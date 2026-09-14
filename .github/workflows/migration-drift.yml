@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Check duplicate prefixes and sort desync
         run: node auramind-gemini/scripts/check-migration-drift.cjs
@@ -46,7 +46,7 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Compare local history vs remote ledger (read-only)
         run: node auramind-gemini/scripts/check-remote-drift.cjs
