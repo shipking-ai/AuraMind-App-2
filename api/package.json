@@ -8,7 +8,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "resend": "^4.0.0",
+    "resend": "^6.28.0",
     "stripe": "^22.5.0"
   },
   "overrides": {
@@ -18,7 +18,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "tsx": "^4.22.4",
-    "vitest": "^4.1.10"
+    "tsx": "^4.23.13",
+    "vitest": "^5.0.0"
   }
 }
