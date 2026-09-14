@@ -1639,29 +1639,11 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
     case 'email': {
       const parsed = validateBody(res, BulkEmailSchema, req.body);
       if (!parsed.ok) return;
-      const { userIds, subject, body } = parsed.data;
 
-      // In production, this would use Resend or similar to actually send emails
-      // For now, log and return success
-      const emails: string[] = [];
-      for (const uid of userIds) {
-        const { data: userData } = await supabase.auth.admin.getUserById(uid);
-        if (userData?.user?.email) emails.push(userData.user.email);
-      }
-
-      await logAuditEvent(supabase, {
-        actorEmail: user.email || 'admin',
-        action: `Bulk email sent: "${subject}"`,
-        category: 'system',
-        details: `Sent bulk email to ${emails.length} users. Subject: "${subject}". Body length: ${body.length} chars`,
-      });
-
-      return json(res, 200, {
-        success: true,
-        sent: emails.length,
-        recipients: emails,
-        message: 'Bulk email logged. Implement actual email sending via Resend for production.',
-      });
+      // Not implemented: no mail is sent on this path. 501 (not 200) so the
+      // admin UI cannot mistake the response for a completed send, and no
+      // audit row claims "Bulk email sent" for mail that never left.
+      return json(res, 501, { error: 'Bulk email is not implemented' });
     }
 
     case 'export': {
@@ -1983,6 +1965,19 @@ async function assertPublicHttpUrl(rawUrl: string): Promise<{ ok: true; url: URL
 // Fetch a URL server-side and extract readable text (SSRF-guarded: public
 // http(s) origins only, DNS re-validated before the outbound fetch).
 async function handleFetchUrl(req: VercelRequest, res: VercelResponse) {
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
+    process.env.SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return json(res, 401, { error: 'Missing authorization' });
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return json(res, 401, { error: 'Invalid token' });
+
   const parsed = validateBody(res, z.object({ url: z.string().url() }), req.body);
   if (!parsed.ok) return;
   const { url } = parsed.data;
@@ -2048,6 +2043,19 @@ function extractYouTubeVideoId(url: string): string | null {
 }
 
 async function handleFetchYouTubeTranscript(req: VercelRequest, res: VercelResponse) {
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
+    process.env.SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return json(res, 401, { error: 'Missing authorization' });
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return json(res, 401, { error: 'Invalid token' });
+
   const parsed = validateBody(res, z.object({ url: z.string().min(1) }), req.body);
   if (!parsed.ok) return;
   const { url } = parsed.data;

@@ -4,6 +4,7 @@ import { describeShare, takeStagedShare } from "../../lib/shareTarget";
 import { auraAiClient } from "../../services/api/auraAiService";
 import { extractStudyAssetText } from "../../services/import/documentImportService";
 import { transcribeAudio } from "../../services/api/groqService";
+import { supabase } from "../../services/database/supabase";
 import { useAudioRecorder } from "../../hooks/useAudioRecorder";
 import type { FlashcardData, Quiz } from "../../types";
 import {
@@ -186,9 +187,11 @@ export default function AndroidGeneratorScreen() {
     setError(null);
     try {
       const endpoint = source === "youtube" ? "/api/fetch-youtube-transcript" : "/api/fetch-url";
+      const { data: { session } } = await supabase!.auth.getSession();
+      const token = session?.access_token;
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ url: topic.trim() }),
       });
       const data = await response.json();

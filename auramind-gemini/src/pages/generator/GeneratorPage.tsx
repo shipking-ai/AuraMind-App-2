@@ -27,6 +27,7 @@ import PresentationViewer from '../../components/study/PresentationViewer';
 import { extractStudyAssetText } from '../../services/import/documentImportService';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { transcribeAudio } from '../../services/api/groqService';
+import { supabase } from '../../services/database/supabase';
 import { Capacitor } from '../../lib/nativeShim';
 import { useAppPreference } from '../../lib/appPreferences';
 import { usesLocalAI as useLocalAIEnabled } from '../../lib/aiProvider';
@@ -103,9 +104,11 @@ const GeneratorPage: React.FC = () => {
     setIsExtracting(true);
     setFetchError(null);
     try {
+      const { data: { session } } = await supabase!.auth.getSession();
+      const token = session?.access_token;
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/fetch-url`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ url: topic.trim() }),
       });
       const data = await res.json();
@@ -129,9 +132,11 @@ const GeneratorPage: React.FC = () => {
     setIsExtracting(true);
     setFetchError(null);
     try {
+      const { data: { session } } = await supabase!.auth.getSession();
+      const token = session?.access_token;
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/fetch-youtube-transcript`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ url: topic.trim() }),
       });
       const data = await res.json();
