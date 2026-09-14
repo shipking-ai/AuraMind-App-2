@@ -3,7 +3,7 @@ import { applyMiddleware } from './_middleware.js';
 import { distributedLimiterConfigured } from './_rateLimit.js';
 import { handleAI, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
-import { sendEmail as sendEmailViaResend } from './_lib/emails.js';
+import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
 import { readSubscriptionStatus } from './_lib/entitlement.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -1639,11 +1639,35 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
     case 'email': {
       const parsed = validateBody(res, BulkEmailSchema, req.body);
       if (!parsed.ok) return;
+      const { userIds, subject, body } = parsed.data;
 
-      // Not implemented: no mail is sent on this path. 501 (not 200) so the
-      // admin UI cannot mistake the response for a completed send, and no
-      // audit row claims "Bulk email sent" for mail that never left.
-      return json(res, 501, { error: 'Bulk email is not implemented' });
+      // Per-recipient loop (not Resend batch): the 100-recipient schema cap
+      // keeps this cheap, and the loop gives exact per-address accounting.
+      const failed: { email: string; error: string }[] = [];
+      let sent = 0;
+      for (const uid of userIds) {
+        const { data: userData } = await supabase.auth.admin.getUserById(uid);
+        const email = userData?.user?.email;
+        if (!email) {
+          failed.push({ email: uid, error: 'No email on account' });
+          continue;
+        }
+        const result = await sendCustomEmail(email, subject, body);
+        if (result.success) {
+          sent += 1;
+        } else {
+          failed.push({ email, error: result.error || 'Send failed' });
+        }
+      }
+
+      await logAuditEvent(supabase, {
+        actorEmail: user.email || 'admin',
+        action: `Bulk email: "${subject}"`,
+        category: 'system',
+        details: `Bulk email sent to ${sent} of ${userIds.length} users. Subject: "${subject}". Failures: ${failed.length}`,
+      });
+
+      return json(res, 200, { success: true, sent, failed });
     }
 
     case 'export': {
