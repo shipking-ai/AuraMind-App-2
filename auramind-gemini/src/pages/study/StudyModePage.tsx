@@ -7,6 +7,7 @@ import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { useHaptics } from '../../hooks/useNative';
 import { ImpactStyle } from '../../lib/nativeShim';
 import { Capacitor } from '../../lib/nativeShim';
+import { reportDeckUsed } from '../../lib/auraDevice';
 import { PersonalizationIndicator } from '../../components/study/PersonalizationIndicator';
 import { DifficultyChip } from '../../components/study/DifficultyChip';
 import { PacingOverride, type PacingMode } from '../../components/study/PacingOverride';
@@ -133,7 +134,15 @@ export default function StudyModePage() {
   const [tiltEnabled, _setTiltEnabled] = useState(true);
   const [isRating, setIsRating] = useState(false);
   const [flowModeOpen, setFlowModeOpen] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false);
+  // `?voice=1` opens the session hands-free: the Android "Voice study" entry
+  // points land here, and would otherwise start an ordinary silent review.
+  const [voiceMode, setVoiceMode] = useState(
+    () => new URLSearchParams(window.location.search).get('voice') === '1',
+  );
+  useEffect(() => {
+    // Launcher ranking: decks you open most float up in long-press shortcuts.
+    if (isAndroidApp && deckId) void reportDeckUsed(deckId);
+  }, [isAndroidApp, deckId]);
   const [elapsedMs, setElapsedMs] = useState(0);
   const _studyTimer = useTimer({ duration: Infinity, autoplay: true });
   const { impact, success, warning } = useHaptics();

@@ -97,27 +97,18 @@ const TurnstileWidget: React.FC<Props> = ({ onToken, handleRef, className }) => 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
     let cancelled = false;
+    let attempt = 0;
+    // Cloudflare can reject the very first render of a session (fingerprint
+    // scoring) while issuing a token on the next attempt. Without a retry a
+    // stray rejection permanently locks the form behind "Couldn't load the
+    // verification check" for the rest of that visit. Once a token has been
+    // delivered the widget is healthy, so later error-callbacks are real
+    // failures and stop retrying.
+    let healthy = false;
 
-    loadTurnstileScript()
-      .then(() => {
-        if (cancelled || !containerRef.current) return;
-        const turnstile = (window as any).turnstile;
-        if (!turnstile) return;
-        widgetIdRef.current = turnstile.render(containerRef.current, {
-          sitekey: siteKey,
-          callback: (token: string) => onToken(token),
-          'expired-callback': () => onToken(null),
-          'error-callback': () => {
-            onToken(null);
-            setFailed(true);
-          },
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    return () => {
+    const tearDown = () => {
       cancelled = true;
       const turnstile = (window as any).turnstile;
       if (turnstile && widgetIdRef.current !== null) {
@@ -129,6 +120,55 @@ const TurnstileWidget: React.FC<Props> = ({ onToken, handleRef, className }) => 
       }
       widgetIdRef.current = null;
     };
+
+    const scheduleRetry = () => {
+      if (cancelled || healthy) return;
+      attempt += 1;
+      if (attempt <= 4) {
+        // Back off on each retry: 600ms, 1.2s, 1.8s, 2.4s.
+        setFailed(false);
+        void wait(600 * attempt).then(() => {
+          if (!cancelled) void run();
+        });
+      } else {
+        setFailed(true);
+      }
+    };
+
+    const run = async () => {
+      try {
+        await loadTurnstileScript();
+      } catch {
+        scheduleRetry();
+        return;
+      }
+      if (cancelled || !containerRef.current) return;
+      const turnstile = (window as any).turnstile;
+      if (!turnstile) {
+        scheduleRetry();
+        return;
+      }
+      try {
+        widgetIdRef.current = turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          callback: (token: string) => {
+            healthy = true;
+            onToken(token);
+          },
+          'expired-callback': () => onToken(null),
+          'error-callback': () => {
+            onToken(null);
+            scheduleRetry();
+          },
+        });
+      } catch {
+        scheduleRetry();
+      }
+    };
+
+    void run();
+
+    return tearDown;
     // onToken is stable in practice (useCallback in the parent); re-rendering
     // the widget on every keystroke would reset the challenge.
     // eslint-disable-next-line react-hooks/exhaustive-deps

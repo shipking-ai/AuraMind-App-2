@@ -196,6 +196,29 @@ Enrollment: localStorage-first with best-effort Supabase sync. Lessons open as p
 - **Android** — active Capacitor 8 app at `auramind-gemini/android/`, built
   from the same React source with a native bottom nav, status-bar/back
   handling, haptics, local reminders, and system sharing.
+
+### Android platform integrations
+
+| Capability | Where |
+|---|---|
+| Launcher shortcuts: 3 static + the 2 most recently studied decks | `res/xml/shortcuts.xml`, `AuraDevicePlugin.setRecentDecks` |
+| Pin a deck to the home screen | `AuraDevicePlugin.pinDeck` (deck action sheet) |
+| Quick Settings tile with the due count | `QuickReviewTileService.java` |
+| Screen kept on during a study session | `AuraDevicePlugin.setKeepAwake`, driven by `NativeRuntime` |
+| Material You colour, biometric lock, in-app review/updates | `ThemeColorsPlugin`, `BiometricAuthPlugin`, `PlayEngagementPlugin` |
+| Share target, home-screen widget, Wear OS sync | `ShareTargetPlugin`, `AuraMindWidgetProvider`, `WearSync*` |
+
+All shortcuts, the tile and the widget open `auramind://app/...` VIEW
+intents, so every entry point goes through one allowlist (`lib/deepLinks.ts`).
+The tile and widget read the same `CapacitorStorage` due count; neither
+reimplements FSRS in Java.
+
+The shell itself (`styles/android-native.css`) adds what a WebView lacks by
+default: a top bar that elevates on scroll, a bottom nav that hides while
+reading down and returns on reverse, swipe-to-refresh on the list screens
+(`lib/workspaceRefresh.ts`), modal bottom sheets that close on the system back
+gesture (`lib/backStack.ts`), long-press deck actions, and a navigation rail
+at 600dp and up.
 - **Desktop** — no desktop build. An earlier Tauri 2 stack was removed;
   recover it from git history if it is ever revived.
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Flame, Settings } from "@/components/icons";
+import { Flame } from "@/components/icons";
 import { useAppPreference } from "../../lib/appPreferences";
 import { hapticTap } from "./androidHaptics";
 import type { UserProfile } from "../../types";
@@ -58,17 +58,6 @@ export function AndroidMobileTopBar({ user }: { user: UserProfile | null | undef
           <Flame className="h-4 w-4" aria-hidden />
           {user?.streak ?? 0}
         </span>
-        <button
-          type="button"
-          className="android-top-icon"
-          onClick={() => {
-            hapticTap();
-            navigate("/dashboard/settings");
-          }}
-          aria-label="Open settings"
-        >
-          <Settings className="h-5 w-5" aria-hidden />
-        </button>
         <button
           type="button"
           className="android-avatar"

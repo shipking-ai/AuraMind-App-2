@@ -8,6 +8,7 @@ import { Capacitor } from './lib/nativeShim';
 // Loads last so the editorial layer can override platform-styles' drifted
 // values by cascade order rather than !important.
 import './styles/editorial.css';
+import './styles/android-native.css';
 
 // Environment validation
 import { validateEnv, logEnvValidation } from './lib/env';

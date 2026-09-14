@@ -20,6 +20,9 @@ import {
 import { toast } from "sonner";
 import { useDashboardWorkspace } from "../../contexts/DashboardWorkspaceContext";
 import { useCurrentUserId } from "../../hooks/useCurrentUserId";
+import { useBiometricAuth } from "../../hooks/useNative";
+import { APP_LOCK_PREF_KEY } from "./BiometricGate";
+import { disablePush, enablePush } from "../../services/notifications/pushService";
 import { useAppPreference } from "../../lib/appPreferences";
 import { hapticSelection, hapticSuccess, hapticTap, hapticWarning } from "./androidHaptics";
 import { userService } from "../../services/user/userService";
@@ -187,6 +190,34 @@ export default function AndroidSettingsScreen() {
   const [dailyReminder, setDailyReminder] = useStoredValue("auramind_dailyReminder", true);
   const [reminderTime, setReminderTime] = useStoredValue("auramind_reminderTime", "09:00");
   const [dueReminder, setDueReminder] = useStoredValue("auramind_dueReminder", true);
+  const [pushReminders, setPushReminders] = useStoredValue("auramind_pushReminders", false);
+
+  /**
+   * Server-sent push. Enabling probes Firebase for real: without
+   * google-services.json the registration never resolves and the toggle
+   * fails closed with an explanation instead of a stuck "on". The day
+   * credentials land, this exact path starts working — nothing else changes.
+   */
+  const togglePush = async (next: boolean) => {
+    if (!next) {
+      setPushReminders(false);
+      await disablePush(userId ?? "");
+      return;
+    }
+    if (!userId) {
+      toast.error("Sign in to enable push reminders");
+      return;
+    }
+    const ok = await enablePush(userId);
+    if (ok) {
+      hapticSuccess();
+      setPushReminders(true);
+      toast.success("Push reminders on");
+    } else {
+      hapticWarning();
+      toast.error("Push isn't available on this build yet");
+    }
+  };
   const [streakReminder, setStreakReminder] = useStoredValue("auramind_streakReminder", true);
   const [weeklySummary, setWeeklySummary] = useStoredValue("auramind_weeklySummary", false);
   const [soundEffects, setSoundEffects] = useStoredValue("auramind_soundEffects", true);
@@ -208,7 +239,55 @@ export default function AndroidSettingsScreen() {
   const [offlineMode, setOfflineMode] = useStoredValue("auramind_offlineMode", false);
   const [usageAnalytics, setUsageAnalytics] = useStoredValue("auramind_usageAnalytics", true);
   const [saveChatHistory, setSaveChatHistory] = useStoredValue("auramind_saveChatHistory", true);
+  const [appLock, setAppLock] = useStoredValue(APP_LOCK_PREF_KEY, false);
+  const [biometricDetail, setBiometricDetail] = useState<string | null>(null);
+  const { getAvailability, authenticate } = useBiometricAuth();
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // Resolve the biometric detail line once: "Fingerprint" when ready,
+  // "Add a fingerprint in system Settings" when not enrolled, and nothing
+  // on web (this screen is Android-only, so a null detail hides the row).
+  useEffect(() => {
+    let cancelled = false;
+    void getAvailability().then((availability) => {
+      if (cancelled) return;
+      if (availability.isAvailable) {
+        const kind =
+          availability.biometryType === "face"
+            ? "Face unlock"
+            : availability.biometryType === "iris"
+              ? "Iris unlock"
+              : availability.biometryType === "multiple"
+                ? "Biometrics"
+                : "Fingerprint";
+        setBiometricDetail(`${kind} required to open AuraMind`);
+      } else if (availability.reason === "not_enrolled") {
+        setBiometricDetail("Add a fingerprint or face in system Settings first");
+      } else {
+        setBiometricDetail(null);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [getAvailability]);
+
+  /** Enabling proves the sheet works first — a lock nobody can pass is a brick. */
+  const toggleAppLock = async (next: boolean) => {
+    if (!next) {
+      setAppLock(false);
+      return;
+    }
+    const ok = await authenticate("Confirm biometrics to enable App lock");
+    if (ok) {
+      hapticSuccess();
+      setAppLock(true);
+      toast.success("App lock enabled");
+    } else {
+      hapticWarning();
+      toast.error("Biometric check failed — App lock stayed off");
+    }
+  };
 
   const displayName = workspace?.user.name || profile?.name || "Learner";
 
@@ -600,6 +679,13 @@ export default function AndroidSettingsScreen() {
         <AndroidSettingRow label="Weekly summary">
           <AndroidToggle value={weeklySummary} onChange={setWeeklySummary} label="Weekly summary" />
         </AndroidSettingRow>
+        <AndroidSettingRow label="Push reminders" detail="Server-sent nudges, even when closed">
+          <AndroidToggle
+            value={pushReminders}
+            onChange={(next) => void togglePush(next)}
+            label="Push reminders"
+          />
+        </AndroidSettingRow>
       </AndroidSettingsSection>
 
       <AndroidSettingsSection
@@ -686,6 +772,15 @@ export default function AndroidSettingsScreen() {
         <AndroidSettingRow label="Offline mode" detail="Prefer local study data">
           <AndroidToggle value={offlineMode} onChange={setOfflineMode} label="Offline mode" />
         </AndroidSettingRow>
+        {biometricDetail && (
+          <AndroidSettingRow label="App lock" detail={biometricDetail}>
+            <AndroidToggle
+              value={appLock}
+              onChange={(next) => void toggleAppLock(next)}
+              label="App lock"
+            />
+          </AndroidSettingRow>
+        )}
         <button
           type="button"
           className="android-settings-action"

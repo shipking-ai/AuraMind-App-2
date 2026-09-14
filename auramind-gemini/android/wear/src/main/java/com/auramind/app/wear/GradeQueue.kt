@@ -43,6 +43,25 @@ object GradeQueueLogic {
     }
 
     fun size(arr: JSONArray): Int = arr.length()
+
+    /**
+     * Removes the most recent queued grade for cardId — the undo window.
+     * Only grades still waiting for the phone can come back; anything
+     * already flushed is on the phone and out of our hands. Returns the new
+     * queue and whether anything was removed.
+     */
+    fun removeLastMatching(current: JSONArray, cardId: String): Pair<JSONArray, Boolean> {
+        var idx = -1
+        for (i in 0 until current.length()) {
+            if (current.getJSONObject(i).optString("cardId") == cardId) idx = i
+        }
+        if (idx == -1) return current to false
+        val out = JSONArray()
+        for (i in 0 until current.length()) {
+            if (i != idx) out.put(current.get(i))
+        }
+        return out to true
+    }
 }
 
 /**
@@ -87,6 +106,15 @@ object GradeQueue {
 
     fun size(context: Context): Int =
         GradeQueueLogic.size(JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_QUEUE, "[]")))
+
+    /** Retracts the newest still-queued grade for a card. False = already synced. */
+    fun removeLastMatching(context: Context, cardId: String): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val current = JSONArray(prefs.getString(KEY_QUEUE, "[]"))
+        val (next, removed) = GradeQueueLogic.removeLastMatching(current, cardId)
+        if (removed) prefs.edit().putString(KEY_QUEUE, next.toString()).apply()
+        return removed
+    }
 
     fun overflowed(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_OVERFLOWED, false)

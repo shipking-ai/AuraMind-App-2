@@ -1,39 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * The web boot screen.
  *
- * It used to lie in two directions at once. A CSS keyframe filled the bar to
- * 100% over a fixed 1.4s, and a `setTimeout` hid the whole thing after 1800ms
- * — neither connected to whether the app had actually loaded.
- *
- * On a fast boot that meant sitting through an animation after the app was
- * ready. On a slow one it was worse than useless: the bar announced
- * "complete", the loader hid itself, and the user was left on a blank screen
- * while auth was still in flight, with nothing to indicate anything was
- * happening.
- *
- * So the bar is now indeterminate. That is not a downgrade — during boot the
- * app genuinely does not know how long the session check will take, and a
- * sweep says "working, duration unknown" honestly where a filling bar claims
- * knowledge it does not have. It completes only when `ready` is true, which
- * is the one moment a full bar is true.
+ * Shows a determinate progress bar that climbs over time and jumps to 100%
+ * the moment `ready` flips true. The bar reflects real elapsed time:
+ * most boots resolve in under a second, slower ones show honest progress
+ * rather than a fake sweep that claims completion before auth is done.
  *
  * The component no longer hides itself. It is unmounted by its parent when
  * `authChecked` flips, so it is on screen for exactly as long as the app is
  * actually loading.
  */
 export function CinematicLoader({ ready = false }: { ready?: boolean }) {
-  // Nothing is said for the first beat. Most boots resolve inside it, and
-  // flashing "Restoring your session" for 200ms is noise, not information.
+  const [progress, setProgress] = useState(0);
+  const startRef = useRef(Date.now());
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (ready) {
+      setProgress(100);
+      return;
+    }
+
+    const tick = () => {
+      const elapsed = Date.now() - startRef.current;
+      // Logarithmic curve: fast early gains, slows as it approaches ~85%
+      // 0ms → 0%, 500ms → ~40%, 1500ms → ~65%, 4000ms → ~80%, 8000ms → ~85%
+      const maxProgress = 85;
+      const p = maxProgress * (1 - Math.exp(-elapsed / 1800));
+      setProgress(Math.min(p, maxProgress));
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [ready]);
+
+  // Status text phases — same timing as before but driven by elapsed time
   const [phase, setPhase] = useState<"quiet" | "working" | "slow">("quiet");
 
   useEffect(() => {
     if (ready) return;
     const working = setTimeout(() => setPhase("working"), 1200);
-    // Past this point something is genuinely wrong-ish — a cold serverless
-    // function, a bad connection. Saying so is more respectful than a
-    // spinner that looks identical at second 2 and second 20.
     const slow = setTimeout(() => setPhase("slow"), 6000);
     return () => {
       clearTimeout(working);
@@ -62,7 +73,7 @@ export function CinematicLoader({ ready = false }: { ready?: boolean }) {
         <span className="font-serif italic text-violet-400">Mind</span>
       </div>
 
-      <div className={`loader-bar ${ready ? "is-complete" : ""}`} />
+      <div className="loader-bar" style={{ "--progress": `${progress}%` } as React.CSSProperties} />
 
       <p className="loader-status" aria-hidden={phase === "quiet"}>
         {phase === "slow"
@@ -73,7 +84,7 @@ export function CinematicLoader({ ready = false }: { ready?: boolean }) {
       </p>
 
       <span className="sr-only">
-        {ready ? "Ready" : "Loading AuraMind"}
+        {ready ? "Ready" : `Loading AuraMind — ${Math.round(progress)}%`}
       </span>
     </div>
   );

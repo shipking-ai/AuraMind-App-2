@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Clipboard } from '@capacitor/clipboard';
 import { Device } from '@capacitor/device';
@@ -11,6 +11,7 @@ import { Share } from '@capacitor/share';
 import { Keyboard } from '@capacitor/keyboard';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 /**
  * Native capability facade.
@@ -40,25 +41,44 @@ export {
   Style,
 };
 
-/** Push is intentionally opt-in until Firebase credentials are configured. */
-export const PushNotifications = {
-  requestPermissions: async (..._args: unknown[]) => ({ receive: 'denied' as 'granted' | 'denied' | 'prompt' }),
-  register: async (..._args: unknown[]) => undefined,
-  addListener: async (..._args: unknown[]) => ({ remove: () => undefined }),
-  removeAllListeners: async (..._args: unknown[]) => undefined,
-};
+/**
+ * Real FCM plugin. Until google-services.json is configured (drop it in
+ * android/app/google-services.json and rebuild), register() rejects and the
+ * push service treats push as unavailable — every consumer already handles
+ * that path, so activation needs credentials and nothing else.
+ */
+export { PushNotifications };
+
+export type BiometryType = 'none' | 'fingerprint' | 'face' | 'iris' | 'multiple';
+
+export interface BiometricAvailability {
+  isAvailable: boolean;
+  biometryType: BiometryType;
+  /** Machine-readable when unavailable: not_enrolled, no_hardware, … */
+  reason?: string;
+}
+
+export interface NativeBiometricPlugin {
+  isAvailable(options?: { useFallback?: boolean }): Promise<BiometricAvailability>;
+  verifyIdentity(options: {
+    reason?: string;
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    useFallback?: boolean;
+  }): Promise<{ success: boolean }>;
+  setCredentials(options: { username: string; password: string; server: string }): Promise<void>;
+  getCredentials(options: { server: string }): Promise<{ username: string; password: string }>;
+  deleteCredentials(options: { server: string }): Promise<void>;
+}
 
 /**
- * Biometric login is kept behind the existing facade until a biometric plugin
- * is selected and configured for the production authentication flow.
+ * First-party native plugin (BiometricAuthPlugin.java): the system biometric
+ * sheet plus a Keystore-backed credential vault. On web the proxy rejects
+ * with "not implemented" — every consumer guards with
+ * `Capacitor.isNativePlatform()` first, so the website never touches it.
  */
-export const NativeBiometric = {
-  isAvailable: async (..._args: unknown[]) => ({ isAvailable: false }),
-  verifyIdentity: async (..._args: unknown[]) => undefined,
-  setCredentials: async (..._args: unknown[]) => undefined,
-  getCredentials: async (..._args: unknown[]) => null,
-  deleteCredentials: async (..._args: unknown[]) => undefined,
-};
+export const NativeBiometric = registerPlugin<NativeBiometricPlugin>('BiometricAuth');
 
 export async function getVersion(): Promise<string> {
   try {

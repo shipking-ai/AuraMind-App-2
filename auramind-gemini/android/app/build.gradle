@@ -100,6 +100,9 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    // EdgeToEdge.enable() for MainActivity (explicit: Capacitor also ships it,
+    // but the window call must resolve against a known version at compile time)
+    implementation "androidx.activity:activity:$androidxActivityVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
@@ -109,6 +112,14 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
     // Wear OS data layer — used by the WearSync plugin (watch companion sync)
     implementation "com.google.android.gms:play-services-wearable:18.1.0"
+    // System biometric sheet (BiometricAuthPlugin) + Keystore-backed vault
+    implementation "androidx.biometric:biometric:1.1.0"
+    // 1.1.0-alpha06: the 1.0.0 line has only the deprecated MasterKeys API;
+    // the MasterKey builder used by the credential vault arrived in 1.1.0.
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+    // In-app review + flexible updates (PlayEngagementPlugin)
+    implementation "com.google.android.play:review:2.0.1"
+    implementation "com.google.android.play:app-update:2.1.0"
 }
 
 apply from: 'capacitor.build.gradle'

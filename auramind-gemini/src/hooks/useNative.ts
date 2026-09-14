@@ -474,24 +474,33 @@ export function useClipboard() {
 }
 
 export function useBiometricAuth() {
-  const isAvailable = useCallback(async (): Promise<boolean> => {
-    if (!Capacitor.isNativePlatform()) return false;
+  /**
+   * Full availability payload. Distinct from isAvailable() on purpose: the
+   * settings row needs the `reason` (e.g. not_enrolled → "add a fingerprint
+   * in Settings") without raising the system sheet.
+   */
+  const getAvailability = useCallback(async () => {
+    if (!Capacitor.isNativePlatform()) {
+      return { isAvailable: false as const, biometryType: 'none' as const, reason: 'web' };
+    }
     try {
-      const result = await NativeBiometric.isAvailable({ useFallback: true });
-      return result.isAvailable;
+      return await NativeBiometric.isAvailable();
     } catch {
-      return false;
+      return { isAvailable: false as const, biometryType: 'none' as const, reason: 'unknown' };
     }
   }, []);
+
+  const isAvailable = useCallback(async (): Promise<boolean> => {
+    return (await getAvailability()).isAvailable;
+  }, [getAvailability]);
 
   const authenticate = useCallback(async (reason?: string): Promise<boolean> => {
     if (!Capacitor.isNativePlatform()) return false;
     try {
       await NativeBiometric.verifyIdentity({
         reason: reason || "Authentication required",
-        title: "Authentication Required",
-        subtitle: "Please authenticate to continue",
-        useFallback: true,
+        title: "Unlock AuraMind",
+        subtitle: "Confirm it's you to continue",
       });
       return true;
     } catch {
@@ -519,5 +528,5 @@ export function useBiometricAuth() {
     await NativeBiometric.deleteCredentials({ server });
   }, []);
 
-  return { isAvailable, authenticate, setCredentials, getCredentials, deleteCredentials };
+  return { isAvailable, getAvailability, authenticate, setCredentials, getCredentials, deleteCredentials };
 }

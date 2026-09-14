@@ -47,4 +47,32 @@ class GradeQueueTest {
         val (q2, _) = GradeQueueLogic.append(q1, grade("c2"))
         assertEquals(2, GradeQueueLogic.size(q2))
     }
+
+    @Test
+    fun `removeLastMatching retracts the newest grade for the card`() {
+        val (q1, _) = GradeQueueLogic.append(JSONArray(), grade("c1", 1L))
+        val (q2, _) = GradeQueueLogic.append(q1, grade("c2", 2L))
+        val (q3, _) = GradeQueueLogic.append(q2, grade("c1", 3L))
+        val (next, removed) = GradeQueueLogic.removeLastMatching(q3, "c1")
+        assertTrue(removed)
+        assertEquals(2, GradeQueueLogic.size(next))
+        // The older c1 (ts 1) survives; the newer c1 (ts 3) is gone.
+        assertEquals(1L, next.getJSONObject(0).getLong("timestamp"))
+        assertEquals(2L, next.getJSONObject(1).getLong("timestamp"))
+    }
+
+    @Test
+    fun `removeLastMatching reports false when the card is not queued`() {
+        val (q, _) = GradeQueueLogic.append(JSONArray(), grade("c1"))
+        val (next, removed) = GradeQueueLogic.removeLastMatching(q, "c9")
+        assertFalse(removed)
+        assertEquals(1, GradeQueueLogic.size(next))
+    }
+
+    @Test
+    fun `removeLastMatching on an empty queue is a no-op`() {
+        val (next, removed) = GradeQueueLogic.removeLastMatching(JSONArray(), "c1")
+        assertFalse(removed)
+        assertEquals(0, GradeQueueLogic.size(next))
+    }
 }

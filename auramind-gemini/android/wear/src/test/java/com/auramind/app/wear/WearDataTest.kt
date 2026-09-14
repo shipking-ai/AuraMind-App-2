@@ -28,6 +28,20 @@ class WearDataTest {
     }
 
     @Test
+    fun `reviewProgress fills as cards are graded`() {
+        assertEquals(0f, reviewProgress(0, 8))
+        assertEquals(0.5f, reviewProgress(4, 8))
+        assertEquals(0.875f, reviewProgress(7, 8))
+    }
+
+    @Test
+    fun `reviewProgress is defensive about bad input`() {
+        assertEquals(0f, reviewProgress(0, 0))
+        assertEquals(0f, reviewProgress(-1, 8))
+        assertEquals(1f, reviewProgress(12, 8))
+    }
+
+    @Test
     fun `rejects an unknown payload version`() {
         val dm = DataMap().apply {
             putInt("version", 999)

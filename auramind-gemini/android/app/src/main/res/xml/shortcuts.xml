@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launcher long-press shortcuts. Each fires a VIEW intent on the auramind://
+  scheme, which the JS layer turns into router navigation (see NativeRuntime).
+  Paths mirror the Android bottom-nav destinations in AndroidBottomNav.tsx.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="resume_review"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_review"
+        android:shortcutShortLabel="@string/shortcut_review_short"
+        android:shortcutLongLabel="@string/shortcut_review_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.auramind.app"
+            android:targetClass="com.auramind.app.MainActivity"
+            android:data="auramind://app/dashboard/study" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="new_cards"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_new"
+        android:shortcutShortLabel="@string/shortcut_new_short"
+        android:shortcutLongLabel="@string/shortcut_new_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.auramind.app"
+            android:targetClass="com.auramind.app.MainActivity"
+            android:data="auramind://app/dashboard/generator" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="ask_coach"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_coach"
+        android:shortcutShortLabel="@string/shortcut_coach_short"
+        android:shortcutLongLabel="@string/shortcut_coach_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.auramind.app"
+            android:targetClass="com.auramind.app.MainActivity"
+            android:data="auramind://app/dashboard/chat" />
+    </shortcut>
+</shortcuts>

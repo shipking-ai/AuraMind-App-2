@@ -3,6 +3,18 @@
    Each platform gets its own look & feel
    ======================================== */
 
+/* Material You dynamic color (installed Android app only).
+   initDynamicColor() overwrites these from the wallpaper palette; the
+   brand-violet defaults below are the whole design on every other device,
+   so a missing bridge changes nothing. */
+:root {
+  --android-dynamic-primary: #8b5cf6;
+  --android-dynamic-primary-container: #7c3aed;
+  --android-dynamic-secondary: #67e8f9;
+  --android-dynamic-tertiary: #f0abfc;
+  --android-dynamic-surface: #0f172a;
+}
+
 /* Apply platform font to body */
 .platform-android body {
   font-family: 'Google Sans', 'Inter', system-ui, sans-serif;
@@ -1385,7 +1397,11 @@
   color: #71809e;
   font-size: 9px;
   font-weight: 800;
-  transition: transform 0.16s ease, color 0.16s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1), color 0.18s ease;
+}
+
+.android-nav-item:active {
+  transform: scale(0.94);
 }
 
 .android-nav-item.is-active {
@@ -1408,7 +1424,7 @@
 
 /* Material 3-style sliding indicator. framer-motion animates this pill across
    the five destinations so switching tabs feels continuous rather than a
-   hard cut. */
+   hard cut. Tinted from the wallpaper palette on dynamic-color devices. */
 .android-nav-active-pill {
   position: absolute;
   top: 5px;
@@ -1417,7 +1433,11 @@
   height: 30px;
   margin-left: -23px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.55), rgba(124, 58, 237, 0.26));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--android-dynamic-primary) 55%, transparent),
+    color-mix(in srgb, var(--android-dynamic-primary-container) 30%, transparent)
+  );
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.14), 0 4px 14px rgba(124, 58, 237, 0.28);
   z-index: 0;
 }
@@ -1442,9 +1462,17 @@
   border: 4px solid #080c18;
   border-radius: 19px;
   color: #fff;
-  background: linear-gradient(145deg, #8b5cf6, #06b6d4);
+  background: linear-gradient(
+    145deg,
+    var(--android-dynamic-primary),
+    var(--android-dynamic-tertiary)
+  );
   box-shadow: 0 10px 20px rgba(124, 58, 237, 0.35);
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+
+.android-nav-item-featured:active .android-nav-feature-icon {
+  transform: scale(0.92);
 }
 
 .android-nav-item-featured.is-active .android-nav-feature-icon,
@@ -3094,8 +3122,8 @@ html.android-app #root {
 }
 
 .android-settings-toggle.is-on {
-  border-color: rgba(114, 230, 244, 0.45);
-  background: rgba(48, 148, 170, 0.5);
+  border-color: color-mix(in srgb, var(--android-dynamic-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--android-dynamic-primary) 55%, transparent);
 }
 
 .android-settings-toggle.is-on span {

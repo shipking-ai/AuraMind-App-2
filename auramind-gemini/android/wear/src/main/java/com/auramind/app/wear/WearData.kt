@@ -49,6 +49,16 @@ fun ReviewPayload.toDataMap(): DataMap = DataMap().apply {
     putDataMapArrayList("cards", list)
 }
 
+/**
+ * Fraction of the session completed BEFORE the card at [index] is graded:
+ * card 0 of 8 shows 0, card 7 of 8 shows 7/8. The bar fills to full only on
+ * the AllCaughtUp screen, which is the one moment "done" is true.
+ */
+fun reviewProgress(index: Int, total: Int): Float {
+    if (total <= 0 || index < 0) return 0f
+    return (index.coerceAtMost(total).toFloat() / total).coerceIn(0f, 1f)
+}
+
 fun DataMap.toReviewPayload(): ReviewPayload? {
     if (getInt("version", -1) != PAYLOAD_VERSION) return null
     val rawCards = getDataMapArrayList("cards") ?: emptyList()

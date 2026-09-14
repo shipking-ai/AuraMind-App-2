@@ -1,0 +1,527 @@
+/* ============================================================
+   NATIVE BEHAVIOUR LAYER — Android
+   ============================================================
+
+   editorial.css fixed the scale (type, space, radii). This layer adds the
+   behaviour a native Android app has and a WebView does not by default:
+
+     - app bars that react to scroll (M3 on-scroll elevation, hide-on-scroll)
+     - modal bottom sheets instead of centered web dialogs
+     - swipe-to-refresh
+     - a navigation rail on tablets, foldables and landscape
+     - 48dp touch targets and an 11px type floor on the shell chrome
+
+   Loads after editorial.css. Everything is scoped to the Android shell, so
+   the web build is untouched.
+   ============================================================ */
+
+/* ---------- Home rhythm ------------------------------------ */
+
+/* .android-home-screen has always declared `gap`, but was never a flex
+   container, so the gap did nothing: the greeting ran straight into the
+   focus card and the card into "Quick actions". */
+.android-mobile-shell .android-home-screen {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Top app bar: on-scroll elevation ---------------- */
+
+.android-mobile-shell .android-mobile-topbar {
+  transition:
+    min-height 220ms cubic-bezier(0.2, 0, 0, 1),
+    padding 220ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 220ms ease,
+    border-color 220ms ease;
+  border-bottom-color: transparent;
+  background: rgba(8, 13, 27, 0.55);
+  box-shadow: none;
+}
+
+.android-mobile-shell.is-scrolled .android-mobile-topbar {
+  min-height: 60px;
+  padding-bottom: 8px;
+  border-bottom-color: var(--ed-hairline);
+  background: rgba(8, 13, 27, 0.94);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.35);
+}
+
+/* ---------- Bottom navigation: floats, hides on scroll ------ */
+
+/* Out of flow so hiding it is a pure transform (no layout per frame), and
+   lists scroll underneath the translucent bar the way native ones do. */
+.android-mobile-shell .android-mobile-bottom-nav {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transition: transform 260ms cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform;
+}
+
+.android-mobile-shell.is-nav-hidden .android-mobile-bottom-nav {
+  transform: translateY(calc(100% + 28px));
+}
+
+.android-mobile-shell .android-mobile-main {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  overscroll-behavior-y: contain;
+}
+
+/* 9px labels were the last sub-11px text on screen. */
+.android-mobile-shell .android-nav-label {
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Touch targets (48dp) ---------------------------- */
+
+.android-mobile-shell .android-avatar {
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+}
+
+.android-mobile-shell .android-top-streak {
+  min-height: 40px;
+}
+
+.android-mobile-shell .android-round-action {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.android-mobile-shell .android-deck-actions {
+  min-height: 52px;
+  padding-inline: 0;
+}
+
+.android-mobile-shell .android-deck-actions button {
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.android-mobile-shell .android-deck-more {
+  display: inline-flex;
+  min-width: 48px;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--ed-ink-3);
+}
+
+.android-mobile-shell .android-due-badge {
+  padding: 4px 9px;
+  font-size: 12px;
+}
+
+/* A held row shows it is about to open its menu. */
+.android-mobile-shell .android-deck-main {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ---------- Daily goal ring --------------------------------- */
+
+.android-focus-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.android-goal-ring {
+  position: relative;
+  display: inline-grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.android-goal-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.android-goal-ring circle {
+  fill: none;
+  stroke-width: 3.5;
+}
+
+.android-goal-ring-track {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+
+.android-goal-ring-value {
+  stroke: var(--android-dynamic-primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 600ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.android-goal-ring.is-complete .android-goal-ring-value {
+  stroke: #6ee7b7;
+}
+
+.android-goal-ring-text {
+  color: var(--ed-ink);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.android-goal-ring.is-complete .android-goal-ring-text {
+  color: #6ee7b7;
+}
+
+/* ---------- Modal bottom sheet ------------------------------ */
+
+.android-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.android-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.62);
+}
+
+.android-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 48px);
+  overflow-y: auto;
+  padding: 10px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 28px 28px 0 0;
+  background: #121b31;
+  box-shadow: 0 -18px 48px rgba(2, 6, 23, 0.5), inset 0 1px rgba(255, 255, 255, 0.06);
+  outline: none;
+  touch-action: none;
+}
+
+.android-sheet-handle {
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 6px auto 18px;
+  border-radius: 999px;
+  background: rgba(195, 205, 230, 0.4);
+}
+
+.android-sheet .android-eyebrow {
+  margin-bottom: 6px;
+}
+
+.android-sheet-title {
+  color: var(--ed-ink);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.android-sheet-description {
+  margin-top: 6px;
+  color: var(--ed-ink-2);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.android-sheet-body {
+  margin-top: 18px;
+  /* The sheet itself owns vertical drags (dismiss); content may still pan. */
+  touch-action: pan-y;
+}
+
+.android-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  margin-inline: -12px;
+}
+
+.android-sheet-action {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  color: var(--ed-ink);
+  text-align: left;
+}
+
+.android-sheet-action:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.android-sheet-action-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--android-dynamic-primary);
+  background: color-mix(in srgb, var(--android-dynamic-primary) 16%, transparent);
+}
+
+.android-sheet-action-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.android-sheet-action-detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--ed-ink-3);
+  font-size: 13px;
+}
+
+.android-sheet-action.is-danger,
+.android-sheet-action.is-danger .android-sheet-action-icon {
+  color: #fda4af;
+}
+
+.android-sheet-action.is-danger .android-sheet-action-icon {
+  background: rgba(244, 63, 94, 0.14);
+}
+
+.android-sheet-input {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
+  border: 1px solid rgba(169, 184, 232, 0.2);
+  border-radius: 16px;
+  color: var(--ed-ink);
+  background: rgba(2, 6, 23, 0.45);
+  font-size: 16px;
+  outline: none;
+}
+
+.android-sheet-input::placeholder {
+  color: #64748b;
+}
+
+.android-sheet-input:focus {
+  border-color: var(--android-dynamic-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--android-dynamic-primary) 22%, transparent);
+}
+
+.android-sheet-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.android-sheet-buttons button {
+  min-height: 48px;
+  padding-inline: 20px;
+}
+
+/* ---------- Swipe to refresh -------------------------------- */
+
+.android-ptr {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 70px);
+  left: 50%;
+  z-index: 15;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: #1c2b47;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.45);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.android-ptr.is-visible {
+  opacity: 1;
+}
+
+.android-ptr-spinner {
+  width: 24px;
+  height: 24px;
+  stroke: var(--android-dynamic-primary);
+}
+
+.android-ptr-spinner circle {
+  transform-origin: 50% 50%;
+}
+
+.android-ptr.is-refreshing .android-ptr-spinner {
+  animation: android-ptr-spin 900ms linear infinite;
+}
+
+@keyframes android-ptr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Light theme ------------------------------------- */
+
+html[data-theme="light"] .android-mobile-shell .android-mobile-topbar {
+  background: rgba(244, 246, 252, 0.7);
+}
+
+html[data-theme="light"] .android-mobile-shell.is-scrolled .android-mobile-topbar {
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+  background: rgba(244, 246, 252, 0.96);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .android-sheet {
+  background: #f7f8fd;
+  box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.18);
+}
+
+html[data-theme="light"] .android-sheet-title,
+html[data-theme="light"] .android-sheet-action,
+html[data-theme="light"] .android-sheet-input {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .android-sheet-description,
+html[data-theme="light"] .android-sheet-action-detail {
+  color: #475569;
+}
+
+html[data-theme="light"] .android-sheet-input {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: #fff;
+}
+
+html[data-theme="light"] .android-sheet-handle {
+  background: rgba(15, 23, 42, 0.25);
+}
+
+html[data-theme="light"] .android-ptr {
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.16);
+}
+
+html[data-theme="light"] .android-goal-ring-track {
+  stroke: rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] .android-goal-ring-text {
+  color: #0f172a;
+}
+
+/* ---------- Navigation rail (600dp and up) ------------------ */
+
+/* Tablets, unfolded foldables and landscape phones get the M3 navigation
+   rail: destinations down the leading edge instead of a bar stretched
+   across a wide screen, which is Google's large-screen quality bar. */
+@media (min-width: 600px) {
+  .android-mobile-shell {
+    flex-direction: row;
+  }
+
+  /* The rail grows by the leading inset rather than giving it up: in
+     landscape the camera cutout alone is ~90px, which squeezed a fixed-width
+     rail down to truncated one-letter labels. */
+  .android-mobile-shell .android-mobile-bottom-nav {
+    position: relative;
+    order: -1;
+    width: calc(104px + env(safe-area-inset-left, 0px));
+    flex: 0 0 auto;
+    height: 100%;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 8px calc(12px + env(safe-area-inset-bottom, 0px))
+      calc(8px + env(safe-area-inset-left, 0px));
+    transform: none;
+  }
+
+  .android-mobile-shell .android-nav-item {
+    min-height: 60px;
+  }
+
+  .android-mobile-shell .android-nav-feature-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .android-mobile-shell.is-nav-hidden .android-mobile-bottom-nav {
+    transform: none;
+  }
+
+  .android-mobile-shell .android-mobile-bottom-nav-inner {
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    align-content: center;
+    gap: 12px;
+    padding: 12px 6px;
+    border-radius: 24px;
+  }
+
+  .android-mobile-shell .android-nav-item-featured {
+    order: -1;
+    margin: 0 0 12px;
+  }
+
+  .android-mobile-shell .android-mobile-main {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .android-mobile-shell .android-mobile-content {
+    max-width: 760px;
+  }
+
+  .android-mobile-shell .android-action-grid {
+    gap: 24px;
+  }
+}
+
+/* A landscape phone is wide enough for the rail but only ~360dp tall:
+   tighten it so all five destinations fit without clipping the last. */
+@media (min-width: 600px) and (max-height: 480px) {
+  .android-mobile-shell .android-mobile-bottom-nav-inner {
+    gap: 0;
+    padding: 6px;
+  }
+
+  .android-mobile-shell .android-nav-item {
+    min-height: 56px;
+  }
+
+  .android-mobile-shell .android-nav-item-featured {
+    margin-bottom: 4px;
+  }
+
+  .android-mobile-shell .android-nav-feature-icon {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+  }
+}
+
+/* ---------- Reduced motion ---------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .android-mobile-shell .android-mobile-topbar,
+  .android-mobile-shell .android-mobile-bottom-nav,
+  .android-goal-ring-value {
+    transition: none;
+  }
+
+  .android-ptr.is-refreshing .android-ptr-spinner {
+    animation-duration: 2.4s;
+  }
+}

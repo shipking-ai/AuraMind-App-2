@@ -76,4 +76,14 @@
         android:textSize="12sp"
         android:maxLines="1"
         android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_streak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text=""
+        android:textColor="#B9A4FF"
+        android:textSize="11sp"
+        android:maxLines="1" />
 </LinearLayout>

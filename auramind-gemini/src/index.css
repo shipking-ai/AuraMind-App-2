@@ -402,43 +402,22 @@ body::after {
   background: #2A2A3A;
   overflow: hidden;
 }
-/* Indeterminate by default.
-   The old rule filled to 100% over a fixed 1.4s regardless of what the app
-   was doing, so the bar reached "complete" while auth was often still in
-   flight. During boot the duration genuinely is not known, and a sweep says
-   that honestly where a filling bar claims knowledge it does not have. */
+/* Determinate fill driven by --progress (set via inline style).
+   The bar climbs as time passes and jumps to 100% when ready is true. */
 .loader-bar::after {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 45%;
-  background: linear-gradient(90deg, transparent, #7C3AED, #8B5CF6, #3B82F6, transparent);
-  animation: loader-sweep 1.15s ease-in-out infinite;
-}
-
-/* The one moment a full bar is true. */
-.loader-bar.is-complete::after {
-  animation: none;
-  width: 100%;
+  width: var(--progress, 0%);
   background: linear-gradient(90deg, #7C3AED, #8B5CF6, #3B82F6);
-  transform: none;
+  transition: width 300ms ease;
 }
 
-@keyframes loader-sweep {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(322%); }
-}
-
-/* A sweeping bar is motion for its own sake to anyone who has asked for
-   less of it. Hold it steady and let the status text carry the meaning. */
 @media (prefers-reduced-motion: reduce) {
   .loader-bar::after {
-    animation: none;
-    width: 100%;
-    opacity: 0.5;
-    transform: none;
+    transition: none;
   }
 }
 

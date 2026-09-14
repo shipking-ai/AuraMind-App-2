@@ -42,25 +42,20 @@ dispatch go live without a console visit.
 Nothing is broken. These are the next things worth doing, roughly in order of
 value:
 
-- **Share target.** Register the app as an Android share target so a PDF, link
-  or highlighted text from any app can become a deck. The other three native
-  features from the original list (haptics, notifications, widget) are done.
-- **Motion pass.** The aurora and prism are strong assets doing almost
-  nothing — a static gradient and a slow drift. Scroll-reactive aurora and a
-  collapsing header are the obvious wins. Press feedback and the card flip are
-  already in.
-- **Tap targets below 48dp.** A few remain (~36–44px). They clear WCAG 2.5.8's
-  24px minimum, so this is polish, not a defect.
+- **Push sender.** `push_tokens` fills as devices opt in, but no server sends
+  FCM messages yet and no `google-services.json` is configured.
+- **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
+  nav) is in; the aurora and prism are still a static gradient and a slow drift.
+- **`chat-stream` edge function** is deployed with `verify_jwt: false`, and
+  nothing in the client calls it. Worth confirming it is unused and removing
+  it, or locking it down.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
   threat model changes.
 - **Leaked-password protection** is a Supabase Pro feature. Not an oversight.
-- **Dead icon files.** `src/assets/favicon-512.png` is a completely different
-  design (a purple circuit-brain, not the prism) and `favicon-1024.png` is
-  703×688 despite the name. Nothing references them, but they're an obvious
-  trap for anyone looking for "the 512 icon". The real ones are in
-  `public/favicons,logos/`.
+- **Tests on Node 25+.** Node's own `localStorage` global shadows jsdom's;
+  `src/test/setup.ts` restores it. CI pins Node 20/22 and never hit this.
 
 ---
 

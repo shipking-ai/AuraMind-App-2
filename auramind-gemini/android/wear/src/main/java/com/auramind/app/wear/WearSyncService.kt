@@ -15,6 +15,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 object WearState {
     val payload: MutableStateFlow<ReviewPayload?> = MutableStateFlow(null)
     val lastSyncAt: MutableStateFlow<Long> = MutableStateFlow(0L)
+
+    /** Grades graded on-watch but not yet delivered to the phone. */
+    val pendingGrades: MutableStateFlow<Int> = MutableStateFlow(0)
+
+    /** True when the queue overflowed and the oldest grades were dropped. */
+    val queueOverflowed: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    /** Re-read queue state after enqueue/flush/undo and on cold start. */
+    fun refreshQueue(context: Context) {
+        pendingGrades.value = GradeQueue.size(context)
+        queueOverflowed.value = GradeQueue.overflowed(context)
+    }
 }
 
 /** Receives /auramind/sync data items pushed by the paired phone app. */
@@ -29,6 +41,9 @@ class WearSyncService : WearableListenerService() {
                 if (payload != null) {
                     WearState.payload.value = payload
                     WearState.lastSyncAt.value = System.currentTimeMillis()
+                    // The tile and complication read this same process state —
+                    // nudge them now instead of waiting for their schedule.
+                    AuraMindTileService.requestUpdate(this@WearSyncService)
                 }
             }
         }

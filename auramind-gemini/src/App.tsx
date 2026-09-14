@@ -48,6 +48,8 @@ import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
+import BiometricGate from "./components/native/BiometricGate";
+import { initPushListeners } from "./services/notifications/pushService";
 import { Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
 import { useShareTarget } from "./hooks/useShareTarget";
@@ -58,6 +60,21 @@ import { supabase, requireSupabase } from "./services/database/supabase";
 import { CommandPalette } from "./components/auramind/CommandPalette";
 import { CinematicLoader } from "./components/ui/CinematicLoader";
 import { CustomCursor } from "./components/ui/CustomCursor";
+import { registerWorkspaceRefresh } from "./lib/workspaceRefresh";
+
+function loadWorkspaceData(userId: string) {
+  return loadOfflineAwareData(userId, {
+    online: isOnline(),
+    offlineMode: getAppPreference("auramind_offlineMode", false),
+    autoSync: getAppPreference("auramind_autoSync", true),
+    getCachedDecks,
+    getCachedCards,
+    fetchDecks: (id) => dbService.fetchDecks(id),
+    fetchCards: (id) => dbService.fetchCards(id),
+    cacheDeck: cacheDeckForOffline,
+    syncUser: syncCurrentUser,
+  });
+}
 
 if (typeof window !== "undefined" && !window.requestIdleCallback) {
   window.requestIdleCallback = function (
@@ -107,43 +124,7 @@ const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const PaymentPage = React.lazy(() => import("./components/auth/PaymentPage"));
 const DownloadPage = React.lazy(() => import("./pages/DownloadPage"));
 
-import {
-  ArrowDownIcon as ArrowDown,
-  BrainCircuitIcon as BrainCircuit,
-} from "./components/icons/CustomIcons";
-
-const LoadingOverlay = () => (
-  <motion.div
-    initial={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[9999] bg-arch-bg flex flex-col items-center justify-center p-6 text-center"
-  >
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-zinc-900/[0.02] blur-[100px] rounded-full animate-pulse" />
-    </div>
-    <div className="relative flex flex-col items-center gap-10">
-      <div className="w-24 h-24 rounded-[32px] bg-zinc-900/[0.02] border border-zinc-700/10 flex items-center justify-center shadow-[0_0_50px_rgba(0,0,0,0.02)] relative group">
-        <div className="absolute inset-0 bg-zinc-900/10 rounded-full blur-2xl opacity-50 animate-pulse" />
-        <BrainCircuit size={40} className="text-white relative z-10" />
-      </div>
-      <div className="space-y-4">
-        <h2 className="text-sm font-black uppercase tracking-[0.6em] text-white/40 italic">
-          AuraMind Neural Link
-        </h2>
-        <div className="flex items-center justify-center gap-1">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              animate={{ height: [4, 12, 4], opacity: [0.1, 1, 0.1] }}
-              transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-              className="w-[3px] bg-zinc-300 rounded-full"
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  </motion.div>
-);
+import { ArrowDownIcon as ArrowDown } from "./components/icons/CustomIcons";
 
 const ScrollTopButton = () => {
   const [visible, setVisible] = useState(false);
@@ -187,7 +168,7 @@ const ProtectedRoute = ({
   children?: React.ReactNode;
 }) => {
   if (status === "loading") {
-    return <LoadingOverlay />;
+    return null;
   }
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -278,8 +259,8 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   const [user, setUser] = useState<UserProfile | null>(null);
   // True once the initial session check has resolved (signed in OR signed out).
   // The loader must NOT be keyed on `user` alone — a signed-out visitor on a
-  // public route (/about, /reset-password, 404s…) would otherwise hang on an
-  // infinite LoadingOverlay instead of seeing the page.
+  // public route (/about, /reset-password, 404s…) would otherwise hang
+  // indefinitely instead of seeing the page.
   const [authChecked, setAuthChecked] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<
     "active" | "trialing" | "canceled" | "past_due" | "none" | "loading"
@@ -358,7 +339,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   const checkSubscription = async (userId: string, email: string, forceCheck = false) => {
     /** Timeout guard: if /api/subscription is unreachable (local dev w/o API, or a
      * slow deploy), bail to "none" instead of leaving subscriptionStatus stuck on
-     * "loading" — which held LoadingOverlay on every protected route forever. */
+     * "loading" forever. */
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || "";
       // The API now authenticates this call: the bearer token identifies the
@@ -517,19 +498,8 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
           );
         }
 
-        const { decks: fetchedDecks, cards: fetchedCards } = await loadOfflineAwareData(
+        const { decks: fetchedDecks, cards: fetchedCards } = await loadWorkspaceData(
           session.user.id,
-          {
-            online: isOnline(),
-            offlineMode: getAppPreference("auramind_offlineMode", false),
-            autoSync: getAppPreference("auramind_autoSync", true),
-            getCachedDecks,
-            getCachedCards,
-            fetchDecks: (userId) => dbService.fetchDecks(userId),
-            fetchCards: (userId) => dbService.fetchCards(userId),
-            cacheDeck: cacheDeckForOffline,
-            syncUser: syncCurrentUser,
-          },
         );
 
         setDecks(fetchedDecks);
@@ -585,6 +555,18 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       .catch((err) => console.error("Failed to get session:", err));
     return () => subscription?.unsubscribe();
   }, [mapAuthUserToProfile, clearSessionState]);
+
+  // Pull-to-refresh on the Android screens reloads through the same path the
+  // session sync uses, so a refresh honours offline mode and auto-sync too.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    return registerWorkspaceRefresh(async () => {
+      const { decks: fetchedDecks, cards: fetchedCards } = await loadWorkspaceData(userId);
+      setDecks(fetchedDecks);
+      setCards(fetchedCards);
+    });
+  }, [userId]);
 
   const createDeck = useCallback(
     async (t: string, d: string) => {
@@ -724,15 +706,25 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   // a share cannot land on a route guard and bounce to /auth, losing itself.
   useShareTarget(authChecked);
 
+  // Server-sent push listeners (token refresh, foreground presentation, tap
+  // routing). Dormant until Firebase is configured — initPushListeners binds
+  // nothing and upserts nothing when registration cannot succeed. Keyed on
+  // the user id so a sign-out/sign-in swap never attributes a token to the
+  // wrong account.
+  useEffect(() => {
+    if (!authChecked || !user?.id) return;
+    return initPushListeners(user.id);
+  }, [authChecked, user?.id]);
+
   /**
    * Hand off from the native splash exactly once, when the app can actually
    * render something.
    *
    * The splash no longer auto-hides, so without this it would stay up
    * forever. Hiding it here means the user sees one continuous loading
-   * screen instead of the splash giving way to LoadingOverlay and then to
-   * the app. The timeout is a backstop: if auth never resolves, the splash
-   * must still come down rather than trapping the user behind it.
+   * screen instead of the splash giving way to the app. The timeout is a
+   * backstop: if auth never resolves, the splash must still come down
+   * rather than trapping the user behind it.
    */
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -756,10 +748,8 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
 
   return (
     <>
-      {/* The cinematic boot moment is the ONLY loading screen web users see:
-          it replaces the auth LoadingOverlay rather than stacking after it.
-          Android keeps LoadingOverlay (invisible behind the native splash)
-          and the welcome screen instead of replaying the video over them.
+      {/* The cinematic boot moment is the ONLY loading screen web users see.
+          Android relies on the Capacitor native splash screen instead.
 
           It sits here, at a stable position in the tree, rather than inside
           the `!authChecked` branch. Rendering it there unmounted it the
@@ -773,12 +763,11 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       {/* The harness renders regardless of auth. It is a component contract
           test for the Android shell, so gating it on a session check makes a
           layout assertion depend on network timing for no reason. */}
-      {!authChecked && !isVisualHarness ? (
-        isNativeShell ? <LoadingOverlay /> : null
-      ) : (
+      {!authChecked && !isVisualHarness ? null : (
     <div className="min-h-screen bg-background text-foreground font-body selection:bg-primary selection:text-primary-foreground">
       <CustomCursor />
       <NativeRuntime />
+      <BiometricGate />
       <StreakBurstMount />
       <AnnouncerMount />
       <Toaster
@@ -795,7 +784,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
-          <Suspense fallback={<LoadingOverlay />}>
+          <Suspense fallback={<GenericPageSkeleton />}>
             <Routes location={location}>
               {/* ───── Public routes ───────────────────────────────────────── */}
               <Route

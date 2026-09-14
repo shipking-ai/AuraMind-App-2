@@ -7,7 +7,7 @@ import {
   Check,
   ChevronRight,
   Clock,
-  Flame,
+  EllipsisVertical,
   Layers,
   MessageCircle,
   Mic,
@@ -15,13 +15,20 @@ import {
   Play,
   Plus,
   Search,
+  Share,
+  Smartphone,
   Sparkles,
   Trash2,
 } from "@/components/icons";
 import { useDashboardWorkspace } from "../../contexts/DashboardWorkspaceContext";
 import { hapticSuccess, hapticTap, hapticWarning } from "./androidHaptics";
 import { publishWidgetState } from "../../lib/widgetBridge";
+import { canPinDecks, pinDeckToHomeScreen, publishRecentDecks } from "../../lib/auraDevice";
+import { useAppPreference } from "../../lib/appPreferences";
+import { Share as NativeShare } from "../../lib/nativeShim";
 import AndroidAura from "./AndroidAura";
+import { AndroidSheet, AndroidSheetAction } from "./AndroidSheet";
+import { useLongPress } from "./useLongPress";
 import type { Card, Deck } from "../../types";
 import { toast } from "sonner";
 import { toastError } from "../../lib/errorToast";
@@ -104,32 +111,143 @@ function AndroidAction({
   );
 }
 
+/**
+ * Everything you can do with one deck, in one place: reached by long-pressing
+ * a row or its overflow button. Delete lives here rather than as a bare icon
+ * on every row, where a mis-tap next to "Edit" was one confirm away from
+ * losing a deck.
+ */
+function DeckActionsSheet({
+  deck,
+  cards,
+  onClose,
+  onDelete,
+}: {
+  deck: Deck | null;
+  cards: Card[];
+  onClose: () => void;
+  onDelete?: (deck: Deck) => void;
+}) {
+  const navigate = useNavigate();
+  const [canPin, setCanPin] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void canPinDecks().then((supported) => {
+      if (live) setCanPin(supported);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const count = deck ? deckCards(deck, cards).length : 0;
+  const due = deck ? deckDue(deck, cards) : 0;
+  const run = (action: () => void) => {
+    onClose();
+    action();
+  };
+
+  return (
+    <AndroidSheet
+      open={deck !== null}
+      onClose={onClose}
+      eyebrow="DECK"
+      title={deck?.title ?? ""}
+      description={`${count} ${count === 1 ? "card" : "cards"} · ${due} due`}
+    >
+      {deck && (
+        <div className="android-sheet-actions">
+          <AndroidSheetAction
+            icon={Play}
+            label="Study now"
+            detail={due > 0 ? `Start with the ${due} due` : "Review at your own pace"}
+            onClick={() => run(() => navigate(`/dashboard/study/${deck.id}`))}
+          />
+          <AndroidSheetAction
+            icon={Mic}
+            label="Voice study"
+            detail="Hands-free: questions read aloud"
+            onClick={() => run(() => navigate(`/dashboard/study/${deck.id}?voice=1`))}
+          />
+          <AndroidSheetAction
+            icon={Pencil}
+            label="Edit cards"
+            onClick={() => run(() => navigate(`/deck/${deck.id}`))}
+          />
+          {canPin && (
+            <AndroidSheetAction
+              icon={Smartphone}
+              label="Add to home screen"
+              detail="One tap from your launcher to this deck"
+              onClick={() =>
+                run(() => {
+                  void pinDeckToHomeScreen({ id: deck.id, title: deck.title });
+                })
+              }
+            />
+          )}
+          <AndroidSheetAction
+            icon={Share}
+            label="Share"
+            onClick={() =>
+              run(() => {
+                void NativeShare.share({
+                  title: deck.title,
+                  text: `I'm studying "${deck.title}" on AuraMind (${count} cards).`,
+                  url: "https://auramind.app",
+                  dialogTitle: "Share deck",
+                }).catch(() => undefined);
+              })
+            }
+          />
+          {onDelete && (
+            <AndroidSheetAction
+              icon={Trash2}
+              label="Delete deck"
+              tone="danger"
+              onClick={() =>
+                run(() => {
+                  hapticWarning();
+                  onDelete(deck);
+                })
+              }
+            />
+          )}
+        </div>
+      )}
+    </AndroidSheet>
+  );
+}
+
 function AndroidDeckRow({
   deck,
   cards,
   onStudy,
   onEdit,
-  onDelete,
+  onMore,
 }: {
   deck: Deck;
   cards: Card[];
   onStudy: () => void;
   onEdit: () => void;
-  onDelete?: () => void;
+  onMore: () => void;
 }) {
   const items = deckCards(deck, cards);
   const due = deckDue(deck, cards);
   const progress = deckProgress(deck, cards);
+  const longPress = useLongPress(onMore);
 
   return (
     <article className="android-deck-row">
       <button
         type="button"
         className="android-deck-main"
+        {...longPress}
         onClick={() => {
           hapticTap();
           onStudy();
         }}
+        aria-description="Press and hold for more actions"
       >
         <span className="android-deck-icon">
           <BookOpen className="h-5 w-5" aria-hidden />
@@ -173,19 +291,17 @@ function AndroidDeckRow({
           <Pencil className="h-3.5 w-3.5" aria-hidden />
           Edit
         </button>
-        {onDelete && (
-          <button
-            type="button"
-            className="android-deck-delete"
-            onClick={() => {
-              hapticWarning();
-              onDelete();
-            }}
-            aria-label={`Delete ${deck.title}`}
-          >
-            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-          </button>
-        )}
+        <button
+          type="button"
+          className="android-deck-more"
+          onClick={() => {
+            hapticTap();
+            onMore();
+          }}
+          aria-label={`More actions for ${deck.title}`}
+        >
+          <EllipsisVertical className="h-4 w-4" aria-hidden />
+        </button>
       </div>
     </article>
   );
@@ -203,13 +319,32 @@ export function AndroidOverview() {
   ).length;
   const firstName = user?.name?.split(" ")[0] || "Learner";
   const firstDueDeck = decks.find((deck) => deckDue(deck, cards) > 0) ?? decks[0];
+  const [dailyGoalPref] = useAppPreference("auramind_dailyGoal", "20");
+  const dailyGoal = Math.max(1, Number.parseInt(String(dailyGoalPref), 10) || 20);
+  const [sheetDeck, setSheetDeck] = useState<Deck | null>(null);
+
+  // Launcher long-press lists the two decks studied most recently.
+  const recentDecks = useMemo(() => {
+    const lastTouched = new Map<string, number>();
+    for (const card of cards) {
+      const at = card.lastReviewed ?? 0;
+      if (at > (lastTouched.get(card.deckId) ?? 0)) lastTouched.set(card.deckId, at);
+    }
+    return [...decks]
+      .sort((a, b) => (lastTouched.get(b.id) ?? 0) - (lastTouched.get(a.id) ?? 0))
+      .slice(0, 2)
+      .map((deck) => ({ id: deck.id, title: deck.title }));
+  }, [decks, cards]);
+  useEffect(() => {
+    void publishRecentDecks(recentDecks);
+  }, [recentDecks]);
   // Keep the home-screen widget in step with what this screen shows. The
   // widget cannot compute due-ness itself (that is FSRS, and it lives in TS),
   // so the count is published from the one place that already derives it.
   // MainActivity broadcasts the redraw when the app backgrounds.
   useEffect(() => {
-    void publishWidgetState(dueCount, firstDueDeck?.title ?? null);
-  }, [dueCount, firstDueDeck?.title]);
+    void publishWidgetState(dueCount, firstDueDeck?.title ?? null, user?.streak ?? 0);
+  }, [dueCount, firstDueDeck?.title, user?.streak]);
 
   const greeting =
     new Date().getHours() < 12
@@ -243,9 +378,6 @@ export function AndroidOverview() {
             <span className="android-focus-label">
               <span className="android-live-dot" /> TODAY&apos;S FOCUS
             </span>
-            <span className="android-streak-pill">
-              <Flame className="h-3.5 w-3.5" aria-hidden /> {user?.streak ?? 0} day streak
-            </span>
           </div>
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
@@ -270,7 +402,10 @@ export function AndroidOverview() {
               <Clock className="h-3.5 w-3.5" aria-hidden /> About{" "}
               {Math.max(2, Math.ceil(dueCount * 0.6))} min
             </span>
-            <span>{studiedToday} reviewed today</span>
+            <span className="android-focus-goal">
+              <DailyGoalRing done={studiedToday} goal={dailyGoal} />
+              Daily goal
+            </span>
           </div>
         </div>
       </section>
@@ -293,7 +428,9 @@ export function AndroidOverview() {
             hint="Learn hands-free"
             icon={Mic}
             tone="cyan"
-            onClick={() => (firstDueDeck ? startQuickStudy() : navigate("/dashboard/study"))}
+            onClick={() =>
+              navigate(firstDueDeck ? `/dashboard/study/${firstDueDeck.id}?voice=1` : "/dashboard/study")
+            }
           />
           <AndroidAction
             label="Ask Aura"
@@ -331,8 +468,8 @@ export function AndroidOverview() {
             <span className="android-stat-label">Mastered</span>
           </div>
           <div>
-            <span className="android-stat-value android-stat-amber">{user?.streak ?? 0}</span>
-            <span className="android-stat-label">Streak</span>
+            <span className="android-stat-value android-stat-amber">{decks.length}</span>
+            <span className="android-stat-label">Decks</span>
           </div>
         </div>
       </section>
@@ -357,6 +494,7 @@ export function AndroidOverview() {
                 cards={cards}
                 onStudy={() => startStudyForDeck(deck.id)}
                 onEdit={() => navigate(`/deck/${deck.id}`)}
+                onMore={() => setSheetDeck(deck)}
               />
             ))}
           </div>
@@ -380,7 +518,38 @@ export function AndroidOverview() {
           </button>
         )}
       </section>
+      <DeckActionsSheet deck={sheetDeck} cards={cards} onClose={() => setSheetDeck(null)} />
     </div>
+  );
+}
+
+/** Today's reviews against the daily goal from Settings, as a progress ring. */
+function DailyGoalRing({ done, goal }: { done: number; goal: number }) {
+  const radius = 17;
+  const circumference = 2 * Math.PI * radius;
+  const ratio = Math.min(1, done / goal);
+  const complete = done >= goal;
+  return (
+    <span
+      className={`android-goal-ring ${complete ? "is-complete" : ""}`}
+      role="img"
+      aria-label={`${done} of ${goal} daily reviews`}
+    >
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <circle className="android-goal-ring-track" cx="20" cy="20" r={radius} />
+        <circle
+          className="android-goal-ring-value"
+          cx="20"
+          cy="20"
+          r={radius}
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - ratio)}
+        />
+      </svg>
+      <span className="android-goal-ring-text">
+        {complete ? <Check className="h-4 w-4" aria-hidden /> : `${done}/${goal}`}
+      </span>
+    </span>
   );
 }
 
@@ -392,6 +561,7 @@ export function AndroidLibrary() {
   const [createOpen, setCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Deck | null>(null);
+  const [sheetDeck, setSheetDeck] = useState<Deck | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const filtered = useMemo(
     () =>
@@ -454,101 +624,80 @@ export function AndroidLibrary() {
           </button>
         }
       />
-      {(createOpen || deleteTarget) && (
-        <div
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center"
-          role="presentation"
-          onClick={() => {
-            if (actionBusy) return;
-            setCreateOpen(false);
-            setDeleteTarget(null);
+      <AndroidSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        busy={actionBusy}
+        eyebrow="NEW DECK"
+        title="Give it a home"
+        description="Name the collection you want to return to."
+      >
+        <input
+          data-autofocus
+          value={newDeckTitle}
+          onChange={(event) => setNewDeckTitle(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") void handleCreate();
           }}
-        >
-          <div
-            className="w-full max-w-md rounded-3xl border border-indigo-200/15 bg-[#11182b] p-5 shadow-2xl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={createOpen ? "android-create-deck-title" : "android-delete-deck-title"}
-            onClick={(event) => event.stopPropagation()}
+          enterKeyHint="done"
+          autoCapitalize="words"
+          className="android-sheet-input"
+          placeholder="e.g. Biology foundations"
+          aria-label="New deck name"
+        />
+        <div className="android-sheet-buttons">
+          <button
+            type="button"
+            className="android-native-secondary"
+            onClick={() => setCreateOpen(false)}
+            disabled={actionBusy}
           >
-            {createOpen ? (
-              <>
-                <p className="android-eyebrow">NEW DECK</p>
-                <h2
-                  id="android-create-deck-title"
-                  className="mt-2 text-xl font-extrabold text-white"
-                >
-                  Give it a home
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Name the collection you want to return to.
-                </p>
-                <input
-                  autoFocus
-                  value={newDeckTitle}
-                  onChange={(event) => setNewDeckTitle(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") void handleCreate();
-                    if (event.key === "Escape" && !actionBusy) setCreateOpen(false);
-                  }}
-                  className="mt-5 min-h-12 w-full rounded-2xl border border-indigo-200/15 bg-slate-950/50 px-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-300/60"
-                  placeholder="e.g. Biology foundations"
-                  aria-label="New deck name"
-                />
-                <div className="mt-5 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    className="android-native-secondary"
-                    onClick={() => setCreateOpen(false)}
-                    disabled={actionBusy}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="android-native-primary"
-                    onClick={() => void handleCreate()}
-                    disabled={actionBusy || !newDeckTitle.trim()}
-                  >
-                    {actionBusy ? "Creating…" : "Create deck"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="android-eyebrow">DELETE DECK</p>
-                <h2
-                  id="android-delete-deck-title"
-                  className="mt-2 text-xl font-extrabold text-white"
-                >
-                  Delete {deleteTarget?.title}?
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  This removes the deck and its cards. This action cannot be undone.
-                </p>
-                <div className="mt-5 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    className="android-native-secondary"
-                    onClick={() => setDeleteTarget(null)}
-                    disabled={actionBusy}
-                  >
-                    Keep deck
-                  </button>
-                  <button
-                    type="button"
-                    className="android-native-danger"
-                    onClick={() => void handleDelete()}
-                    disabled={actionBusy}
-                  >
-                    {actionBusy ? "Deleting…" : "Delete deck"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="android-native-primary"
+            onClick={() => void handleCreate()}
+            disabled={actionBusy || !newDeckTitle.trim()}
+          >
+            {actionBusy ? "Creating…" : "Create deck"}
+          </button>
         </div>
-      )}
+      </AndroidSheet>
+      <AndroidSheet
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        busy={actionBusy}
+        eyebrow="DELETE DECK"
+        title={`Delete ${deleteTarget?.title ?? "deck"}?`}
+        description="This removes the deck and its cards. This action cannot be undone."
+      >
+        <div className="android-sheet-buttons">
+          <button
+            type="button"
+            className="android-native-secondary"
+            onClick={() => setDeleteTarget(null)}
+            disabled={actionBusy}
+            data-autofocus
+          >
+            Keep deck
+          </button>
+          <button
+            type="button"
+            className="android-native-danger"
+            onClick={() => void handleDelete()}
+            disabled={actionBusy}
+          >
+            {actionBusy ? "Deleting…" : "Delete deck"}
+          </button>
+        </div>
+      </AndroidSheet>
+      <DeckActionsSheet
+        deck={sheetDeck}
+        cards={cards}
+        onClose={() => setSheetDeck(null)}
+        onDelete={setDeleteTarget}
+      />
       <div className="android-search-box">
         <Search className="h-4 w-4" aria-hidden />
         <input
@@ -568,7 +717,7 @@ export function AndroidLibrary() {
               cards={cards}
               onStudy={() => navigate(`/dashboard/study/${deck.id}`)}
               onEdit={() => navigate(`/deck/${deck.id}`)}
-              onDelete={() => setDeleteTarget(deck)}
+              onMore={() => setSheetDeck(deck)}
             />
           ))}
         </div>
@@ -632,6 +781,7 @@ export function AndroidStudy() {
   const dueCount = cards.filter((card) => (card.nextReview ?? 0) <= Date.now()).length;
   const studiedToday = cards.filter((card) => (card.lastReviewed ?? 0) >= startOfToday()).length;
   const dueDecks = decks.filter((deck) => deckDue(deck, cards) > 0);
+  const [sheetDeck, setSheetDeck] = useState<Deck | null>(null);
 
   return (
     <div className="android-screen">
@@ -692,9 +842,11 @@ export function AndroidStudy() {
               cards={cards}
               onStudy={() => navigate(`/dashboard/study/${deck.id}`)}
               onEdit={() => navigate(`/deck/${deck.id}`)}
+              onMore={() => setSheetDeck(deck)}
             />
           ))}
         </div>
+        <DeckActionsSheet deck={sheetDeck} cards={cards} onClose={() => setSheetDeck(null)} />
         {decks.length === 0 && (
           <div className="android-empty-state">
             <div className="android-empty-icon">

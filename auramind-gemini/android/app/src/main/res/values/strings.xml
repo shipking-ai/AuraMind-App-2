@@ -5,4 +5,17 @@
     <string name="package_name">com.auramind.app</string>
     <string name="custom_url_scheme">com.auramind.app</string>
     <string name="widget_description">Cards due for review today.</string>
+    <string name="shortcut_review_short">Resume review</string>
+    <string name="shortcut_review_long">Resume today\'s review</string>
+    <string name="shortcut_new_short">New cards</string>
+    <string name="shortcut_new_long">Create cards from anything</string>
+    <string name="shortcut_coach_short">Ask Coach</string>
+    <string name="shortcut_coach_long">Ask Prof. Aura anything</string>
+    <string name="shortcut_deck_long">Study %1$s</string>
+    <string name="tile_review_label">Review</string>
+    <string name="tile_review_clear">All caught up</string>
+    <plurals name="tile_review_due">
+        <item quantity="one">%d card due</item>
+        <item quantity="other">%d cards due</item>
+    </plurals>
 </resources>

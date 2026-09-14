@@ -1,13 +1,25 @@
 package com.auramind.app;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.Window;
+
+import androidx.activity.EdgeToEdge;
 
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // No native action bar, ever. The launch/splash theme chain
+        // (Theme.SplashScreen + Capacitor's late installSplashScreen) can
+        // resolve to a theme WITH an action bar, which then sits above the
+        // WebView showing the app label and stealing ~170px. Requesting
+        // NO_TITLE before super pins the decor to bar-less before anything
+        // else gets a vote; the hide() after super is the backstop.
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        setTheme(R.style.AppTheme_NoActionBar);
         // Registration MUST precede super.onCreate(). Capacitor builds the
         // bridge there and only picks up plugins registered beforehand;
         // registering after leaves the JS proxy resolving to nothing and every
@@ -16,7 +28,26 @@ public class MainActivity extends BridgeActivity {
         // certainly never reachable either.
         registerPlugin(WearSyncPlugin.class);
         registerPlugin(ShareTargetPlugin.class);
+        registerPlugin(BiometricAuthPlugin.class);
+        registerPlugin(PlayEngagementPlugin.class);
+        registerPlugin(ThemeColorsPlugin.class);
+        registerPlugin(AuraDevicePlugin.class);
+        // Edge-to-edge BEFORE super.onCreate(): Capacitor calls setContentView
+        // inside super, and the window flags must be set before content exists.
+        // With targetSdk 35+ the system enforces this anyway; doing it here
+        // keeps the bars transparent on every API level instead of only where
+        // enforcement already applies. Content insets are handled in CSS via
+        // env(safe-area-inset-*) — see styles/platform-styles.css.
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+        // The gesture pill floats over our dark bottom nav. Let it stay
+        // translucent rather than forcing the system to scrim behind it.
+        if (Build.VERSION.SDK_INT >= 29) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
         // A cold-start share is delivered here, long before the web layer has
         // mounted. ShareTargetPlugin parks it so JS can pull it when ready.
         ShareTargetPlugin.handleIntent(getIntent());
@@ -54,5 +85,7 @@ public class MainActivity extends BridgeActivity {
         super.onPause();
         sendBroadcast(new Intent(AuraMindWidgetProvider.ACTION_REFRESH)
                 .setPackage(getPackageName()));
+        // The Quick Settings tile reads the same count, for the same reason.
+        QuickReviewTileService.requestRefresh(this);
     }
 }

@@ -7,7 +7,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:enableOnBackInvokedCallback="true">
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
@@ -47,6 +48,21 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
 
+            <!-- Deep links for launcher shortcuts (and anything else that can
+                 open a URL): auramind://app/<path>. Capacitor's App plugin
+                 forwards these to the JS `appUrlOpen` listener, which routes
+                 them — see NativeRuntime. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="auramind" android:host="app" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+
         </activity>
 
         <provider
@@ -82,11 +98,30 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.auramind.app.WIDGET_REFRESH" />
+                <!-- Redraw from persisted prefs after a reboot. -->
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/auramind_widget_info" />
         </receiver>
+
+        <!-- Quick Settings tile: due count + one tap into review. Reads the
+             same prefs as the widget. Exported because SystemUI binds it;
+             the BIND_QUICK_SETTINGS_TILE permission restricts who can. -->
+        <service
+            android:name=".QuickReviewTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_shortcut_review"
+            android:label="@string/tile_review_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.ACTIVE_TILE"
+                android:value="false" />
+        </service>
 </application>
 
     <!-- Permissions -->
@@ -96,6 +131,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Haptic feedback on study answers (Capacitor Haptics uses the Vibrator) -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Biometric app-lock (BiometricAuthPlugin; normal permission, granted at install) -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Review reminders on Android 13+ (local notifications) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Widget redraw after reboot (AuraMindWidgetProvider) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>

@@ -127,7 +127,7 @@ describe("cross-platform runtime preferences", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Create deck" }));
-    const createDialog = screen.getByRole("dialog");
+    const createDialog = await screen.findByRole("dialog", { name: "Give it a home" });
     expect(within(createDialog).getByLabelText("New deck name")).toBeInTheDocument();
     fireEvent.change(within(createDialog).getByLabelText("New deck name"), {
       target: { value: "New topic" },
@@ -135,8 +135,13 @@ describe("cross-platform runtime preferences", () => {
     fireEvent.click(within(createDialog).getByRole("button", { name: "Create deck" }));
     await waitFor(() => expect(createDeck).toHaveBeenCalledWith("New topic", ""));
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Intro deck" }));
-    const deleteDialog = screen.getByRole("dialog");
+    // Delete is behind the deck's action sheet, then a confirmation sheet —
+    // never a bare icon on the row.
+    expect(screen.queryByRole("button", { name: "Delete Intro deck" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Intro deck" }));
+    const actions = await screen.findByRole("dialog", { name: "Intro deck" });
+    fireEvent.click(within(actions).getByRole("button", { name: /Delete deck/ }));
+    const deleteDialog = await screen.findByRole("dialog", { name: "Delete Intro deck?" });
     expect(deleteDialog).toHaveTextContent("This action cannot be undone.");
     fireEvent.click(within(deleteDialog).getByRole("button", { name: "Delete deck" }));
     await waitFor(() => expect(deleteDeck).toHaveBeenCalledWith("deck-1"));

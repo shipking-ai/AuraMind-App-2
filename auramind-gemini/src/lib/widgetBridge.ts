@@ -21,9 +21,11 @@ import { Capacitor, Preferences } from './nativeShim';
 
 const KEY_DUE = 'auramind_widget_due';
 const KEY_DECK = 'auramind_widget_deck';
+const KEY_STREAK = 'auramind_widget_streak';
 
 /**
- * Publish the current due count, and the deck a review would start with.
+ * Publish the current due count, the deck a review would start with, and the
+ * day streak for the home-screen widget.
  *
  * No-ops off-native and swallows failures: the widget is an accessory, and a
  * storage error must never interrupt a study session.
@@ -31,6 +33,7 @@ const KEY_DECK = 'auramind_widget_deck';
 export async function publishWidgetState(
   dueCount: number,
   nextDeckName?: string | null,
+  streakDays?: number | null,
 ): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
@@ -39,6 +42,10 @@ export async function publishWidgetState(
     // An empty string rather than removing the key: the provider treats a
     // missing deck and an empty deck the same way, and set() is one call.
     await Preferences.set({ key: KEY_DECK, value: nextDeckName?.trim() || '' });
+    const streak = Number.isFinite(streakDays) && (streakDays as number) > 0
+      ? Math.floor(streakDays as number)
+      : 0;
+    await Preferences.set({ key: KEY_STREAK, value: String(streak) });
   } catch {
     // Accessory surface; never surface a storage failure to the user.
   }

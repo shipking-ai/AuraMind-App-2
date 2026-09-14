@@ -13,6 +13,10 @@ import { PageTransition, Shimmer } from './motion';
 import OnboardingTutorial from '../../shared/OnboardingTutorial';
 import AndroidBottomNav from '../../native/AndroidBottomNav';
 import AndroidMobileTopBar from '../../native/AndroidMobileTopBar';
+import AndroidPullToRefresh from '../../native/AndroidPullToRefresh';
+import { useAndroidScrollChrome } from '../../native/useAndroidScrollChrome';
+
+const ANDROID_REFRESHABLE_PATHS = new Set(['/dashboard', '/dashboard/decks', '/dashboard/study']);
 import { MobileWebBottomNav } from './MobileWebBottomNav';
 import { Capacitor } from '../../../lib/nativeShim';
 
@@ -557,6 +561,15 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
   const isAndroidMobile = isAndroidApp && !isOnAdminRoute && !immersive;
   const showAndroidBottomNav = isAndroidMobile;
   const showMobileWebNav = !isAndroidApp && !isOnAdminRoute && !immersive;
+  const { scrolled, navHidden } = useAndroidScrollChrome(
+    'nova-main-content',
+    isAndroidMobile && !bleed,
+    location.pathname,
+  );
+  // Swipe-to-refresh belongs on the list screens. Chat, the generator and
+  // settings have their own scrolling inputs a pull would fight with.
+  const canPullToRefresh =
+    isAndroidMobile && ANDROID_REFRESHABLE_PATHS.has(location.pathname.replace(/\/$/, ''));
 
   const sections = useMemo<NavSection[]>(
     () => (isOnAdminRoute ? buildAdminNavSections(user?.role) : USER_NAV_SECTIONS),
@@ -589,7 +602,9 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
   );
 
   return (
-    <div className={`nova-shell relative flex h-screen overflow-hidden bg-transparent text-white ${isAndroidMobile ? 'android-mobile-shell' : ''}`}>
+    <div
+      className={`nova-shell relative flex h-screen overflow-hidden bg-transparent text-white ${isAndroidMobile ? 'android-mobile-shell' : ''} ${scrolled ? 'is-scrolled' : ''} ${navHidden ? 'is-nav-hidden' : ''}`}
+    >
       <SkipLink />
       <AuroraGradient admin={isOnAdminRoute} />
       <FloatingOrbs />
@@ -658,6 +673,7 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
             </Suspense>
           </div>
         </main>
+        {canPullToRefresh && <AndroidPullToRefresh scrollerId="nova-main-content" />}
       </div>
       {isAndroidMobile && <AndroidBottomNav />}
       {showMobileWebNav && <MobileWebBottomNav />}
