@@ -1,8 +1,0 @@
-App Reviewer demo account:
-
-email:    reviewer+auramind@auramind.app
-password: ReviewerAuraMind2026!
-
-This account is provisioned at the FREE plan with the Starter trial pre-applied (no payment required). Email verification is bypassed for accounts at the @auramind.app domain, so reviewers reach the Dashboard immediately on first sign-in.
-
-If the password resets mid-review, regenerate it via our Salesforce dev portal (admin only) — the field on the Account row is "App Reviewer Demo".

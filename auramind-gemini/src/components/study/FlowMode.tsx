@@ -1,7 +1,7 @@
 /**
  * FlowMode — Enhanced Focus Session with deep-work telemetry.
  *
- * Builds on FocusMode with:
+ * A distraction-free study session with:
  *   - Live "study buddies" counter (presence indicator for body-doubling)
  *   - Focus score (smoothness of answers, time-on-card consistency)
  *   - Breathing guide before session start

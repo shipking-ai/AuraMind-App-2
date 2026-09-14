@@ -37,10 +37,6 @@
   "bugs": {
     "url": "https://github.com/mattycigemp-crypto/AuraMind-App-2/issues"
   },
-  "dependencies": {
-    "react-responsive": "^10.0.1",
-    "recharts": "^3.8.1"
-  },
   "devDependencies": {
     "concurrently": "^10.0.0"
   }

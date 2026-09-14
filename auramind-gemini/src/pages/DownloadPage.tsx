@@ -380,12 +380,12 @@ const DownloadPage: React.FC = () => {
               <p className="text-zinc-500 text-sm">
                 See{' '}
                 <a
-                  href="https://github.com/mattycigemp-crypto/AuraMind-App-2/blob/main/auramind-gemini/scripts/README-MOBILE-PUBLISHING.md"
+                  href="https://github.com/mattycigemp-crypto/AuraMind-App-2/blob/main/docs/M6-store-submission-playbook.md"
                   className="text-primary hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  scripts/README-MOBILE-PUBLISHING.md
+                  docs/M6-store-submission-playbook.md
                 </a>{' '}
                 for the full step-by-step publishing guide.
               </p>

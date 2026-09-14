@@ -76,7 +76,7 @@ npm run build && npm run preview   # serves the real app on :4173
 node scripts/capture-store-screenshots.mjs
 ```
 
-See `store/screenshots/SHOT_MANIFEST.md` for the master list.
+Capture them with `auramind-gemini/scripts/capture-store-screenshots.mjs`.
 
 ## Content rating (IARC)
 

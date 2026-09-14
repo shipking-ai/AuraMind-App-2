@@ -1,8 +1,8 @@
 # AuraMind Pre-Launch Checklist
 
 > **Single source of truth for "are we ready to ship?"** Every box below must
-> be ticked before either store submission. Items map directly to the boxes
-> Apple + Google review teams check. Update this checklist with the date of
+> be ticked before a Play submission. Items map directly to the boxes
+> Google's review team checks. Update this checklist with the date of
 > each completion so we have an audit trail.
 
 **Target first release date:** ___________
@@ -34,13 +34,7 @@
 - [ ] Wear OS companion AAB signed with the **same upload keystore**
       (`com.auramind.app.wear` — `./gradlew :wear:bundleRelease`).
 - [x] Android `versionCode` increments by 1 every release (currently `1`).
-- [ ] iOS IPA signed with **Apple Distribution** identity (not Ad Hoc,
-      not Development).
-- [ ] iOS `CFBundleShortVersionString` matches the marketing version
-      (e.g., "1.0.0", "1.1.0").
-- [ ] iOS `CFBundleVersion` is a positive integer ≥ previous build.
 - [x] Android target SDK ≥ 34 (we ship **36**).
-- [ ] iOS deployment target: 15.0+
 - [ ] No leftover debug logs in release AAB (verify with `adb logcat`
       on a sideloaded release build — there should be no `console.log`.
       We use Sentry's `beforeSend` stripper to strip browser debug logs.)
@@ -54,46 +48,13 @@
       (already in `AndroidManifest.xml`).
 - [ ] Android: Push Notifications permission declared IF google-services.json
       is present; the build script auto-applies the plugin when present.
-- [ ] iOS: `NSFaceIDUsageDescription` set (we set this in our updated
-      Info.plist — for `NativeBiometric`).
-- [ ] iOS: `NSMicrophoneUsageDescription` set
-      (we set this — for `useSpeechRecognition`).
-- [ ] iOS: `NSSpeechRecognitionUsageDescription` set
-      (iOS 17+ requirement).
-- [ ] iOS: `ITSAppUsesNonExemptEncryption=false`
-      (HTTPS-only, no annual ERN filing required).
-- [ ] iOS: `aps-environment` entitlement set (development for TestFlight,
-      production for App Store upload).
-- [ ] iOS: `keychain-access-groups` set to `group.com.auramind.app` for
-      biometric credential persistence.
+## 4. Closed Testing
 
-## 4. TestFlight / Internal Testing
-
-- [ ] TestFlight internal testers added (Apple IDs from team members).
-- [ ] TestFlight internal build smoke-tested ≥ 14 days.
 - [ ] Google Play Internal Testing track has ≥ 5 internal testers.
 - [ ] Internal Testing track has been running ≥ 14 days with no P0 bugs.
-- [ ] At least 5 distinct real-device installs (mixed Pixel + Samsung + iPhone).
+- [ ] At least 5 distinct real-device installs (mixed Pixel + Samsung).
 
 ## 5. Store listings
-
-### Apple App Store Connect
-
-- [ ] App name "AuraMind" entered.
-- [ ] Subtitle ≤ 30 chars (e.g., "AI flashcards & memory").
-- [ ] Promotional text ≤ 170 chars.
-- [ ] Description copy from `store/ios/listing.md` pasted.
-- [ ] Keywords pasted (≤ 100 chars).
-- [ ] Privacy + support + marketing URLs all set.
-- [ ] App Privacy Details filled (see `store/ios/listing.md` table).
-- [ ] Age rating questionnaire complete.
-- [ ] iPhone 6.7" screenshots uploaded (3+).
-- [ ] iPhone 6.5" screenshots uploaded (3+).
-- [ ] iPad 12.9" screenshots if "Designed for iPad" published.
-- [ ] App icon 1024×1024 uploaded (no transparency).
-- [ ] Pricing set to Free.
-- [ ] IAP products published (AuraMind Premium subscription).
-- [ ] Build selected and submitted to App Review.
 
 ### Google Play Console
 
@@ -117,7 +78,7 @@
 ## 6. Operational readiness
 
 - [ ] Stripe webhook endpoint live + verified.
-- [ ] Sentry crash reporting live + verified (test crash on TestFlight).
+- [ ] Sentry crash reporting live + verified (test crash on a closed-testing build).
 - [ ] PostHog analytics live + verified (test event lands).
 - [ ] Error budget alert wired (e.g., Sentry PagerDuty).
 - [ ] On-call rotation documented (one human responsible for launches).
@@ -144,7 +105,7 @@
 - [ ] Marketing website updated with current screenshots.
 - [ ] Email blast drafted (or skipped if silent launch).
 - [ ] Twitter post drafted.
-- [ ] App Store / Play Store links recorded for analytics attribution.
+- [ ] Play Store link recorded for analytics attribution.
 - [ ] Date of release: _____________
 
 **Sign-off:**

@@ -100,7 +100,7 @@ Write-Host "After generating, update the signing config in:"
 Write-Host "  capacitor.config.ts  (android.buildOptions)"
 Write-Host "  android/app/build.gradle (signingConfigs.release)"
 Write-Host ""
-Write-Host "See scripts/README-MOBILE-PUBLISHING.md for the full publishing guide."
+Write-Host "See docs/M6-store-submission-playbook.md for the full publishing guide."
 
 # ---------------------------------------------------------------------------
 # 4.  Update capacitor.config.ts with debug keystore path

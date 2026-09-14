@@ -1,9 +1,0 @@
-source "https://rubygems.org"
-
-# Pin to a known-good version range to avoid fastlane API breakages.
-# Bump deliberately and test before bumping major.
-gem "fastlane", "~> 2.226"
-gem "match", "~> 0.27"        # signing identity management
-gem "supply", "~> 0.27"       # Google Play upload
-gem "pilot", "~> 0.27"        # TestFlight upload (also rolls into fastlane)
-gem "rest-client", ">= 2.0"   # transitive dependency, lock for stability

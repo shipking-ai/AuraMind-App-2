@@ -234,7 +234,7 @@ gh workflow run mobile-android.yml --ref main -f track=alpha -f status=draft
 can never collide with a code Play has already consumed. Play burns a
 versionCode permanently on upload.
 
-See `scripts/README-MOBILE-PUBLISHING.md` for the full publishing flow.
+See `docs/M6-store-submission-playbook.md` for the full publishing flow.
 
 ### Vercel Deployment
 

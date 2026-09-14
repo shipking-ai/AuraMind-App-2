@@ -1,8 +1,0 @@
-v2.0.0 — AuraMind by CogniVect, Inc.
-
-• Brand refresh — "AuraMind by CogniVect" surfaces in the sidebar, onboarding, and legal footer.
-• Adaptive FSRS scheduler round-trip — date arithmetic is now safe across DST and timezone changes; no more "1/1/1970" review dates.
-• Study sessions persist — your "Studied today" count is correct across hard reloads.
-• League standings page — weekly XP leaderboards with season rollover.
-• Improved crash reporting via Sentry (synthetic crashes only during testing).
-• Bug fixes + performance improvements.

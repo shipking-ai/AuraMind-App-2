@@ -1,5 +1,26 @@
 import '@testing-library/jest-dom';
 
+// ── Web Storage on Node 25+ ────────────────────────────────────────────────
+// Node 25 turned on its own experimental `localStorage`/`sessionStorage`
+// globals. Without `--localstorage-file` they are getters that return
+// undefined, and because they already exist on Node's global, vitest does not
+// copy jsdom's working Storage over them — so every test touching storage
+// dies on `localStorage.removeItem`. CI pins Node 20/22 and never sees this.
+// Put jsdom's own Storage back whenever the global one is unusable.
+for (const key of ['localStorage', 'sessionStorage'] as const) {
+  let usable: boolean;
+  try {
+    usable = typeof globalThis[key]?.getItem === 'function';
+  } catch {
+    usable = false;
+  }
+  if (usable) continue;
+  const domStorage = (globalThis as { jsdom?: { window: Window } }).jsdom?.window[key];
+  if (domStorage) {
+    Object.defineProperty(globalThis, key, { configurable: true, value: domStorage });
+  }
+}
+
 // ── anime.js v4 DOM polyfills ──────────────────────────────────────────────
 // anime.js v4 uses DOMPoint + DOMMatrix internally (createDraggable,
 // MotionPath, ScrollObserver, etc.). jsdom does not implement these,

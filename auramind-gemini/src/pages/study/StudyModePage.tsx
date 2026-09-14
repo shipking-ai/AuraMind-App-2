@@ -396,7 +396,7 @@ export default function StudyModePage() {
       // reads `stats.streakDays` from gamificationService.getUserStats(). That
       // value is only updated by trackStudySession — without this call, the
       // streak widget stays stuck at 0 even after the user completes a study
-      // session. FlowMode / FocusMode / SpeedReview already mirror this call;
+      // session. FlowMode already mirrors this call;
       // StudyModePage was the only producer missing it.
       if (userId) {
         const sessionPayload: Omit<StudySession, 'id'> = {

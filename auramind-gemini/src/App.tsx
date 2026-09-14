@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
-import { Routes, Route, Navigate, useLocation, Outlet, useParams } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Deck, Card, UserProfile, UserRole } from "./types";
 import { getInitialCardState } from "./services/study/srs";
@@ -59,11 +59,6 @@ import { CommandPalette } from "./components/auramind/CommandPalette";
 import { CinematicLoader } from "./components/ui/CinematicLoader";
 import { CustomCursor } from "./components/ui/CustomCursor";
 
-function LegacyStudyRedirect() {
-  const { deckId } = useParams<{ deckId: string }>();
-  return <Navigate to={`/dashboard/study/${deckId || ""}`} replace />;
-}
-
 if (typeof window !== "undefined" && !window.requestIdleCallback) {
   window.requestIdleCallback = function (
     callback: IdleRequestCallback,
@@ -104,7 +99,6 @@ const PrivacyPolicyPage = React.lazy(() => import("./pages/legal/PrivacyPolicyPa
 const TermsOfServicePage = React.lazy(() => import("./pages/legal/TermsOfServicePage"));
 const AboutPage = React.lazy(() => import("./pages/system/AboutPage"));
 const StatusPage = React.lazy(() => import("./pages/system/StatusPage"));
-const BrainPreview = React.lazy(() => import("./pages/debug/BrainPreview"));
 const ResetPasswordPage = React.lazy(() => import("./pages/auth/ResetPasswordPage"));
 const RestoreAccountPage = React.lazy(() => import("./pages/auth/RestoreAccountPage"));
 const CallbackPage = React.lazy(() => import("./pages/auth/CallbackPage"));
@@ -836,12 +830,6 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                   </PageTransition>
                 }
               />
-              {/* /showcase was a component playground (Particles, Meteors,
-                  BorderBeam…) with no inbound links from anywhere in the app —
-                  a 62 kB dev artifact reachable only by typing the URL. The
-                  page itself is kept in src/pages/IntegrationShowcase.tsx;
-                  re-add the lazy import and this Route to bring it back. */}
-
               <Route
                 path="/subscribe"
                 element={
@@ -906,17 +894,6 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                   </PageTransition>
                 }
               />
-              {import.meta.env.DEV && (
-                <Route
-                  path="/brain-preview"
-                  element={
-                    <React.Suspense fallback={null}>
-                      <BrainPreview />
-                    </React.Suspense>
-                  }
-                />
-              )}
-
               {/* ───── Deck detail (standalone) ───────────────────────────── */}
               <Route
                 element={
@@ -1006,7 +983,6 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
               </Route>
 
               {/* ───── Auth callback / restore pages ────────────────────── */}
-              <Route path="/study/:deckId" element={<LegacyStudyRedirect />} />
               <Route
                 path="/reset-password"
                 element={

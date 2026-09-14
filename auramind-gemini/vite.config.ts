@@ -87,7 +87,6 @@ export default defineConfig(({ mode }) => {
             // touches it; isolating it keeps the entry chunk cacheable
             // across releases instead of invalidating on every app change.
             if (id.includes('@sentry')) return 'vendor-sentry';
-            if (id.includes('i18next')) return 'vendor-i18n';
             if (id.includes('react-markdown') || id.includes('remark-gfm')) return 'vendor-markdown';
             if (id.includes('katex')) return 'vendor-katex';
             if (id.includes('pdfjs-dist')) return 'vendor-pdfjs';

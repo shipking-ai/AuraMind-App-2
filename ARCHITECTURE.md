@@ -137,7 +137,7 @@ Admin API includes: user role management, test user creation, SQL query explorer
 
 ### Route structure (`App.tsx`)
 - **Public**: `/` (landing), `/auth`, `/subscribe`, `/docs`, `/privacy`, `/terms`, `/download`, `/reset-password`, `/restore-account`, `/auth/callback`, `/auth/schoology/callback`
-- **Protected**: `/dashboard/*`, `/study/:deckId`, `/deck/:id`, `/admin/vault`, `/admin/health`
+- **Protected**: `/dashboard/*`, `/deck/:id`, `/admin/users`, `/admin/check`
 - Redirects: old routes → new dashboard routes
 
 ### Component tree
@@ -251,8 +251,8 @@ notifications at launch is the fastest way to be permanently denied.
   are not what renders
 - **Motion**: cubic-bezier(0.16, 1, 0.3, 1) for entrances; 90ms/160ms for
   press feedback
-- **Animation**: Framer Motion + GSAP (ScrollTrigger) + Three.js/R3F + Lenis
-- **Component library**: Radix UI primitives with custom Tailwind styling
+- **Animation**: Framer Motion + GSAP (ScrollTrigger) + anime.js
+- **Component library**: Base UI primitives with custom Tailwind styling
 
 ### Editorial layer (Android)
 
