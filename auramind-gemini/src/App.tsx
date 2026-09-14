@@ -46,6 +46,7 @@ const AmbientPlayer = React.lazy(() => import("./components/shared/AmbientPlayer
 import HmrRefreshNotice from "./components/shared/HmrRefreshNotice";
 import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
+import CookieConsentBanner from "./components/shared/CookieConsentBanner";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
@@ -781,6 +782,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
           },
         }}
       />
+      <CookieConsentBanner />
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
