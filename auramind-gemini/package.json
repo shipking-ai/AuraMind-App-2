@@ -50,7 +50,7 @@
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@heyputer/puter.js": "^2.6.2",
-    "@mlc-ai/web-llm": "^0.2.84",
+    "@mlc-ai/web-llm": "^0.2.85",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
