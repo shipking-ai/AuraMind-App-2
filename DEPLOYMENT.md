@@ -99,9 +99,10 @@ Verified against the code in this repo (Aug 2026):
       Permissions-Policy set in `api/_middleware.ts` and `vercel.json`.
 - [x] **Rate limiting** — per-IP limiter in `api/_middleware.ts` (100 req/min
       default, 30 for AI, 10 for auth) applied to every API route.
-- [ ] **Cookie consent banner** — NOT implemented (no `CookieConsentBanner`
-      exists in `src/`; analytics opt-out key `auramind_usageAnalytics` has no
-      UI). Required before serving regulated regions with PostHog/Stripe live.
+- [x] **Cookie consent banner** — `src/components/shared/CookieConsentBanner.tsx`
+      (one-time, non-blocking; `analyticsService.init` skips until Accept;
+      choice persisted via `auramind_consentChoice` + `auramind_usageAnalytics`,
+      changeable in Settings).
 - [x] **RLS policies** — created by the append-only migrations in
       `supabase/migrations/` (see `SECURITY.md` for the rules every policy
       follows).
