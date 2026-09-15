@@ -782,7 +782,9 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
           },
         }}
       />
-      <CookieConsentBanner />
+      {/* Ambient chrome like the boot loader: excluded from the deterministic
+          visual-contract harness (/__e2e/*) so baselines don't include it. */}
+      {!isVisualHarness && <CookieConsentBanner />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
