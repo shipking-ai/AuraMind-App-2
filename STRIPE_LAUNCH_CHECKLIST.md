@@ -91,13 +91,13 @@ verifies every response, and **always restores `api/.env`** — even on failure.
 1. Script prints the checkout URL → open it and pay with card
    `4242 4242 4242 4242` (any future expiry, any CVC).
 2. Redirect back succeeds; the account row shows `Pro` + `trial_end`
-   (user_metadata), and the buyer email arrives (check the Resend dashboard).
+   (`app_metadata.subscription_status`), and the buyer email arrives (check the Resend dashboard).
 3. `subscription.deleted` path: cancel the subscription in the dashboard →
    the handler downgrades the user to Starter and sends the cancellation email.
 
 > ⚠️ The webhook writes subscription metadata for `--user-id` in the **real**
 > Supabase project. Use your own account — payments are fake, the DB write is
-> real. Verify (and if you like, reset) your `user_metadata` afterwards.
+> real. Verify (and if you like, reset) your `app_metadata` afterwards.
 
 ---
 
@@ -126,7 +126,7 @@ verifies every response, and **always restores `api/.env`** — even on failure.
    **200** `{"received":true,"ignored":true}`. Equivalent to the dashboard
    "Send test webhook".
 6. **Live smoke:** make one small real payment through the checkout flow;
-   verify the subscription row, `user_metadata` upgrade, and buyer email.
+   verify the subscription row, `app_metadata.subscription_status`, and buyer email. Checkout starts a 7-day trial, so the first real charge lands when the trial ends.
 
 ---
 
