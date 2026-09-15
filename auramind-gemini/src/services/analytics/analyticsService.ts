@@ -1,6 +1,7 @@
 import { supabase } from '../database/supabase';
 import { getFSRSAnalytics } from '../study/fsrs';
 import { getAppPreference } from '../../lib/appPreferences';
+import { CONSENT_CHOICE_KEY } from '../../lib/consent';
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
@@ -24,6 +25,10 @@ let initialized = false;
 export const analyticsService = {
   init: async () => {
     if (getAppPreference<boolean>('auramind_usageAnalytics', true) === false) return;
+    // No consent choice yet: tracking must not start before the banner
+    // answer. (The banner backfills the marker for legacy explicit
+    // opt-outs, so this only delays first-run init until Accept.)
+    if (getAppPreference<string | null>(CONSENT_CHOICE_KEY, null) === null) return;
     if (import.meta.env.MODE === 'test' || initialized) return;
     initialized = true;
     const ph = await getPostHog();

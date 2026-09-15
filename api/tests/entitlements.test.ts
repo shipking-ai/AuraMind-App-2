@@ -256,38 +256,50 @@ describe('fetch-url SSRF guard', () => {
     globalThis.fetch = realFetch;
   });
 
+  function authedFetchUser() {
+    supabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: USER_ID, email: 'me@example.com', user_metadata: {} } },
+      error: null,
+    });
+  }
+
   it('blocks localhost hostnames', async () => {
-    const { status, body } = await call('fetch-url', { body: { url: 'http://localhost:8080/admin' } });
+    authedFetchUser();
+    const { status, body } = await call('fetch-url', { headers: AUTH, body: { url: 'http://localhost:8080/admin' } });
     expect(status).toBe(400);
     expect(body.error).toMatch(/internal/i);
   });
 
   it('blocks private IPv4 literals', async () => {
+    authedFetchUser();
     for (const url of ['http://10.0.0.5/', 'http://192.168.1.1/', 'http://172.16.0.9/']) {
-      const { status } = await call('fetch-url', { body: { url } });
+      const { status } = await call('fetch-url', { headers: AUTH, body: { url } });
       expect(status).toBe(400);
     }
   });
 
   it('blocks the cloud metadata endpoint', async () => {
-    const { status, body } = await call('fetch-url', { body: { url: 'http://169.254.169.254/latest/meta-data/' } });
+    authedFetchUser();
+    const { status, body } = await call('fetch-url', { headers: AUTH, body: { url: 'http://169.254.169.254/latest/meta-data/' } });
     expect(status).toBe(400);
     expect(body.error).toMatch(/private/i);
   });
 
   it('blocks non-http(s) schemes', async () => {
-    const { status } = await call('fetch-url', { body: { url: 'file:///etc/passwd' } });
+    authedFetchUser();
+    const { status } = await call('fetch-url', { headers: AUTH, body: { url: 'file:///etc/passwd' } });
     expect(status).toBe(400);
   });
 
   it('blocks URLs with embedded credentials', async () => {
-    const { status } = await call('fetch-url', { body: { url: 'http://user:pass@example.com/' } });
+    authedFetchUser();
+    const { status } = await call('fetch-url', { headers: AUTH, body: { url: 'http://user:pass@example.com/' } });
     expect(status).toBe(400);
   });
 
   it('allows a public URL through to fetch (mocked 200)', async () => {
     // example.com resolves publicly; mock fetch so the test is hermetic.
-    supabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    authedFetchUser();
     const mockResponse = new Response('<html><title>Public Page</title><body>Hello world</body></html>', {
       status: 200,
       headers: { 'content-type': 'text/html' },
@@ -295,7 +307,7 @@ describe('fetch-url SSRF guard', () => {
     Object.defineProperty(mockResponse, 'url', { value: 'https://example.com/' });
     globalThis.fetch = vi.fn().mockResolvedValue(mockResponse) as any;
 
-    const { status, body } = await call('fetch-url', { body: { url: 'https://example.com/' } });
+    const { status, body } = await call('fetch-url', { headers: AUTH, body: { url: 'https://example.com/' } });
     expect(status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.title).toBe('Public Page');

@@ -15,12 +15,17 @@
  *       INTERVAL '1 hour'`, so any re-grade after the first hour was a
  *       guaranteed 42501 with no UI feedback.
  *
- *   M7 (this file) replaces the REST upsert with a single RPC call,
- *   `record_card_review(...)`, which:
+ * M7 (this file) replaces the REST upsert with a single RPC call,
+ * `record_card_review(...)`, which:
  *
  *     - validates caller ownership of both the card and the review row;
- *     - performs the upsert under SECURITY DEFINER;
+ *     - performs the write under SECURITY DEFINER;
  *     - permits re-grading at any latency (the 1-hour UPDATE window is gone).
+ *
+ * Each review inserts its own `card_reviews` row (history, not latest-only),
+ * so SessionReplayModal sees per-session rows; offline re-flush stays
+ * idempotent via the (user_id, card_id, reviewed_at) key because the queue
+ * replays the original review timestamp.
  *
  * The shape on the wire and the error class are unchanged so the
  * StudyModePage + FlowMode catch chains stay the same.
@@ -80,16 +85,16 @@ export interface CardReviewRecord {
 
 export const cardReviewsService = {
   /**
-   * Insert-or-update one card_reviews row keyed by `card_id` via the
-   * `record_card_review` SECURITY DEFINER RPC. The RPC authorizes the
-   * caller (must equal `auth.uid()`), checks that the rated card belongs
-   * to the caller (prevents cross-user pollution on shared-deck flows),
-   * then performs the upsert under the function owner's privileges so
-   * client-side RLS-to-JWT coupling no longer gates a normal re-grade.
+   * Insert one card_reviews row via the `record_card_review` SECURITY DEFINER
+   * RPC. The RPC authorizes the caller (must equal `auth.uid()`), checks
+   * that the rated card belongs to the caller (prevents cross-user
+   * pollution on shared-deck flows), then inserts under the function
+   * owner's privileges so client-side RLS-to-JWT coupling no longer gates
+   * a normal re-grade.
    *
-   * Re-grading = ON CONFLICT (card_id) DO UPDATE. The 1-hour UPDATE RLS
-   * window was removed alongside the RPC. There is no UI latency
-   * threshold that produces 42501.
+   * Re-grading inserts a NEW row (history). The 1-hour UPDATE RLS window
+   * was removed alongside the RPC. There is no UI latency threshold that
+   * produces 42501.
    */
   async recordReview(review: CardReviewRecord): Promise<void> {
     if (!supabase) {

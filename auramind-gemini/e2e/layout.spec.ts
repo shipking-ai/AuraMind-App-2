@@ -37,7 +37,12 @@ test.describe('Layout regression tests', () => {
   test.describe('Auth page form', () => {
     test('auth page renders a centered card layout', async ({ page }) => {
       await page.goto('/auth');
-      await page.waitForLoadState('networkidle');
+      // NOTE: 'networkidle' never fires here — the Turnstile widget holds a
+      // long-lived challenges.cloudflare.com connection (and its challenge
+      // fetch can hang outright in sandboxed networks). These tests assert
+      // layout, so domcontentloaded + explicit locator waits are the
+      // correct readiness signal.
+      await page.waitForLoadState('domcontentloaded');
 
       const formCard = page.locator('.max-w-sm').first();
       await expect(formCard).toBeVisible({ timeout: 10_000 });
@@ -53,7 +58,8 @@ test.describe('Layout regression tests', () => {
 
     test('auth page has email and password fields', async ({ page }) => {
       await page.goto('/auth');
-      await page.waitForLoadState('networkidle');
+      // Same Turnstile caveat as above: never networkidle on this page.
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(page.locator('input[type="email"]').first()).toBeVisible({ timeout: 10_000 });
       await expect(page.locator('input[type="password"]').first()).toBeVisible();
