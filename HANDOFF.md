@@ -46,9 +46,9 @@ value:
   FCM messages yet and no `google-services.json` is configured.
 - **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
   nav) is in; the aurora and prism are still a static gradient and a slow drift.
-- **`chat-stream` edge function** is deployed with `verify_jwt: false`, and
-  nothing in the client calls it. Worth confirming it is unused and removing
-  it, or locking it down.
+- **`stripe-webhook` edge function** is the last legacy function deployed.
+  It requires a JWT Stripe never sends, so it is dead rather than dangerous;
+  live webhooks go to `/api/stripe-webhook`. Safe to delete.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
@@ -62,6 +62,28 @@ value:
 ## Traps
 
 Each of these cost real time. None are obvious from the code.
+
+### `verify_jwt: true` does not mean "signed-in users only"
+
+It only checks that the caller presents *a* valid JWT, and the public anon key
+shipped in the web bundle is one. On 2026-09-14 eleven legacy edge functions
+were deleted after an audit found open relays among them: `send-email` sent
+arbitrary HTML from `hello@auramind.app` to anyone, `auth_send_email_hook`
+accepted the hard-coded secret `testsecret123`, and `chat-stream` proxied the
+Groq key with no auth at all. None were called by the app. Sources are backed
+up outside the repo in `edge-function-backups-2026-09-14/`.
+
+A function that must not be public checks the user itself
+(`auth.getUser(token)`) or a shared secret, and fails closed when that secret
+is unset.
+
+### realtime-notify is gated by a Vault secret
+
+`broadcast_user_notification()` reads `realtime_notify_secret` from Vault and
+sends it as `x-webhook-secret`; the function compares it with
+`REALTIME_WEBHOOK_SECRET` and returns 503 if that is missing. Rotating it means
+updating both, Vault first. See
+`supabase/migrations/20260914000000_realtime_notify_secret.sql`.
 
 ### The service worker served the previous release's JavaScript
 
