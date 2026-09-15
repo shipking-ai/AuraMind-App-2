@@ -1,4 +1,8 @@
-import '@testing-library/jest-dom';
+// The /vitest entry registers the matchers on Vitest's `expect` AND augments
+// its Assertion type. The bare import only did the latter through a global
+// Jest namespace, which jest-dom 7 dropped, so every toBeInTheDocument()
+// stopped type-checking. Works on 6.x too.
+import '@testing-library/jest-dom/vitest';
 
 // ── Web Storage on Node 25+ ────────────────────────────────────────────────
 // Node 25 turned on its own experimental `localStorage`/`sessionStorage`
