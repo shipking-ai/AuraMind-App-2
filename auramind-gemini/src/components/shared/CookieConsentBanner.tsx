@@ -48,9 +48,9 @@ export function CookieConsentBanner() {
       style={{ background: "#111118", borderColor: "#2A2A3A", color: "#F0EFFE" }}
     >
       <p className="text-[13px] leading-relaxed">
-        We use cookies for sign-in and, with your permission, anonymous usage
-        analytics that help improve AuraMind. You can change this anytime in
-        Settings.
+        We use necessary cookies to keep you signed in. With your permission we
+        also use anonymous usage analytics to help improve AuraMind. You can
+        change this anytime in Settings.
       </p>
       <div className="mt-3 flex gap-2">
         <button
@@ -59,7 +59,7 @@ export function CookieConsentBanner() {
           className="flex-1 rounded-xl border px-3 py-2 text-[13px] font-medium"
           style={{ borderColor: "#2A2A3A" }}
         >
-          Decline
+          Accept only necessary
         </button>
         <button
           type="button"
@@ -67,7 +67,7 @@ export function CookieConsentBanner() {
           className="flex-1 rounded-xl px-3 py-2 text-[13px] font-semibold"
           style={{ background: "#7C3AED", color: "#fff" }}
         >
-          Accept
+          Accept all
         </button>
       </div>
     </section>

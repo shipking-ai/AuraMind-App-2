@@ -44,22 +44,22 @@ describe("CookieConsentBanner", () => {
   it("renders when the visitor has never been asked", () => {
     render(<CookieConsentBanner />);
     expect(screen.getByRole("region", { name: "Cookie consent" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Accept" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Decline" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Accept all" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Accept only necessary" })).not.toBeNull();
   });
 
   it("accept enables analytics, records the choice, hides, and starts init", () => {
     render(<CookieConsentBanner />);
-    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    fireEvent.click(screen.getByRole("button", { name: "Accept all" }));
     expect(getAppPreference(ANALYTICS_PREF_KEY, false)).toBe(true);
     expect(window.localStorage.getItem(CONSENT_CHOICE_KEY)).toBe('"accepted"');
     expect(initMock).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("region", { name: "Cookie consent" })).toBeNull();
   });
 
-  it("decline disables analytics and never starts init", () => {
+  it("accept only necessary disables analytics and never starts init", () => {
     render(<CookieConsentBanner />);
-    fireEvent.click(screen.getByRole("button", { name: "Decline" }));
+    fireEvent.click(screen.getByRole("button", { name: "Accept only necessary" }));
     expect(getAppPreference(ANALYTICS_PREF_KEY, true)).toBe(false);
     expect(window.localStorage.getItem(CONSENT_CHOICE_KEY)).toBe('"declined"');
     expect(initMock).not.toHaveBeenCalled();
