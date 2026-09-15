@@ -460,6 +460,17 @@ export async function handleAITranscribe(
     return;
   }
 
+  // Entitlement, same as chat: without this any signed-in free account could
+  // spend the server-side Whisper budget. Read from app_metadata via the
+  // shared helper — user_metadata is client-writable and must not gate spend.
+  if (!isEntitled(user)) {
+    res.status(402).json({
+      error: 'A subscription is required to use AI features.',
+      code: 'subscription_required',
+    });
+    return;
+  }
+
   // Per-user rate limit.
   const userLimit = checkUserRateLimit(user.id);
   res.setHeader('X-RateLimit-Remaining', String(userLimit.remaining));

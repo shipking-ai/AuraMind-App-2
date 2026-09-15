@@ -271,11 +271,17 @@ export async function syncOfflineData(): Promise<{ synced: number; failed: numbe
         // JWT↔row coupling that the dropped 1-hour UPDATE policy used
         // to enforce; the offline queue can carry an item without
         // user_id (the RPC fills it in from auth.uid() server-side).
+        //
+        // Replay the ORIGINAL review timestamp: it is stable across
+        // retries, so a re-flush after a partial failure hits the
+        // (user_id, card_id, reviewed_at) idempotency key and no-ops
+        // instead of duplicating the review.
         const { error } = await (supabase as any).rpc('record_card_review', {
           p_card_id: item.data.cardId,
           p_rating: item.data.rating,
           p_srs_result: item.data.srsResult ?? {},
           p_srs_algorithm: item.data.srsAlgorithm ?? 'fsrs',
+          p_reviewed_at: new Date(item.timestamp ?? Date.now()).toISOString(),
           // p_user_id intentionally omitted — let server-side
           // auth.uid() populate the row owner.
         });

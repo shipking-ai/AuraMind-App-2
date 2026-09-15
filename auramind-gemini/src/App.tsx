@@ -46,6 +46,7 @@ const AmbientPlayer = React.lazy(() => import("./components/shared/AmbientPlayer
 import HmrRefreshNotice from "./components/shared/HmrRefreshNotice";
 import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
+import CookieConsentBanner from "./components/shared/CookieConsentBanner";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
@@ -781,6 +782,9 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
           },
         }}
       />
+      {/* Ambient chrome like the boot loader: excluded from the deterministic
+          visual-contract harness (/__e2e/*) so baselines don't include it. */}
+      {!isVisualHarness && <CookieConsentBanner />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">

@@ -296,3 +296,59 @@ export async function sendEmail(
     };
   }
 }
+
+/** Escape admin-composed text before embedding it in the shared HTML shell. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Free-form send for the admin bulk-email endpoint. Unlike sendEmail (fixed
+ * templates), the subject/body are admin-composed: the body is treated as
+ * plain text (blank lines become paragraphs) and HTML-escaped so markup in
+ * the input cannot break the shell or inject content.
+ */
+export async function sendCustomEmail(
+  to: string,
+  subject: string,
+  textBody: string,
+): Promise<EmailSendResult> {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) {
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  const from = process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app';
+  const paragraphs = textBody
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .join('\n');
+  const html = shell(escapeHtml(subject), paragraphs || '<p></p>');
+
+  try {
+    const resend = new Resend(resendKey);
+    const { error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+    });
+
+    if (error) {
+      const message = typeof error.message === 'string' ? error.message : 'Resend rejected the email';
+      return { success: false, error: message };
+    }
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Email send failed',
+    };
+  }
+}

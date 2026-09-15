@@ -8,19 +8,21 @@
  *   The `realtime` PostgreSQL extension is not available on all Supabase
  *   projects. pg_net + this Edge Function is the portable alternative.
  *
+ * AUTHENTICATION
+ *
+ * Deployed with --no-verify-jwt, because pg_net has no user session to
+ * present. The gate is a shared secret instead: the trigger reads it from
+ * Vault (`realtime_notify_secret`) and sends it as `x-webhook-secret`; this
+ * function compares it against REALTIME_WEBHOOK_SECRET.
+ *
+ * It fails closed. An earlier build treated the secret as optional, the
+ * secret was never set, and the function would broadcast anything to any
+ * user's channel for anyone who found the URL. A missing secret is now a
+ * 503, never an open door. See
+ * supabase/migrations/20260914000000_realtime_notify_secret.sql.
+ *
  * Deploy:
  *   supabase functions deploy realtime-notify --no-verify-jwt
- *
- * Usage (from a PostgreSQL trigger):
- *   PERFORM net.http_post(
- *     url := 'https://{project}.supabase.co/functions/v1/realtime-notify',
- *     headers := '{"Content-Type": "application/json"}'::jsonb,
- *     body := jsonb_build_object(
- *       'channel', 'user:<user_id>:notifications',
- *       'event', 'broadcast',
- *       'payload', '{"type":"study_session","event":"study_session_completed",...}'::jsonb
- *     )::text
- *   );
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -29,75 +31,63 @@ interface BroadcastBody {
   channel: string;
   event?: string;
   payload: Record<string, unknown>;
-  /** Optional shared secret for request authentication */
-  secret?: string;
 }
 
+/** The only channels the triggers publish to. */
+const CHANNEL_PATTERN =
+  /^user:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:notifications$/;
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
+
+/** Constant-time comparison, so response timing can't leak the secret. */
+function secretsMatch(provided: string, expected: string): boolean {
+  const encoder = new TextEncoder();
+  const a = encoder.encode(provided);
+  const b = encoder.encode(expected);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    diff |= (a[i % (a.length || 1)] ?? 0) ^ (b[i % (b.length || 1)] ?? 0);
+  }
+  return diff === 0 && a.length === b.length;
+}
+
+// Server-to-server only: no CORS headers, so browsers can't call it at all.
 Deno.serve(async (req: Request) => {
-  // CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
-  };
-
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Method not allowed' }, 405);
   }
 
-  // Optional webhook secret check
   const expectedSecret = Deno.env.get('REALTIME_WEBHOOK_SECRET');
-  if (expectedSecret) {
-    const providedSecret = req.headers.get('x-webhook-secret') || '';
-    if (providedSecret !== expectedSecret) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+  if (!expectedSecret) {
+    console.error('[realtime-notify] REALTIME_WEBHOOK_SECRET is not set; refusing all requests');
+    return json({ error: 'Not configured' }, 503);
+  }
+  if (!secretsMatch(req.headers.get('x-webhook-secret') ?? '', expectedSecret)) {
+    return json({ error: 'Forbidden' }, 403);
   }
 
-  // Parse body
   let body: BroadcastBody;
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Invalid JSON' }, 400);
   }
 
-  if (!body.channel) {
-    return new Response(JSON.stringify({ error: 'channel is required' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  if (typeof body.channel !== 'string' || !CHANNEL_PATTERN.test(body.channel)) {
+    return json({ error: 'channel must be user:<uuid>:notifications' }, 400);
   }
 
-  // Get Supabase URL + service role key from the Edge Function environment
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
   if (!supabaseUrl || !serviceRoleKey) {
-    return new Response(
-      JSON.stringify({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+    return json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' }, 500);
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-  // Subscribe to the channel, send the broadcast, then clean up
   const realtimeChannel = supabase.channel(body.channel);
 
   try {
@@ -116,13 +106,7 @@ Deno.serve(async (req: Request) => {
 
     if (subscribeStatus !== 'SUBSCRIBED') {
       supabase.removeChannel(realtimeChannel);
-      return new Response(
-        JSON.stringify({ error: `Failed to subscribe: ${subscribeStatus}` }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
+      return json({ error: `Failed to subscribe: ${subscribeStatus}` }, 500);
     }
 
     // Fire-and-forget broadcast (no ack wait needed)
@@ -137,25 +121,15 @@ Deno.serve(async (req: Request) => {
 
     supabase.removeChannel(realtimeChannel);
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        channel: body.channel,
-        event: body.event ?? 'broadcast',
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+    return json({ ok: true, channel: body.channel, event: body.event ?? 'broadcast' });
   } catch (err: unknown) {
-    // Clean up channel on any error
-    try { supabase.removeChannel(realtimeChannel); } catch { /* ignore */ }
-
+    try {
+      supabase.removeChannel(realtimeChannel);
+    } catch {
+      /* ignore */
+    }
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('[realtime-notify] Error:', message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: message }, 500);
   }
 });

@@ -459,8 +459,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 user.user.user_metadata?.full_name || 'User',
                 `${currency} ${amount}`,
                 'Pro Plan',
-                invoice.next_payment_attempt
-                  ? new Date(invoice.next_payment_attempt * 1000).toLocaleDateString()
+                // next_payment_attempt is null on a *succeeded* invoice (nothing
+                // left to attempt), so it always rendered 'N/A'. The subscription
+                // was just retrieved above — its period end is the next bill date.
+                (subscription as any).current_period_end
+                  ? new Date((subscription as any).current_period_end * 1000).toLocaleDateString()
                   : 'N/A'
               );
             }
