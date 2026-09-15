@@ -203,3 +203,37 @@ the app.
   de-boxed home and library, real type scale
 - **Native** — haptics on the study loop, home-screen widget, one loading
   screen instead of two, reminders synced at app start
+
+---
+
+## 2026-09-14 - prod-hardening pass (traps that cost real time)
+
+- **Phantom deps hide behind hoisting.** `api/index.ts` imported `zod`
+  without declaring it; it resolved from `C:/Users/<you>/node_modules`
+  on dev machines while CI `npm ci` failed with TS2307. A dep audit that
+  regenerates the lockfile will silently drop such entries. When CI fails
+  on a module that works locally, check `require.resolve` paths before
+  anything else - and beware user-level `node_modules` above the repo.
+- **Turnstile defeats `networkidle`.** The widget holds a
+  `challenges.cloudflare.com` blob connection open indefinitely, so
+  `page.waitForLoadState("networkidle")` never fires on `/auth` (worse
+  in sandboxed networks where the challenge fetch hangs). Assert layout
+  with `domcontentloaded` plus locator waits instead.
+- **Fresh e2e profiles trip one-time UI.** Playwright starts with empty
+  storage, so the consent banner renders over visual baselines. Ambient
+  chrome (banner, boot loader) belongs behind the `/__e2e` harness flag,
+  not dismissed per-spec.
+- **Sticky `getLaunchUrl()` + fresh `useNavigate` identity.** Capacitor
+  returns the launch intent URL for the process lifetime, and this RR
+  build returns a new `navigate` every render - so any effect dep on
+  `[navigate]` re-applies the boot route after every navigation (~79ms
+  later, measurable as a second pushState). Deep-link effects mount once
+  (`[]`) and read route/navigate through refs. Verified live: the bounce
+  reproduces only in deep-link-launched processes.
+- **`UNIQUE(card_id)` vs window readers.** If a table is read by time
+  window (session replay) but written latest-only (upsert), re-grades
+  silently migrate rows out of old windows. Match the write shape to the
+  read shape; use a `(user, card, timestamp)` key for idempotent retry.
+- **Emulator ports shift on restart.** After a reboot 5556 was gone and
+  the phone reappeared as 5554 - always re-check `adb devices` plus
+  `getprop ro.product.model` instead of trusting remembered ports.
