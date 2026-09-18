@@ -83,7 +83,8 @@ describe("cross-platform runtime preferences", () => {
     await waitFor(() => expect(screen.getByTestId("enabled")).toHaveTextContent("true"));
     fireEvent.click(screen.getByRole("button", { name: "Speak" }));
 
-    expect(speechSynthesis.speak).toHaveBeenCalledTimes(1);
+    // Speaking resolves the chosen voice first, so it starts a tick later.
+    await waitFor(() => expect(speechSynthesis.speak).toHaveBeenCalledTimes(1));
   });
 
   it("uses an in-app Android dialog for deck creation and deletion", async () => {

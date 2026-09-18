@@ -35,6 +35,7 @@ import { trackStudySession } from '../../services/gamification/gamificationServi
 import { useTimer, MotionPath } from '../../lib/effects';
 import { VoiceStudyControls } from '../../components/study/VoiceStudyControls';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
+import { speak as speakAloud, stopSpeaking } from '../../services/voice/speechOutput';
 
 const RATING_BTNS = [
   { label: 'Again', rating: Rating.AGAIN, interval: '5m', color: 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20' },
@@ -119,6 +120,7 @@ export default function StudyModePage() {
   const [showIntervals] = useAppPreference('auramind_showIntervals', true);
   const [showHintFirst] = useAppPreference('auramind_showHintFirst', false);
   const [keyboardShortcuts] = useAppPreference('auramind_keyboardShortcuts', true);
+  const [readAloud] = useAppPreference('auramind_textToSpeech', false);
   // Tracks when the active study session began. Reset every time the user
   // resets the session via "Study Again" so a re-runs session's startTime
   // doesn't bleed into the prior session row. Used by the session-save
@@ -263,6 +265,16 @@ export default function StudyModePage() {
   const currentHint = (currentCard?.back || "")
     .split(/[.!?]\s+/)[0]
     .slice(0, 120);
+
+  // "Read cards aloud" (Settings > Audio): the question when a card appears,
+  // the answer when it flips. Voice study mode speaks for itself, so it is
+  // skipped there. Leaving the card or the page cuts speech off.
+  useEffect(() => {
+    if (!readAloud || voiceMode || completed || !currentCard) return;
+    const text = flipped ? currentCard.back : currentCard.front;
+    if (text?.trim()) void speakAloud(text, { rate: 0.95 });
+    return () => stopSpeaking();
+  }, [readAloud, voiceMode, completed, currentCard, flipped]);
 
   /**
    * Flip the card and tick.

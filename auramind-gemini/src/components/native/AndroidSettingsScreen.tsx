@@ -28,6 +28,16 @@ import { hapticSelection, hapticSuccess, hapticTap, hapticWarning } from "./andr
 import { userService } from "../../services/user/userService";
 import { analyticsService } from "../../services/analytics/analyticsService";
 import { useReminderSync } from "../../hooks/useReminderSync";
+import { useVoiceOptions } from "../../hooks/useVoiceOptions";
+import { AuraSpeech } from "../../lib/auraSpeech";
+import { SPOKEN_REMINDER_MESSAGES, type SpokenReminderMode } from "../../lib/reminderSchedule";
+import {
+  resetRandomVoice,
+  speak,
+  VOICE_AUTO,
+  VOICE_PREF_KEY,
+  VOICE_RANDOM,
+} from "../../services/voice/speechOutput";
 import { deleteAvatar, uploadAvatar } from "../../services/user/avatarService";
 import ProfAuraAvatar from "../auramind/ProfAuraAvatar";
 import { DeleteAccountModal } from "../settings/DeleteAccountModal";
@@ -120,7 +130,7 @@ function AndroidSelect({
 }: {
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: Array<string | { value: string; label: string }>;
   label: string;
 }) {
   return (
@@ -133,9 +143,15 @@ function AndroidSelect({
       }}
       aria-label={label}
     >
-      {options.map((option) => (
-        <option key={option}>{option}</option>
-      ))}
+      {options.map((option) =>
+        typeof option === "string" ? (
+          <option key={option}>{option}</option>
+        ) : (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ),
+      )}
     </select>
   );
 }
@@ -222,6 +238,44 @@ export default function AndroidSettingsScreen() {
   const [weeklySummary, setWeeklySummary] = useStoredValue("auramind_weeklySummary", false);
   const [soundEffects, setSoundEffects] = useStoredValue("auramind_soundEffects", true);
   const [textToSpeech, setTextToSpeech] = useStoredValue("auramind_textToSpeech", false);
+  const [ttsVoice, setTtsVoice] = useStoredValue<string>(VOICE_PREF_KEY, VOICE_AUTO);
+  const voiceOptions = useVoiceOptions(ttsVoice);
+  const [spokenReminder, setSpokenReminder] = useStoredValue<SpokenReminderMode>(
+    "auramind_spokenReminder",
+    "off",
+  );
+  const [spokenReminderMessage, setSpokenReminderMessage] = useStoredValue<string>(
+    "auramind_spokenReminderMessage",
+    SPOKEN_REMINDER_MESSAGES[0],
+  );
+
+  const chooseVoice = (next: string) => {
+    // A fresh pick every time Random is chosen, so "Test voice" shows it off.
+    if (next === VOICE_RANDOM) resetRandomVoice();
+    setTtsVoice(next);
+  };
+
+  const testVoice = async () => {
+    hapticTap();
+    const { interrupted } = await speak(
+      "Hi, I'm Prof. Aura. This is the voice I'll read your cards in.",
+      { voice: ttsVoice },
+    );
+    if (interrupted) toast.error("Couldn't play the voice. Check your media volume.");
+  };
+
+  const testSpokenReminder = async () => {
+    hapticTap();
+    const message =
+      spokenReminder === "chosen"
+        ? spokenReminderMessage
+        : SPOKEN_REMINDER_MESSAGES[Math.floor(Math.random() * SPOKEN_REMINDER_MESSAGES.length)];
+    try {
+      await AuraSpeech.previewSpokenReminder({ message, voice: ttsVoice, lang: "en-US" });
+    } catch {
+      toast.error("Couldn't play the reminder. Check your notification volume.");
+    }
+  };
   const [autoPlayAudio, setAutoPlayAudio] = useStoredValue("auramind_autoPlayAudio", false);
   const [reduceMotion, setReduceMotion] = useStoredValue("auramind_reduceMotion", false);
   const [highContrast, setHighContrast] = useStoredValue("auramind_highContrast", false);
@@ -407,6 +461,9 @@ export default function AndroidSettingsScreen() {
       "auramind_weeklySummary",
       "auramind_soundEffects",
       "auramind_textToSpeech",
+      VOICE_PREF_KEY,
+      "auramind_spokenReminder",
+      "auramind_spokenReminderMessage",
       "auramind_autoPlayAudio",
       "auramind_reduceMotion",
       "auramind_highContrast",
@@ -679,6 +736,41 @@ export default function AndroidSettingsScreen() {
         <AndroidSettingRow label="Weekly summary">
           <AndroidToggle value={weeklySummary} onChange={setWeeklySummary} label="Weekly summary" />
         </AndroidSettingRow>
+        <AndroidSettingRow
+          label="Speak reminder"
+          detail="Says it out loud with the first reminder. Stays quiet on silent or Do Not Disturb."
+        >
+          <AndroidSelect
+            label="Speak reminder"
+            value={spokenReminder}
+            onChange={(next) => setSpokenReminder(next as SpokenReminderMode)}
+            options={[
+              { value: "off", label: "Off" },
+              { value: "random", label: "Random message" },
+              { value: "chosen", label: "A message I choose" },
+            ]}
+          />
+        </AndroidSettingRow>
+        {spokenReminder === "chosen" && (
+          <AndroidSettingRow label="Message">
+            <AndroidSelect
+              label="Reminder message"
+              value={spokenReminderMessage}
+              onChange={setSpokenReminderMessage}
+              options={SPOKEN_REMINDER_MESSAGES.map((line) => ({ value: line, label: line }))}
+            />
+          </AndroidSettingRow>
+        )}
+        {spokenReminder !== "off" && (
+          <button
+            type="button"
+            className="android-settings-action"
+            onClick={() => void testSpokenReminder()}
+          >
+            <Volume2 className="h-4 w-4" aria-hidden /> Play reminder now
+            <ChevronRight className="ml-auto h-4 w-4" aria-hidden />
+          </button>
+        )}
         <AndroidSettingRow label="Push reminders" detail="Server-sent nudges, even when closed">
           <AndroidToggle
             value={pushReminders}
@@ -699,6 +791,16 @@ export default function AndroidSettingsScreen() {
         <AndroidSettingRow label="Read cards aloud">
           <AndroidToggle value={textToSpeech} onChange={setTextToSpeech} label="Text to speech" />
         </AndroidSettingRow>
+        <AndroidSettingRow
+          label="Voice"
+          detail="Used for read-aloud, voice study and spoken reminders"
+        >
+          <AndroidSelect label="Voice" value={ttsVoice} onChange={chooseVoice} options={voiceOptions} />
+        </AndroidSettingRow>
+        <button type="button" className="android-settings-action" onClick={() => void testVoice()}>
+          <Volume2 className="h-4 w-4" aria-hidden /> Test voice
+          <ChevronRight className="ml-auto h-4 w-4" aria-hidden />
+        </button>
         <AndroidSettingRow label="Auto-play audio">
           <AndroidToggle
             value={autoPlayAudio}
