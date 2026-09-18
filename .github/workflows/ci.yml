@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x, 22.x]   # react-router v7 requires Node >= 20
+        node-version: [22.x, 24.x]   # 20 is EOL (2026-04); jsdom 30 needs >= 22.19
 
     steps:
       - name: Checkout code

@@ -106,7 +106,9 @@ function collectRpcDeclarations(sqlFiles: Iterable<string>): Set<string> {
   const out = new Set<string>();
   for (const f of sqlFiles) {
     const src = fs.readFileSync(f, 'utf8');
-    const re = /CREATE(?:\s+OR\s+REPLACE)?\s+(?:FUNCTION|PROCEDURE)\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    // Optional `public.` prefix: schema-qualified declarations are the norm
+    // in newer migrations and name the same RPC.
+    const re = /CREATE(?:\s+OR\s+REPLACE)?\s+(?:FUNCTION|PROCEDURE)\s+(?:public\.)?([a-zA-Z_][a-zA-Z0-9_]*)/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(src))) out.add(m[1]);
   }
