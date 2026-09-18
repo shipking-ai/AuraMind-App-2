@@ -19,6 +19,7 @@
  */
 
 import { hasNativeSpeech } from '../../lib/auraSpeech';
+import { createNativeRecognition } from './nativeRecognition';
 
 // ── Capabilities ────────────────────────────────────────────────────────
 
@@ -46,8 +47,14 @@ export function getSpeechCapabilities(): SpeechCapabilities {
     // The Android app's WebView has no speechSynthesis; it speaks through
     // the native AuraSpeech plugin instead (see speechOutput.ts).
     tts: 'speechSynthesis' in window || hasNativeSpeech(),
-    stt: getRecognitionCtor() !== null,
+    // Likewise no SpeechRecognition; AuraListen wraps Android's recogniser.
+    stt: getRecognitionCtor() !== null || hasNativeSpeech(),
   };
+}
+
+/** True when listening goes through Android's native recogniser. */
+export function usesNativeRecognition(): boolean {
+  return getRecognitionCtor() === null && hasNativeSpeech();
 }
 
 // ── Voice loading ───────────────────────────────────────────────────────
@@ -166,6 +173,8 @@ export interface SpeechRecognitionEventLike {
 
 export type SpeechErrorCode =
   | 'not-allowed'
+  | 'unavailable'
+  | 'language-not-supported'
   | 'no-speech'
   | 'audio-capture'
   | 'network'
@@ -196,10 +205,27 @@ export function describeSpeechError(raw: string): SpeechError {
     case 'service-not-allowed':
       return {
         code: raw as SpeechErrorCode,
-        message:
-          'Microphone access is blocked. Allow the mic for this site in your browser’s address-bar icon, then try again.',
+        message: hasNativeSpeech()
+          ? 'Microphone access is off for AuraMind. Turn it on in Settings › Apps › AuraMind › Permissions, then try again.'
+          : 'Microphone access is blocked. Allow the mic for this site in your browser’s address-bar icon, then try again.',
         recoverable: false,
         needsPermission: true,
+      };
+    case 'unavailable':
+      return {
+        code: 'unavailable',
+        message:
+          'This phone has no speech recognition service. Install or enable the Google app, then try again.',
+        recoverable: false,
+        needsPermission: false,
+      };
+    case 'language-not-supported':
+      return {
+        code: 'language-not-supported',
+        message:
+          'Speech recognition isn’t available in this language yet. Download it in your phone’s voice input settings.',
+        recoverable: false,
+        needsPermission: false,
       };
     case 'no-speech':
       return {
@@ -257,7 +283,7 @@ export function createRecognition(opts: {
   interimResults?: boolean;
 }): SpeechRecognitionLike | null {
   const Ctor = getRecognitionCtor();
-  if (!Ctor) return null;
+  if (!Ctor) return hasNativeSpeech() ? createNativeRecognition(opts) : null;
   const rec = new Ctor();
   rec.lang = opts.lang ?? 'en-US';
   rec.continuous = opts.continuous ?? false;
