@@ -32,6 +32,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PlayEngagementPlugin.class);
         registerPlugin(ThemeColorsPlugin.class);
         registerPlugin(AuraDevicePlugin.class);
+        registerPlugin(AuraSpeechPlugin.class);
         // Edge-to-edge BEFORE super.onCreate(): Capacitor calls setContentView
         // inside super, and the window flags must be set before content exists.
         // With targetSdk 35+ the system enforces this anyway; doing it here

@@ -13,6 +13,15 @@ import { Capacitor } from '../../lib/nativeShim';
 import { useAppPreference } from '../../lib/appPreferences';
 import { analyticsService } from '../../services/analytics/analyticsService';
 import { useReminderSync } from '../../hooks/useReminderSync';
+import { useVoiceOptions } from '../../hooks/useVoiceOptions';
+import {
+  isSpeechOutputAvailable,
+  resetRandomVoice,
+  speak,
+  VOICE_AUTO,
+  VOICE_PREF_KEY,
+  VOICE_RANDOM,
+} from '../../services/voice/speechOutput';
 import { getAIProvider, setAIProvider, type AIProvider } from '../../lib/aiProvider';
 import {
   listFactors, beginEnrollment, verifyEnrollment, unenroll,
@@ -285,6 +294,12 @@ export default function SettingsPage() {
   const [fontSize, setFontSize] = useLocalStorage('auramind_fontSize', 'Medium');
   const [highContrast, setHighContrast] = useLocalStorage('auramind_highContrast', false);
   const [textToSpeech, setTextToSpeech] = useLocalStorage('auramind_textToSpeech', false);
+  const [ttsVoice, setTtsVoice] = useLocalStorage<string>(VOICE_PREF_KEY, VOICE_AUTO);
+  const voiceOptions = useVoiceOptions(ttsVoice);
+  const chooseVoice = (next: string) => {
+    if (next === VOICE_RANDOM) resetRandomVoice();
+    setTtsVoice(next);
+  };
   const [autoNightMode, setAutoNightMode] = useLocalStorage('auramind_autoNightMode', true);
   const [reviewOrder, setReviewOrder] = useLocalStorage('auramind_reviewOrder', 'FSRS - Optimized');
   const [showHintFirst, setShowHintFirst] = useLocalStorage('auramind_showHintFirst', false);
@@ -699,6 +714,23 @@ export default function SettingsPage() {
             <SettingRow label="Text-to-speech" desc="Read cards aloud during review">
               <Toggle on={textToSpeech} onChange={setTextToSpeech} />
             </SettingRow>
+            {isSpeechOutputAvailable() && (
+              <>
+                <div className="border-t border-[#2A2A3A]/30" />
+                <SettingRow label="Voice" desc="Used for read-aloud and voice study">
+                  <div className="flex items-center gap-2">
+                    <Select value={ttsVoice} onChange={chooseVoice} options={voiceOptions} />
+                    <button
+                      type="button"
+                      onClick={() => void speak("Hi, I'm Prof. Aura. This is the voice I'll read your cards in.", { voice: ttsVoice })}
+                      className="rounded-lg border border-[#2A2A3A] px-3 py-1.5 text-xs text-[#F0EFFE] hover:border-[#7C3AED]/50"
+                    >
+                      Test
+                    </button>
+                  </div>
+                </SettingRow>
+              </>
+            )}
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Auto-play audio" desc="Play card audio automatically">
               <Toggle on={autoPlayAudio} onChange={setAutoPlayAudio} />

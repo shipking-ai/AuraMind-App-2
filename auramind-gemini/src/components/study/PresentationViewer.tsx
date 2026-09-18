@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PlayIcon as Play, PauseIcon as Pause, ChevronRightIcon as ChevronRight, ChevronLeftIcon as ChevronLeft, Volume2Icon as Volume2, Maximize2Icon as Maximize2, Minimize2Icon as Minimize2, RotateCcwIcon as RotateCcw } from '../icons/CustomIcons';
 import type { Slide } from '../../types';
+import { isSpeechOutputAvailable, speak as speakAloud, stopSpeaking as stopSpeech } from '../../services/voice/speechOutput';
 
 interface PresentationViewerProps {
     title: string;
@@ -14,37 +15,32 @@ const PresentationViewer: React.FC<PresentationViewerProps> = ({ title, slides }
     const [isFullscreen, setIsFullscreen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Speech Synthesis
+    // Narration: native TTS in the Android app, Web Speech elsewhere, in the
+    // voice chosen in Settings. The token ignores a finish that belongs to a
+    // slide the user has already moved past.
+    const speechTokenRef = useRef(0);
+
     const speak = useCallback((text: string) => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Stop current
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.onstart = () => setIsSpeaking(true);
-            utterance.onend = () => {
-                setIsSpeaking(false);
-                if (isPlaying && currentSlide < slides.length - 1) {
-                    // Auto advance if playing
-                    setTimeout(() => setCurrentSlide(c => c + 1), 1000);
-                } else if (isPlaying && currentSlide === slides.length - 1) {
-                    setIsPlaying(false);
-                }
-            };
-
-            // Select a good voice if available
-            const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
-            if (preferredVoice) utterance.voice = preferredVoice;
-
-            window.speechSynthesis.speak(utterance);
-        }
+        if (!isSpeechOutputAvailable()) return;
+        const token = ++speechTokenRef.current;
+        setIsSpeaking(true);
+        void speakAloud(text).then(({ interrupted }) => {
+            if (token !== speechTokenRef.current) return;
+            setIsSpeaking(false);
+            if (interrupted) return;
+            if (isPlaying && currentSlide < slides.length - 1) {
+                // Auto advance if playing
+                setTimeout(() => setCurrentSlide(c => c + 1), 1000);
+            } else if (isPlaying && currentSlide === slides.length - 1) {
+                setIsPlaying(false);
+            }
+        });
     }, [isPlaying, currentSlide, slides.length]);
 
     const stopSpeaking = useCallback(() => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            setIsSpeaking(false);
-        }
+        speechTokenRef.current += 1;
+        stopSpeech();
+        setIsSpeaking(false);
     }, []);
 
     useEffect(() => {
