@@ -5,8 +5,8 @@
  *   - league_memberships (current season)
  *   - user_profiles (last week's tier from past seasons)
  *
- * Writes:
- *   - Inserts/upserts the user's row for the current week
+ * Writes (only through the increment_weekly_xp RPC; RLS has no write policy):
+ *   - Creates the user's row for the current week on first award
  *   - Adds weekly_xp on each study session
  *
  * Falls back to local-only computation when Supabase is offline; the UI
@@ -64,8 +64,8 @@ function writeLocalLeague(state: { seasonId: string; weeklyXp: number; tier: num
 }
 
 /**
- * Award weekly XP to the current user. Idempotent — safe to call many times.
- * Returns the user's current weekly XP and rank within their own group.
+ * Award weekly XP to the current user. Each call adds xpDelta once, so call
+ * it once per finished session. Returns the user's current weekly XP and rank within their own group.
  */
 export async function awardWeeklyXp(
   userId: string,
@@ -94,39 +94,28 @@ export async function awardWeeklyXp(
     const totalUsersInTier = (tierRows?.length ?? 0) + 1;
     const groupId = leagueGroupIdFor(userId, tier, seasonId, totalUsersInTier);
 
-    // Upsert this user's row.
-    const { data: upserted, error: upsertErr } = await supabase
-      .from('league_memberships')
-      .upsert(
-        {
-          season_id: seasonId,
-          user_id: userId,
-          league_group_id: groupId,
-          tier,
-          weekly_xp: Math.max(0, xpDelta),
-          accuracy_rate: Math.max(0, Math.min(100, accuracy)),
-        },
-        { onConflict: 'season_id,user_id' },
-      )
-      .select('weekly_xp')
-      .single();
+    // The RPC is the only writer: it creates the season if needed and adds
+    // the delta to the stored total in one atomic statement. A direct upsert
+    // here would replace the running total with this session's XP.
+    const { data: rpcRows, error: rpcErr } = await supabase.rpc('increment_weekly_xp', {
+      p_user_id: userId,
+      p_group_id: groupId,
+      p_tier: tier,
+      p_xp_delta: Math.max(0, Math.round(xpDelta)),
+      p_accuracy: Math.max(0, Math.min(100, accuracy)),
+    });
 
-    if (upsertErr) throw upsertErr;
+    if (rpcErr) throw rpcErr;
+    const weeklyXp = (Array.isArray(rpcRows) ? rpcRows[0]?.weekly_xp : undefined) ?? xpDelta;
 
     // Compute rank within group.
     const peers = (tierRows ?? []).filter(r => r.user_id !== userId);
-    const higherCount = peers.filter(p => (p.weekly_xp ?? 0) > (upserted?.weekly_xp ?? 0)).length;
+    const higherCount = peers.filter(p => (p.weekly_xp ?? 0) > weeklyXp).length;
 
-    writeLocalLeague({
-      seasonId,
-      weeklyXp: upserted?.weekly_xp ?? xpDelta,
-      tier,
-    });
-
-    await maybeEnsureSeasonExists(seasonId);
+    writeLocalLeague({ seasonId, weeklyXp, tier });
 
     return {
-      weeklyXp: upserted?.weekly_xp ?? xpDelta,
+      weeklyXp,
       tier,
       groupId,
       rank: higherCount + 1,
@@ -137,23 +126,6 @@ export async function awardWeeklyXp(
     const weeklyXp = (local?.weeklyXp ?? 0) + xpDelta;
     writeLocalLeague({ seasonId, weeklyXp, tier });
     return { weeklyXp, tier, groupId: '' };
-  }
-}
-
-async function maybeEnsureSeasonExists(seasonId: string) {
-  if (!supabase) return;
-  try {
-    const { data } = await supabase.from('league_seasons').select('id').eq('id', seasonId).maybeSingle();
-    if (!data) {
-      const { startsAt, endsAt } = currentWeekBounds();
-      await supabase.from('league_seasons').insert({
-        id: seasonId,
-        starts_at: new Date(startsAt).toISOString(),
-        ends_at: new Date(endsAt).toISOString(),
-      });
-    }
-  } catch {
-    /* not critical */
   }
 }
 

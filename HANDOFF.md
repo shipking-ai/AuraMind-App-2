@@ -46,10 +46,6 @@ value:
   FCM messages yet and no `google-services.json` is configured.
 - **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
   nav) is in; the aurora and prism are still a static gradient and a slow drift.
-- **`increment_weekly_xp` double-counts.** Its `ON CONFLICT` adds
-  `EXCLUDED.weekly_xp` (already prev + delta) to the stored value. Nothing
-  calls it yet and `league_memberships` is empty, but fix it before leagues
-  ship — and note users can also update their own league rows directly.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
