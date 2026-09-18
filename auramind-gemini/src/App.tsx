@@ -21,7 +21,11 @@ import { loadOfflineAwareData } from "./lib/offlineAwareData";
 import { getAppPreference } from "./lib/appPreferences";
 import { resetUserData } from "./services/gamification/gamificationService";
 import { analyticsService } from "./services/analytics/analyticsService";
-import { getPermissions, getDefaultRole } from "./utils/permissions";
+import {
+  getPermissions,
+  getDefaultRole,
+  resolveAuthorizationRole,
+} from "./utils/permissions";
 import { addNotification } from "./services/notifications/notificationStore";
 import {
   initRealtimeNotifications,
@@ -123,6 +127,7 @@ const CallbackPage = React.lazy(() => import("./pages/auth/CallbackPage"));
 const SchoologyCallbackPage = React.lazy(() => import("./pages/auth/SchoologyCallbackPage"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const PaymentPage = React.lazy(() => import("./components/auth/PaymentPage"));
+const OnboardingFlow = React.lazy(() => import("./pages/onboarding/OnboardingFlow"));
 const DownloadPage = React.lazy(() => import("./pages/DownloadPage"));
 
 import { ArrowDownIcon as ArrowDown } from "./components/icons/CustomIcons";
@@ -421,7 +426,12 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   const mapAuthUserToProfile = useCallback(
     (authUser: any): UserProfile => {
       const metadata = authUser.user_metadata || {};
-      const role = (metadata.role as UserRole) || roleOf(authUser.email);
+      // Authorization role: app_metadata ONLY (service-role written). The
+      // client-writable user_metadata.role holds the onboarding persona and
+      // whatever else the user typed into their own metadata — reading it here
+      // would let any account grant itself `tester` free access or staff
+      // access from the console.
+      const role = resolveAuthorizationRole(authUser, roleOf(authUser.email));
       const permissions = getPermissions(role);
       onUserRoleChange(role);
       return {
@@ -435,6 +445,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
         joinedDate: metadata.joined_date ? Number(metadata.joined_date) : Date.now(),
         isAdmin: permissions.canAccessAdminPanel,
         role,
+        persona:
+          typeof metadata.role === "string" && metadata.role !== role
+            ? metadata.role
+            : undefined,
         isEmailVerified: !!authUser.email_confirmed_at,
         isPhoneVerified: !!authUser.phone_confirmed_at,
         phone: authUser.phone || "",
@@ -477,6 +491,9 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
             const dbPerms = getPermissions(dbRole);
             const memPerms = getPermissions(profile.role || UserRole.USER);
             if (dbPerms.canAccessAdminPanel && !memPerms.canAccessAdminPanel) {
+              // user_profiles.role is written by the sync trigger from
+              // app_metadata (server-side), so it is a legitimate elevation
+              // source — unlike user_metadata, which is never read here.
               profile = { ...profile, role: dbRole, isAdmin: true };
               setUser(profile);
             }
@@ -836,6 +853,15 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                       />
                     </PageTransition>
                   )
+                }
+              />
+
+              <Route
+                path="/onboarding"
+                element={
+                  <PageTransition>
+                    <OnboardingFlow />
+                  </PageTransition>
                 }
               />
 

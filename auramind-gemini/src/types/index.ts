@@ -191,8 +191,16 @@ export enum UserRole {
   CEO = 'ceo',
   ADMIN = 'admin',
   EMPLOYEE = 'employee',
+  TESTER = 'tester',
   USER = 'user'
 }
+
+/**
+ * Onboarding personas (learner, student, teacher, …). Display-only: they
+ * personalize copy and starter topics but never drive authorization —
+ * see `ONBOARDING_ROLES` in lib/onboardingRoles.ts.
+ */
+export type OnboardingPersona = string;
 
 export interface UserProfile {
   id: string;
@@ -205,6 +213,8 @@ export interface UserProfile {
   joinedDate: number;
   isAdmin?: boolean;
   role?: UserRole;
+  /** Onboarding persona from user_metadata — display only. */
+  persona?: OnboardingPersona;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   phone?: string;

@@ -53,6 +53,7 @@ const statusColor = (s: string) =>
 const roleColor = (r: string) =>
   r === 'owner' || r === 'ceo' ? 'bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/20'
   : r === 'admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+  : r === 'tester' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
   : 'bg-[#2A2A3A] text-[#7A7A96]';
 
 const fmt = (iso?: string) => {
@@ -240,6 +241,7 @@ export default function AdminUsersPage() {
                 <Field label="Role">
                   <select value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })} className="w-full px-3 py-2 bg-[#1A1A24] border border-[#2A2A3A] rounded-xl text-xs text-white focus:outline-none focus:border-[#7C3AED]/40 transition-colors">
                     <option value="user">User</option>
+                    <option value="tester">Tester</option>
                     <option value="employee">Employee</option>
                     <option value="admin">Admin</option>
                     <option value="ceo">CEO</option>

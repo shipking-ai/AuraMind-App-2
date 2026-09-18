@@ -60,7 +60,7 @@ const AdminToggleSchema = z.object({
 const AdminSetRoleSchema = z.object({
   targetUserId: z.string().uuid(),
   testData: z.object({
-    role: z.enum(['user', 'employee', 'admin', 'ceo', 'owner']).optional(),
+    role: z.enum(['user', 'tester', 'employee', 'admin', 'ceo', 'owner']).optional(),
   }).optional(),
 });
 
@@ -77,7 +77,7 @@ const CreateTestUserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8, 'password must be at least 8 characters'),
     makeAdmin: z.boolean().optional(),
-    role: z.enum(['user', 'employee', 'admin', 'ceo', 'owner']).optional(),
+    role: z.enum(['user', 'tester', 'employee', 'admin', 'ceo', 'owner']).optional(),
   }),
 });
 
@@ -123,7 +123,7 @@ const AuditCreateSchema = z.object({
 
 const BulkRoleChangeSchema = z.object({
   userIds: z.array(z.string().uuid()).min(1, 'At least one userId is required').max(100, 'Max 100 users at a time'),
-  role: z.enum(['user', 'employee', 'admin']),
+  role: z.enum(['user', 'tester', 'employee', 'admin']),
 });
 
 const BulkEmailSchema = z.object({

@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { call } from './helpers.js';
-import { isEntitled, readSubscriptionStatus } from '../_lib/entitlement.js';
+import {
+  isEntitled,
+  isEntitledWithRoleAccess,
+  readSubscriptionStatus,
+} from '../_lib/entitlement.js';
 
 /**
  * Regression cover for a paywall bypass.
@@ -30,6 +34,19 @@ const supabase = vi.hoisted(() => ({
 vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => supabase) }));
 
 const AUTHED = { headers: { authorization: 'Bearer token' } };
+
+/**
+ * True when the stubbed fetch was pointed at a billable AI provider. The
+ * distributed rate limiter (Upstash) legitimately calls fetch from the
+ * middleware before the handler answers, so "no fetch at all" is the wrong
+ * assertion on machines where UPSTASH_* is configured — provider URLs are
+ * what actually cost money.
+ */
+function providerCallCount(fetchMock: { mock: { calls: unknown[][] } }): number {
+  return fetchMock.mock.calls.filter(([url]) => {
+    return typeof url === 'string' && /groq|cerebras|gemini|openrouter/i.test(url);
+  }).length;
+}
 
 beforeEach(() => {
   vi.stubEnv('GROQ_API_KEY', 'test-groq');
@@ -66,7 +83,6 @@ describe('entitlement is read from app_metadata only', () => {
       expect(isEntitled({ app_metadata: { subscription_status: status } }), status).toBe(false);
     }
   });
-
   it('refuses /api/ai for a user who forged entitlement in user_metadata', async () => {
     supabase.auth.getUser.mockResolvedValue({
       data: {
@@ -91,9 +107,9 @@ describe('entitlement is read from app_metadata only', () => {
     expect(status, 'a forged status must not buy AI access').toBe(402);
     expect(body?.code).toBe('subscription_required');
     expect(
-      upstream,
+      providerCallCount(upstream),
       'the request must be refused before any billable provider call',
-    ).not.toHaveBeenCalled();
+    ).toBe(0);
   });
 
   it('allows /api/ai for a genuinely entitled user', async () => {
@@ -104,6 +120,102 @@ describe('entitlement is read from app_metadata only', () => {
           email: 'p@b.co',
           app_metadata: { subscription_status: 'active' },
           user_metadata: {},
+        },
+      },
+      error: null,
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { role: 'assistant', content: 'ok' } }],
+            usage: { completion_tokens: 3 },
+          }),
+          text: async () => '',
+        }) as unknown as Response,
+      ),
+    );
+
+    const { status } = await call('ai/chat', {
+      ...AUTHED,
+      body: { messages: [{ role: 'user', content: 'hi' }] },
+    });
+    expect(status).toBe(200);
+  });
+});
+
+describe('isEntitledWithRoleAccess — internal roles bypass the paywall', () => {
+  it('entitles every internal role from app_metadata', () => {
+    for (const role of ['owner', 'ceo', 'admin', 'employee', 'tester']) {
+      expect(
+        isEntitledWithRoleAccess({ app_metadata: { role } }),
+        role,
+      ).toBe(true);
+    }
+  });
+
+  it('still entitles a paid subscription with no role', () => {
+    expect(isEntitledWithRoleAccess({ app_metadata: { subscription_status: 'active' } })).toBe(true);
+    expect(isEntitledWithRoleAccess({ app_metadata: { subscription_status: 'trialing' } })).toBe(true);
+  });
+
+  it('refuses a plain user with no subscription', () => {
+    expect(isEntitledWithRoleAccess({ app_metadata: { role: 'user' } })).toBe(false);
+    expect(isEntitledWithRoleAccess({ app_metadata: {} })).toBe(false);
+    expect(isEntitledWithRoleAccess(null)).toBe(false);
+  });
+
+  it('IGNORES a role forged in user_metadata — same attack as the status forgery', () => {
+    // A signed-in user can set user_metadata.role = 'tester' with one
+    // auth.updateUser call. The role must be read from app_metadata ONLY.
+    const forged = {
+      app_metadata: {},
+      user_metadata: { role: 'tester' },
+    };
+    expect(isEntitledWithRoleAccess(forged)).toBe(false);
+  });
+
+  it('refuses /api/ai for a user who forged the tester role in user_metadata', async () => {
+    supabase.auth.getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 'attacker2',
+          email: 't@b.co',
+          app_metadata: {},
+          user_metadata: { role: 'tester' }, // self-granted
+        },
+      },
+      error: null,
+    });
+
+    const upstream = vi.fn();
+    vi.stubGlobal('fetch', upstream);
+
+    const { status, body } = await call('ai/chat', {
+      ...AUTHED,
+      body: { messages: [{ role: 'user', content: 'hi' }] },
+    });
+
+    expect(status, 'a forged tester role must not buy AI access').toBe(402);
+    expect(body?.code).toBe('subscription_required');
+    expect(
+      providerCallCount(upstream),
+      'the request must be refused before any billable provider call',
+    ).toBe(0);
+  });
+
+  it('allows /api/ai for a genuine tester (role set server-side)', async () => {
+    supabase.auth.getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 'tester1',
+          email: 'qa@b.co',
+          app_metadata: { role: 'tester' },
+          user_metadata: { role: 'tester' },
         },
       },
       error: null,

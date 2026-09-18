@@ -9,6 +9,7 @@ import { needsMfaChallenge, listFactors, completeMfaChallenge } from "../../serv
 import { FrostGlass } from "../ui/FrostGlass";
 import { BorderBeam } from "../ui/BorderBeam";
 import { Capacitor } from "../../lib/nativeShim";
+import { hasCompletedOnboarding } from "../../lib/onboardingGate";
 
 
 export default function AuthPage() {
@@ -44,6 +45,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await completeMfaChallenge(mfaFactorId, mfaCode.replace(/\s+/g, ""));
+      // MFA users are returning accounts that finished onboarding already.
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Invalid verification code");
@@ -83,7 +85,9 @@ export default function AuthPage() {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: captchaToken ? { captchaToken } : undefined,
+          options: {
+            ...(captchaToken ? { captchaToken } : {}),
+          },
         });
         if (signUpError) throw signUpError;
         if (!data.session) {
@@ -95,9 +99,9 @@ export default function AuthPage() {
           return;
         }
         analyticsService.trackFunnel("signup_completed", { method: "email", confirmed: true });
-        navigate("/dashboard");
+        navigate("/onboarding");
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
           options: captchaToken ? { captchaToken } : undefined,
@@ -113,7 +117,12 @@ export default function AuthPage() {
             return;
           }
         }
-        navigate("/dashboard");
+        // Returning users that finished onboarding go straight in. A fresh
+        // signup that skips onboarding (e.g. the interstitial beat the confirm
+        // email) is routed through the role/topic flow too.
+        navigate(
+          hasCompletedOnboarding(signInData.user?.user_metadata) ? "/dashboard" : "/onboarding",
+        );
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -339,38 +348,40 @@ export default function AuthPage() {
                   required
                 />
               </div>
-              <div>
-                <label htmlFor="auth-password" className="block text-[#9090A8] text-xs mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="auth-password"
-                    name="password"
-                    // "new-password" tells a manager to offer a generated
-                    // password on signup and not to autofill the saved one.
-                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-[#1A1A24] border border-[#2A2A3A] rounded-lg px-3 py-2.5 text-[#F0EFFE] text-sm placeholder-[#7A7A96] outline-none focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/20 transition-all pr-10"
-                    placeholder={mode === "signup" ? "Create a password" : "Enter your password"}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    // Icon-only control: without this it is announced as an
-                    // unlabelled button.
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    aria-pressed={showPassword}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7A7A96] hover:text-[#F0EFFE] text-sm transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+              {!mfaPending && (
+                <div>
+                  <label htmlFor="auth-password" className="block text-[#9090A8] text-xs mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-password"
+                      name="password"
+                      // "new-password" tells a manager to offer a generated
+                      // password on signup and not to autofill the saved one.
+                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-[#1A1A24] border border-[#2A2A3A] rounded-lg px-3 py-2.5 text-[#F0EFFE] text-sm placeholder-[#7A7A96] outline-none focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/20 transition-all pr-10"
+                      placeholder={mode === "signup" ? "Create a password" : "Enter your password"}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      // Icon-only control: without this it is announced as an
+                      // unlabelled button.
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7A7A96] hover:text-[#F0EFFE] text-sm transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
-              </div>
-              {mode === "signup" && (
+              )}
+              {mode === "signup" && !mfaPending && (
                 <div>
                   <label htmlFor="auth-confirm" className="block text-[#9090A8] text-xs mb-1">
                     Confirm password

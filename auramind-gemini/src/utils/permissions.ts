@@ -5,6 +5,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   [UserRole.CEO]: 90,
   [UserRole.ADMIN]: 80,
   [UserRole.EMPLOYEE]: 50,
+  [UserRole.TESTER]: 30,
   [UserRole.USER]: 10
 };
 
@@ -13,6 +14,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.CEO]: 'CEO',
   [UserRole.ADMIN]: 'Admin',
   [UserRole.EMPLOYEE]: 'Employee',
+  [UserRole.TESTER]: 'Tester',
   [UserRole.USER]: 'User'
 };
 
@@ -21,6 +23,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   [UserRole.CEO]: 'Executive access, can manage admins and view all data',
   [UserRole.ADMIN]: 'Administrative access, can manage users and content',
   [UserRole.EMPLOYEE]: 'Staff access, can view analytics and manage basic operations',
+  [UserRole.TESTER]: 'Internal QA account, bypasses the paywall for testing only',
   [UserRole.USER]: 'Standard user access'
 };
 
@@ -48,7 +51,9 @@ export const getPermissions = (role: UserRole = UserRole.USER): Permission => {
     canViewAllData: level >= ROLE_HIERARCHY[UserRole.CEO],
     canDeleteUsers: level >= ROLE_HIERARCHY[UserRole.OWNER],
     canAccessAdminPanel: level >= ROLE_HIERARCHY[UserRole.ADMIN],
-    hasFreeAccess: level >= ROLE_HIERARCHY[UserRole.ADMIN]
+    // Testers are internal QA accounts: they skip the paywall to exercise the
+    // product but get NO staff or admin powers.
+    hasFreeAccess: level >= ROLE_HIERARCHY[UserRole.ADMIN] || role === UserRole.TESTER
   };
 };
 
@@ -77,6 +82,39 @@ export const getDefaultRole = (email?: string): UserRole => {
   if (ownerEmail && email === ownerEmail) return UserRole.OWNER;
   return UserRole.USER;
 };
+
+const USER_ROLE_VALUES: readonly string[] = Object.values(UserRole);
+
+/**
+ * Resolve the AUTHORIZATION role for a signed-in user.
+ *
+ * Reads `app_metadata.role` ONLY — the field only the service-role key can
+ * write. `user_metadata.role` is client-writable (any signed-in user can set
+ * it with one `auth.updateUser` call): it holds the onboarding persona
+ * (student, teacher, …) and whatever else the user has written, and must
+ * never reach `getPermissions`, or a user could grant themselves `tester`
+ * free access — or staff-level access — from the browser console.
+ *
+ * An absent or unrecognised value fails closed to `fallback` (default USER),
+ * never to "we don't know yet = elevated". Genuine staff are mirrored into
+ * `app_metadata` by the admin API and synced into `user_profiles` by the
+ * `sync_auth_role_to_profiles` trigger, so no user_metadata fallback is
+ * needed — same deliberate no-fallback rule as the entitlement reader in
+ * `api/_lib/entitlement.ts`.
+ */
+export function resolveAuthorizationRole(
+  user:
+    | { app_metadata?: Record<string, unknown> | null; user_metadata?: Record<string, unknown> | null }
+    | null
+    | undefined,
+  fallback: UserRole = UserRole.USER,
+): UserRole {
+  const raw = user?.app_metadata?.role;
+  if (typeof raw === "string" && (USER_ROLE_VALUES as readonly string[]).includes(raw)) {
+    return raw as UserRole;
+  }
+  return fallback;
+}
 
 // `role` is optional because callers read it off a possibly-unloaded
 // profile (`workspace?.user?.role`). An absent role must fail closed —
