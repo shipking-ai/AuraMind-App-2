@@ -141,18 +141,21 @@
         </receiver>
 </application>
 
-    <!-- Android 11+ package visibility: without this TextToSpeech cannot
-         find the installed speech engine and initialisation fails. -->
+    <!-- Android 11+ package visibility: without these, TextToSpeech and
+         SpeechRecognizer cannot find the installed speech services. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
 
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Voice study mode + audio transcription (MediaRecorder/getUserMedia) -->
+    <!-- Voice study answers (AuraListenPlugin / SpeechRecognizer) + audio transcription -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Haptic feedback on study answers (Capacitor Haptics uses the Vibrator) -->
     <uses-permission android:name="android.permission.VIBRATE" />
