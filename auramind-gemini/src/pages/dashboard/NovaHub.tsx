@@ -26,6 +26,8 @@ const GeneratorPage = React.lazy(() => import("../generator/GeneratorPage"));
 const SettingsPage = React.lazy(() => import("../settings/SettingsPage"));
 const StudyModeRoute = React.lazy(() => import("../study/StudyModePage"));
 const StudyToolsRoute = React.lazy(() => import("../study/StudyToolsPage"));
+const ClassroomsPage = React.lazy(() => import("../classroom/ClassroomsPage"));
+const ClassDetailPage = React.lazy(() => import("../classroom/ClassDetailPage"));
 
 export interface NovaHubProps {
   user: UserProfile;
@@ -85,6 +87,8 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
             <Route path="/chat" element={<AIChatPage />} />
             <Route path="/generator" element={resolveDashboardSurface(isAndroidApp, '/generator') === 'android-generator' ? <AndroidGeneratorScreen /> : <GeneratorPage />} />
             <Route path="/study-tools" element={<StudyToolsRoute />} />
+            <Route path="/classes" element={<ClassroomsPage />} />
+            <Route path="/classes/:id" element={<ClassDetailPage />} />
             <Route path="/settings" element={resolveDashboardSurface(isAndroidApp, '/settings') === 'android-settings' ? <AndroidSettingsScreen /> : <SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

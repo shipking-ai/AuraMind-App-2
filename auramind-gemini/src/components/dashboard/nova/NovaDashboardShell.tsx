@@ -42,6 +42,7 @@ const USER_NAV_SECTIONS: NavSection[] = [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
       { label: 'Library', icon: BookOpen, path: '/dashboard/decks' },
       { label: 'Study', icon: Brain, path: '/dashboard/study' },
+      { label: 'Classes', icon: Users, path: '/dashboard/classes' },
     ],
   },
   {

@@ -15,7 +15,7 @@ the traps that cost real time.
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, **alpha / closed testing, draft** |
 | Branch | `main`, clean, everything pushed |
-| Migrations | all applied, including the four from 2026-09-07/08 |
+| Migrations | all applied, including `20260919000000_classroom_portal.sql` |
 
 ---
 
@@ -234,3 +234,85 @@ the app.
 - **Emulator ports shift on restart.** After a reboot 5556 was gone and
   the phone reappeared as 5554 - always re-check `adb devices` plus
   `getprop ro.product.model` instead of trusting remembered ports.
+
+---
+
+## 2026-09-18 - Classroom Portal
+
+Student/teacher LMS-lite: create classes, join via a 6-char invite code or
+deep link, assign decks/quizzes, per-student progress with most-missed terms.
+Built on the Nova design system. Applied to the live project and verified
+end-to-end (DB smoke + real-browser Playwright).
+
+### What shipped
+
+- **Migration** `supabase/migrations/20260919000000_classroom_portal.sql`:
+  tables `classrooms`, `classroom_memberships`, `assignments`,
+  `assignment_progress`; definer helpers `is_class_member` /
+  `is_class_teacher`; RLS is client-read-only (`SELECT`), *every* write goes
+  through a SECURITY DEFINER RPC; invite codes are `^[A-Z2-9]{6}$`.
+- **App** routes `/dashboard/classes` and `/dashboard/classes/:id` (lazy in
+  `NovaHub`), nav item in `NovaDashboardShell`, service layer
+  `services/classroom/{classroom,assignment}Service.ts`, pure mappers in
+  `lib/classroom/format.ts`, components `ClassProgress` + `AssignDeckModal`.
+- **Tests** `src/__tests__/classroom.test.ts` (19) - mappers, due/percent
+  math, join-code sanitation, error classification. Full suite 384 passing.
+
+### How the security model works (keep it this way)
+
+Roles are **class-scoped**; global `UserRole` is untouched. A class has one
+`owner` plus `teacher`/`student` members. RLS policies are scoped
+`TO authenticated` only so `anon` never evaluates the definer helpers (empty
+rows, not 500s). Definers `SET search_path = public, pg_temp`, are
+`REVOKE EXECUTE FROM PUBLIC, anon` and `GRANT ... TO authenticated`.
+
+Aggregates (status, accuracy, most-missed terms from FSRS/`card_reviews`)
+are persisted, not computed live - the Quizlet model: teacher reads every
+member's progress rows, a student reads only their own.
+
+### Traps found here
+
+- **`accept_class_deck` INSERTed columns that don't exist.** Both deck/copy
+  INSERTs referenced `decks.source_label` and `cards.header`/`image`/
+  `source_label`/`citations` — none exist on the real schema (PL/pgSQL only
+  errors at call time, so this survived type-check/build). Caught by a live
+  smoke test; fixed in the migration file and re-applied to the DB before any
+  commit. If you ever see "column does not exist" from an RPC, verify column
+  names against `information_schema.columns` — definitions don't validate.
+- **`join_classroom_with_code` once selected a nonexistent `is_public`
+  column** (a removed `v_locked` CTE). Same class of bug as above; fixed
+  before shipping. The RPC returns `SETOF classrooms`, not `{ok, id}`.
+- **`rpc().single()` can resolve to `null` or fan out** the same way table
+  `.single()` can. Service layer normalizes through `asRow()` before mapping.
+- **`accept_class_deck` is the idempotency key** for the student flow: it
+  copies the source deck to a student-owned row once, then `record_progress`
+  recomputes status from the student's own reviews. Re-running never
+  regresses a `completed` status backwards.
+- **Freshly accepted class decks work in StudyMode** because the study page
+  reloads the deck by id from the DB instead of trusting workspace state.
+- **Membership table is roster-readable by all members, by design.** Any
+  member can `SELECT` the membership rows of their own class (that's the
+  People tab); cross-class rows are invisible under RLS. Emails stay behind
+  the `classroom_roster()` RPC (teacher-only). Verified in the smoke test.
+- **Class cards used a `<button>` nested inside a `<motion.button>`** —
+  invalid HTML that React only flags at runtime (a console error that the UI
+  E2E caught; type-check/build can't see it). The outer card is now a
+  `role="button"` div with keyboard handling so the inner invite-copy button
+  stays a real button. Grep `motion\.button|<button` when adding cards.
+
+### Verification
+
+`npm run type-check`, `npm run lint`, full `npm test` (384), and `npm run
+build` all pass. The migration is **applied** to the live project
+(`ndwiaawqkkzdsdqeglez`); objects verified in `pg_class`/`pg_proc`, and a 29-
+assertion end-to-end smoke test (teacher create class → assign deck/quiz →
+student join/accept/record → RLS isolation checks, simulated
+authenticated roles via `request.jwt.claims`) passed against the live DB.
+
+Real-browser UI E2E (Playwright, `npm run dev` stack) also passes: seeded a
+captcha-free session via GoTrue admin `generate_link` → `verify` (Turnstile
+gates the password grant — never fight the widget in tests), granted
+`app_metadata.subscription_status: 'active'` (the dashboard gates on
+entitlement), and exercised sign in → create class → detail/tabs → delete
+with **zero console or page errors**. This surfaced and fixed the nested-
+button bug above. Re-run `npm run diagnostics` after any further SQL changes.
