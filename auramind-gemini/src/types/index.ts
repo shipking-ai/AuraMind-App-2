@@ -207,7 +207,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatar?: string;
-  plan: 'Starter' | 'Pro' | 'Scholar';
+  plan: 'Starter' | 'Pro';
   streak: number;
   streakFreezes: number;
   joinedDate: number;

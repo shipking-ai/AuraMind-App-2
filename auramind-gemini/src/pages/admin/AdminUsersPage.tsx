@@ -41,7 +41,6 @@ async function apiCall(path: string, init?: RequestInit): Promise<{ ok: boolean;
 
 const planColor = (p: string) =>
   p === 'Pro' || p === 'pro' ? 'bg-[#7C3AED]/10 text-[#8B5CF6] border border-[#7C3AED]/20'
-  : p === 'Scholar' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
   : 'bg-[#2A2A3A] text-[#7A7A96]';
 
 const statusColor = (s: string) =>
@@ -252,7 +251,6 @@ export default function AdminUsersPage() {
                   <select value={editing.plan} onChange={e => setEditing({ ...editing, plan: e.target.value })} className="w-full px-3 py-2 bg-[#1A1A24] border border-[#2A2A3A] rounded-xl text-xs text-white focus:outline-none focus:border-[#7C3AED]/40 transition-colors">
                     <option value="Starter">Starter (Free)</option>
                     <option value="Pro">Pro</option>
-                    <option value="Scholar">Scholar</option>
                   </select>
                 </Field>
                 <Field label="Subscription Status">

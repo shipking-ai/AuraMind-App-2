@@ -104,10 +104,13 @@ if (typeof window !== "undefined" && !window.requestIdleCallback) {
 //
 //  Two hubs own the authenticated product surface:
 //   • NovaHub   — every /dashboard/* path (overview, tools, study, etc.)
+//   • AdminHub  — every /admin/* path, inside the same Nova shell chrome
 // ─────────────────────────────────────────────────────────────────────────
 
 const NovaHub = React.lazy(() => import("./pages/dashboard/NovaHub"));
-const AdminShellRoute = React.lazy(() => import("./pages/admin/AdminShell"));
+const AdminHub = React.lazy(() => import("./pages/admin/AdminHub"));
+const AdminOverviewRoute = React.lazy(() => import("./pages/admin/AdminOverviewPage"));
+const AdminSettingsRoute = React.lazy(() => import("./pages/admin/AdminSettingsPage"));
 const AdminUsersRoute = React.lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminAppCheckRoute = React.lazy(() => import("./pages/admin/AdminAppCheckPage"));
 
@@ -480,6 +483,26 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
         // applied in place afterwards and does not block the guard.
         setUser(profile);
         setAuthChecked(true);
+        try {
+          // Refresh the user from the server. `session.user` above is the
+          // JWT's embedded claims, frozen at token-mint time — a role
+          // promotion (matty.cigemp -> owner) or an avatar uploaded on
+          // another device stays invisible until the token refreshes, which
+          // is exactly the "cards sync but profile pic / admin don't" bug.
+          // `getUser()` round-trips to PostgREST and returns the CURRENT
+          // app_metadata.role and user_metadata, so both stale-JWT symptom
+          // classes self-heal on every boot without a manual re-login.
+          const { data: freshUser, error: freshError } =
+            await requireSupabase().auth.getUser();
+          if (!freshError && freshUser?.user) {
+            profile = mapAuthUserToProfile(freshUser.user);
+            setUser(profile);
+          } else if (freshError) {
+            console.warn("Fresh user refresh failed, keeping cached session:", freshError.message);
+          }
+        } catch {
+          // network hiccup — the cached session is still usable until next boot
+        }
         try {
           const { data: dbProfile } = await requireSupabase()
             .from("user_profiles")
@@ -974,14 +997,34 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                     currentUser &&
                     getPermissions(currentUser.role || UserRole.USER).canAccessAdminPanel ? (
                       <Suspense fallback={<GenericPageSkeleton />}>
-                        <AdminShellRoute />
+                        {workspaceProps ? (
+                          <AdminHub
+                            user={workspaceProps.user}
+                            decks={workspaceProps.decks}
+                            cards={workspaceProps.cards}
+                            createDeck={workspaceProps.createDeck}
+                            deleteDeck={workspaceProps.deleteDeck}
+                            addCardsToDeck={workspaceProps.addCardsToDeck}
+                            updateProfile={workspaceProps.updateProfile}
+                            onLogout={workspaceProps.onLogout}
+                          />
+                        ) : (
+                          <GenericPageSkeleton />
+                        )}
                       </Suspense>
                     ) : (
                       <Navigate to="/dashboard" replace />
                     )
                   }
                 >
-                  <Route index element={<Navigate to="users" replace />} />
+                  <Route
+                    index
+                    element={
+                      <Suspense fallback={<GenericPageSkeleton />}>
+                        <AdminOverviewRoute />
+                      </Suspense>
+                    }
+                  />
                   <Route
                     path="users"
                     element={
@@ -995,6 +1038,14 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                     element={
                       <Suspense fallback={<GenericPageSkeleton />}>
                         <AdminAppCheckRoute />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="settings"
+                    element={
+                      <Suspense fallback={<GenericPageSkeleton />}>
+                        <AdminSettingsRoute />
                       </Suspense>
                     }
                   />

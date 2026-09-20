@@ -8,7 +8,10 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDashboardWorkspace } from '../../../contexts/DashboardWorkspaceContext';
 import { UserRole } from '../../../types';
+import { isAdminOrHigher } from '../../../utils/permissions';
 import { AnimatedBrandMark, PulsingDot } from './icons';
+// Notification bell panel (unread badge + dropdown over the realtime store).
+import { NotificationPanel, useUnreadCount } from './NotificationPanel';
 import { PageTransition, Shimmer } from './motion';
 import OnboardingTutorial from '../../shared/OnboardingTutorial';
 import AndroidBottomNav from '../../native/AndroidBottomNav';
@@ -56,7 +59,8 @@ const USER_NAV_SECTIONS: NavSection[] = [
 
 // Admin nav links are limited to routes that actually exist in App.tsx —
 // advertising unbuilt pages just produces 404s for admins. Extend this list
-// when new admin routes ship (currently: /admin, /admin/users, /admin/check).
+// when new admin routes ship (currently: /admin, /admin/users,
+// /admin/check, /admin/settings).
 const ADMIN_VAULT_SECTION: NavSection = {
   title: 'Admin',
   badge: 'ADMIN',
@@ -64,12 +68,23 @@ const ADMIN_VAULT_SECTION: NavSection = {
     { label: 'Overview', icon: Shield, path: '/admin' },
     { label: 'Users', icon: Users, path: '/admin/users' },
     { label: 'App Check', icon: Activity, path: '/admin/check' },
+    // No Settings item here on purpose — the sidebar footer already has the
+    // "Admin Settings" button (-> /admin/settings). Two entries to the same
+    // page is a dupe.
   ],
 };
 
 function buildAdminNavSections(_role: UserRole | undefined): NavSection[] {
   // Single real section today; role gating returns when tiered admin pages ship.
-  return [ADMIN_VAULT_SECTION];
+  // The Dashboard escape hatch replaces the one AdminShell's slim bar used to
+  // own — without it there's no way back from /admin/* inside this shell.
+  return [
+    ADMIN_VAULT_SECTION,
+    {
+      title: 'Navigate',
+      items: [{ label: 'Back to Dashboard', icon: LayoutDashboard, path: '/dashboard' }],
+    },
+  ];
 }
 
 // ─── Background layers ──────────────────────────────────────────────────────
@@ -302,10 +317,22 @@ function Sidebar({
       <div className="shrink-0 space-y-1 border-t border-white/[0.06] px-3 py-3">
         <button
           type="button"
-          onClick={() => handleNav(isAdminRoute ? '/admin' : '/dashboard/settings')}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-zinc-500 transition-all hover:bg-white/[0.04] hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50"
+          onClick={() => handleNav(isAdminRoute ? '/admin/settings' : '/dashboard/settings')}
+          aria-current={isActive(isAdminRoute ? '/admin/settings' : '/dashboard/settings') ? 'page' : undefined}
+          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50 ${
+            isActive(isAdminRoute ? '/admin/settings' : '/dashboard/settings')
+              ? 'bg-gradient-to-r from-violet-500/30 via-violet-500/10 to-transparent font-semibold text-white'
+              : 'font-medium text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300'
+          }`}
         >
-          <Settings className="h-4 w-4" aria-hidden />
+          <Settings
+            className={`h-4 w-4 ${
+              isActive(isAdminRoute ? '/admin/settings' : '/dashboard/settings')
+                ? 'text-violet-200'
+                : ''
+            }`}
+            aria-hidden
+          />
           <span className="flex-1 text-left">{isAdminRoute ? 'Admin Settings' : 'Settings'}</span>
         </button>
         {workspace?.onLogout && (
@@ -331,13 +358,19 @@ function TopBar({
   isAdmin,
 }: {
   onMenuClick: () => void;
-  user: { name?: string; email?: string; streak?: number } | null | undefined;
+  user: { name?: string; email?: string; streak?: number; avatar?: string | null } | null | undefined;
   isAdmin: boolean;
 }) {
   const navigate = useNavigate();
   const workspace = useDashboardWorkspace();
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifOpen, setNotifOpen] = useState(false);
+  const unreadCount = useUnreadCount();
+  // Mirror AndroidMobileTopBar: show the uploaded photo when present, with an
+  // initials fallback if the image 404s (deleted from storage, offline).
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const avatar = !avatarFailed ? user?.avatar : undefined;
 
   const initials =
     user?.name
@@ -353,7 +386,7 @@ function TopBar({
     <header
       role="banner"
       aria-label="Application header"
-      className={`flex h-16 shrink-0 items-center justify-between border-b border-white/[0.08] px-4 nova-chrome lg:px-7 ${
+      className={`relative z-40 flex h-16 shrink-0 items-center justify-between border-b border-white/[0.08] px-4 nova-chrome lg:px-7 ${
         isAdmin ? 'border-rose-500/20' : ''
       }`}
     >
@@ -411,14 +444,26 @@ function TopBar({
           </div>
         )}
 
-        <button
-          type="button"
-          className="relative rounded-xl p-2 text-zinc-400 transition-all hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" aria-hidden />
-          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" aria-hidden />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setNotifOpen(v => !v)}
+            className="relative rounded-xl p-2 text-zinc-400 transition-all hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50"
+            aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+            aria-expanded={notifOpen}
+          >
+            <Bell className="h-4 w-4" aria-hidden />
+            {unreadCount > 0 && (
+              <span
+                className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-[9px] font-bold tabular-nums text-white shadow-[0_0_8px_rgba(167,139,250,0.8)]"
+                aria-hidden
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+          <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
+        </div>
 
         <button
           type="button"
@@ -427,14 +472,23 @@ function TopBar({
           className="ml-1 flex items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-2.5 transition-all hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50"
         >
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-lg shadow-lg ${
+            className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg shadow-lg ${
               isAdmin
                 ? 'bg-gradient-to-br from-rose-500 to-amber-500 shadow-rose-500/25'
                 : 'bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-violet-500/25'
             }`}
             aria-hidden
           >
-            <span className="text-[11px] font-bold text-white">{initials}</span>
+            {avatar ? (
+              <img
+                src={avatar}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : (
+              <span className="text-[11px] font-bold text-white">{initials}</span>
+            )}
           </div>
           <span className="hidden max-w-[120px] truncate text-sm font-medium text-zinc-200 md:block">
             {user?.name || 'User'}
@@ -573,7 +627,14 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
     isAndroidMobile && ANDROID_REFRESHABLE_PATHS.has(location.pathname.replace(/\/$/, ''));
 
   const sections = useMemo<NavSection[]>(
-    () => (isOnAdminRoute ? buildAdminNavSections(user?.role) : USER_NAV_SECTIONS),
+    () => {
+      if (isOnAdminRoute) return buildAdminNavSections(user?.role);
+      // Admins get a visible entry point from the dashboard too — previously
+      // the Admin section only rendered once you were already on /admin/*,
+      // so the panel was undiscoverable (Ctrl+K-only) even for owners.
+      if (isAdminOrHigher(user?.role)) return [...USER_NAV_SECTIONS, ADMIN_VAULT_SECTION];
+      return USER_NAV_SECTIONS;
+    },
     [isOnAdminRoute, user?.role],
   );
 

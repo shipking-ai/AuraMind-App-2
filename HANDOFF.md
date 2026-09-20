@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09. Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-18 (onboarding + tester role, E2E seeding). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,7 +14,7 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, **alpha / closed testing, draft** |
-| Branch | `main`, clean, everything pushed |
+| Branch | `main`, clean, 3 commits ahead of origin at last update |
 | Migrations | all applied, including `20260919000000_classroom_portal.sql` |
 
 ---
@@ -316,3 +316,110 @@ gates the password grant — never fight the widget in tests), granted
 entitlement), and exercised sign in → create class → detail/tabs → delete
 with **zero console or page errors**. This surfaced and fixed the nested-
 button bug above. Re-run `npm run diagnostics` after any further SQL changes.
+
+---
+
+## 2026-09-18 - Onboarding + tester role (security fix)
+
+Two features plus one security fix the tester role forced into the open.
+Nothing in `Outstanding — code` changed; the push sender and Aurora motion
+are still the next items.
+
+### What shipped
+
+- **Onboarding flow** — `/onboarding` (persona + topic), lazy-routed in
+  `App.tsx`; the gate `lib/onboardingGate.ts` (`hasCompletedOnboarding`)
+  routes fresh accounts through it from signUp, signIn, and the email callback;
+  legacy picker accounts and internal roles skip it. `PaymentPage`
+  personalizes copy from `?role=&topic=`; `services/decks/topicDeckService.ts`
+  pre-creates the topic deck *before* the paywall (Groq → Puter → offline
+  template), so the library is never empty. New funnel event
+  `onboarding_completed`.
+- **`tester` internal role** — `UserRole.TESTER`, hierarchy 30 (below
+  employee): `hasFreeAccess` true, zero staff powers. Admin role picker and
+  the API zod role enums accept it.
+
+### Security fix: the client's role source was still user_metadata
+
+Adding tester to `hasFreeAccess` exposed that `mapAuthUserToProfile` still
+read `role` from **user_metadata** and fed it to `getPermissions` — any
+signed-in user could set `user_metadata.role = 'tester'` (or `admin`) with one
+`auth.updateUser` call and unlock the paywall. Same bug class as the
+entitlement move: the server reader got fixed, the client's source did not.
+
+- `resolveAuthorizationRole()` (`utils/permissions.ts`) is now the only role
+  source for permission decisions: `app_metadata.role` ONLY, fails closed on
+  unknown values. The onboarding persona lives on a display-only
+  `profile.persona` field.
+- Server parity: `isEntitledWithRoleAccess()` in `api/_lib/entitlement.ts`
+  (owner/ceo/admin/employee/tester, app_metadata only) now gates `/api/ai`
+  chat + transcribe. Previously `hasFreeAccess` was client-only decoration —
+  staff hit 402 on the AI proxy despite an unlocked UI.
+- Regression tests on both sides: `src/__tests__/permissions.test.ts`;
+  `api/tests/entitlement-source.test.ts` (a forged
+  `user_metadata.role = 'tester'` through `/api/ai` must 402 before any
+  provider call).
+- **The rule, restated:** `user_metadata.role` = display persona;
+  `app_metadata.role` = authorization. The `user_profiles.role` elevation
+  check in `syncSession` stays safe only because that column is server-synced
+  from app_metadata and persona strings grant no permission bits — do not
+  loosen either half.
+
+### E2E seeding without fighting Turnstile
+
+`scripts/e2e-seed-session.mjs` + `e2e/onboarding.spec.ts` — 3 tests: the role
+step (all personas render, Continue disabled), the full flow to
+`/subscribe?role=student&topic=…` with personalized copy, and the
+bounce-to-dashboard for finished accounts. The seeder creates/reuses a user
+via the GoTrue admin API (service-role key from the root `.env`), sets
+`user_metadata` per scenario (`--fresh` = empty, else
+`onboarding_completed: true`), and mints a session via `generate_link` →
+magic-link verify → Playwright storage state in `e2e/.auth/`.
+
+Traps found here:
+
+- **vitest `env` values are stringified.** `UPSTASH_X: undefined` in
+  vitest.config becomes the literal string `"undefined"`, which
+  `Boolean(process.env.X)` treats as *configured*. To unset inherited env you
+  must `delete process.env.X` in a `setupFiles` file — `api/tests/setup.ts`
+  does that and tripwires any test that still reaches the limiter.
+- **Inherited shell env breaks CI-green suites locally.** UPSTASH_* exported
+  from the root `.env` made 7 API tests fail on this machine while CI passed
+  (fetch mocks saw Upstash instead of the provider). When local failures make
+  no sense, diff the shell env against CI before suspecting the code.
+- **`redirect_to` cannot override the Supabase Site URL** unless the target
+  is on the project's redirect allowlist — localhost is not, so the seeded
+  session landed on the auramind.app origin and the app bounced to `/auth`.
+  Fix: run the verify hop in Node (`redirect: 'manual'`), take the
+  `#access_token=…` fragment off the Location header, and navigate the *local*
+  `/auth/callback` with it so `detectSessionInURL` stores the session on the
+  right origin.
+- **Playwright route interception doesn't help there**: `route.fetch` dials
+  Supabase from the browser context and hits the same wall as direct
+  navigation.
+- **Playwright's Chromium fails the Supabase hop with
+  `ERR_CERT_DATE_INVALID`** on this machine (sandbox TLS/clock
+  interception). The seeder launches with `--ignore-certificate-errors`;
+  only localhost is visited afterward.
+- **vite on this machine binds `::1` only**, and Node resolves `localhost`
+  IPv6-first: proxy targets must be `127.0.0.1`, not `localhost`, or every
+  proxied `/api` call dies with EADDRINUSE noise and 500s.
+- **`test.use({ storageState })` is captured at collection time**, before any
+  `beforeAll` can seed. Pre-create empty `{}` state files at module scope and
+  let the seeder overwrite them.
+- The browser always logs `Failed to load resource: 402` for the entitlement
+  probe on fresh accounts — expected, `App.tsx` catches it. Assert on
+  `pageerror` plus filtered console errors, not raw console output.
+
+Run: `npx playwright test e2e/onboarding.spec.ts --project=chromium` (vite on
+3001; cleanest with the API also running: `PORT=3002 npx tsx server.js` in
+`api/` plus `VITE_API_PROXY_TARGET=http://127.0.0.1:3002` on the vite
+process). Seeded `e2e-*` users are deleted from auth after runs;
+`e2e/.auth/` is gitignored — storage states contain live session tokens and
+must never be committed.
+
+### Verification
+
+API 95/95; web type-check, lint, 405 unit tests, and production build green;
+E2E 3/3 against the live project. No SQL changed, so no migration or
+`npm run diagnostics` rerun was needed.

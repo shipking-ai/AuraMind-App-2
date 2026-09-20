@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,11 @@ import {
 } from './motion';
 import { AnimatedSparkline, SalesAreaChart } from './NovaCharts';
 import { PulsingDot } from './icons';
+import {
+  bucketReviewsByDay,
+  fetchDailyReviewCounts,
+  type DayActivity,
+} from '../../../services/database/modules/reviewActivityService';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -24,14 +29,39 @@ function startOfTodayMs() {
   return d.getTime();
 }
 
-function makeSpark(seed: number, n = 8): Array<[number, number]> {
-  const arr: Array<[number, number]> = [];
-  const base = Math.max(2, Math.abs(seed));
-  for (let i = 0; i < n; i++) {
-    const v = Math.max(0, base * (0.45 + 0.55 * Math.abs(Math.sin(i * 0.9 + (base % 7) * 0.28))));
-    arr.push([i, v]);
-  }
-  return arr;
+/**
+ * Trailing review activity for the charts. Reads the real per-review log
+ * (`card_reviews`) on mount / account switch; while loading — or when the
+ * log is unreachable (offline) — falls back to bucketing the already-loaded
+ * client cards by `lastReviewed` day. Both sources are real data; nothing
+ * here is ever invented. The fallback undercounts multi-review days (one
+ * timestamp per card) but never fabricates.
+ */
+function useDailyReviewActivity(userId: string | undefined, days: number) {
+  const [activity, setActivity] = useState<DayActivity[] | null>(null);
+  useEffect(() => {
+    if (!userId) {
+      setActivity(null);
+      return;
+    }
+    let cancelled = false;
+    setActivity(null);
+    void fetchDailyReviewCounts(userId, days).then(result => {
+      if (!cancelled) setActivity(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, days]);
+  return activity;
+}
+
+/** Fallback buckets from client cards (lastReviewed day). Real, partial. */
+function bucketClientCards(cards: Card[], days: number): DayActivity[] {
+  const stamps = cards
+    .map(c => c.lastReviewed ?? NaN)
+    .filter(ts => Number.isFinite(ts));
+  return bucketReviewsByDay(stamps, days);
 }
 
 function deckStats(deck: Deck, cards: Card[]) {
@@ -349,20 +379,18 @@ function ActivityPanel({
   totalCards,
   studiedToday,
   dueNow,
+  days,
 }: {
   totalCards: number;
   studiedToday: number;
   dueNow: number;
+  /** Trailing-7-day review counts (real log data). Never synthesized. */
+  days: DayActivity[];
 }) {
-  const points = useMemo(() => {
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const seed = Math.max(studiedToday, 4);
-    return labels.map((label, i) => {
-      const wave = 0.55 + 0.45 * Math.abs(Math.sin(i * 0.85 + seed * 0.07));
-      const weekend = i >= 5 ? 0.72 : 1;
-      return { label, value: Math.max(1, Math.round(seed * wave * weekend * (0.7 + i * 0.06))) };
-    });
-  }, [studiedToday]);
+  const points = useMemo(
+    () => days.map(d => ({ label: d.label, value: d.count })),
+    [days],
+  );
 
   return (
     <FadeUp delay={0.22}>
@@ -779,10 +807,24 @@ export function NovaOverview() {
   const firstName = user?.name?.split(' ')[0] || 'Learner';
   const streak = user?.streak ?? 0;
 
-  const sparkDue = useMemo(() => makeSpark(dueCount), [dueCount]);
-  const sparkToday = useMemo(() => makeSpark(studiedToday), [studiedToday]);
-  const sparkStreak = useMemo(() => makeSpark(streak || 3), [streak]);
-  const sparkMastery = useMemo(() => makeSpark(mastered), [mastered]);
+  // Trailing-8-day review log for the charts (real data; null while
+  // loading/offline, in which case the client-card fallback below applies).
+  const logActivity = useDailyReviewActivity(user?.id, 8);
+  const fallbackDays = useMemo(() => bucketClientCards(cards, 8), [cards]);
+  const trail = logActivity ?? fallbackDays;
+  const weekDays = useMemo(() => trail.slice(-7), [trail]);
+  // Reviewed spark: real trailing counts. Streak spark: real studied/not
+  // per day. Due + Mastered are point-in-time snapshots with no stored
+  // history — reconstructing it would be fabrication, so those pills carry
+  // no spark (the prop is optional).
+  const sparkToday: Array<[number, number]> = useMemo(
+    () => trail.map((d, i) => [i, d.count] as [number, number]),
+    [trail],
+  );
+  const sparkStreak: Array<[number, number]> = useMemo(
+    () => trail.map((d, i) => [i, d.studied ? 1 : 0] as [number, number]),
+    [trail],
+  );
 
   const goStudy = () => {
     if (decks.length === 0) {
@@ -818,15 +860,15 @@ export function NovaOverview() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            <MetricPill icon={Clock} label="Due now" value={dueCount} accent="cyan" spark={sparkDue} delay={0.04} />
+            <MetricPill icon={Clock} label="Due now" value={dueCount} accent="cyan" delay={0.04} />
             <MetricPill icon={Zap} label="Reviewed today" value={studiedToday} accent="violet" spark={sparkToday} delay={0.08} />
             <MetricPill icon={Flame} label="Streak" value={streak} suffix="d" accent="amber" spark={sparkStreak} delay={0.12} />
-            <MetricPill icon={Brain} label="Mastered" value={mastered} accent="fuchsia" spark={sparkMastery} delay={0.16} />
+            <MetricPill icon={Brain} label="Mastered" value={mastered} accent="fuchsia" delay={0.16} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-5">
             <div className="lg:col-span-3">
-              <ActivityPanel totalCards={cards.length} studiedToday={studiedToday} dueNow={dueCount} />
+              <ActivityPanel totalCards={cards.length} studiedToday={studiedToday} dueNow={dueCount} days={weekDays} />
             </div>
             <div className="lg:col-span-2">
               <MemoryHealth
