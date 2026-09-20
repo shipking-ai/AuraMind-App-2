@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-18 (onboarding + tester role, E2E seeding). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-20 (admin hub, notifications, memory sparks in flight). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,7 +14,7 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, **alpha / closed testing, draft** |
-| Branch | `main`, clean, 3 commits ahead of origin at last update |
+| Branch | `main`, 4 commits ahead of origin at last update |
 | Migrations | all applied, including `20260919000000_classroom_portal.sql` |
 
 ---
@@ -423,3 +423,52 @@ must never be committed.
 API 95/95; web type-check, lint, 405 unit tests, and production build green;
 E2E 3/3 against the live project. No SQL changed, so no migration or
 `npm run diagnostics` rerun was needed.
+
+---
+
+## 2026-09-20 - Admin hub unification, real notifications, honest charts
+
+Committed as `be65a1f6` (user-authored; reviewed and verified before commit).
+
+### What shipped
+
+- **Admin hub** — `AdminShell` deleted; every `/admin/*` path renders inside
+  `NovaDashboardShell` via `pages/admin/AdminHub.tsx` (own
+  `DashboardWorkspaceProvider`). New `/admin` Overview (fleet stats, role/plan
+  breakdowns, newest signups, health strip fed by `/api/admin/test` +
+  `/api/admin/health/payments`) and `/admin/settings` (coupon CRUD via
+  `/api/coupons/*`, read-only env readout through the `CLIENT_ENV` allowlist).
+  Command palette's eleven phantom admin pages removed — every palette entry
+  now resolves to a real route. Admin sidebar gained "Back to Dashboard"; the
+  Admin section now renders on `/dashboard/*` for admins too (was
+  Ctrl+K-only).
+- **Notification bell is real** — `NotificationPanel.tsx` over the shared
+  `notificationStore` (unread badge, mark-all-read, `actionUrl` click-through,
+  outside-click + Escape close). Store is shared with QuizGenerationNotifier,
+  so the panel shows real events.
+- **Honest overview charts** — the sin-wave `makeSpark` fiction deleted.
+  `services/database/modules/reviewActivityService.ts` reads real
+  `card_reviews` history (RLS-scoped, `(user_id, reviewed_at)` indexed) and
+  buckets by local day; falls back to bucketing client cards by `lastReviewed`
+  (undercounts multi-review days, never invents). `bucketReviewsByDay` is pure
+  and unit-tested.
+- **Stale-JWT self-heal** — `syncSession` re-fetches the user via
+  `auth.getUser()` on boot, so role promotions and avatars uploaded on another
+  device appear without re-login.
+- **Avatars in TopBar** — from `user_metadata.avatar_url`, initials fallback
+  on image error. `Scholar` plan removed everywhere.
+
+### Security fix: updateUserById replaced metadata wholesale
+
+Every `auth.admin.updateUserById` call (Stripe checkout, subscription
+updates, cancellation, cron dunning, admin status override) passed a bare
+`app_metadata: { subscription_status }`. That call **replaces** the record:
+any purchase or dunning event would have wiped `app_metadata.role` and
+demoted staff/testers. All call sites now spread the existing
+app/user_metadata first; `stripe-flow.test.ts` pins that a buyer carrying
+`role: 'admin'` survives provisioning.
+
+### Verification
+
+Web type-check, lint, 410 unit tests, production build green; API 95/95.
+No SQL changed.
