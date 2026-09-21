@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyMiddleware } from './_middleware.js';
 import { distributedLimiterConfigured } from './_rateLimit.js';
-import { handleAI, handleAITranscribe } from './_aiHandler.js';
+import { handleAI, handleAISpeech, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
 import { readSubscriptionStatus } from './_lib/entitlement.js';
@@ -308,6 +308,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'ai':
         if (action === 'transcribe') {
           return await handleAITranscribe(req, res);
+        }
+        if (action === 'speech') {
+          return await handleAISpeech(req, res);
         }
         return await handleAI(req, res, action);
       case 'stripe':

@@ -11,6 +11,7 @@
  *   POST /api/ai/transcribe  — audio → text (multipart forwarded to Groq;
  *                              the client sends base64 in JSON to keep the
  *                              proxy free of raw file uploads)
+ *   POST /api/ai/speech      — text (≤ 200 chars) → WAV via Orpheus (Groq)
  *
  * Security properties:
  *   - Requires a valid Supabase session (Bearer token) — mirrors /api/search
@@ -43,6 +44,17 @@ const GROQ_TRANSCRIBE_URL = 'https://api.groq.com/openai/v1/audio/transcriptions
 const ALLOWED_TRANSCRIBE_MODELS = new Set(['whisper-large-v3', 'whisper-large-v3-turbo']);
 const DEFAULT_TRANSCRIBE_MODEL = 'whisper-large-v3';
 
+// Neural text-to-speech (Canopy Labs Orpheus on Groq). Groq caps input at 200
+// characters per request, so the client splits text at sentence boundaries.
+const GROQ_SPEECH_URL = 'https://api.groq.com/openai/v1/audio/speech';
+const SPEECH_MODEL = 'canopylabs/orpheus-v1-english';
+export const SPEECH_VOICES: ReadonlySet<string> = new Set(['autumn', 'diana', 'hannah', 'austin', 'daniel', 'troy']);
+const MAX_SPEECH_CHARS = 200;
+// Its own bucket: reading a lesson aloud is many short requests and must not
+// starve chat, and chat must not silence the reader.
+const SPEECH_RATE_LIMIT_MAX = 120;
+const speechRateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
 // Decoded audio size cap (Groq's own limit is 25 MB — leave headroom).
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 
@@ -64,17 +76,21 @@ const USER_RATE_LIMIT_WINDOW = 60_000;
 const USER_RATE_LIMIT_MAX = 60;
 const userRateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-function checkUserRateLimit(userId: string): { allowed: boolean; remaining: number } {
+function checkUserRateLimit(
+  userId: string,
+  store = userRateLimitStore,
+  max = USER_RATE_LIMIT_MAX,
+): { allowed: boolean; remaining: number } {
   const now = Date.now();
-  const entry = userRateLimitStore.get(userId);
+  const entry = store.get(userId);
   if (!entry || now > entry.resetAt) {
-    userRateLimitStore.set(userId, { count: 1, resetAt: now + USER_RATE_LIMIT_WINDOW });
-    return { allowed: true, remaining: USER_RATE_LIMIT_MAX - 1 };
+    store.set(userId, { count: 1, resetAt: now + USER_RATE_LIMIT_WINDOW });
+    return { allowed: true, remaining: max - 1 };
   }
   entry.count++;
   return {
-    allowed: entry.count <= USER_RATE_LIMIT_MAX,
-    remaining: Math.max(0, USER_RATE_LIMIT_MAX - entry.count),
+    allowed: entry.count <= max,
+    remaining: Math.max(0, max - entry.count),
   };
 }
 
@@ -97,7 +113,7 @@ interface AiResponse {
   status: (code: number) => AiResponse;
   setHeader: (name: string, value: string) => AiResponse;
   json: (body: Record<string, unknown>) => void;
-  send: (body: string) => void;
+  send: (body: string | Buffer) => void;
   write: (chunk: string) => void;
   end: () => void;
   flushHeaders?: () => void;
@@ -570,5 +586,104 @@ export async function handleAITranscribe(
     } catch (logErr: any) {
       console.error('[AIHandler] Failed to log transcription:', logErr.message);
     }
+  }
+}
+
+/**
+ * POST /api/ai/speech — text → natural-sounding speech (WAV) via Orpheus.
+ *
+ * Body: { text: string (≤ 200 chars), voice: one of SPEECH_VOICES }.
+ * Same session auth and entitlement as chat; its own per-user rate bucket.
+ * The client caches clips and falls back to on-device voices on any error,
+ * so a 4xx/5xx here degrades to the old voice rather than to silence.
+ */
+export async function handleAISpeech(
+  req: AiRequest,
+  res: AiResponse,
+): Promise<void> {
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const groqKey = getGroqKey();
+  if (!groqKey) {
+    res.status(503).json({ error: 'AI service is not configured on the server' });
+    return;
+  }
+
+  const authHeader = req.headers?.authorization;
+  const token = String(authHeader ?? '').replace(/^Bearer\s+/i, '').trim();
+  if (!token) {
+    res.status(401).json({ error: 'Missing authorization' });
+    return;
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!supabaseUrl || !supabaseServiceKey) {
+    res.status(500).json({ error: 'Server configuration error' });
+    return;
+  }
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    res.status(401).json({ error: 'Invalid token' });
+    return;
+  }
+
+  // Spend gate, same rule as chat and transcription (app_metadata only).
+  if (!isEntitledWithRoleAccess(user)) {
+    res.status(402).json({
+      error: 'A subscription is required to use AI voices.',
+      code: 'subscription_required',
+    });
+    return;
+  }
+
+  const limit = checkUserRateLimit(user.id, speechRateLimitStore, SPEECH_RATE_LIMIT_MAX);
+  res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
+  if (!limit.allowed) {
+    res.status(429).json({ error: 'Too many speech requests. Please wait a moment.' });
+    return;
+  }
+
+  const body = (req.body ?? {}) as { text?: unknown; voice?: unknown };
+  const text = typeof body.text === 'string' ? body.text.trim() : '';
+  if (!text) {
+    res.status(400).json({ error: 'text is required' });
+    return;
+  }
+  if (text.length > MAX_SPEECH_CHARS) {
+    res.status(413).json({ error: `text exceeds ${MAX_SPEECH_CHARS} characters; split it first` });
+    return;
+  }
+  const voice = typeof body.voice === 'string' ? body.voice.toLowerCase() : '';
+  if (!SPEECH_VOICES.has(voice)) {
+    res.status(400).json({ error: 'unknown voice' });
+    return;
+  }
+
+  try {
+    const upstream = await fetch(GROQ_SPEECH_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: SPEECH_MODEL, input: text, voice, response_format: 'wav' }),
+    });
+    if (!upstream.ok) {
+      const errText = (await upstream.text().catch(() => '')).slice(0, 500);
+      // Upstream 4xx (e.g. model terms not yet accepted) is a server problem
+      // from the caller's point of view; never echo anything key-shaped.
+      console.error('[AIHandler] speech upstream error:', upstream.status, errText);
+      res.status(upstream.status >= 500 ? 502 : 503).json({ error: 'AI voice unavailable' });
+      return;
+    }
+    const audio = Buffer.from(await upstream.arrayBuffer());
+    res.status(200).setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    res.send(audio);
+  } catch (err: any) {
+    console.error('[AIHandler] speech proxy error:', err);
+    res.status(502).json({ error: 'AI voice unavailable' });
   }
 }

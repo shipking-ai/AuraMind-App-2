@@ -31,6 +31,13 @@ the traps that cost real time.
    published, so this is the long pole.
 3. **Confirm sign-in works** at auramind.app/auth. Turnstile is wired and the
    site key is correct, but nobody has completed a CAPTCHA end to end.
+4. **Accept the Orpheus model terms** in the Groq console (org admin):
+   console.groq.com/playground?model=canopylabs%2Forpheus-v1-english.
+   Until then `/api/ai/speech` gets `model_terms_required` from Groq, answers
+   503, and every AI voice silently falls back to the device voice. Orpheus is
+   a Groq *preview* model (~$22 per 1M characters); if it is withdrawn, swap
+   `SPEECH_MODEL`/`SPEECH_VOICES` in `api/_aiHandler.ts` and `AI_VOICES` in
+   `src/services/voice/aiVoice.ts`.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
