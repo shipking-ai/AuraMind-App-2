@@ -127,9 +127,7 @@ export function MemorySpark() {
     let cancelled = false;
     let timer: number | undefined;
 
-    const tick = () => {
-      if (cancelled) return;
-      const now = Date.now();
+    const tryFire = (now: number) => {
       const history = getSparkLog();
       const visible = typeof document === 'undefined' || document.visibilityState === 'visible';
       const idle = !phaseRef.current && !busyRef.current;
@@ -142,6 +140,11 @@ export function MemorySpark() {
           analyticsService.track('spark_shown', { cardId: picked.id, surface: 'popup' });
         }
       }
+    };
+
+    const tick = () => {
+      if (cancelled) return;
+      tryFire(Date.now());
       // Jitter the next poll ±20% so the cadence never feels mechanical.
       const jitter = 0.8 + Math.random() * 0.4;
       timer = window.setTimeout(tick, POLL_MS * jitter);
@@ -153,6 +156,28 @@ export function MemorySpark() {
       if (timer) window.clearTimeout(timer);
     };
   }, [routeAllows, prefs, workspace?.cards]);
+
+  // E2E/test hook (dev builds only): `?sparks=force` on a sparkable route
+  // bypasses the sporadic gate and fires the scheduler's PICK immediately —
+  // the eligibility band, caps, and quiet hours still apply, so the test
+  // still exercises the real selection logic; only the coin is removed.
+  // Production is unaffected: the hook reads no query params there.
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('sparks') === 'force') {
+        const t = window.setTimeout(() => {
+          const now = Date.now();
+          const picked = pickSparkCard(workspace?.cards ?? [], { now, history: getSparkLog() });
+          if (picked) {
+            setPhase({ card: picked, revealed: false });
+            analyticsService.track('spark_shown', { cardId: picked.id, surface: 'popup' });
+          }
+        }, 400);
+        return () => window.clearTimeout(t);
+      }
+    }
+  }, [workspace?.cards, location.pathname]);
 
   // Speak the front when a spark appears; the back on reveal.
   useEffect(() => {

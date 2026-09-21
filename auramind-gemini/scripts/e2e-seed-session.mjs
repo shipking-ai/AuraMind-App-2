@@ -40,6 +40,7 @@ const password = arg('--password', `E2e-pass-${Math.random().toString(36).slice(
 const name = arg('--name', 'onboarding');
 const baseUrl = arg('--base-url', 'http://localhost:3001');
 const onboarded = !argv.includes('--fresh');
+const withSparkDeck = argv.includes('--with-spark-deck');
 
 // ── Load service-role key from the repo-root .env (same source migrate uses) ─
 function loadRootEnv() {
@@ -92,10 +93,65 @@ async function main() {
   const metadata = onboarded
     ? { role: 'student', onboarding_topic: 'Cell biology', onboarding_completed: true }
     : {};
+  // Entitlement lives in app_metadata (service-role only). Spark E2E needs
+  // the dashboard, which the paywall guards, so only those accounts get an
+  // active subscription; onboarding E2E must still land on /subscribe. The
+  // existing app_metadata is spread first so a reused account keeps its role.
+  const { data: current } = await admin.auth.admin.getUserById(userId);
   const { error: updateErr } = await admin.auth.admin.updateUserById(userId, {
     user_metadata: metadata,
+    ...(withSparkDeck
+      ? { app_metadata: { ...(current?.user?.app_metadata ?? {}), subscription_status: 'active' } }
+      : {}),
   });
   if (updateErr) throw updateErr;
+
+  // 2b. Optional: seed a deck + cards with FSRS state in the memory-spark
+  //     retrievability band (0.65–0.90). Service-role inserts bypass RLS, and
+  //     rows are keyed to this user so normal sign-out hygiene covers them.
+  //     The card 'Luke?' front/back pair matches the spark E2E assertions.
+  if (withSparkDeck) {
+    const nowIso = new Date().toISOString();
+    const { data: deck, error: deckErr } = await admin
+      .from('decks')
+      .insert({ user_id: userId, name: 'E2E Spark Deck', description: 'memory spark e2e', created_at: nowIso })
+      .select()
+      .single();
+    if (deckErr) throw deckErr;
+
+    const DAY = 24 * 60 * 60 * 1000;
+    // R = (1 + elapsed/S)^-1 with S = 10 days: elapsed ≈ 2.5 days → R ≈ 0.8.
+    // last_reviewed 2.5 days ago also clears the 3 h re-review floor.
+    const lastReviewed = new Date(Date.now() - 2.5 * DAY).toISOString();
+    const fsrs = {
+      stability: 10, difficulty: 5, elapsedDays: 2.5, scheduledDays: 14,
+      repetitions: 3, lapses: 0, lastReview: Date.now() - 2.5 * DAY,
+    };
+    const { data: insertedCards, error: cardsErr } = await admin.from('cards').insert([
+      {
+        user_id: userId, deck_id: deck.id, front: 'Luke?', back: 'Your friend from the demo',
+        interval: 14, ease_factor: 2.5, repetition: 3,
+        last_reviewed: lastReviewed, fsrs_state: JSON.stringify(fsrs),
+      },
+      {
+        user_id: userId, deck_id: deck.id, front: '42?', back: 'The answer',
+        interval: 14, ease_factor: 2.5, repetition: 3,
+        last_reviewed: lastReviewed, fsrs_state: JSON.stringify(fsrs),
+      },
+    ])
+      .select('id, front');
+    if (cardsErr) throw cardsErr;
+
+    // Persist the seeded ids so the spec can deep-link to
+    // /dashboard/spark/:cardId without scraping the UI.
+    const seedInfoPath = resolve(appDir, 'e2e/.auth/spark-seed.json');
+    mkdirSync(dirname(seedInfoPath), { recursive: true });
+    writeFileSync(seedInfoPath, JSON.stringify({
+      deckId: deck.id,
+      cards: (insertedCards ?? []).map((c) => ({ id: c.id, front: c.front })),
+    }, null, 2));
+    console.log(`spark deck seeded (${deck.id})`);
+  }
 
   // 3. Magic link → real browser session (never fights Turnstile).
   const { data: link, error: linkErr } = await admin.auth.admin.generateLink({

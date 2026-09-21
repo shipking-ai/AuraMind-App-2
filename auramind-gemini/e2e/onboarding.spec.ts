@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { canSeedSessions, SEED_SKIP_REASON } from './seedCredentials';
 
 /**
  * Onboarding E2E — real-browser coverage for /onboarding and the auth-entry
@@ -61,6 +62,7 @@ function seed(email: string, state: string, fresh: boolean) {
 
 test.describe('fresh account — onboarding flow', () => {
   test.describe.configure({ mode: 'serial' });
+  test.skip(!canSeedSessions, SEED_SKIP_REASON);
 
   test.beforeAll(async () => {
     seed(FRESH.email, FRESH.state, true);
@@ -137,6 +139,7 @@ test.describe('fresh account — onboarding flow', () => {
 
 test.describe('onboarded account — gate skips the flow', () => {
   test.describe.configure({ mode: 'serial' });
+  test.skip(!canSeedSessions, SEED_SKIP_REASON);
 
   test.beforeAll(async () => {
     seed(DONE.email, DONE.state, false);
