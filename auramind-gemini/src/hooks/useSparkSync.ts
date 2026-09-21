@@ -23,6 +23,7 @@ import { useLocalNotifications } from './useNative';
 import { useCurrentUserId } from './useCurrentUserId';
 import {
   cardsSparkedToday,
+  dropPendingSparks,
   getSparkLog,
   pickSparkCard,
   recordSpark,
@@ -69,6 +70,8 @@ export function useSparkSync(mode: SparkSyncMode = 'maintain'): void {
       try {
         // Cancel-first with fixed IDs: a changed plan replaces, never stacks.
         await Promise.all([...Array.from({ length: 4 }, (_, i) => 7411 + i)].map((id) => cancel(id)));
+        // The cancelled notifications never fire, so forget their log entries.
+        dropPendingSparks('notification');
         if (abandoned) return;
 
         if (!(sparksEnabled && notificationsEnabled)) return;
@@ -80,6 +83,7 @@ export function useSparkSync(mode: SparkSyncMode = 'maintain'): void {
         const now = Date.now();
         const schedulePlan = buildSparkNotificationPlan({ count: 4, now });
         const usedCardIds: string[] = [];
+        const usedAt: number[] = [];
         for (const slot of schedulePlan) {
           // Pick a card per slot at schedule time so the day's notifications
           // cover different cards; skip cards already claimed by an earlier
@@ -88,6 +92,7 @@ export function useSparkSync(mode: SparkSyncMode = 'maintain'): void {
           if (abandoned) return;
           if (!card) break;
           usedCardIds.push(card.id);
+          usedAt.push(new Date(slot.at).getTime());
           await schedule({
             id: slot.id,
             title: 'Memory spark',
@@ -95,12 +100,9 @@ export function useSparkSync(mode: SparkSyncMode = 'maintain'): void {
             schedule: { at: new Date(slot.at) },
           });
         }
-        if (usedCardIds.length > 0) {
-          recordSpark('notification', usedCardIds[0], now);
-          for (let i = 1; i < usedCardIds.length; i++) {
-            recordSpark('notification', usedCardIds[i], now + i);
-          }
-        }
+        // Log each spark at the time it will actually fire, so the pop-up's
+        // spacing and the daily cap see it then — not at planning time.
+        usedCardIds.forEach((id, i) => recordSpark('notification', id, usedAt[i]));
         plannedDayRef.current = dayKey(now);
       } catch {
         // Sparks are a convenience — never interrupt boot over them.

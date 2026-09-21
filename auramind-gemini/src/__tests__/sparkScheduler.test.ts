@@ -8,6 +8,7 @@ import {
   cardRetrievability,
   cardsSparkedToday,
   clearSparkLog,
+  dropPendingSparks,
   fireGate,
   getSparkLog,
   isQuietHour,
@@ -164,6 +165,13 @@ describe('shouldFireNow', () => {
     expect(shouldFireNow({ now: NOW, history, rand: RAND_LOW })).toBe(false);
   });
 
+  it('keeps MIN_SPARK_GAP between any two sparks, whatever the card', () => {
+    const recent = [{ cardId: 'other', ts: NOW - MIN_SPARK_GAP_MS + 60 * 1000, surface: 'popup' as const }];
+    expect(shouldFireNow({ now: NOW, history: recent, rand: RAND_LOW })).toBe(false);
+    const old = [{ cardId: 'other', ts: NOW - MIN_SPARK_GAP_MS - 1, surface: 'popup' as const }];
+    expect(shouldFireNow({ now: NOW, history: old, rand: RAND_LOW })).toBe(true);
+  });
+
   it('is silent deep inside quiet hours', () => {
     const night = new Date(2026, 8, 20, 2, 0, 0).getTime(); // 02:00, inside 22–8
     expect(isQuietHour(night)).toBe(true);
@@ -266,6 +274,14 @@ describe('spark log', () => {
     recordSpark('popup', 'old', NOW - 8 * DAY);
     recordSpark('popup', 'new', NOW);
     expect(getSparkLog().map((e) => e.cardId)).toEqual(['new']);
+  });
+
+  it('dropPendingSparks forgets only future events of that surface', () => {
+    recordSpark('notification', 'fired', NOW - HOUR);
+    recordSpark('notification', 'pending', NOW + HOUR);
+    recordSpark('popup', 'popup-later', NOW + HOUR);
+    dropPendingSparks('notification', NOW);
+    expect(getSparkLog().map((e) => e.cardId)).toEqual(['fired', 'popup-later']);
   });
 
   it('cardsSparkedToday returns only today’s ids', () => {

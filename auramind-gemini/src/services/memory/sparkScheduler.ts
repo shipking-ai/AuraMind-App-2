@@ -88,6 +88,22 @@ export function recordSpark(surface: SparkSurface, cardId: string, now: number =
   }
 }
 
+/**
+ * Drop events of `surface` scheduled after `now`. Notification sparks are
+ * logged at their fire time when planned; a re-plan cancels those
+ * notifications, so their log entries must go too or every app launch would
+ * stack another day's worth against the daily cap.
+ */
+export function dropPendingSparks(surface: SparkSurface, now: number = Date.now()): void {
+  try {
+    const log = getSparkLog();
+    const kept = log.filter((e) => !(e.surface === surface && e.ts > now));
+    if (kept.length !== log.length) localStorage.setItem(SPARK_LOG_KEY, JSON.stringify(kept));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function clearSparkLog(): void {
   try {
     localStorage.removeItem(SPARK_LOG_KEY);
@@ -227,6 +243,9 @@ export function shouldFireNow(
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
   if (history.filter((e) => e.ts >= todayStart.getTime()).length >= DAILY_SPARK_CAP) return false;
+  // Global spacing: without it a dismissed spark could be followed by
+  // another on the very next poll (~90 s), which reads as nagging.
+  if (history.some((e) => e.ts > now - MIN_SPARK_GAP_MS && e.ts <= now)) return false;
 
   const gate = fireGate(now, prefs);
   if (gate <= 0) return false;
