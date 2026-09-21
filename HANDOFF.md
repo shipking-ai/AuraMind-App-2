@@ -472,3 +472,65 @@ app/user_metadata first; `stripe-flow.test.ts` pins that a buyer carrying
 
 Web type-check, lint, 410 unit tests, production build green; API 95/95.
 No SQL changed.
+
+---
+
+## 2026-09-20 - Memory sparks (sporadic resurfacing)
+
+Spec: `SPECS/memory-sparks.md`. Sparks resurface cards in the FSRS
+retrievability band ~0.65–0.90 (fading, not forgotten) across three surfaces,
+all driven by one pure scheduler. Phase 2 (background voice via Foreground
+Service, server push sparks) is explicitly out of scope.
+
+### What shipped
+
+- **`services/memory/sparkScheduler.ts` (pure)** — eligibility band, sporadic
+  firing (jittered ~90 s poll × 15% coin, ramped at quiet-hours edges), daily
+  cap 12, per-card cap 2/day, 20 min between sparks, 3 h re-review floor,
+  weighted pick toward lowest retrievability with jitter. Spark log in
+  `localStorage['auramind:sparkLog']` (7-day retention) gives cross-surface
+  suppression — no DB migration.
+- **Surface 1: in-app pop-up** — `components/memory/MemorySpark.tsx`, mounted
+  once in `NovaDashboardShell`; fires only on dashboard-ish routes while the
+  tab is visible, never during study/chat/admin. Front spoken through
+  `speechOutput`, reveal → grade with the real SRS path
+  (calculateSRS → dbService.updateCard → cardReviewsService, fire-and-forget).
+- **Surface 2: notification sparks** — `lib/sparkNotificationSchedule.ts`
+  (pure planner: 2–4 one-shot times/day inside waking hours, ≥2 h apart,
+  band-jittered so spacing holds) + `hooks/useSparkSync.ts` mounted next to
+  `useReminderSync` in App.tsx. Native only, 'maintain' mode (never prompts on
+  launch), cancel-first with fixed IDs 7411–7414 so re-plans replace rather
+  than stack. One-shots deliberately avoid the `repeats` trap. Tap deep-links
+  to `/dashboard/spark/:cardId` (`pages/dashboard/SparkReviewPage.tsx`) which
+  speaks the prompt and offers reveal + grading; unknown card ids degrade
+  gently.
+- **Surface 3: interleaved sessions** — `services/memory/sessionComposer.ts`
+  (pure) mixes ≤20% near-due cards from OTHER decks into the study queue at
+  expanding gaps; wired into `StudyModePage` behind `auramind_sparksEnabled`.
+  Gap base scales with queue size so the ratio is actually reachable; the
+  last insertion only happens while a full gap can still be honored (no
+  tail-bunching).
+- **Settings** — "Memory sparks" section: master toggle plus per-surface
+  toggles (pop-up, notifications), stored via appPreferences. Quiet hours
+  default 22–8 (scheduler constants; per-surface quiet-hours UI deferred).
+
+### Traps found here
+
+- **getFSRSState's SM-2 fallback fabricates stability for never-reviewed
+  cards** (interval 0, ease 2.5 → stability > 0), so forgettingCurve(0, s) =
+  1 — a naive retrievability helper reports 100% for fresh cards. Gate on
+  `lastReviewed` before trusting retrievability.
+- **Destructured parameter defaults like `rand = Math.random()`** failed to
+  apply under this toolchain (vitest transform), yielding `rand is not a
+  function`; defaulting inside the body via `typeof rand === 'function'` is
+  the reliable pattern for injectable randomness.
+- **updateUserById wholesale replacement** (documented above) applies to any
+  metadata write — the spark log stays client-side partly so sparks never
+  need one.
+
+### Verification
+
+Web type-check, lint, 455 unit tests (45 new: scheduler 28, composer 9,
+notification planner 8), production build green. No SQL changed. E2E for the
+spark surfaces not yet written (needs the seeded-session harness plus a way
+to force `shouldFireNow` deterministically).

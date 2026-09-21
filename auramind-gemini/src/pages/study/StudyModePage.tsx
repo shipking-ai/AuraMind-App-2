@@ -30,6 +30,7 @@ import SessionReplayModal from '../../components/study/SessionReplayModal';
 import { useMultiplayerStudy } from '../../hooks/useMultiplayerStudy';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { useAppPreference, getAppPreference } from '../../lib/appPreferences';
+import { composeSessionQueue } from '../../services/memory/sessionComposer';
 import { loadOfflineAwareData } from '../../lib/offlineAwareData';
 import { trackStudySession } from '../../services/gamification/gamificationService';
 import { useTimer, MotionPath } from '../../lib/effects';
@@ -217,17 +218,30 @@ export default function StudyModePage() {
             : [],
         );
         const pacedQueue = queue.filter((card) => !newCardIds.has(card.id));
+        // Memory sparks (Surface 3): interleave near-due cards from OTHER
+        // decks into the queue so old material keeps resurfacing mid-session.
+        // Pure module; reviews are recorded by the normal path below. Gated
+        // on the master spark toggle; the interleave adds ≤20% of the queue.
+        let composed = pacedQueue;
+        if (getAppPreference('auramind_sparksEnabled', true)) {
+          try {
+            composed = composeSessionQueue(pacedQueue, allCards, {
+              now: Date.now(),
+              currentDeckId: deckId,
+            }).queue;
+          } catch { /* interleave is additive — never block the session */ }
+        }
         const requestedGoal = Number(dailyGoal);
         const requestedMax = Number(maxReviews);
         const sessionLimit = Math.max(
           1,
           Math.min(
-            pacedQueue.length,
+            composed.length,
             Number.isFinite(requestedGoal) && requestedGoal > 0 ? requestedGoal : 20,
             Number.isFinite(requestedMax) && requestedMax > 0 ? requestedMax : 100,
           ),
         );
-        setStudyCards(pacedQueue.slice(0, sessionLimit));
+        setStudyCards(composed.slice(0, sessionLimit));
       } catch (err) {
         console.error('Failed to load study session:', err);
         navigate('/dashboard/study');

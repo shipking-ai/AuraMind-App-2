@@ -57,6 +57,7 @@ import BiometricGate from "./components/native/BiometricGate";
 import { initPushListeners } from "./services/notifications/pushService";
 import { Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
+import { useSparkSync } from "./hooks/useSparkSync";
 import { useShareTarget } from "./hooks/useShareTarget";
 import QuizGenerationNotifier from "./components/notifications/QuizGenerationNotifier";
 import { Toaster, toast } from "./components/ui/sonner";
@@ -742,6 +743,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   // 'maintain' mode this never raises a permission dialog -- it only
   // reschedules when the user has already granted it. See useReminderSync.
   useReminderSync('maintain');
+
+  // Memory sparks (Surface 2): plan the day's notification sparks on native
+  // platforms. Also 'maintain' mode — never prompts on launch. Settings asks.
+  useSparkSync('maintain');
 
   // Content shared into AuraMind from any other app. Gated on authChecked so
   // a share cannot land on a route guard and bounce to /auth, losing itself.

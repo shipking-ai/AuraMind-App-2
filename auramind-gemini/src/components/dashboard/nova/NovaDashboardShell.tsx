@@ -12,6 +12,8 @@ import { isAdminOrHigher } from '../../../utils/permissions';
 import { AnimatedBrandMark, PulsingDot } from './icons';
 // Notification bell panel (unread badge + dropdown over the realtime store).
 import { NotificationPanel, useUnreadCount } from './NotificationPanel';
+// Memory sparks: sporadic FSRS-driven card resurfacing (Surface 1 — in-app).
+import { MemorySpark } from '../../memory/MemorySpark';
 import { PageTransition, Shimmer } from './motion';
 import OnboardingTutorial from '../../shared/OnboardingTutorial';
 import AndroidBottomNav from '../../native/AndroidBottomNav';
@@ -739,6 +741,7 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
       </div>
       {isAndroidMobile && <AndroidBottomNav />}
       {showMobileWebNav && <MobileWebBottomNav />}
+      <MemorySpark />
       <FirstRunGate />
     </div>
   );
