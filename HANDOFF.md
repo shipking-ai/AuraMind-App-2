@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-20 (admin hub, notifications, memory sparks in flight). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-21 (memory sparks E2E, natural voices, migrations applied). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,8 +14,8 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, **alpha / closed testing, draft** |
-| Branch | `main`, 4 commits ahead of origin at last update |
-| Migrations | all applied through `20260919000000_classroom_portal.sql`; **pending, apply in order:** `20260921000000_classroom_rpc_only_writes.sql` (security fix), `20260921000100_classroom_quiz_grading.sql` (graded quizzes) |
+| Branch | `feat/natural-voices` (the `main` line merged via PR #84) |
+| Migrations | all applied through `20260921000100_classroom_quiz_grading.sql` (verified live in `schema_migrations` on 2026-09-21) |
 
 ---
 
@@ -49,8 +49,10 @@ dispatch go live without a console visit.
 Nothing is broken. These are the next things worth doing, roughly in order of
 value:
 
-- **Push sender.** `push_tokens` fills as devices opt in, but no server sends
-  FCM messages yet and no `google-services.json` is configured.
+- **Push sender — built, awaiting credentials.** Server sender, admin send
+  endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
+  nothing delivers until the Firebase console steps at the end of that
+  section are done (google-services.json + FCM_* env vars).
 - **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
   nav) is in; the aurora and prism are still a static gradient and a slow drift.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
@@ -555,6 +557,62 @@ Service, server push sparks) is explicitly out of scope.
 ### Verification
 
 Web type-check, lint, 455 unit tests (45 new: scheduler 28, composer 9,
-notification planner 8), production build green. No SQL changed. E2E for the
-spark surfaces not yet written (needs the seeded-session harness plus a way
-to force `shouldFireNow` deterministically).
+notification planner 8), production build green. No SQL changed. Spark E2E
+since landed in `82ec13dc` (pop-up, grading, deep-link; skips in CI without
+the service key).
+
+---
+
+## 2026-09-21 - Push sender (FCM), dormant until credentials land
+
+The last piece of the push system: `push_tokens` (2026-09-11 migration), the
+client registration flow (`pushService.ts`), and the conditional Android
+gradle plugin all existed; only the server could not deliver. Now it can —
+the moment credentials arrive. Nothing else in the code changes when they do.
+
+### What shipped
+
+- **`api/_lib/push.ts`** — FCM HTTP v1 sender. Service-account JWT signed with
+  `node:crypto` RS256 (no firebase-admin dependency — every dep must be
+  declared, and crypto does this fine), OAuth token cached ~55 min in module
+  scope. `sendPushToUsers()` reads `public.push_tokens`, caps 5 tokens/user,
+  prunes tokens FCM reports dead (404 / UNREGISTERED) so the table doesn't
+  fill with corpses that slow every future send. Fails closed:
+  unconfigured → `configured: false` report, zero network calls.
+- **`POST /api/push/send`** — admin-only (same `app_metadata` role gate as
+  every privileged route), zod-validated (`auramind://` links only, caps on  
+  title/body/userIds). Used for admin-triggered sends and manual testing.
+- **Daily due-card reminders** — cron job 4 on the existing
+  `/api/cron/dunning` run (14:00 UTC in vercel.json): users with cards due in
+  the next 24h get one quiet push (“Cards are coming due…”) deep-linking to
+  the dashboard, capped at 2000 users/run. Timing is deliberate: NOT
+  morning — in-app habit covers the first session of the day.
+- **Tests** — `api/tests/pushLib.test.ts` (config parsing incl. base64 keys,
+  prune vs transient-failure classification) and `api/tests/pushSend.test.ts`
+  (fails closed unconfigured, 401/403 gates, payload validation, happy path).
+
+### Activation checklist (human, no code)
+
+1. Firebase console → project + Android app `com.auramind.app` (debug build
+   uses `com.auramind.app.debug` — register it too if pushes are wanted in
+   debug).
+2. `google-services.json` → `auramind-gemini/android/app/` and rebuild. The
+   gradle plugin applies itself when the file exists (already wired in
+   `app/build.gradle`).
+3. Service account with `firebase-messaging(sender)` → key JSON → set
+   `FCM_PROJECT_ID` + `FCM_SERVICE_ACCOUNT_KEY` (raw or base64) on the API.
+4. Test: enable push in app Settings on a device (token lands in
+   `push_tokens`), then `POST /api/push/send` as an admin.
+
+### Traps found here
+
+- **Mocks must be URL-aware.** The sender makes two different fetches (OAuth
+  exchange → token endpoint, then FCM). A mock that 404s everything fails
+  before the FCM call, and the test failure points at the wrong thing.
+- **`createSign().sign()` needs a real PEM**, even in tests — throw up a
+  512-bit key with `generateKeyPairSync` rather than stubbing crypto.
+
+### Verification
+
+API 113/113 (14 new). Web type-check, lint green (one doc-comment change).
+No SQL changed, so no migration or `npm run diagnostics` rerun.
