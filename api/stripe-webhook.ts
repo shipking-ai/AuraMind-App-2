@@ -311,11 +311,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const sub = await stripe.subscriptions.retrieve(session.subscription as string);
           const subscription = sub as any;
 
+          // updateUserById REPLACES metadata wholesale: spread the current
+          // record first or a purchase would wipe app_metadata.role
+          // (demoting staff) and user_metadata display fields (name,
+          // avatar, onboarding flags).
+          const { data: existingCheckout } = await supabase.auth.admin.getUserById(userId);
           await supabase.auth.admin.updateUserById(userId, {
             // Authoritative entitlement. app_metadata is service-role only;
             // user_metadata below is client-writable and is display data.
-            app_metadata: { subscription_status: subscription.status },
+            app_metadata: {
+              ...(existingCheckout?.user?.app_metadata || {}),
+              subscription_status: subscription.status,
+            },
             user_metadata: {
+              ...(existingCheckout?.user?.user_metadata || {}),
               stripe_customer_id: session.customer as string,
               stripe_subscription_id: subscription.id,
               subscription_status: subscription.status,
@@ -353,11 +362,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const plan = subscription.status === 'active' || subscription.status === 'trialing'
             ? 'Pro' : 'Starter';
 
+          // Spread current metadata first — updateUserById replaces wholesale
+          // (see checkout.session.completed above for what gets wiped).
+          const { data: existingSub } = await supabase.auth.admin.getUserById(userId);
           await supabase.auth.admin.updateUserById(userId, {
             // Authoritative entitlement. app_metadata is service-role only;
             // user_metadata below is client-writable and is display data.
-            app_metadata: { subscription_status: subscription.status },
+            app_metadata: {
+              ...(existingSub?.user?.app_metadata || {}),
+              subscription_status: subscription.status,
+            },
             user_metadata: {
+              ...(existingSub?.user?.user_metadata || {}),
               stripe_subscription_id: subscription.id,
               subscription_status: subscription.status,
               plan,
@@ -379,11 +395,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const userId = subscription.metadata?.supabase_user_id;
 
         if (userId) {
+          // Fetch first: the merge below needs the current record, and the
+          // cancellation email needs the pre-wipe display name.
+          const { data: user } = await supabase.auth.admin.getUserById(userId);
           await supabase.auth.admin.updateUserById(userId, {
             // Authoritative entitlement. app_metadata is service-role only;
             // user_metadata below is client-writable and is display data.
-            app_metadata: { subscription_status: 'canceled' },
+            // Spread current metadata — updateUserById replaces wholesale.
+            app_metadata: {
+              ...(user?.user?.app_metadata || {}),
+              subscription_status: 'canceled',
+            },
             user_metadata: {
+              ...(user?.user?.user_metadata || {}),
               subscription_status: 'canceled',
               plan: 'Starter',
               trial_end: null,
@@ -391,7 +415,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
 
           // Get user email for notification
-          const { data: user } = await supabase.auth.admin.getUserById(userId);
           if (user?.user?.email) {
             await sendSubscriptionCancelledEmail(
               user.user.email,
@@ -435,11 +458,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const userId = subscription.metadata?.supabase_user_id;
 
           if (userId) {
+            // Fetch first for the merge below (updateUserById replaces
+            // wholesale) and reuse for the receipt email.
+            const { data: user } = await supabase.auth.admin.getUserById(userId);
             await supabase.auth.admin.updateUserById(userId, {
               // Authoritative entitlement. app_metadata is service-role only;
               // user_metadata below is client-writable and is display data.
-              app_metadata: { subscription_status: subscription.status },
+              app_metadata: {
+                ...(user?.user?.app_metadata || {}),
+                subscription_status: subscription.status,
+              },
               user_metadata: {
+                ...(user?.user?.user_metadata || {}),
                 subscription_status: subscription.status,
                 plan: 'Pro',
                 // Dunning recovery — clear the failure trail so the grace
@@ -450,7 +480,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
 
             // Get user email for notification
-            const { data: user } = await supabase.auth.admin.getUserById(userId);
             if (user?.user?.email) {
               const amount = invoice.amount_paid ? (invoice.amount_paid / 100).toFixed(2) : '0.00';
               const currency = invoice.currency?.toUpperCase() || 'USD';
@@ -491,8 +520,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             await supabase.auth.admin.updateUserById(userId, {
               // Authoritative entitlement. app_metadata is service-role only;
               // user_metadata below is client-writable and is display data.
-              app_metadata: { subscription_status: 'past_due' },
+              // Spread current metadata — updateUserById replaces wholesale
+              // (currentUser was already fetched above for priorFailures).
+              app_metadata: {
+                ...(currentUser?.user?.app_metadata || {}),
+                subscription_status: 'past_due',
+              },
               user_metadata: {
+                ...(currentUser?.user?.user_metadata || {}),
                 subscription_status: 'past_due',
                 payment_failure_count: priorFailures + 1,
                 last_payment_failure_at: new Date().toISOString(),

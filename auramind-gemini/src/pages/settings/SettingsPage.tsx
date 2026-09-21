@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Zap, Bell, Palette, Shield, AlertTriangle, Volume2, RefreshCw, Languages, Accessibility, Pencil, Check, X, Camera, Trash2, Upload as UploadIcon, LogOut } from '@/components/icons';
+import { BookOpen, Zap, Bell, Palette, Shield, AlertTriangle, Volume2, RefreshCw, Languages, Accessibility, Pencil, Check, X, Camera, Trash2, Upload as UploadIcon, LogOut, Sparkles } from '@/components/icons';
 import { toast } from 'sonner';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
@@ -278,6 +278,10 @@ export default function SettingsPage() {
   const [includeExamples, setIncludeExamples] = useLocalStorage('auramind_includeExamples', true);
   const [defaultLanguage, setDefaultLanguage] = useLocalStorage('auramind_defaultLanguage', 'English');
   const [dailyReminder, setDailyReminder] = useLocalStorage('auramind_dailyReminder', true);
+  // Memory sparks (sporadic FSRS-driven resurfacing) — master + per-surface.
+  const [sparksEnabled, setSparksEnabled] = useLocalStorage('auramind_sparksEnabled', true);
+  const [sparksPopup, setSparksPopup] = useLocalStorage('auramind_sparksPopup', true);
+  const [sparksNotifications, setSparksNotifications] = useLocalStorage('auramind_sparksNotifications', true);
   const [reminderTime, setReminderTime] = useLocalStorage('auramind_reminderTime', '09:00');
   const [dueReminder, setDueReminder] = useLocalStorage('auramind_dueReminder', true);
   const [streakReminder, setStreakReminder] = useLocalStorage('auramind_streakReminder', true);
@@ -647,6 +651,28 @@ export default function SettingsPage() {
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Weekly progress summary">
               <Toggle on={weeklySummary} onChange={setWeeklySummary} />
+            </SettingRow>
+          </div>
+        </div>
+
+        {/* Memory sparks */}
+        <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
+          <SectionHeader
+            icon={Sparkles}
+            title="Memory sparks"
+            subtitle="Sporadically resurface cards as recall fades — pop-ups, gentle notifications, and mixes into study sessions."
+          />
+          <div className="space-y-1">
+            <SettingRow label="Memory sparks">
+              <Toggle on={sparksEnabled} onChange={setSparksEnabled} />
+            </SettingRow>
+            <div className="border-t border-[#2A2A3A]/30" />
+            <SettingRow label="In-app pop-up sparks">
+              <Toggle on={sparksPopup} onChange={setSparksPopup} />
+            </SettingRow>
+            <div className="border-t border-[#2A2A3A]/30" />
+            <SettingRow label="Notification sparks">
+              <Toggle on={sparksNotifications} onChange={setSparksNotifications} />
             </SettingRow>
           </div>
         </div>

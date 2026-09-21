@@ -60,7 +60,7 @@ const AdminToggleSchema = z.object({
 const AdminSetRoleSchema = z.object({
   targetUserId: z.string().uuid(),
   testData: z.object({
-    role: z.enum(['user', 'employee', 'admin', 'ceo', 'owner']).optional(),
+    role: z.enum(['user', 'tester', 'employee', 'admin', 'ceo', 'owner']).optional(),
   }).optional(),
 });
 
@@ -77,7 +77,7 @@ const CreateTestUserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8, 'password must be at least 8 characters'),
     makeAdmin: z.boolean().optional(),
-    role: z.enum(['user', 'employee', 'admin', 'ceo', 'owner']).optional(),
+    role: z.enum(['user', 'tester', 'employee', 'admin', 'ceo', 'owner']).optional(),
   }),
 });
 
@@ -123,7 +123,7 @@ const AuditCreateSchema = z.object({
 
 const BulkRoleChangeSchema = z.object({
   userIds: z.array(z.string().uuid()).min(1, 'At least one userId is required').max(100, 'Max 100 users at a time'),
-  role: z.enum(['user', 'employee', 'admin']),
+  role: z.enum(['user', 'tester', 'employee', 'admin']),
 });
 
 const BulkEmailSchema = z.object({
@@ -483,8 +483,14 @@ async function handleAdminUtility(req: VercelRequest, res: VercelResponse, supab
       if (!userData?.user) return json(res, 404, { error: 'User not found' });
 
       await supabase.auth.admin.updateUserById(targetUserId, {
-        // Authoritative copy — service-role only.
-        app_metadata: { subscription_status: status || 'active' },
+        // Authoritative copy — service-role only. updateUserById REPLACES
+        // metadata wholesale, so the existing app_metadata must be spread
+        // first: a bare { subscription_status } would silently wipe
+        // app_metadata.role and demote staff/testers to regular users.
+        app_metadata: {
+          ...userData.user.app_metadata,
+          subscription_status: status || 'active',
+        },
         user_metadata: {
           ...userData.user.user_metadata,
           subscription_status: status || 'active',
@@ -786,6 +792,88 @@ async function handleAdminTest(req: VercelRequest, res: VercelResponse, supabase
     results.tests.push({ name: 'Resend Email', status: 'failed', message: err.message });
   }
 
+  // Test Storage (avatars bucket) — profile photos 404 when this is missing
+  // or private, and nothing else checks it.
+  try {
+    const { data: bucket, error: bucketError } = await supabase.storage.getBucket('avatars');
+    if (bucketError || !bucket) {
+      results.tests.push({ name: 'Avatar Storage', status: 'failed', message: bucketError?.message || 'avatars bucket missing' });
+    } else if (!bucket.public) {
+      results.tests.push({ name: 'Avatar Storage', status: 'failed', message: 'avatars bucket is not public — profile photos will 404' });
+    } else {
+      results.tests.push({ name: 'Avatar Storage', status: 'passed', message: 'avatars bucket is public' });
+    }
+  } catch (err: any) {
+    results.tests.push({ name: 'Avatar Storage', status: 'failed', message: err.message });
+  }
+
+  // Test cron configuration — an unset CRON_SECRET means Vercel cron calls
+  // 401 and dunning/trial jobs silently never run.
+  {
+    const cronSecret = process.env.CRON_SECRET || '';
+    const graceDays = process.env.DUNNING_GRACE_DAYS || '7';
+    if (!cronSecret) {
+      results.tests.push({ name: 'Cron Jobs', status: 'failed', message: 'CRON_SECRET not configured — scheduled jobs are dead' });
+    } else {
+      results.tests.push({ name: 'Cron Jobs', status: 'passed', message: `Secret set · dunning grace ${graceDays}d` });
+    }
+  }
+
+  // Test webhook flow — the payments check only proves the Stripe endpoint
+  // EXISTS; the idempotency ledger proves events are actually ARRIVING.
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { count, error: ledgerError } = await supabase
+      .from('processed_webhook_events')
+      .select('event_id', { count: 'exact', head: true })
+      .gte('processed_at', weekAgo);
+    if (ledgerError) {
+      results.tests.push({ name: 'Webhook Flow', status: 'failed', message: ledgerError.message });
+    } else {
+      results.tests.push({ name: 'Webhook Flow', status: 'passed', message: `${count ?? 0} events delivered in the last 7 days` });
+    }
+  } catch (err: any) {
+    results.tests.push({ name: 'Webhook Flow', status: 'failed', message: err.message });
+  }
+
+  // Test sellable catalog — Stripe reachable but with zero active recurring
+  // prices means there is nothing to sell.
+  try {
+    const Stripe = (await import('stripe')).default;
+    const secretKey = process.env.STRIPE_SECRET_KEY || '';
+    if (!secretKey) {
+      results.tests.push({ name: 'Sellable Catalog', status: 'failed', message: 'STRIPE_SECRET_KEY not configured' });
+    } else {
+      const stripe = new Stripe(secretKey);
+      const prices = await stripe.prices.list({ limit: 20, active: true });
+      const recurring = prices.data.filter((p: any) => p.recurring);
+      if (recurring.length > 0) {
+        results.tests.push({ name: 'Sellable Catalog', status: 'passed', message: `${recurring.length} active recurring price${recurring.length === 1 ? '' : 's'}` });
+      } else {
+        results.tests.push({ name: 'Sellable Catalog', status: 'failed', message: 'No active recurring prices — nothing to sell' });
+      }
+    }
+  } catch (err: any) {
+    results.tests.push({ name: 'Sellable Catalog', status: 'failed', message: err.message });
+  }
+
+  // Test core tables — catches migration drift live (a table the app reads
+  // that doesn't exist breaks entire surfaces, not just one query).
+  try {
+    const missing: string[] = [];
+    for (const table of ['user_profiles', 'decks', 'cards']) {
+      const { error: tableError } = await supabase.from(table).select('id', { count: 'exact', head: true }).limit(0);
+      if (tableError) missing.push(`${table} (${tableError.message})`);
+    }
+    if (missing.length === 0) {
+      results.tests.push({ name: 'Core Tables', status: 'passed', message: 'user_profiles · decks · cards reachable' });
+    } else {
+      results.tests.push({ name: 'Core Tables', status: 'failed', message: missing.join('; ') });
+    }
+  } catch (err: any) {
+    results.tests.push({ name: 'Core Tables', status: 'failed', message: err.message });
+  }
+
   return json(res, 200, results);
 }
 
@@ -989,8 +1077,14 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
             const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
             if (userData?.user) {
               await supabaseAdmin.auth.admin.updateUserById(userId, {
-                // Authoritative copy — service-role only.
-                app_metadata: { subscription_status: 'trialing' },
+                // Authoritative copy — service-role only. Spread existing
+                // app_metadata first: updateUserById replaces wholesale, and
+                // a bare { subscription_status } would demote staff who buy
+                // a subscription by wiping app_metadata.role.
+                app_metadata: {
+                  ...userData.user.app_metadata,
+                  subscription_status: 'trialing',
+                },
                 user_metadata: {
                   ...userData.user.user_metadata,
                   subscription_status: 'trialing',
@@ -1810,7 +1904,9 @@ async function handleCron(req: VercelRequest, res: VercelResponse, action?: stri
         if (Number.isNaN(failedAt) || now - failedAt > graceMs) {
           try {
             await supabase.auth.admin.updateUserById(user.id, {
-              app_metadata: { subscription_status: 'expired' },
+              // Spread existing app_metadata: updateUserById replaces
+              // wholesale, and a bare object would wipe app_metadata.role.
+              app_metadata: { ...(user.app_metadata || {}), subscription_status: 'expired' },
               user_metadata: { ...meta, subscription_status: 'expired', plan: 'Starter' },
             });
             summary.dunningExpired++;

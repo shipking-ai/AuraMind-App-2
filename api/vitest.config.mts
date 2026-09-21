@@ -5,6 +5,13 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     testTimeout: 15000,
+    // Hermetic defaults: every key a handler might read gets a dummy value so
+    // tests never depend on machine configuration. UPSTASH_* (the distributed
+    // rate limiter) is deliberately NOT set here — `env` stringifies values,
+    // so `undefined` would become the literal "undefined" and make the
+    // limiter think it is configured. tests/setup.ts deletes any inherited
+    // UPSTASH_* instead; see that file for the full rationale.
+    setupFiles: ['tests/setup.ts'],
     env: {
       NODE_ENV: 'test',
       SUPABASE_URL: 'https://test.supabase.co',
