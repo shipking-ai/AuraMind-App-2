@@ -53,8 +53,10 @@ value:
   endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
   nothing delivers until the Firebase console steps at the end of that
   section are done (google-services.json + FCM_* env vars).
-- **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
-  nav) is in; the aurora and prism are still a static gradient and a slow drift.
+- **Aurora motion — shipped** (2026-09-21, below). What remains in this
+  theme: the landing-page hero blobs and the Android aura are still
+  time-animated only; the scroll-reactive depth stack covers the dashboard
+  shell.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
@@ -616,3 +618,47 @@ the moment credentials arrive. Nothing else in the code changes when they do.
 
 API 113/113 (14 new). Web type-check, lint green (one doc-comment change).
 No SQL changed, so no migration or `npm run diagnostics` rerun.
+
+---
+
+## 2026-09-21 - Aurora motion (scroll-reactive background)
+
+The dashboard aurora and orbs are no longer a static gradient plus a
+time-only drift: they form a depth stack that responds to scrolling.
+Everything lives in `NovaDashboardShell.tsx`.
+
+### How it works
+
+- The shell scrolls on the **inner** `<main id="nova-main-content">`, not
+  the window — so the effect can't use framer's `useScroll()` default. The
+  shell owns one `useMotionValue` fed by a **rAF-throttled passive scroll
+  listener** on that element, **clamped to 900px** (a long page saturates
+  the effect instead of pushing layers off-screen) and **reset to 0 on
+  route change** so every page starts at the static baseline.
+- Layer depths (per px scrolled, after a shared spring stiffness 60):
+  aurora `y −0.09` + `scale +0.00006` + `hue-rotate 0.04°` (nearest veil,
+  the hue drift), orbs `+0.22 / +0.12 / +0.05` (positive = drifts down =
+  deeper), grid `+0.03` counter-drift (farthest anchor). All MotionValues →
+  zero re-renders; framer composes the transforms on the compositor.
+- **Parallax wrapper pattern:** each orb is wrapped in a `ParallaxLayer`
+  that owns the scroll `y`, while the orb *inside* keeps its original
+  time-drift `animate`. Two elements, two transforms — no property fight
+  (the framer-owns-`style.transform` trap).
+- Reduced-motion (`useRM`): the scroll listener never attaches and orb
+  time-drift stops — the exact pre-change static background. The aurora
+  layer is oversized (`-inset-24`) so translate/scale can't expose an edge.
+- Bleed/study routes have no scroller → scrollTop stays 0 → static.
+
+### Verification
+
+`e2e/aurora.spec.ts` (seeded session, skips in CI like the other seeded
+specs): scrolls `main#nova-main-content` by 700px, reads computed
+transform/filter of both background layers before/after, asserts ≥2 layers
+moved and `.nova-shell` did not. Measured, not eyeballed. Plus web
+type-check, lint, 472 unit tests, production build.
+
+E2E traps worth keeping: the seeder writes its storage state **to the
+`--name` path** (pass the state file path, not a display name), and
+`--with-spark-deck` is the flag that grants `subscription_status: 'active'`
+— a fresh account without entitlement bounces to /subscribe before any
+shell renders.
