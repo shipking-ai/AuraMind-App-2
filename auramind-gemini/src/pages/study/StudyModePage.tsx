@@ -33,6 +33,7 @@ import { useAppPreference, getAppPreference } from '../../lib/appPreferences';
 import { composeSessionQueue } from '../../services/memory/sessionComposer';
 import { loadOfflineAwareData } from '../../lib/offlineAwareData';
 import { trackStudySession } from '../../services/gamification/gamificationService';
+import { assignmentService } from '../../services/classroom/assignmentService';
 import { useTimer, MotionPath } from '../../lib/effects';
 import { VoiceStudyControls } from '../../components/study/VoiceStudyControls';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
@@ -445,9 +446,18 @@ export default function StudyModePage() {
           accuracy: sessionAccuracy,
           duration: sessionDuration,
         };
-        sessionService.saveStudySession(sessionPayload).catch((err) => {
-          console.warn('saveStudySession failed (non-blocking):', err);
-        });
+        const studiedDeckId = deck?.id;
+        sessionService
+          .saveStudySession(sessionPayload)
+          .catch((err) => {
+            console.warn('saveStudySession failed (non-blocking):', err);
+          })
+          // Class copies report progress to the teacher; the RPC reads the
+          // session just saved, so this runs after it. No-op for other decks.
+          .then(() => (studiedDeckId ? assignmentService.syncProgressForDeck(studiedDeckId) : undefined))
+          .catch((err) => {
+            console.warn('class assignment sync failed (non-blocking):', err);
+          });
         // Fire-and-forget update to the localStorage-backed streak counter.
         // duration is the field name AND the unit (minutes) in the gamification
         // layer; convert ms → minutes and pass through the percent accuracy.

@@ -137,6 +137,23 @@ export const assignmentService = {
     };
   },
 
+  /**
+   * Student side: after a study session on a class copy of a deck, refresh
+   * every assignment that copy belongs to so the teacher sees live progress
+   * without the student tapping "Refresh". A local deck id is unique to its
+   * owner, so this only ever matches the caller's own progress rows.
+   */
+  async syncProgressForDeck(localDeckId: string): Promise<void> {
+    const { data, error } = await requireSupabase()
+      .from("assignment_progress")
+      .select("assignment_id")
+      .eq("local_deck_id", localDeckId);
+    if (error) throw error;
+    for (const row of data ?? []) {
+      await this.recordProgress(row.assignment_id, { localDeckId });
+    }
+  },
+
   /** Student side: recompute + persist progress for an assignment. */
   async recordProgress(
     assignmentId: string,
