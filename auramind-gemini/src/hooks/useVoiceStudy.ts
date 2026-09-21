@@ -1,7 +1,9 @@
 /**
- * useVoiceStudy — hands-free study powered by the Web Speech API.
+ * useVoiceStudy — hands-free study: speaks prompts, listens for answers.
  *
- * All browser-quirk handling lives in services/voice/speechEngine.ts; this
+ * Speaking goes through services/voice/speechOutput.ts (native TTS in the
+ * Android app, Web Speech elsewhere, honouring the chosen voice). Listening
+ * and browser-quirk handling live in services/voice/speechEngine.ts; this
  * hook is the React binding. Notable behaviour:
  *
  *   - `ttsSupported` and `sttSupported` are reported separately. Firefox has
@@ -20,12 +22,12 @@ import {
   describeSpeechError,
   getSpeechCapabilities,
   loadVoices,
-  pickPreferredVoice,
   UNSUPPORTED_STT_ERROR,
   type SpeechError,
   type SpeechRecognitionEventLike,
   type SpeechRecognitionLike,
 } from '../services/voice/speechEngine';
+import { speak as speakAloud, stopSpeaking } from '../services/voice/speechOutput';
 
 export interface VoiceStudyState {
   speaking: boolean;
@@ -75,7 +77,6 @@ export function useVoiceStudy(options?: {
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState<SpeechError | null>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voicesReady, setVoicesReady] = useState(false);
 
   // Written only from callbacks — never during render.
@@ -98,10 +99,10 @@ export function useVoiceStudy(options?: {
       return;
     }
     let alive = true;
-    loadVoices().then((v) => {
-      if (!alive) return;
-      setVoices(v);
-      setVoicesReady(true);
+    // speechOutput resolves the voice per utterance; this only reports
+    // when the web voice list has settled.
+    loadVoices().then(() => {
+      if (alive) setVoicesReady(true);
     });
     return () => {
       alive = false;
@@ -114,48 +115,33 @@ export function useVoiceStudy(options?: {
 
   // ── Speak ──────────────────────────────────────────────────────────────
 
+  // Bumped on every speak/cancel so a superseded utterance never flips
+  // `speaking` off or fires the previous onEnd.
+  const speakTokenRef = useRef(0);
+
   const speak = useCallback(
     (text: string, onEnd?: () => void) => {
-      if (!caps.tts || typeof window === 'undefined') return;
+      if (!caps.tts) return;
       if (!text.trim()) {
         onEnd?.();
         return;
       }
-      const synth = window.speechSynthesis;
-      const cleaned = text.replace(/\s+/g, ' ').trim();
-      const utterance = new SpeechSynthesisUtterance(cleaned);
-      utterance.rate = rate;
-      utterance.pitch = pitch;
-      utterance.lang = lang;
-      const preferred = pickPreferredVoice(voices, voiceURI, lang);
-      if (preferred) utterance.voice = preferred;
-
-      let finished = false;
-      const finish = (withEnd: boolean) => {
-        if (finished) return;
-        finished = true;
+      const token = ++speakTokenRef.current;
+      setSpeaking(true);
+      void speakAloud(text, { rate, pitch, lang, voice: voiceURI }).then(({ interrupted }) => {
+        if (token !== speakTokenRef.current) return;
         setSpeaking(false);
-        if (withEnd) onEnd?.();
-      };
-      utterance.onstart = () => setSpeaking(true);
-      utterance.onend = () => finish(true);
-      utterance.onerror = () => finish(false);
-      // Remove handlers on end so a cancelled utterance can't call onEnd twice.
-      utterance.onend = () => {
-        finish(true);
-        utterance.onend = null;
-        utterance.onerror = null;
-      };
-
-      synth.cancel();
-      synth.speak(utterance);
+        // Only a natural finish advances the session; a stop does not.
+        if (!interrupted) onEnd?.();
+      });
     },
-    [caps.tts, voices, voiceURI, rate, pitch, lang],
+    [caps.tts, voiceURI, rate, pitch, lang],
   );
 
   const cancelSpeech = useCallback(() => {
-    if (!caps.tts || typeof window === 'undefined') return;
-    window.speechSynthesis.cancel();
+    if (!caps.tts) return;
+    speakTokenRef.current += 1;
+    stopSpeaking();
     setSpeaking(false);
   }, [caps.tts]);
 
@@ -255,12 +241,14 @@ export function useVoiceStudy(options?: {
       } catch {
         /* no-op */
       }
-      // Check the live object rather than the `caps.tts` snapshot taken at
-      // mount. Teardown can run after the API has gone away, and a cleanup
-      // function that throws leaves React unable to finish unmounting the
-      // rest of the tree.
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      // stopSpeaking checks the live API rather than the `caps.tts` snapshot
+      // taken at mount; the try guards the case where teardown runs after
+      // the API has gone away, since a cleanup that throws leaves React
+      // unable to finish unmounting the rest of the tree.
+      try {
+        stopSpeaking();
+      } catch {
+        /* no-op */
       }
     };
   }, []);

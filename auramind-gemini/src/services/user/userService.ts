@@ -98,6 +98,7 @@ export const userService = {
         plan: newProfile.plan,
         streak: newProfile.streak,
         joinedDate: newProfile.joined_date,
+        avatar: user.user_metadata?.avatar_url || undefined,
         role: newProfile.role,
         isEmailVerified: newProfile.isEmailVerified,
         isPhoneVerified: newProfile.isPhoneVerified,
@@ -112,6 +113,12 @@ export const userService = {
       plan: profile.plan,
       streak: profile.streak,
       joinedDate: profile.joined_date,
+      // Avatar lives in auth users' user_metadata (user_profiles has no
+      // avatar_url column), written by updateUserProfile via
+      // `auth.updateUser()`. Surfacing it here keeps the Settings page in
+      // sync with the top-right avatar on every platform — and lets an
+      // avatar uploaded on mobile appear on desktop.
+      avatar: user.user_metadata?.avatar_url || undefined,
       role: profile.role,
       isEmailVerified: profile.isEmailVerified,
       isPhoneVerified: profile.isPhoneVerified,

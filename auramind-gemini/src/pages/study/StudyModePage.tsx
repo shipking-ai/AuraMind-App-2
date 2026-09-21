@@ -30,11 +30,14 @@ import SessionReplayModal from '../../components/study/SessionReplayModal';
 import { useMultiplayerStudy } from '../../hooks/useMultiplayerStudy';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { useAppPreference, getAppPreference } from '../../lib/appPreferences';
+import { composeSessionQueue } from '../../services/memory/sessionComposer';
 import { loadOfflineAwareData } from '../../lib/offlineAwareData';
 import { trackStudySession } from '../../services/gamification/gamificationService';
+import { assignmentService } from '../../services/classroom/assignmentService';
 import { useTimer, MotionPath } from '../../lib/effects';
 import { VoiceStudyControls } from '../../components/study/VoiceStudyControls';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
+import { speak as speakAloud, stopSpeaking } from '../../services/voice/speechOutput';
 
 const RATING_BTNS = [
   { label: 'Again', rating: Rating.AGAIN, interval: '5m', color: 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20' },
@@ -119,6 +122,7 @@ export default function StudyModePage() {
   const [showIntervals] = useAppPreference('auramind_showIntervals', true);
   const [showHintFirst] = useAppPreference('auramind_showHintFirst', false);
   const [keyboardShortcuts] = useAppPreference('auramind_keyboardShortcuts', true);
+  const [readAloud] = useAppPreference('auramind_textToSpeech', false);
   // Tracks when the active study session began. Reset every time the user
   // resets the session via "Study Again" so a re-runs session's startTime
   // doesn't bleed into the prior session row. Used by the session-save
@@ -215,17 +219,30 @@ export default function StudyModePage() {
             : [],
         );
         const pacedQueue = queue.filter((card) => !newCardIds.has(card.id));
+        // Memory sparks (Surface 3): interleave near-due cards from OTHER
+        // decks into the queue so old material keeps resurfacing mid-session.
+        // Pure module; reviews are recorded by the normal path below. Gated
+        // on the master spark toggle; the interleave adds ≤20% of the queue.
+        let composed = pacedQueue;
+        if (getAppPreference('auramind_sparksEnabled', true)) {
+          try {
+            composed = composeSessionQueue(pacedQueue, allCards, {
+              now: Date.now(),
+              currentDeckId: deckId,
+            }).queue;
+          } catch { /* interleave is additive — never block the session */ }
+        }
         const requestedGoal = Number(dailyGoal);
         const requestedMax = Number(maxReviews);
         const sessionLimit = Math.max(
           1,
           Math.min(
-            pacedQueue.length,
+            composed.length,
             Number.isFinite(requestedGoal) && requestedGoal > 0 ? requestedGoal : 20,
             Number.isFinite(requestedMax) && requestedMax > 0 ? requestedMax : 100,
           ),
         );
-        setStudyCards(pacedQueue.slice(0, sessionLimit));
+        setStudyCards(composed.slice(0, sessionLimit));
       } catch (err) {
         console.error('Failed to load study session:', err);
         navigate('/dashboard/study');
@@ -263,6 +280,16 @@ export default function StudyModePage() {
   const currentHint = (currentCard?.back || "")
     .split(/[.!?]\s+/)[0]
     .slice(0, 120);
+
+  // "Read cards aloud" (Settings > Audio): the question when a card appears,
+  // the answer when it flips. Voice study mode speaks for itself, so it is
+  // skipped there. Leaving the card or the page cuts speech off.
+  useEffect(() => {
+    if (!readAloud || voiceMode || completed || !currentCard) return;
+    const text = flipped ? currentCard.back : currentCard.front;
+    if (text?.trim()) void speakAloud(text, { rate: 0.95 });
+    return () => stopSpeaking();
+  }, [readAloud, voiceMode, completed, currentCard, flipped]);
 
   /**
    * Flip the card and tick.
@@ -419,9 +446,18 @@ export default function StudyModePage() {
           accuracy: sessionAccuracy,
           duration: sessionDuration,
         };
-        sessionService.saveStudySession(sessionPayload).catch((err) => {
-          console.warn('saveStudySession failed (non-blocking):', err);
-        });
+        const studiedDeckId = deck?.id;
+        sessionService
+          .saveStudySession(sessionPayload)
+          .catch((err) => {
+            console.warn('saveStudySession failed (non-blocking):', err);
+          })
+          // Class copies report progress to the teacher; the RPC reads the
+          // session just saved, so this runs after it. No-op for other decks.
+          .then(() => (studiedDeckId ? assignmentService.syncProgressForDeck(studiedDeckId) : undefined))
+          .catch((err) => {
+            console.warn('class assignment sync failed (non-blocking):', err);
+          });
         // Fire-and-forget update to the localStorage-backed streak counter.
         // duration is the field name AND the unit (minutes) in the gamification
         // layer; convert ms → minutes and pass through the percent accuracy.

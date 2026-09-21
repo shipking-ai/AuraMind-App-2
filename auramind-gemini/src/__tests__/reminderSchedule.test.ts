@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReminderNotifications, REMINDER_IDS } from "../lib/reminderSchedule";
+import { buildReminderNotifications, REMINDER_IDS, spokenReminderTime } from "../lib/reminderSchedule";
 
 describe("reminder schedule", () => {
   it("builds only enabled reminders at predictable offsets", () => {
@@ -67,5 +67,31 @@ describe("reminder schedule", () => {
         reminderTime: "25:99",
       }),
     ).toEqual([]);
+  });
+});
+
+describe('spokenReminderTime', () => {
+  it('speaks with the first enabled reminder only', () => {
+    const all = buildReminderNotifications({
+      dailyReminder: false,
+      dueReminder: true,
+      streakReminder: true,
+      weeklySummary: false,
+      reminderTime: '20:00',
+    });
+    // Daily is off, so the due-cards reminder (+15 min) is first.
+    expect(spokenReminderTime(all)).toEqual({ hour: 20, minute: 15 });
+  });
+
+  it('keeps the weekday for a weekly-only schedule and returns null when nothing is on', () => {
+    const weekly = buildReminderNotifications({
+      dailyReminder: false,
+      dueReminder: false,
+      streakReminder: false,
+      weeklySummary: true,
+      reminderTime: '09:00',
+    });
+    expect(spokenReminderTime(weekly)).toEqual({ hour: 9, minute: 45, weekday: 2 });
+    expect(spokenReminderTime([])).toBeNull();
   });
 });

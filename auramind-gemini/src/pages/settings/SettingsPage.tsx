@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Zap, Bell, Palette, Shield, AlertTriangle, Volume2, RefreshCw, Languages, Accessibility, Pencil, Check, X, Camera, Trash2, Upload as UploadIcon, LogOut } from '@/components/icons';
+import { BookOpen, Zap, Bell, Palette, Shield, AlertTriangle, Volume2, RefreshCw, Languages, Accessibility, Pencil, Check, X, Camera, Trash2, Upload as UploadIcon, LogOut, Sparkles } from '@/components/icons';
 import { toast } from 'sonner';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
@@ -13,6 +13,15 @@ import { Capacitor } from '../../lib/nativeShim';
 import { useAppPreference } from '../../lib/appPreferences';
 import { analyticsService } from '../../services/analytics/analyticsService';
 import { useReminderSync } from '../../hooks/useReminderSync';
+import { useVoiceOptions } from '../../hooks/useVoiceOptions';
+import {
+  isSpeechOutputAvailable,
+  resetRandomVoice,
+  speak,
+  VOICE_AUTO,
+  VOICE_PREF_KEY,
+  VOICE_RANDOM,
+} from '../../services/voice/speechOutput';
 import { getAIProvider, setAIProvider, type AIProvider } from '../../lib/aiProvider';
 import {
   listFactors, beginEnrollment, verifyEnrollment, unenroll,
@@ -269,6 +278,10 @@ export default function SettingsPage() {
   const [includeExamples, setIncludeExamples] = useLocalStorage('auramind_includeExamples', true);
   const [defaultLanguage, setDefaultLanguage] = useLocalStorage('auramind_defaultLanguage', 'English');
   const [dailyReminder, setDailyReminder] = useLocalStorage('auramind_dailyReminder', true);
+  // Memory sparks (sporadic FSRS-driven resurfacing) — master + per-surface.
+  const [sparksEnabled, setSparksEnabled] = useLocalStorage('auramind_sparksEnabled', true);
+  const [sparksPopup, setSparksPopup] = useLocalStorage('auramind_sparksPopup', true);
+  const [sparksNotifications, setSparksNotifications] = useLocalStorage('auramind_sparksNotifications', true);
   const [reminderTime, setReminderTime] = useLocalStorage('auramind_reminderTime', '09:00');
   const [dueReminder, setDueReminder] = useLocalStorage('auramind_dueReminder', true);
   const [streakReminder, setStreakReminder] = useLocalStorage('auramind_streakReminder', true);
@@ -285,6 +298,12 @@ export default function SettingsPage() {
   const [fontSize, setFontSize] = useLocalStorage('auramind_fontSize', 'Medium');
   const [highContrast, setHighContrast] = useLocalStorage('auramind_highContrast', false);
   const [textToSpeech, setTextToSpeech] = useLocalStorage('auramind_textToSpeech', false);
+  const [ttsVoice, setTtsVoice] = useLocalStorage<string>(VOICE_PREF_KEY, VOICE_AUTO);
+  const voiceOptions = useVoiceOptions(ttsVoice);
+  const chooseVoice = (next: string) => {
+    if (next === VOICE_RANDOM) resetRandomVoice();
+    setTtsVoice(next);
+  };
   const [autoNightMode, setAutoNightMode] = useLocalStorage('auramind_autoNightMode', true);
   const [reviewOrder, setReviewOrder] = useLocalStorage('auramind_reviewOrder', 'FSRS - Optimized');
   const [showHintFirst, setShowHintFirst] = useLocalStorage('auramind_showHintFirst', false);
@@ -636,6 +655,28 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Memory sparks */}
+        <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
+          <SectionHeader
+            icon={Sparkles}
+            title="Memory sparks"
+            subtitle="Sporadically resurface cards as recall fades — pop-ups, gentle notifications, and mixes into study sessions."
+          />
+          <div className="space-y-1">
+            <SettingRow label="Memory sparks">
+              <Toggle on={sparksEnabled} onChange={setSparksEnabled} />
+            </SettingRow>
+            <div className="border-t border-[#2A2A3A]/30" />
+            <SettingRow label="In-app pop-up sparks">
+              <Toggle on={sparksPopup} onChange={setSparksPopup} />
+            </SettingRow>
+            <div className="border-t border-[#2A2A3A]/30" />
+            <SettingRow label="Notification sparks">
+              <Toggle on={sparksNotifications} onChange={setSparksNotifications} />
+            </SettingRow>
+          </div>
+        </div>
+
         {/* Appearance */}
         <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
           <SectionHeader icon={Palette} title="Appearance" subtitle="How AuraMind looks and feels on this device." />
@@ -699,6 +740,23 @@ export default function SettingsPage() {
             <SettingRow label="Text-to-speech" desc="Read cards aloud during review">
               <Toggle on={textToSpeech} onChange={setTextToSpeech} />
             </SettingRow>
+            {isSpeechOutputAvailable() && (
+              <>
+                <div className="border-t border-[#2A2A3A]/30" />
+                <SettingRow label="Voice" desc="Used for read-aloud and voice study">
+                  <div className="flex items-center gap-2">
+                    <Select value={ttsVoice} onChange={chooseVoice} options={voiceOptions} />
+                    <button
+                      type="button"
+                      onClick={() => void speak("Hi, I'm Prof. Aura. This is the voice I'll read your cards in.", { voice: ttsVoice })}
+                      className="rounded-lg border border-[#2A2A3A] px-3 py-1.5 text-xs text-[#F0EFFE] hover:border-[#7C3AED]/50"
+                    >
+                      Test
+                    </button>
+                  </div>
+                </SettingRow>
+              </>
+            )}
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Auto-play audio" desc="Play card audio automatically">
               <Toggle on={autoPlayAudio} onChange={setAutoPlayAudio} />

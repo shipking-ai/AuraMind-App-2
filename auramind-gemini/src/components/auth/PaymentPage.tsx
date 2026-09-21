@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, Check, Sparkles, ShieldCheck, Brain, Bot, BookOpen, Zap } from '@/components/icons';
+import { ONBOARDING_ROLE_LABEL } from '../../lib/onboardingRoles';
 
 interface PaymentPageProps {
   user: { id: string; email: string; name: string };
@@ -39,9 +40,15 @@ const FEATURES = [
 
 const PaymentPage: React.FC<PaymentPageProps> = ({ user, cancelled = false }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState('annual');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Personalization carried over from onboarding (`/subscribe?role=teacher&topic=...`).
+  const roleParam = searchParams.get('role');
+  const roleLabel = roleParam ? ONBOARDING_ROLE_LABEL[roleParam as keyof typeof ONBOARDING_ROLE_LABEL] : null;
+  const topic = searchParams.get('topic');
 
   const handleSubscribe = async () => {
     const plan = PLANS.find((p) => p.id === selectedPlan);
@@ -133,11 +140,18 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user, cancelled = false }) =>
               <Zap size={12} />
               7-Day Free Trial
             </div>
+            {roleLabel && (
+              <div className="mb-3 text-[#A78BFA] text-xs">
+                {roleParam === 'teacher' ? 'The Teacher plan' : `${roleLabel} plan`} — access to everything.
+              </div>
+            )}
             <h1 className="text-[#F0EFFE] text-3xl font-light tracking-tight mb-3">
-              Upgrade your learning
+              {topic ? `Your "${topic}" deck is ready.` : 'Upgrade your learning'}
             </h1>
             <p className="text-[#7A7A96] text-sm max-w-md mx-auto">
-              Unlock AI-powered study tools, unlimited decks, and accelerated learning. Cancel anytime.
+              {roleParam === 'teacher'
+                ? 'Unlock AI-powered prep, class-ready study tools, and unlimited decks for you and your learners.'
+                : 'Unlock AI-powered study tools, unlimited decks, and accelerated learning. Cancel anytime.'}
             </p>
           </div>
 

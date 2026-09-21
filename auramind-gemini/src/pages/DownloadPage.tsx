@@ -123,7 +123,7 @@ const DownloadPage: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
               <Link
-                to="/auth"
+                to="/auth?mode=signup"
                 className="group inline-flex items-center gap-3 px-10 py-5 bg-primary text-black font-bold text-base uppercase tracking-wider hover:bg-primary/90 transition-all duration-300"
               >
                 Get Started Free
@@ -455,7 +455,7 @@ const DownloadPage: React.FC = () => {
                   Start on the web, upgrade to native anytime. Your data syncs seamlessly.
                 </p>
                 <Link
-                  to="/auth"
+                  to="/auth?mode=signup"
                   className="inline-flex items-center gap-3 px-10 py-5 bg-primary text-black font-bold text-base uppercase tracking-wider hover:bg-primary/90 transition-all duration-300"
                 >
                   Get Started Free

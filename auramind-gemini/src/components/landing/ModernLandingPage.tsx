@@ -143,7 +143,7 @@ const Navbar = () => {
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate("/auth")}
+            onClick={() => navigate("/auth?mode=login")}
             className="text-[#7A7A96] hover:text-[#F0EFFE] text-xs transition-colors"
           >
             Sign in
@@ -151,7 +151,7 @@ const Navbar = () => {
           <MagneticButton
             onClick={() => {
               analyticsService.trackFunnel("landing_cta_click", { location: "navbar" });
-              navigate("/auth");
+              navigate("/auth?mode=signup");
             }}
             className="px-4 py-1.5 min-h-[44px] bg-[#7C3AED] text-white text-xs font-medium rounded-lg hover:bg-[#6D28D9] transition-colors"
           >
@@ -170,9 +170,11 @@ export default function ModernLandingPage() {
   const { playClick, playSuccess } = useSoundDesign({ volume: 0.1 });
 
   // Signup funnel — fire-and-forget; analytics must never block navigation.
+  // All landing CTAs except the navbar "Sign in" start a new account, so the
+  // helper always routes to signup mode.
   const goToAuth = (location: string) => {
     analyticsService.trackFunnel("landing_cta_click", { location });
-    navigate("/auth");
+    navigate("/auth?mode=signup");
   };
 
   // anime.js v4 ScrollObserver hooks for sections that should reveal as the

@@ -306,6 +306,17 @@ describe('Stripe flow (mocked Stripe + Supabase + Resend)', () => {
       trial_end: null,
       current_period_end: 2_000_000_000,
     });
+    // The handler merges into existing metadata (updateUserById replaces
+    // wholesale) — the mock user carries a staff role + display fields that
+    // must survive provisioning.
+    supabase.auth.admin.getUserById.mockResolvedValue({
+      data: { user: {
+        email: 'buyer@example.com',
+        app_metadata: { role: 'admin' },
+        user_metadata: { full_name: 'Buyer', avatar_url: 'https://example.com/a.png', onboarding_completed: true },
+      } },
+      error: null,
+    });
     supabase.auth.admin.updateUserById.mockResolvedValue({ error: null });
     resendMock.emails.send.mockResolvedValue({ data: { id: 'email_1' }, error: null });
 
@@ -323,11 +334,18 @@ describe('Stripe flow (mocked Stripe + Supabase + Resend)', () => {
     expect(supabase.auth.admin.updateUserById).toHaveBeenCalledWith(
       '00000000-0000-4000-8000-000000000001',
       expect.objectContaining({
+        app_metadata: expect.objectContaining({
+          role: 'admin',
+          subscription_status: 'active',
+        }),
         user_metadata: expect.objectContaining({
           stripe_customer_id: 'cus_123',
           stripe_subscription_id: 'sub_123',
           subscription_status: 'active',
           plan: 'Pro',
+          full_name: 'Buyer',
+          avatar_url: 'https://example.com/a.png',
+          onboarding_completed: true,
         }),
       }),
     );

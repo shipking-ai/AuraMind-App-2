@@ -26,7 +26,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { isEntitled } from './_lib/entitlement.js';
+import { isEntitled, isEntitledWithRoleAccess } from './_lib/entitlement.js';
 import {
   availableProviders,
   providerKey,
@@ -156,8 +156,10 @@ export async function handleAI(
   // holding a session token does not go through the UI.
   //
   // Read from app_metadata via the shared helper: it is service-role only,
-  // unlike user_metadata which the user can write themselves.
-  if (!isEntitled(user)) {
+  // unlike user_metadata which the user can write themselves. Internal roles
+  // (staff, tester) are entitled without a subscription, mirroring the
+  // client-side hasFreeAccess — the UI they exercise must actually work.
+  if (!isEntitledWithRoleAccess(user)) {
     res.status(402).json({
       error: 'A subscription is required to use AI features.',
       code: 'subscription_required',
@@ -463,7 +465,8 @@ export async function handleAITranscribe(
   // Entitlement, same as chat: without this any signed-in free account could
   // spend the server-side Whisper budget. Read from app_metadata via the
   // shared helper — user_metadata is client-writable and must not gate spend.
-  if (!isEntitled(user)) {
+  // Internal roles (staff, tester) are entitled, mirroring hasFreeAccess.
+  if (!isEntitledWithRoleAccess(user)) {
     res.status(402).json({
       error: 'A subscription is required to use AI features.',
       code: 'subscription_required',

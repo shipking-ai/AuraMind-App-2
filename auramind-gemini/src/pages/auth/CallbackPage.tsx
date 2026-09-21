@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/database/supabase';
+import { hasCompletedOnboarding } from '../../lib/onboardingGate';
 import { Loader2, Check, AlertTriangle } from '@/components/icons';
 
 const CallbackPage: React.FC = () => {
@@ -77,7 +78,15 @@ const CallbackPage: React.FC = () => {
 
           if (existingSession && !cancelled) {
             setStatus('success');
-            setTimeout(() => navigate('/dashboard', { replace: true }), 800);
+            const metadata = existingSession.user?.user_metadata;
+            setTimeout(
+              () =>
+                navigate(
+                  hasCompletedOnboarding(metadata) ? '/dashboard' : '/onboarding',
+                  { replace: true },
+                ),
+              800,
+            );
             return;
           }
 
@@ -90,7 +99,17 @@ const CallbackPage: React.FC = () => {
 
         if (data?.session && !cancelled) {
           setStatus('success');
-          setTimeout(() => navigate('/dashboard', { replace: true }), 800);
+          // A fresh signup that confirmed their email lands on onboarding for
+          // the role + topic step before the plan; returning users skip it.
+          const metadata = data.session.user?.user_metadata;
+          setTimeout(
+            () =>
+              navigate(
+                hasCompletedOnboarding(metadata) ? '/dashboard' : '/onboarding',
+                { replace: true },
+              ),
+            800,
+          );
         } else if (!cancelled) {
           setStatus('error');
           setErrorMsg('Could not establish session. Please try signing in again.');
