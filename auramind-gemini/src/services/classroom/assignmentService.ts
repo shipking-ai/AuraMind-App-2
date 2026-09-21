@@ -24,6 +24,22 @@ export interface UpdateAssignmentInput {
   dueAt?: number | null;
 }
 
+export interface QuizQuestion {
+  /** The source card's id; answers are keyed by it. */
+  id: string;
+  prompt: string;
+  choices: string[];
+}
+
+export interface QuizResult {
+  score: number;
+  total: number;
+  accuracy: number;
+  attempts: number;
+  /** Prompts answered wrong on this attempt. */
+  missed: string[];
+}
+
 export interface AcceptDeckResult {
   deckId: string;
   title: string;
@@ -134,6 +150,38 @@ export const assignmentService = {
     return {
       deckId: data?.deck_id,
       title: data?.title,
+    };
+  },
+
+  /**
+   * Student side: the quiz's multiple-choice questions. The server builds
+   * them from the teacher's deck and never sends which choice is right.
+   */
+  async getQuizQuestions(assignmentId: string): Promise<QuizQuestion[]> {
+    const { data, error } = await requireSupabase().rpc("get_quiz_questions", {
+      p_assignment_id: assignmentId,
+    });
+    if (error) throw error;
+    return (data ?? []).map((row: { card_id: string; prompt: string; choices: string[] | null }) => ({
+      id: row.card_id,
+      prompt: row.prompt,
+      choices: row.choices ?? [],
+    }));
+  },
+
+  /** Student side: submit answers ({ questionId: choice }); graded on the server. */
+  async submitQuiz(assignmentId: string, answers: Record<string, string>): Promise<QuizResult> {
+    const { data, error } = await requireSupabase().rpc("submit_quiz_attempt", {
+      p_assignment_id: assignmentId,
+      p_answers: answers,
+    });
+    if (error) throw error;
+    return {
+      score: data?.score ?? 0,
+      total: data?.score_total ?? 0,
+      accuracy: data?.accuracy ?? 0,
+      attempts: data?.attempts ?? 1,
+      missed: Array.isArray(data?.missed) ? data.missed.map((m: { front: string }) => m.front) : [],
     };
   },
 

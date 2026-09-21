@@ -12,6 +12,7 @@ import {
 import { Button } from "../../components/ui/button";
 import { AssignDeckModal } from "../../components/classroom/AssignDeckModal";
 import { ClassProgress } from "../../components/classroom/ClassProgress";
+import { QuizTakeDialog } from "../../components/classroom/QuizTakeDialog";
 import { classroomService } from "../../services/classroom/classroomService";
 import { assignmentService } from "../../services/classroom/assignmentService";
 import { useDashboardWorkspace } from "../../contexts/DashboardWorkspaceContext";
@@ -114,7 +115,8 @@ export function ClassDetailPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Quiz completion dialog
+  // Graded quiz (deck-backed) and legacy self-reported quiz dialogs
+  const [takingQuiz, setTakingQuiz] = useState<Assignment | null>(null);
   const [quizAssignment, setQuizAssignment] = useState<Assignment | null>(null);
   const [quizCorrect, setQuizCorrect] = useState("");
   const [quizTotal, setQuizTotal] = useState("");
@@ -290,6 +292,11 @@ export function ClassDetailPage() {
   };
 
   const openQuizComplete = (assignment: AssignmentWithProgress) => {
+    // Quizzes built from a deck are taken in-app and graded by the server.
+    if (assignment.deckId) {
+      setTakingQuiz(assignment);
+      return;
+    }
     const mine = progressByUser(assignment, userId);
     setQuizCorrect(mine?.score != null ? String(mine.score) : "");
     setQuizTotal(mine?.scoreTotal != null ? String(mine.scoreTotal) : "");
@@ -588,7 +595,13 @@ export function ClassDetailPage() {
         />
       )}
 
-      {/* Quiz completion dialog */}
+      <QuizTakeDialog
+        assignment={takingQuiz}
+        onClose={() => setTakingQuiz(null)}
+        onSubmitted={() => void load()}
+      />
+
+      {/* Legacy quiz (no deck): self-reported score */}
       <Dialog open={quizAssignment !== null} onOpenChange={(open) => !open && setQuizAssignment(null)}>
         <DialogContent className="max-w-sm border border-white/10 bg-[#0E1420] text-white">
           <DialogHeader>
@@ -778,11 +791,13 @@ function AssignmentCard({
               <>
                 <Button size="sm" onClick={onCompleteQuiz} disabled={busy}>
                   <ListChecks className="h-3.5 w-3.5" aria-hidden />
-                  {mine?.status === "completed" ? "Record new score" : "Complete quiz"}
+                  {assignment.deckId
+                    ? mine?.status === "completed" ? "Retake quiz" : "Take quiz"
+                    : mine?.status === "completed" ? "Record new score" : "Complete quiz"}
                 </Button>
                 {mine?.status === "completed" && mine?.accuracy != null && (
                   <span className="text-[11px] font-semibold tabular-nums text-emerald-300">
-                    Score {mine.score}/{mine.scoreTotal} · {mine.accuracy}%
+                    {assignment.deckId ? "Best" : "Score"} {mine.score}/{mine.scoreTotal} · {Math.round(mine.accuracy)}%
                   </span>
                 )}
               </>

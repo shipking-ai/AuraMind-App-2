@@ -82,14 +82,14 @@ export function AssignDeckModal({
   // Auto-select the first deck and keep the selection meaningful when the
   // user switches between kind and deck.
   useEffect(() => {
-    if (kind === "deck" && !deckId && ownedDecks.length > 0) {
+    if (!deckId && ownedDecks.length > 0) {
       setDeckId(ownedDecks[0].id);
     }
-  }, [kind, deckId, ownedDecks]);
+  }, [deckId, ownedDecks]);
 
   const canSubmit =
     title.trim().length > 0 &&
-    (kind === "quiz" || deckId.length > 0) &&
+    deckId.length > 0 &&
     !submitting;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +102,7 @@ export function AssignDeckModal({
         title: title.trim(),
         instructions: instructions.trim() || undefined,
         kind,
-        deckId: kind === "deck" ? deckId : null,
+        deckId,
         startAt: fromLocalInput(startAt),
         dueAt: fromLocalInput(dueAt),
       });
@@ -170,32 +170,36 @@ export function AssignDeckModal({
             </div>
           </div>
 
-          {kind === "deck" && (
-            <div>
-              <label htmlFor="assignment-deck" className={labelCls}>
-                Deck
-              </label>
-              {ownedDecks.length === 0 ? (
-                <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-zinc-400">
-                  <Sparkles className="h-4 w-4" aria-hidden />
-                  Assignments reuse decks from your library.
-                </div>
-              ) : (
-                <select
-                  id="assignment-deck"
-                  className={inputCls}
-                  value={deckId}
-                  onChange={(e) => setDeckId(e.target.value)}
-                >
-                  {ownedDecks.map((d) => (
-                    <option key={d.id} value={d.id} className="bg-[#0E1420] text-white">
-                      {d.title} · {d.cardCount} cards
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          )}
+          <div>
+            <label htmlFor="assignment-deck" className={labelCls}>
+              {kind === "quiz" ? "Questions from" : "Deck"}
+            </label>
+            {ownedDecks.length === 0 ? (
+              <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-zinc-400">
+                <Sparkles className="h-4 w-4" aria-hidden />
+                Assignments reuse decks from your library.
+              </div>
+            ) : (
+              <select
+                id="assignment-deck"
+                className={inputCls}
+                value={deckId}
+                onChange={(e) => setDeckId(e.target.value)}
+              >
+                {ownedDecks.map((d) => (
+                  <option key={d.id} value={d.id} className="bg-[#0E1420] text-white">
+                    {d.title} · {d.cardCount} cards
+                  </option>
+                ))}
+              </select>
+            )}
+            {kind === "quiz" && ownedDecks.length > 0 && (
+              <p className="mt-1.5 text-[11px] text-zinc-500">
+                Each card becomes a multiple-choice question (up to 20), graded automatically.
+                Needs at least two cards with different answers.
+              </p>
+            )}
+          </div>
 
           <div>
             <label htmlFor="assignment-instructions" className={labelCls}>

@@ -45,6 +45,14 @@ describe('classroom write lockdown', () => {
     expect(body).toMatch(/user_id = v_assignment\.created_by/);
   });
 
+  it('deck-backed quizzes are graded on the server, never self-reported', () => {
+    const last = history.lastIndexOf('CREATE OR REPLACE FUNCTION public.record_assignment_progress');
+    const body = history.slice(last, history.indexOf('$$;', history.indexOf('AS $$', last) + 5));
+    expect(body).toMatch(/v_assignment\.deck_id IS NOT NULL THEN\s+RAISE EXCEPTION/);
+    // The quiz internals expose the answer key, so clients must not call them.
+    expect(history).toMatch(/REVOKE ALL ON FUNCTION public\.classroom_quiz_cards\(UUID, UUID, UUID\) FROM PUBLIC, anon, authenticated/);
+  });
+
   it('client services never write classroom tables directly', () => {
     for (const file of readdirSync(SERVICES_DIR)) {
       const src = readFileSync(resolve(SERVICES_DIR, file), 'utf8');

@@ -15,7 +15,7 @@ the traps that cost real time.
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, **alpha / closed testing, draft** |
 | Branch | `main`, 4 commits ahead of origin at last update |
-| Migrations | all applied through `20260919000000_classroom_portal.sql`; **`20260921000000_classroom_rpc_only_writes.sql` pending** (security fix, apply by hand) |
+| Migrations | all applied through `20260919000000_classroom_portal.sql`; **pending, apply in order:** `20260921000000_classroom_rpc_only_writes.sql` (security fix), `20260921000100_classroom_quiz_grading.sql` (graded quizzes) |
 
 ---
 
@@ -157,6 +157,23 @@ reminder simply fires once and never again.
 - **The Supabase MCP connection is read-only.** Writes go through PostgREST
   with the service-role key from the root `.env`, or through
   `npm run migrate`.
+
+---
+
+## Running the seeded E2E specs locally
+
+`onboarding.spec.ts` and `spark.spec.ts` mint real accounts with the
+service-role key from the root `.env`; without it (CI) they skip. They need
+the Vite dev server on 3001 (the spark force hook is dev-only) and the API
+somewhere else — `auramind-gemini/.env` points the `/api` proxy at 3001, i.e.
+at Vite itself, which hangs every API call. Run the API on 3002 and override
+the proxy:
+
+```bash
+cd api && PORT=3002 npx tsx server.js
+cd auramind-gemini && VITE_API_PROXY_TARGET=http://localhost:3002 npm run dev -- --port 3001
+cd auramind-gemini && npx playwright test e2e/onboarding.spec.ts e2e/spark.spec.ts
+```
 
 ---
 
