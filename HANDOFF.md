@@ -15,7 +15,7 @@ the traps that cost real time.
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, **alpha / closed testing, draft** |
 | Branch | `main`, 4 commits ahead of origin at last update |
-| Migrations | all applied, including `20260919000000_classroom_portal.sql` |
+| Migrations | all applied through `20260919000000_classroom_portal.sql`; **`20260921000000_classroom_rpc_only_writes.sql` pending** (security fix, apply by hand) |
 
 ---
 
