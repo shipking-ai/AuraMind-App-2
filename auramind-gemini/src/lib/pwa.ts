@@ -45,8 +45,37 @@ export const pwaConfig = VitePWA({
     lang: 'en',
     dir: 'ltr',
     prefer_related_applications: false,
-  },
+    // Windows 11 widget board (Edge): the due count as a pinnable card. The
+    // data is owned by the service worker — see public/widget-sw.js. The
+    // plugin's manifest type predates the widgets member, which ships to the
+    // manifest untouched.
+    widgets: [
+      {
+        name: 'Cards due',
+        short_name: 'Due',
+        description: 'How many cards are waiting for review, and the deck to start with.',
+        tag: 'auramind-due',
+        template: 'auramind-due',
+        ms_ac_template: '/widgets/due-template.json',
+        data: '/widgets/due-data.json',
+        type: 'application/json',
+        auth: false,
+        update: 1800,
+        screenshots: [
+          {
+            src: '/auramind/og-cover.png',
+            sizes: '1200x630',
+            label: 'The number of cards due for review',
+          },
+        ],
+        icons: [{ src: '/favicons,logos/icon-192.png', sizes: '192x192' }],
+      },
+    ],
+  } as Record<string, unknown>,
   workbox: {
+    // Widget-board handlers live beside the generated worker rather than in
+    // it, so the generateSW setup stays untouched.
+    importScripts: ['/widget-sw.js'],
     maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB (WebLLM bundle is ~8MB)
     globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
     
