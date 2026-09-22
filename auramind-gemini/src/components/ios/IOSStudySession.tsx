@@ -15,6 +15,11 @@
 import React from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Rating, type Card } from "../../types";
+import { formatInterval } from "../../services/study/srs";
+
+// The grade labels share the web app's wording, so "comes back in…" reads the
+// same on every platform.
+export { formatInterval };
 import { useAppPreference } from "../../lib/appPreferences";
 import { Mic, X } from "../icons";
 import { ActivityRings, deckGradient } from "./IOSPrimitives";
@@ -33,13 +38,6 @@ const GRADES: Array<{ rating: Rating; label: string; color: string }> = [
 const SWIPE = 110;
 
 /** "10m", "3d", "2mo", "1.2y" — when the card comes back after a grade. */
-export function formatInterval(days: number): string {
-  if (!Number.isFinite(days) || days <= 0) return "now";
-  if (days < 1) return `${Math.max(1, Math.round(days * 24 * 60))}m`;
-  if (days < 30) return `${Math.round(days)}d`;
-  if (days < 365) return `${Math.round(days / 30)}mo`;
-  return `${(days / 365).toFixed(1)}y`;
-}
 
 function CardFace({
   side,

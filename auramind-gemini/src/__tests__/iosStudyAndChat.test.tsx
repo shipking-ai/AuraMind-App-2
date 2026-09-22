@@ -36,6 +36,7 @@ describe("formatInterval", () => {
   it("reads like a clock: minutes, days, months, years", () => {
     expect(formatInterval(10 / 1440)).toBe("10m");
     expect(formatInterval(3)).toBe("3d");
+    expect(formatInterval(45)).toBe("6w");
     expect(formatInterval(60)).toBe("2mo");
     expect(formatInterval(730)).toBe("2.0y");
   });
@@ -53,7 +54,7 @@ describe("IOSStudySession", () => {
   it("offers four grades with when-it-returns labels once flipped", () => {
     const { onRate } = session(true);
     expect(screen.getByRole("button", { name: /Again\s*10m/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Easy\s*2mo/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Easy\s*6w/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Good\s*3d/ }));
     expect(onRate).toHaveBeenCalledWith(Rating.GOOD);
   });

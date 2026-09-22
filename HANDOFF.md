@@ -80,6 +80,16 @@ value:
   - Push on iOS needs APNs (Apple Developer account) plus Firebase iOS
     config; until then `pushService` reports it unavailable.
   - Next: Apple Developer Program, then a signed TestFlight job.
+- **Personal FSRS tuning needs rebuilding.** The scheduler now uses the
+  official `ts-fsrs` (FSRS-6, long-term mode, whole-day intervals). The old
+  hand-written scheduler made intervals ~140x too long (Hard could schedule
+  36,500 days out); `20260922000000_fsrs_scheduler_repair.sql` reset the cards
+  it had written. `fsrsAdaptation.ts` still tunes a 20-number vector for the
+  old model, so `scheduleFSRS` ignores anything but a full 21-number FSRS-6
+  vector — profile chips and the starting-difficulty nudge still work, but
+  per-user weights do not affect intervals until the tuner is rebuilt on the
+  FSRS-6 optimizer (`fsrs-rs` / its WASM build).
+
 - **Voice study listening on Android** (merged in #79).
   Android WebView has no `SpeechRecognition`, so spoken answers never worked
   in the app. `AuraListenPlugin` wraps `SpeechRecognizer`;

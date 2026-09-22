@@ -16,7 +16,7 @@ import { PROFILE_DIFFICULTY_CENTER } from '../../services/study/fsrs';
 import { dbService } from '../../services/database/dbService';
 import { sessionService } from '../../services/database/modules/sessionService';
 import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
-import { calculateSRS } from '../../services/study/srs';
+import { calculateSRS, formatInterval, previewIntervals, retentionFromSetting } from '../../services/study/srs';
 import { isOnline, queueCardReview, getCachedDecks, getCachedCards } from '../../services/offline/offlineStudyService';
 import { applyPersonalizedDifficultyInit } from '../../services/study/fsrs';
 import { Rating } from '../../types';
@@ -41,11 +41,12 @@ import { StudyPreviewContext } from './studyPreview';
 import { IOSStudyComplete, IOSStudySession } from '../../components/ios/IOSStudySession';
 import { speak as speakAloud, stopSpeaking } from '../../services/voice/speechOutput';
 
+// The interval under each button is computed per card (previewIntervals).
 const RATING_BTNS = [
-  { label: 'Again', rating: Rating.AGAIN, interval: '5m', color: 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20' },
-  { label: 'Hard', rating: Rating.HARD, interval: '1d', color: 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/20' },
-  { label: 'Good', rating: Rating.GOOD, interval: '3d', color: 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20' },
-  { label: 'Easy', rating: Rating.EASY, interval: '1w', color: 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20' },
+  { label: 'Again', rating: Rating.AGAIN, color: 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20' },
+  { label: 'Hard', rating: Rating.HARD, color: 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/20' },
+  { label: 'Good', rating: Rating.GOOD, color: 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20' },
+  { label: 'Easy', rating: Rating.EASY, color: 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20' },
 ];
 
 const KEY_MAP: Record<string, string> = {
@@ -341,11 +342,7 @@ export default function StudyModePage() {
         personalization.weights,
         pacingTarget ?? undefined,
       );
-      const targetRetention = retention.startsWith('Conservative')
-        ? 0.9
-        : retention.startsWith('Aggressive')
-          ? 0.8
-          : 0.85;
+      const targetRetention = retentionFromSetting(retention);
       const res = calculateSRS(biased.card, rating, personalization.weights, targetRetention);
       // Single round-trip: schedule writes and bias writes travel together so
       // the two never race against stale row reads.
@@ -576,6 +573,15 @@ export default function StudyModePage() {
     enabled: presenceJoined && !!deck?.id,
   });
 
+  // When each grade would bring the current card back — same inputs as handleRate.
+  const gradeIntervals = useMemo(
+    () =>
+      currentCard
+        ? previewIntervals(currentCard, personalization.weights, retentionFromSetting(retention))
+        : null,
+    [currentCard, personalization.weights, retention],
+  );
+
   const lifetimeXp = Number(
     typeof window !== 'undefined' ? localStorage.getItem('auramind_user_xp') ?? 0 : 0,
   );
@@ -583,25 +589,6 @@ export default function StudyModePage() {
   // iPhone gets its own session screen (components/ios/IOSStudySession);
   // the grading, scheduling and saving above are shared with every platform.
   const iosDesign = Capacitor.getPlatform() === 'ios' || preview !== null;
-  // When each grade would bring the card back, for the iPhone grade buttons.
-  // Same weights and retention target as handleRate.
-  const gradeIntervals = useMemo(() => {
-    if (!iosDesign || !currentCard) return {};
-    const targetRetention = retention.startsWith('Conservative')
-      ? 0.9
-      : retention.startsWith('Aggressive')
-        ? 0.8
-        : 0.85;
-    const out: Partial<Record<Rating, number>> = {};
-    for (const r of [Rating.AGAIN, Rating.HARD, Rating.GOOD, Rating.EASY]) {
-      try {
-        out[r] = calculateSRS(currentCard, r, personalization.weights, targetRetention).interval;
-      } catch {
-        /* leave this grade unlabelled */
-      }
-    }
-    return out;
-  }, [iosDesign, currentCard, retention, personalization.weights]);
 
   if (loading) return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center"><div className="text-[#7A7A96] text-sm">Loading...</div></div>;
 
@@ -669,7 +656,7 @@ export default function StudyModePage() {
         onFlip={toggleFlip}
         onRate={(r) => void handleRate(r)}
         onExit={() => navigate('/dashboard')}
-        intervals={gradeIntervals}
+        intervals={gradeIntervals ?? {}}
         voiceMode={voiceMode}
         onToggleVoice={() => setVoiceMode((v) => !v)}
         voicePanel={
@@ -1018,7 +1005,12 @@ export default function StudyModePage() {
                       visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 260, damping: 20 } },
                     }}
                   >
-                    <RatingButton {...btn} showInterval={showIntervals} onRate={(r) => handleRate(r, undefined)} />
+                    <RatingButton
+                      {...btn}
+                      interval={gradeIntervals ? formatInterval(gradeIntervals[btn.rating]) : ''}
+                      showInterval={showIntervals && gradeIntervals !== null}
+                      onRate={(r) => handleRate(r, undefined)}
+                    />
                   </motion.div>
                 ))}
               </motion.div>

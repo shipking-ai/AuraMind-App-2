@@ -120,12 +120,13 @@ async function main() {
     if (deckErr) throw deckErr;
 
     const DAY = 24 * 60 * 60 * 1000;
-    // R = (1 + elapsed/S)^-1 with S = 10 days: elapsed ≈ 2.5 days → R ≈ 0.8.
-    // last_reviewed 2.5 days ago also clears the 3 h re-review floor.
-    const lastReviewed = new Date(Date.now() - 2.5 * DAY).toISOString();
+    // FSRS-6 forgetting curve with S = 10 days: 33 days after review, R ≈ 0.8
+    // (elapsedForRetrievability(0.8, 10) in services/study/fsrs.ts).
+    // A review 33 days ago also clears the 3 h re-review floor.
+    const lastReviewed = new Date(Date.now() - 33 * DAY).toISOString();
     const fsrs = {
-      stability: 10, difficulty: 5, elapsedDays: 2.5, scheduledDays: 14,
-      repetitions: 3, lapses: 0, lastReview: Date.now() - 2.5 * DAY,
+      stability: 10, difficulty: 5, elapsedDays: 33, scheduledDays: 10,
+      repetitions: 3, lapses: 0, lastReview: Date.now() - 33 * DAY,
     };
     const { data: insertedCards, error: cardsErr } = await admin.from('cards').insert([
       {
