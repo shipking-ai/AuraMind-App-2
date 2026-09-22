@@ -53,7 +53,7 @@ import { buildConceptWeaknesses, cardLapses, WEAK_LAPSE_THRESHOLD } from "../../
 import { buildPriorSessionMemory } from "../../lib/chatMemory";
 import PageShell from "../dashboard/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
-import { Capacitor } from "../../lib/nativeShim";
+import { isNativeApp } from "../../lib/platform";
 import { useAppPreference } from "../../lib/appPreferences";
 
 const MODE_LABELS: Record<ChatMode, string> = {
@@ -163,7 +163,7 @@ function getStarterPrompts(context: ChatContext) {
 
 export default function AIChatPage() {
   const navigate = useNavigate();
-  const isAndroidApp = Capacitor.getPlatform() === "android";
+  const isMobileApp = isNativeApp();
   const workspace = useDashboardWorkspace();
   const userId = useCurrentUserId();
   // Real study data (streak, 7-day retention, last-session accuracy) fed into
@@ -496,7 +496,7 @@ export default function AIChatPage() {
           without prop-drilling. Single-shot for the duration of this page. */}
       <ReplayEventBridge onOpen={() => setReplayOpen(true)} />
       <div
-        className={`flex flex-col h-full min-h-0 bg-transparent relative overflow-hidden ${isAndroidApp ? "android-chat-page" : ""}`}
+        className={`flex flex-col h-full min-h-0 bg-transparent relative overflow-hidden ${isMobileApp ? "android-chat-page" : ""}`}
       >
         {/* Ambient background glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">

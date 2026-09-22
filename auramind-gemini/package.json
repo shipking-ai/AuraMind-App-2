@@ -30,7 +30,8 @@
     "build:android": "vite build --mode mobile && npx cap sync android",
     "build:apk:debug": "vite build --mode mobile && npx cap sync android && node scripts/build-debug-apk.mjs",
     "build:aab:release": "vite build --mode mobile && npx cap sync android && node scripts/run-gradle.mjs bundleRelease",
-    "cap:sync": "npx cap sync android"
+    "cap:sync": "npx cap sync android",
+    "build:ios": "vite build --mode mobile && npx cap sync ios"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -41,6 +42,7 @@
     "@capacitor/device": "^8.0.3",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.2",
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/local-notifications": "^8.3.0",
     "@capacitor/network": "^8.0.1",

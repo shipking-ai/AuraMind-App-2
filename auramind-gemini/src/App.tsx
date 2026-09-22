@@ -55,7 +55,7 @@ import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
 import { initPushListeners } from "./services/notifications/pushService";
-import { Capacitor, SplashScreen } from "./lib/nativeShim";
+import { App as NativeApp, Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
 import { useSparkSync } from "./hooks/useSparkSync";
 import { useShareTarget } from "./hooks/useShareTarget";
@@ -784,6 +784,34 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
     const bail = setTimeout(drop, 8000);
     return () => clearTimeout(bail);
   }, [authChecked]);
+
+  /**
+   * Checkout opens in the phone's browser (Apple requires that on iOS, and
+   * Capacitor sends every outside link there), so the purchase finishes
+   * outside the app. Re-check the subscription whenever the app comes back to
+   * the foreground so a new subscriber is let in without restarting the app.
+   */
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !user || subscriptionStatus === "active") return;
+    let listener: { remove: () => Promise<void> } | null = null;
+    let disposed = false;
+    void NativeApp.addListener("appStateChange", ({ isActive }) => {
+      // No forced retry loop: that shows a loading screen on every resume.
+      if (isActive) void checkSubscription(user.id, user.email || "");
+    })
+      .then((handle) => {
+        if (disposed) void handle.remove();
+        else listener = handle;
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+      void listener?.remove();
+    };
+    // checkSubscription is recreated each render; the listener only needs the
+    // current user and whether they still lack access.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, subscriptionStatus]);
 
   const isNativeShell = Capacitor.isNativePlatform();
   // /__e2e/* is a DEV-only harness that renders the Android shell in

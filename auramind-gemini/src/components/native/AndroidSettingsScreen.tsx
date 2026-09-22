@@ -30,6 +30,7 @@ import { analyticsService } from "../../services/analytics/analyticsService";
 import { useReminderSync } from "../../hooks/useReminderSync";
 import { useVoiceOptions } from "../../hooks/useVoiceOptions";
 import { AuraSpeech } from "../../lib/auraSpeech";
+import { deviceName, isAndroidApp } from "../../lib/platform";
 import { SPOKEN_REMINDER_MESSAGES, type SpokenReminderMode } from "../../lib/reminderSchedule";
 import {
   resetRandomVoice,
@@ -502,7 +503,7 @@ export default function AndroidSettingsScreen() {
         <div>
           <p className="android-eyebrow">YOUR DEVICE</p>
           <h1>Settings</h1>
-          <p>Make AuraMind fit the way you learn on Android.</p>
+          <p>Make AuraMind fit the way you learn on {deviceName()}.</p>
         </div>
       </div>
 
@@ -736,40 +737,45 @@ export default function AndroidSettingsScreen() {
         <AndroidSettingRow label="Weekly summary">
           <AndroidToggle value={weeklySummary} onChange={setWeeklySummary} label="Weekly summary" />
         </AndroidSettingRow>
-        <AndroidSettingRow
-          label="Speak reminder"
-          detail="Says it out loud with the first reminder. Stays quiet on silent or Do Not Disturb."
-        >
-          <AndroidSelect
-            label="Speak reminder"
-            value={spokenReminder}
-            onChange={(next) => setSpokenReminder(next as SpokenReminderMode)}
-            options={[
-              { value: "off", label: "Off" },
-              { value: "random", label: "Random message" },
-              { value: "chosen", label: "A message I choose" },
-            ]}
-          />
-        </AndroidSettingRow>
-        {spokenReminder === "chosen" && (
-          <AndroidSettingRow label="Message">
-            <AndroidSelect
-              label="Reminder message"
-              value={spokenReminderMessage}
-              onChange={setSpokenReminderMessage}
-              options={SPOKEN_REMINDER_MESSAGES.map((line) => ({ value: line, label: line }))}
-            />
-          </AndroidSettingRow>
-        )}
-        {spokenReminder !== "off" && (
-          <button
-            type="button"
-            className="android-settings-action"
-            onClick={() => void testSpokenReminder()}
-          >
-            <Volume2 className="h-4 w-4" aria-hidden /> Play reminder now
-            <ChevronRight className="ml-auto h-4 w-4" aria-hidden />
-          </button>
+        {/* Spoken reminders are an Android alarm receiver; iOS has no equivalent. */}
+        {isAndroidApp() && (
+          <>
+            <AndroidSettingRow
+              label="Speak reminder"
+              detail="Says it out loud with the first reminder. Stays quiet on silent or Do Not Disturb."
+            >
+              <AndroidSelect
+                label="Speak reminder"
+                value={spokenReminder}
+                onChange={(next) => setSpokenReminder(next as SpokenReminderMode)}
+                options={[
+                  { value: "off", label: "Off" },
+                  { value: "random", label: "Random message" },
+                  { value: "chosen", label: "A message I choose" },
+                ]}
+              />
+            </AndroidSettingRow>
+            {spokenReminder === "chosen" && (
+              <AndroidSettingRow label="Message">
+                <AndroidSelect
+                  label="Reminder message"
+                  value={spokenReminderMessage}
+                  onChange={setSpokenReminderMessage}
+                  options={SPOKEN_REMINDER_MESSAGES.map((line) => ({ value: line, label: line }))}
+                />
+              </AndroidSettingRow>
+            )}
+            {spokenReminder !== "off" && (
+              <button
+                type="button"
+                className="android-settings-action"
+                onClick={() => void testSpokenReminder()}
+              >
+                <Volume2 className="h-4 w-4" aria-hidden /> Play reminder now
+                <ChevronRight className="ml-auto h-4 w-4" aria-hidden />
+              </button>
+            )}
+          </>
         )}
         <AndroidSettingRow label="Push reminders" detail="Server-sent nudges, even when closed">
           <AndroidToggle
@@ -793,7 +799,7 @@ export default function AndroidSettingsScreen() {
         </AndroidSettingRow>
         <AndroidSettingRow
           label="Voice"
-          detail="Used for read-aloud, voice study and spoken reminders"
+          detail={isAndroidApp() ? "Used for read-aloud, voice study and spoken reminders" : "Used for read-aloud and voice study"}
         >
           <AndroidSelect label="Voice" value={ttsVoice} onChange={chooseVoice} options={voiceOptions} />
         </AndroidSettingRow>

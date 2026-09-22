@@ -23,7 +23,7 @@ import { useAndroidScrollChrome } from '../../native/useAndroidScrollChrome';
 
 const ANDROID_REFRESHABLE_PATHS = new Set(['/dashboard', '/dashboard/decks', '/dashboard/study']);
 import { MobileWebBottomNav } from './MobileWebBottomNav';
-import { Capacitor } from '../../../lib/nativeShim';
+import { isNativeApp } from '../../../lib/platform';
 
 // ─── Navigation config ──────────────────────────────────────────────────────
 
@@ -700,10 +700,11 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
   }, [location.pathname, scrollMotion]);
   const workspace = useDashboardWorkspace();
   const user = workspace?.user;
-  const isAndroidApp = Capacitor.getPlatform() === 'android';
-  const isAndroidMobile = isAndroidApp && !isOnAdminRoute && !immersive;
+  // Both native apps use the phone shell (built first for Android).
+  const isMobileApp = isNativeApp();
+  const isAndroidMobile = isMobileApp && !isOnAdminRoute && !immersive;
   const showAndroidBottomNav = isAndroidMobile;
-  const showMobileWebNav = !isAndroidApp && !isOnAdminRoute && !immersive;
+  const showMobileWebNav = !isMobileApp && !isOnAdminRoute && !immersive;
   const { scrolled, navHidden } = useAndroidScrollChrome(
     'nova-main-content',
     isAndroidMobile && !bleed,
