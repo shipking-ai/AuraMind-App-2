@@ -53,6 +53,10 @@
 	<string>AuraMind turns your spoken answers into text so it can check them during voice study.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- The study session appears on the Lock Screen and in the Dynamic
+	     Island; see App/AuraLiveActivityPlugin.swift. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>

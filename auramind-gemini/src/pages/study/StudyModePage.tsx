@@ -17,6 +17,7 @@ import { dbService } from '../../services/database/dbService';
 import { sessionService } from '../../services/database/modules/sessionService';
 import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
 import { calculateSRS, formatInterval, previewIntervals, retentionFromSetting } from '../../services/study/srs';
+import { startLiveActivity, updateLiveActivity, endLiveActivity } from '../../lib/liveActivity';
 import { isOnline, queueCardReview, getCachedDecks, getCachedCards } from '../../services/offline/offlineStudyService';
 import { applyPersonalizedDifficultyInit } from '../../services/study/fsrs';
 import { Rating } from '../../types';
@@ -151,6 +152,31 @@ export default function StudyModePage() {
     // Launcher ranking: decks you open most float up in long-press shortcuts.
     if (isAndroidApp && deckId) void reportDeckUsed(deckId);
   }, [isAndroidApp, deckId]);
+  // Cards graded Again this session; the Live Activity shows how much of the
+  // session is coming back.
+  const [againCount, setAgainCount] = useState(0);
+
+  // iPhone: the session on the Lock Screen and in the Dynamic Island, so
+  // leaving the app to look something up doesn't lose the thread. No-op
+  // everywhere else (see lib/liveActivity).
+  useEffect(() => {
+    if (!deck || studyCards.length === 0 || completed) return;
+    const session = {
+      deckTitle: deck.title,
+      total: studyCards.length,
+      done: sessionStats.total,
+      again: againCount,
+    };
+    if (sessionStats.total === 0) void startLiveActivity(session);
+    else void updateLiveActivity(session);
+  }, [deck, studyCards.length, sessionStats.total, againCount, completed]);
+
+  // The activity must never outlive the session it mirrors.
+  useEffect(() => {
+    if (completed) void endLiveActivity();
+  }, [completed]);
+  useEffect(() => () => { void endLiveActivity(); }, []);
+
   const [elapsedMs, setElapsedMs] = useState(0);
   const _studyTimer = useTimer({ duration: Infinity, autoplay: true });
   const { impact, success, warning } = useHaptics();
@@ -418,6 +444,7 @@ export default function StudyModePage() {
       correct: prev.correct + (rating >= Rating.GOOD ? 1 : 0),
       total: prev.total + 1,
     }));
+    if (rating === Rating.AGAIN) setAgainCount(n => n + 1);
     if (index >= studyCards.length - 1) {
       // Calculate post-this-rating totals (closure captures sessionStats as
       // of the start of this render, so we add 1 for this rating locally).
