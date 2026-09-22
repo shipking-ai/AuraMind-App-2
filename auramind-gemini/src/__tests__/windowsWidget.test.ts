@@ -91,7 +91,8 @@ describe('widget service worker', () => {
     // The real Cache API hands out a fresh Response per match; storing the
     // body text keeps this stub from replaying a consumed one.
     const stored = new Map<string, string>();
-    const updateByTag = vi.fn(async () => {});
+    const updateByTag =
+      vi.fn(async (_tag: string, _payload: { template: string; data: string }) => {});
     const openWindow = vi.fn(async () => {});
     const self = {
       addEventListener: (type: string, fn: (event: any) => void) => listeners.set(type, fn),
