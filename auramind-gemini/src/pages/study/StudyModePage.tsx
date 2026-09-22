@@ -18,6 +18,7 @@ import { dbService } from '../../services/database/dbService';
 import { sessionService } from '../../services/database/modules/sessionService';
 import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
 import { calculateSRS, formatInterval, previewIntervals, retentionFromSetting } from '../../services/study/srs';
+import { LocalAIAssist } from '../../components/study/LocalAIAssist';
 import { isOnline, queueCardReview, getCachedDecks, getCachedCards } from '../../services/offline/offlineStudyService';
 import { applyPersonalizedDifficultyInit } from '../../services/study/fsrs';
 import { Rating } from '../../types';
@@ -953,6 +954,11 @@ export default function StudyModePage() {
             className="android-study-rating px-6 pb-6"
           >
             <div className="max-w-lg mx-auto">
+              {/* Chrome's on-device model: a shorter answer or a translation,
+                  free and offline. Renders only where those APIs exist. */}
+              {!Capacitor.isNativePlatform() && (
+                <LocalAIAssist front={currentCard.front || ''} back={currentCard.back || ''} />
+              )}
               <div className="text-center mb-3">
                 <span className="text-[#7A7A96] text-[11px]">How well did you know this?</span>
               </div>
