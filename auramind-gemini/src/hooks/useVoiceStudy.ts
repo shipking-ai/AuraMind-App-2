@@ -23,10 +23,12 @@ import {
   getSpeechCapabilities,
   loadVoices,
   UNSUPPORTED_STT_ERROR,
+  usesNativeRecognition,
   type SpeechError,
   type SpeechRecognitionEventLike,
   type SpeechRecognitionLike,
 } from '../services/voice/speechEngine';
+import type { NativeRecognition } from '../services/voice/nativeRecognition';
 import { speak as speakAloud, stopSpeaking } from '../services/voice/speechOutput';
 
 export interface VoiceStudyState {
@@ -110,8 +112,13 @@ export function useVoiceStudy(options?: {
   }, [caps.tts]);
 
   // Metered only while the recogniser is open, so the browser's mic
-  // indicator clears the moment listening stops.
-  const level = useMicLevel(listening);
+  // indicator clears the moment listening stops. Android's recogniser
+  // reports its own loudness instead: a second capture stream there can
+  // starve the recogniser of audio.
+  const [nativeRecognition] = useState(() => usesNativeRecognition());
+  const [nativeLevel, setNativeLevel] = useState(0);
+  const micLevel = useMicLevel(listening && !nativeRecognition);
+  const level = nativeRecognition ? nativeLevel : micLevel;
 
   // ── Speak ──────────────────────────────────────────────────────────────
 
@@ -168,6 +175,9 @@ export function useVoiceStudy(options?: {
     transcriptRef.current = '';
 
     recognition.onstart = () => setListening(true);
+    if ('onlevel' in recognition) {
+      (recognition as NativeRecognition).onlevel = setNativeLevel;
+    }
 
     recognition.onresult = (event: SpeechRecognitionEventLike) => {
       let final = transcriptRef.current;
