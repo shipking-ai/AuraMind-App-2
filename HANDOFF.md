@@ -249,7 +249,16 @@ reminder simply fires once and never again.
 - **PowerShell has no `&&`.** Use `;` or separate commands.
 - **The Supabase MCP connection is read-only.** Writes go through PostgREST
   with the service-role key from the root `.env`, or through
-  `npm run migrate`. The linked CLI works for reads and rolled-back tests:
+  `npm run migrate`.
+- **WSL sandboxes reach Windows npm via `powershell.exe`.** The repo lives on
+  `/mnt/c/...` and its `node_modules` hold Windows native binaries, so Linux
+  tools that need them (vitest → rollup) fail with "Cannot find module
+  @rollup/rollup-linux-x64-gnu" — never `npm install` from the Linux side,
+  it would replace the Windows binaries. Instead run Windows tooling:
+  `powershell.exe -NoProfile -Command 'Set-Location "auramind-gemini"; npm test -- --run'`.
+  It starts in the project root, so the Set-Location is optional there. Bash
+  eats `$variables` inside double-quoted -Command strings — single-quote the
+  whole command and use double quotes inside. Allow ~2 min for the suite. The linked CLI works for reads and rolled-back tests:
   `npx supabase@latest db query --linked -f file.sql -o json`.
 - **Claude Code's auto mode blocks** `gh pr merge` on unreviewed PRs,
   branch-protection edits and production migrations. Those are done by hand
@@ -805,7 +814,8 @@ the pure module was verified by compiling `auraDepth.ts` with tsc and running
 20 runtime assertions against the real code, which caught two bugs a review
 would have missed: IEEE `-0` from `0 × negative depth` (broke `toBe(0)`) and
 an over-eager `!Number.isFinite` guard sending Infinity to 0 instead of
-saturating. Vitest suite should be run from the Windows side (`npm test`).
+saturating. Vitest suite run Windows-side after commit: **57 files / 484
+tests green** (472 existing + 12 new), via the powershell.exe bridge below.
 
 ### Traps found here
 
