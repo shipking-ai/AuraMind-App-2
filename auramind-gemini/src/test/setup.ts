@@ -108,6 +108,10 @@ if (typeof globalThis.DOMMatrix === 'undefined') {
     skewYSelf() { return this; }
     skewY() { return this; }
     multiplySelf() { return this; }
+    // jsdom 30 routes anime.js createDraggable() through these.
+    preMultiplySelf() { return this; }
+    invertSelf() { return this; }
+    setMatrixValue() { return this; }
     flipX() { return this; }
     flipY() { return this; }
     transformPoint(_point?: unknown) {

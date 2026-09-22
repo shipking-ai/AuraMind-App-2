@@ -41,7 +41,6 @@ async function apiCall(path: string, init?: RequestInit): Promise<{ ok: boolean;
 
 const planColor = (p: string) =>
   p === 'Pro' || p === 'pro' ? 'bg-[#7C3AED]/10 text-[#8B5CF6] border border-[#7C3AED]/20'
-  : p === 'Scholar' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
   : 'bg-[#2A2A3A] text-[#7A7A96]';
 
 const statusColor = (s: string) =>
@@ -53,6 +52,7 @@ const statusColor = (s: string) =>
 const roleColor = (r: string) =>
   r === 'owner' || r === 'ceo' ? 'bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/20'
   : r === 'admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+  : r === 'tester' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
   : 'bg-[#2A2A3A] text-[#7A7A96]';
 
 const fmt = (iso?: string) => {
@@ -240,6 +240,7 @@ export default function AdminUsersPage() {
                 <Field label="Role">
                   <select value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })} className="w-full px-3 py-2 bg-[#1A1A24] border border-[#2A2A3A] rounded-xl text-xs text-white focus:outline-none focus:border-[#7C3AED]/40 transition-colors">
                     <option value="user">User</option>
+                    <option value="tester">Tester</option>
                     <option value="employee">Employee</option>
                     <option value="admin">Admin</option>
                     <option value="ceo">CEO</option>
@@ -250,7 +251,6 @@ export default function AdminUsersPage() {
                   <select value={editing.plan} onChange={e => setEditing({ ...editing, plan: e.target.value })} className="w-full px-3 py-2 bg-[#1A1A24] border border-[#2A2A3A] rounded-xl text-xs text-white focus:outline-none focus:border-[#7C3AED]/40 transition-colors">
                     <option value="Starter">Starter (Free)</option>
                     <option value="Pro">Pro</option>
-                    <option value="Scholar">Scholar</option>
                   </select>
                 </Field>
                 <Field label="Subscription Status">

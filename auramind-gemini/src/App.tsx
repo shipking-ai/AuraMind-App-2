@@ -21,7 +21,11 @@ import { loadOfflineAwareData } from "./lib/offlineAwareData";
 import { getAppPreference } from "./lib/appPreferences";
 import { resetUserData } from "./services/gamification/gamificationService";
 import { analyticsService } from "./services/analytics/analyticsService";
-import { getPermissions, getDefaultRole } from "./utils/permissions";
+import {
+  getPermissions,
+  getDefaultRole,
+  resolveAuthorizationRole,
+} from "./utils/permissions";
 import { addNotification } from "./services/notifications/notificationStore";
 import {
   initRealtimeNotifications,
@@ -53,6 +57,7 @@ import BiometricGate from "./components/native/BiometricGate";
 import { initPushListeners } from "./services/notifications/pushService";
 import { Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
+import { useSparkSync } from "./hooks/useSparkSync";
 import { useShareTarget } from "./hooks/useShareTarget";
 import QuizGenerationNotifier from "./components/notifications/QuizGenerationNotifier";
 import { Toaster, toast } from "./components/ui/sonner";
@@ -100,10 +105,13 @@ if (typeof window !== "undefined" && !window.requestIdleCallback) {
 //
 //  Two hubs own the authenticated product surface:
 //   • NovaHub   — every /dashboard/* path (overview, tools, study, etc.)
+//   • AdminHub  — every /admin/* path, inside the same Nova shell chrome
 // ─────────────────────────────────────────────────────────────────────────
 
 const NovaHub = React.lazy(() => import("./pages/dashboard/NovaHub"));
-const AdminShellRoute = React.lazy(() => import("./pages/admin/AdminShell"));
+const AdminHub = React.lazy(() => import("./pages/admin/AdminHub"));
+const AdminOverviewRoute = React.lazy(() => import("./pages/admin/AdminOverviewPage"));
+const AdminSettingsRoute = React.lazy(() => import("./pages/admin/AdminSettingsPage"));
 const AdminUsersRoute = React.lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminAppCheckRoute = React.lazy(() => import("./pages/admin/AdminAppCheckPage"));
 
@@ -123,6 +131,7 @@ const CallbackPage = React.lazy(() => import("./pages/auth/CallbackPage"));
 const SchoologyCallbackPage = React.lazy(() => import("./pages/auth/SchoologyCallbackPage"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const PaymentPage = React.lazy(() => import("./components/auth/PaymentPage"));
+const OnboardingFlow = React.lazy(() => import("./pages/onboarding/OnboardingFlow"));
 const DownloadPage = React.lazy(() => import("./pages/DownloadPage"));
 
 import { ArrowDownIcon as ArrowDown } from "./components/icons/CustomIcons";
@@ -421,7 +430,12 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   const mapAuthUserToProfile = useCallback(
     (authUser: any): UserProfile => {
       const metadata = authUser.user_metadata || {};
-      const role = (metadata.role as UserRole) || roleOf(authUser.email);
+      // Authorization role: app_metadata ONLY (service-role written). The
+      // client-writable user_metadata.role holds the onboarding persona and
+      // whatever else the user typed into their own metadata — reading it here
+      // would let any account grant itself `tester` free access or staff
+      // access from the console.
+      const role = resolveAuthorizationRole(authUser, roleOf(authUser.email));
       const permissions = getPermissions(role);
       onUserRoleChange(role);
       return {
@@ -435,6 +449,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
         joinedDate: metadata.joined_date ? Number(metadata.joined_date) : Date.now(),
         isAdmin: permissions.canAccessAdminPanel,
         role,
+        persona:
+          typeof metadata.role === "string" && metadata.role !== role
+            ? metadata.role
+            : undefined,
         isEmailVerified: !!authUser.email_confirmed_at,
         isPhoneVerified: !!authUser.phone_confirmed_at,
         phone: authUser.phone || "",
@@ -467,6 +485,26 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
         setUser(profile);
         setAuthChecked(true);
         try {
+          // Refresh the user from the server. `session.user` above is the
+          // JWT's embedded claims, frozen at token-mint time — a role
+          // promotion (matty.cigemp -> owner) or an avatar uploaded on
+          // another device stays invisible until the token refreshes, which
+          // is exactly the "cards sync but profile pic / admin don't" bug.
+          // `getUser()` round-trips to PostgREST and returns the CURRENT
+          // app_metadata.role and user_metadata, so both stale-JWT symptom
+          // classes self-heal on every boot without a manual re-login.
+          const { data: freshUser, error: freshError } =
+            await requireSupabase().auth.getUser();
+          if (!freshError && freshUser?.user) {
+            profile = mapAuthUserToProfile(freshUser.user);
+            setUser(profile);
+          } else if (freshError) {
+            console.warn("Fresh user refresh failed, keeping cached session:", freshError.message);
+          }
+        } catch {
+          // network hiccup — the cached session is still usable until next boot
+        }
+        try {
           const { data: dbProfile } = await requireSupabase()
             .from("user_profiles")
             .select("role")
@@ -477,6 +515,9 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
             const dbPerms = getPermissions(dbRole);
             const memPerms = getPermissions(profile.role || UserRole.USER);
             if (dbPerms.canAccessAdminPanel && !memPerms.canAccessAdminPanel) {
+              // user_profiles.role is written by the sync trigger from
+              // app_metadata (server-side), so it is a legitimate elevation
+              // source — unlike user_metadata, which is never read here.
               profile = { ...profile, role: dbRole, isAdmin: true };
               setUser(profile);
             }
@@ -703,6 +744,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   // reschedules when the user has already granted it. See useReminderSync.
   useReminderSync('maintain');
 
+  // Memory sparks (Surface 2): plan the day's notification sparks on native
+  // platforms. Also 'maintain' mode — never prompts on launch. Settings asks.
+  useSparkSync('maintain');
+
   // Content shared into AuraMind from any other app. Gated on authChecked so
   // a share cannot land on a route guard and bounce to /auth, losing itself.
   useShareTarget(authChecked);
@@ -840,6 +885,15 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
               />
 
               <Route
+                path="/onboarding"
+                element={
+                  <PageTransition>
+                    <OnboardingFlow />
+                  </PageTransition>
+                }
+              />
+
+              <Route
                 path="/docs"
                 element={
                   <PageTransition>
@@ -948,14 +1002,34 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                     currentUser &&
                     getPermissions(currentUser.role || UserRole.USER).canAccessAdminPanel ? (
                       <Suspense fallback={<GenericPageSkeleton />}>
-                        <AdminShellRoute />
+                        {workspaceProps ? (
+                          <AdminHub
+                            user={workspaceProps.user}
+                            decks={workspaceProps.decks}
+                            cards={workspaceProps.cards}
+                            createDeck={workspaceProps.createDeck}
+                            deleteDeck={workspaceProps.deleteDeck}
+                            addCardsToDeck={workspaceProps.addCardsToDeck}
+                            updateProfile={workspaceProps.updateProfile}
+                            onLogout={workspaceProps.onLogout}
+                          />
+                        ) : (
+                          <GenericPageSkeleton />
+                        )}
                       </Suspense>
                     ) : (
                       <Navigate to="/dashboard" replace />
                     )
                   }
                 >
-                  <Route index element={<Navigate to="users" replace />} />
+                  <Route
+                    index
+                    element={
+                      <Suspense fallback={<GenericPageSkeleton />}>
+                        <AdminOverviewRoute />
+                      </Suspense>
+                    }
+                  />
                   <Route
                     path="users"
                     element={
@@ -969,6 +1043,14 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                     element={
                       <Suspense fallback={<GenericPageSkeleton />}>
                         <AdminAppCheckRoute />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="settings"
+                    element={
+                      <Suspense fallback={<GenericPageSkeleton />}>
+                        <AdminSettingsRoute />
                       </Suspense>
                     }
                   />

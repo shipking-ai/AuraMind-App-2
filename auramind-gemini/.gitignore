@@ -91,4 +91,7 @@ build.log
 .freebuff/
 .kimchi/
 test-results/
+
+# Playwright storage states contain live session tokens - never commit.
+e2e/.auth/
 preview-*.html

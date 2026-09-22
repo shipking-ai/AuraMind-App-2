@@ -10,16 +10,7 @@ import {
   LogIn,
   Keyboard,
   Users,
-  CreditCard,
-  UserPlus,
-  FileText,
-  Monitor,
-  Database,
-  ScrollText,
-  DollarSign,
   Wrench,
-  Key,
-  Globe,
 } from "@/components/icons";
 import { useAuraMind } from "@/lib/auramind/store";
 import type { ViewKey } from "@/lib/auramind/types";
@@ -59,20 +50,15 @@ const ADMIN_PALETTE_ITEMS: {
   hint: string;
   path: string;
 }[] = [
-  { key: "admin", label: "Admin Overview", icon: Shield, hint: "Launch cockpit", path: "/admin/vault" },
+  // Kept deliberately small: every entry here must resolve to a real route.
+  // The palette previously advertised eleven unbuilt admin pages that all
+  // rendered a blank shell. Role management lives in Users, subscriptions
+  // are per-user in Users — they don't need their own pages. Audit Trail
+  // and Test Users have working APIs and can be added back on demand.
+  { key: "admin", label: "Admin Overview", icon: Shield, hint: "Launch cockpit", path: "/admin" },
   { key: "users", label: "User Management", icon: Users, hint: "User registry", path: "/admin/users" },
-  { key: "subscriptions", label: "Subscriptions", icon: CreditCard, hint: "Plan distribution", path: "/admin/subscriptions" },
-  { key: "test-users", label: "Test Users", icon: UserPlus, hint: "Sandbox accounts", path: "/admin/test-users" },
-  { key: "content", label: "Content Library", icon: FileText, hint: "Knowledge base stats", path: "/admin/content" },
-  { key: "flags", label: "Feature Flags", icon: Activity, hint: "Toggle features", path: "/admin/flags" },
-  { key: "database", label: "SQL Explorer", icon: Database, hint: "Query console", path: "/admin/database" },
-  { key: "audit", label: "Audit Trail", icon: ScrollText, hint: "Activity log", path: "/admin/audit" },
-  { key: "preview", label: "Device Lab", icon: Monitor, hint: "Platform preview", path: "/admin/preview" },
-  { key: "health", label: "Health Check", icon: Activity, hint: "Readiness scanner", path: "/admin/health" },
-  { key: "revenue", label: "Revenue Dashboard", icon: DollarSign, hint: "MRR & analytics", path: "/admin/revenue" },
-  { key: "config", label: "System Config", icon: Wrench, hint: "Platform settings", path: "/admin/config" },
-  { key: "roles", label: "Role Manager", icon: Key, hint: "Permission matrix", path: "/admin/roles" },
-  { key: "nexus", label: "Nexus Command", icon: Globe, hint: "Classified intelligence", path: "/admin/nexus" },
+  { key: "health", label: "Health Check", icon: Activity, hint: "Readiness scanner", path: "/admin/check" },
+  { key: "config", label: "System Config", icon: Wrench, hint: "Platform settings", path: "/admin/settings" },
 ];
 
 export function CommandPalette() {

@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09, updated 2026-09-18. Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-21 (classroom portal + graded quizzes, memory sparks, Android listening). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,9 +14,9 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main`; open PRs: #68 (Dependabot, test tooling), #78 (test polyfill for #68) |
+| Branch | `main`; open PRs: #79 (Android listening), #85 (natural voices), #68 (Dependabot, needs `@dependabot rebase` now that #78 is merged) |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks still list `build-and-test (20.x)` until changed in repo settings |
-| Migrations | all applied, through `20260917000000_league_weekly_xp_atomic` |
+| Migrations | all applied through `20260921000100_classroom_quiz_grading.sql` (verified live 2026-09-21) |
 
 ---
 
@@ -59,8 +59,8 @@ value:
   appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
   loudness streams and silence ends with `no-speech`. **Still needs one phone
   test with a real spoken answer**, since the emulator mic can't be fed audio.
-- **Dependabot #68** (jsdom 30, vitest 5, jest-dom 7) passes once #78 is
-  merged and #68 is rebased (`@dependabot rebase`, not a plain re-run).
+- **Dependabot #68** (jsdom 30, vitest 5, jest-dom 7): #78 is merged, so it
+  passes once rebased (`@dependabot rebase`, not a plain re-run).
 
 - **Push sender.** `push_tokens` fills as devices opt in, but no server sends
   FCM messages yet and no `google-services.json` is configured.
@@ -216,6 +216,23 @@ reminder simply fires once and never again.
 
 ---
 
+## Running the seeded E2E specs locally
+
+`onboarding.spec.ts` and `spark.spec.ts` mint real accounts with the
+service-role key from the root `.env`; without it (CI) they skip. They need
+the Vite dev server on 3001 (the spark force hook is dev-only) and the API
+somewhere else — `auramind-gemini/.env` points the `/api` proxy at 3001, i.e.
+at Vite itself, which hangs every API call. Run the API on 3002 and override
+the proxy:
+
+```bash
+cd api && PORT=3002 npx tsx server.js
+cd auramind-gemini && VITE_API_PROXY_TARGET=http://localhost:3002 npm run dev -- --port 3001
+cd auramind-gemini && npx playwright test e2e/onboarding.spec.ts e2e/spark.spec.ts
+```
+
+---
+
 ## Verifying Android changes
 
 The emulator plus CDP is the fastest honest loop. Screenshots alone hide
@@ -294,3 +311,303 @@ the app.
 - **Emulator ports shift on restart.** After a reboot 5556 was gone and
   the phone reappeared as 5554 - always re-check `adb devices` plus
   `getprop ro.product.model` instead of trusting remembered ports.
+
+---
+
+## 2026-09-18 - Classroom Portal
+
+Student/teacher LMS-lite: create classes, join via a 6-char invite code or
+deep link, assign decks/quizzes, per-student progress with most-missed terms.
+Built on the Nova design system. Applied to the live project and verified
+end-to-end (DB smoke + real-browser Playwright).
+
+### What shipped
+
+- **Migration** `supabase/migrations/20260919000000_classroom_portal.sql`:
+  tables `classrooms`, `classroom_memberships`, `assignments`,
+  `assignment_progress`; definer helpers `is_class_member` /
+  `is_class_teacher`; RLS is client-read-only (`SELECT`), *every* write goes
+  through a SECURITY DEFINER RPC; invite codes are `^[A-Z2-9]{6}$`.
+- **App** routes `/dashboard/classes` and `/dashboard/classes/:id` (lazy in
+  `NovaHub`), nav item in `NovaDashboardShell`, service layer
+  `services/classroom/{classroom,assignment}Service.ts`, pure mappers in
+  `lib/classroom/format.ts`, components `ClassProgress` + `AssignDeckModal`.
+- **Tests** `src/__tests__/classroom.test.ts` (19) - mappers, due/percent
+  math, join-code sanitation, error classification. Full suite 384 passing.
+
+### How the security model works (keep it this way)
+
+Roles are **class-scoped**; global `UserRole` is untouched. A class has one
+`owner` plus `teacher`/`student` members. RLS policies are scoped
+`TO authenticated` only so `anon` never evaluates the definer helpers (empty
+rows, not 500s). Definers `SET search_path = public, pg_temp`, are
+`REVOKE EXECUTE FROM PUBLIC, anon` and `GRANT ... TO authenticated`.
+
+Aggregates (status, accuracy, most-missed terms from FSRS/`card_reviews`)
+are persisted, not computed live - the Quizlet model: teacher reads every
+member's progress rows, a student reads only their own.
+
+### Traps found here
+
+- **`accept_class_deck` INSERTed columns that don't exist.** Both deck/copy
+  INSERTs referenced `decks.source_label` and `cards.header`/`image`/
+  `source_label`/`citations` — none exist on the real schema (PL/pgSQL only
+  errors at call time, so this survived type-check/build). Caught by a live
+  smoke test; fixed in the migration file and re-applied to the DB before any
+  commit. If you ever see "column does not exist" from an RPC, verify column
+  names against `information_schema.columns` — definitions don't validate.
+- **`join_classroom_with_code` once selected a nonexistent `is_public`
+  column** (a removed `v_locked` CTE). Same class of bug as above; fixed
+  before shipping. The RPC returns `SETOF classrooms`, not `{ok, id}`.
+- **`rpc().single()` can resolve to `null` or fan out** the same way table
+  `.single()` can. Service layer normalizes through `asRow()` before mapping.
+- **`accept_class_deck` is the idempotency key** for the student flow: it
+  copies the source deck to a student-owned row once, then `record_progress`
+  recomputes status from the student's own reviews. Re-running never
+  regresses a `completed` status backwards.
+- **Freshly accepted class decks work in StudyMode** because the study page
+  reloads the deck by id from the DB instead of trusting workspace state.
+- **Membership table is roster-readable by all members, by design.** Any
+  member can `SELECT` the membership rows of their own class (that's the
+  People tab); cross-class rows are invisible under RLS. Emails stay behind
+  the `classroom_roster()` RPC (teacher-only). Verified in the smoke test.
+- **Class cards used a `<button>` nested inside a `<motion.button>`** —
+  invalid HTML that React only flags at runtime (a console error that the UI
+  E2E caught; type-check/build can't see it). The outer card is now a
+  `role="button"` div with keyboard handling so the inner invite-copy button
+  stays a real button. Grep `motion\.button|<button` when adding cards.
+
+### Verification
+
+`npm run type-check`, `npm run lint`, full `npm test` (384), and `npm run
+build` all pass. The migration is **applied** to the live project
+(`ndwiaawqkkzdsdqeglez`); objects verified in `pg_class`/`pg_proc`, and a 29-
+assertion end-to-end smoke test (teacher create class → assign deck/quiz →
+student join/accept/record → RLS isolation checks, simulated
+authenticated roles via `request.jwt.claims`) passed against the live DB.
+
+Real-browser UI E2E (Playwright, `npm run dev` stack) also passes: seeded a
+captcha-free session via GoTrue admin `generate_link` → `verify` (Turnstile
+gates the password grant — never fight the widget in tests), granted
+`app_metadata.subscription_status: 'active'` (the dashboard gates on
+entitlement), and exercised sign in → create class → detail/tabs → delete
+with **zero console or page errors**. This surfaced and fixed the nested-
+button bug above. Re-run `npm run diagnostics` after any further SQL changes.
+
+---
+
+## 2026-09-18 - Onboarding + tester role (security fix)
+
+Two features plus one security fix the tester role forced into the open.
+Nothing in `Outstanding — code` changed; the push sender and Aurora motion
+are still the next items.
+
+### What shipped
+
+- **Onboarding flow** — `/onboarding` (persona + topic), lazy-routed in
+  `App.tsx`; the gate `lib/onboardingGate.ts` (`hasCompletedOnboarding`)
+  routes fresh accounts through it from signUp, signIn, and the email callback;
+  legacy picker accounts and internal roles skip it. `PaymentPage`
+  personalizes copy from `?role=&topic=`; `services/decks/topicDeckService.ts`
+  pre-creates the topic deck *before* the paywall (Groq → Puter → offline
+  template), so the library is never empty. New funnel event
+  `onboarding_completed`.
+- **`tester` internal role** — `UserRole.TESTER`, hierarchy 30 (below
+  employee): `hasFreeAccess` true, zero staff powers. Admin role picker and
+  the API zod role enums accept it.
+
+### Security fix: the client's role source was still user_metadata
+
+Adding tester to `hasFreeAccess` exposed that `mapAuthUserToProfile` still
+read `role` from **user_metadata** and fed it to `getPermissions` — any
+signed-in user could set `user_metadata.role = 'tester'` (or `admin`) with one
+`auth.updateUser` call and unlock the paywall. Same bug class as the
+entitlement move: the server reader got fixed, the client's source did not.
+
+- `resolveAuthorizationRole()` (`utils/permissions.ts`) is now the only role
+  source for permission decisions: `app_metadata.role` ONLY, fails closed on
+  unknown values. The onboarding persona lives on a display-only
+  `profile.persona` field.
+- Server parity: `isEntitledWithRoleAccess()` in `api/_lib/entitlement.ts`
+  (owner/ceo/admin/employee/tester, app_metadata only) now gates `/api/ai`
+  chat + transcribe. Previously `hasFreeAccess` was client-only decoration —
+  staff hit 402 on the AI proxy despite an unlocked UI.
+- Regression tests on both sides: `src/__tests__/permissions.test.ts`;
+  `api/tests/entitlement-source.test.ts` (a forged
+  `user_metadata.role = 'tester'` through `/api/ai` must 402 before any
+  provider call).
+- **The rule, restated:** `user_metadata.role` = display persona;
+  `app_metadata.role` = authorization. The `user_profiles.role` elevation
+  check in `syncSession` stays safe only because that column is server-synced
+  from app_metadata and persona strings grant no permission bits — do not
+  loosen either half.
+
+### E2E seeding without fighting Turnstile
+
+`scripts/e2e-seed-session.mjs` + `e2e/onboarding.spec.ts` — 3 tests: the role
+step (all personas render, Continue disabled), the full flow to
+`/subscribe?role=student&topic=…` with personalized copy, and the
+bounce-to-dashboard for finished accounts. The seeder creates/reuses a user
+via the GoTrue admin API (service-role key from the root `.env`), sets
+`user_metadata` per scenario (`--fresh` = empty, else
+`onboarding_completed: true`), and mints a session via `generate_link` →
+magic-link verify → Playwright storage state in `e2e/.auth/`.
+
+Traps found here:
+
+- **vitest `env` values are stringified.** `UPSTASH_X: undefined` in
+  vitest.config becomes the literal string `"undefined"`, which
+  `Boolean(process.env.X)` treats as *configured*. To unset inherited env you
+  must `delete process.env.X` in a `setupFiles` file — `api/tests/setup.ts`
+  does that and tripwires any test that still reaches the limiter.
+- **Inherited shell env breaks CI-green suites locally.** UPSTASH_* exported
+  from the root `.env` made 7 API tests fail on this machine while CI passed
+  (fetch mocks saw Upstash instead of the provider). When local failures make
+  no sense, diff the shell env against CI before suspecting the code.
+- **`redirect_to` cannot override the Supabase Site URL** unless the target
+  is on the project's redirect allowlist — localhost is not, so the seeded
+  session landed on the auramind.app origin and the app bounced to `/auth`.
+  Fix: run the verify hop in Node (`redirect: 'manual'`), take the
+  `#access_token=…` fragment off the Location header, and navigate the *local*
+  `/auth/callback` with it so `detectSessionInURL` stores the session on the
+  right origin.
+- **Playwright route interception doesn't help there**: `route.fetch` dials
+  Supabase from the browser context and hits the same wall as direct
+  navigation.
+- **Playwright's Chromium fails the Supabase hop with
+  `ERR_CERT_DATE_INVALID`** on this machine (sandbox TLS/clock
+  interception). The seeder launches with `--ignore-certificate-errors`;
+  only localhost is visited afterward.
+- **vite on this machine binds `::1` only**, and Node resolves `localhost`
+  IPv6-first: proxy targets must be `127.0.0.1`, not `localhost`, or every
+  proxied `/api` call dies with EADDRINUSE noise and 500s.
+- **`test.use({ storageState })` is captured at collection time**, before any
+  `beforeAll` can seed. Pre-create empty `{}` state files at module scope and
+  let the seeder overwrite them.
+- The browser always logs `Failed to load resource: 402` for the entitlement
+  probe on fresh accounts — expected, `App.tsx` catches it. Assert on
+  `pageerror` plus filtered console errors, not raw console output.
+
+Run: `npx playwright test e2e/onboarding.spec.ts --project=chromium` (vite on
+3001; cleanest with the API also running: `PORT=3002 npx tsx server.js` in
+`api/` plus `VITE_API_PROXY_TARGET=http://127.0.0.1:3002` on the vite
+process). Seeded `e2e-*` users are deleted from auth after runs;
+`e2e/.auth/` is gitignored — storage states contain live session tokens and
+must never be committed.
+
+### Verification
+
+API 95/95; web type-check, lint, 405 unit tests, and production build green;
+E2E 3/3 against the live project. No SQL changed, so no migration or
+`npm run diagnostics` rerun was needed.
+
+---
+
+## 2026-09-20 - Admin hub unification, real notifications, honest charts
+
+Committed as `be65a1f6` (user-authored; reviewed and verified before commit).
+
+### What shipped
+
+- **Admin hub** — `AdminShell` deleted; every `/admin/*` path renders inside
+  `NovaDashboardShell` via `pages/admin/AdminHub.tsx` (own
+  `DashboardWorkspaceProvider`). New `/admin` Overview (fleet stats, role/plan
+  breakdowns, newest signups, health strip fed by `/api/admin/test` +
+  `/api/admin/health/payments`) and `/admin/settings` (coupon CRUD via
+  `/api/coupons/*`, read-only env readout through the `CLIENT_ENV` allowlist).
+  Command palette's eleven phantom admin pages removed — every palette entry
+  now resolves to a real route. Admin sidebar gained "Back to Dashboard"; the
+  Admin section now renders on `/dashboard/*` for admins too (was
+  Ctrl+K-only).
+- **Notification bell is real** — `NotificationPanel.tsx` over the shared
+  `notificationStore` (unread badge, mark-all-read, `actionUrl` click-through,
+  outside-click + Escape close). Store is shared with QuizGenerationNotifier,
+  so the panel shows real events.
+- **Honest overview charts** — the sin-wave `makeSpark` fiction deleted.
+  `services/database/modules/reviewActivityService.ts` reads real
+  `card_reviews` history (RLS-scoped, `(user_id, reviewed_at)` indexed) and
+  buckets by local day; falls back to bucketing client cards by `lastReviewed`
+  (undercounts multi-review days, never invents). `bucketReviewsByDay` is pure
+  and unit-tested.
+- **Stale-JWT self-heal** — `syncSession` re-fetches the user via
+  `auth.getUser()` on boot, so role promotions and avatars uploaded on another
+  device appear without re-login.
+- **Avatars in TopBar** — from `user_metadata.avatar_url`, initials fallback
+  on image error. `Scholar` plan removed everywhere.
+
+### Security fix: updateUserById replaced metadata wholesale
+
+Every `auth.admin.updateUserById` call (Stripe checkout, subscription
+updates, cancellation, cron dunning, admin status override) passed a bare
+`app_metadata: { subscription_status }`. That call **replaces** the record:
+any purchase or dunning event would have wiped `app_metadata.role` and
+demoted staff/testers. All call sites now spread the existing
+app/user_metadata first; `stripe-flow.test.ts` pins that a buyer carrying
+`role: 'admin'` survives provisioning.
+
+### Verification
+
+Web type-check, lint, 410 unit tests, production build green; API 95/95.
+No SQL changed.
+
+---
+
+## 2026-09-20 - Memory sparks (sporadic resurfacing)
+
+Spec: `SPECS/memory-sparks.md`. Sparks resurface cards in the FSRS
+retrievability band ~0.65–0.90 (fading, not forgotten) across three surfaces,
+all driven by one pure scheduler. Phase 2 (background voice via Foreground
+Service, server push sparks) is explicitly out of scope.
+
+### What shipped
+
+- **`services/memory/sparkScheduler.ts` (pure)** — eligibility band, sporadic
+  firing (jittered ~90 s poll × 15% coin, ramped at quiet-hours edges), daily
+  cap 12, per-card cap 2/day, 20 min between sparks, 3 h re-review floor,
+  weighted pick toward lowest retrievability with jitter. Spark log in
+  `localStorage['auramind:sparkLog']` (7-day retention) gives cross-surface
+  suppression — no DB migration.
+- **Surface 1: in-app pop-up** — `components/memory/MemorySpark.tsx`, mounted
+  once in `NovaDashboardShell`; fires only on dashboard-ish routes while the
+  tab is visible, never during study/chat/admin. Front spoken through
+  `speechOutput`, reveal → grade with the real SRS path
+  (calculateSRS → dbService.updateCard → cardReviewsService, fire-and-forget).
+- **Surface 2: notification sparks** — `lib/sparkNotificationSchedule.ts`
+  (pure planner: 2–4 one-shot times/day inside waking hours, ≥2 h apart,
+  band-jittered so spacing holds) + `hooks/useSparkSync.ts` mounted next to
+  `useReminderSync` in App.tsx. Native only, 'maintain' mode (never prompts on
+  launch), cancel-first with fixed IDs 7411–7414 so re-plans replace rather
+  than stack. One-shots deliberately avoid the `repeats` trap. Tap deep-links
+  to `/dashboard/spark/:cardId` (`pages/dashboard/SparkReviewPage.tsx`) which
+  speaks the prompt and offers reveal + grading; unknown card ids degrade
+  gently.
+- **Surface 3: interleaved sessions** — `services/memory/sessionComposer.ts`
+  (pure) mixes ≤20% near-due cards from OTHER decks into the study queue at
+  expanding gaps; wired into `StudyModePage` behind `auramind_sparksEnabled`.
+  Gap base scales with queue size so the ratio is actually reachable; the
+  last insertion only happens while a full gap can still be honored (no
+  tail-bunching).
+- **Settings** — "Memory sparks" section: master toggle plus per-surface
+  toggles (pop-up, notifications), stored via appPreferences. Quiet hours
+  default 22–8 (scheduler constants; per-surface quiet-hours UI deferred).
+
+### Traps found here
+
+- **getFSRSState's SM-2 fallback fabricates stability for never-reviewed
+  cards** (interval 0, ease 2.5 → stability > 0), so forgettingCurve(0, s) =
+  1 — a naive retrievability helper reports 100% for fresh cards. Gate on
+  `lastReviewed` before trusting retrievability.
+- **Destructured parameter defaults like `rand = Math.random()`** failed to
+  apply under this toolchain (vitest transform), yielding `rand is not a
+  function`; defaulting inside the body via `typeof rand === 'function'` is
+  the reliable pattern for injectable randomness.
+- **updateUserById wholesale replacement** (documented above) applies to any
+  metadata write — the spark log stays client-side partly so sparks never
+  need one.
+
+### Verification
+
+Web type-check, lint, 455 unit tests (45 new: scheduler 28, composer 9,
+notification planner 8), production build green. No SQL changed. E2E for the
+spark surfaces not yet written (needs the seeded-session harness plus a way
+to force `shouldFireNow` deterministically).

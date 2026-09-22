@@ -73,6 +73,26 @@ export function isEntitled(user: UserLike | null | undefined): boolean {
 }
 
 /**
+ * Internal roles that bypass the paywall for QA/staff purposes. Mirrors the
+ * client rule in `auramind-gemini/src/utils/permissions.ts` (hasFreeAccess).
+ * Reads `app_metadata.role` ONLY — user_metadata is client-writable and is
+ * never an entitlement source.
+ */
+const FREE_ACCESS_ROLES: ReadonlySet<string> = new Set(['owner', 'ceo', 'admin', 'employee', 'tester']);
+
+/**
+ * Entitlement for endpoints that must honour the internal-role free access
+ * (the client shows these users an unlocked product via `hasFreeAccess`).
+ * Same trust boundary as `isEntitled`: the role is read from app_metadata,
+ * which only the service-role key can write.
+ */
+export function isEntitledWithRoleAccess(user: UserLike | null | undefined): boolean {
+  if (isEntitled(user)) return true;
+  const role = user?.app_metadata?.role;
+  return typeof role === 'string' && FREE_ACCESS_ROLES.has(role);
+}
+
+/**
  * Build the `app_metadata` patch for a status change.
  *
  * Callers pass this to `supabase.auth.admin.updateUserById`, which merges at

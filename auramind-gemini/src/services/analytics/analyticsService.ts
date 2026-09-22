@@ -92,12 +92,12 @@ export const analyticsService = {
   },
 
   /**
-   * Signup funnel — the three events that make the landing page measurable.
-   * PostHog autocapture handles raw pageviews; these give the funnel steps:
-   *   landing_cta_click → signup_started → signup_completed.
+   * Funnel events. PostHog autocapture handles raw pageviews; these give the
+   * measurable funnel steps:
+   *   landing_cta_click → signup_started → signup_completed → onboarding_completed.
    */
   trackFunnel: async (
-    step: 'landing_cta_click' | 'signup_started' | 'signup_completed',
+    step: 'landing_cta_click' | 'signup_started' | 'signup_completed' | 'onboarding_completed',
     properties?: Record<string, any>,
   ) => {
     const ph = await getPostHog();
