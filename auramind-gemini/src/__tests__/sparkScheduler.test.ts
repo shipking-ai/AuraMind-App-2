@@ -18,6 +18,7 @@ import {
   shouldFireNow,
 } from '../services/memory/sparkScheduler';
 import type { Card } from '../types';
+import { elapsedForRetrievability } from '../services/study/fsrs';
 
 // Fixed "now": 2026-09-20 12:00 local — wide awake by any quiet-hours config.
 const NOW = new Date(2026, 8, 20, 12, 0, 0).getTime();
@@ -35,9 +36,9 @@ const RAND_LOW = () => 0;
  * the test exercises the actual forgetting curve, not a mock.
  */
 function cardWithRetrievability(id: string, target: number, deckId = 'deck-1'): Card {
-  // Invert R = (1 + elapsed/S)^-1 → elapsed = S * (1/R - 1). Stability 10d.
+  // Invert the FSRS forgetting curve for a 10-day stability.
   const stabilityDays = 10;
-  const elapsedDays = stabilityDays * (1 / target - 1);
+  const elapsedDays = elapsedForRetrievability(target, stabilityDays);
   return {
     id,
     deckId,
