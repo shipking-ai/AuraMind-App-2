@@ -53,9 +53,9 @@ value:
   endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
   nothing delivers until the Firebase console steps at the end of that
   section are done (google-services.json + FCM_* env vars).
-- **Aurora motion — shipped** (2026-09-21, below), dashboard shell and
-  landing hero both. What remains in this theme: the Android aura is still
-  time-animated only.
+- **Aurora motion — shipped** (2026-09-21, below), dashboard shell, landing
+  hero, and (same day) the Android focus aura (see bottom). Nothing remains
+  in this theme.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
@@ -258,6 +258,10 @@ the app.
   window (session replay) but written latest-only (upsert), re-grades
   silently migrate rows out of old windows. Match the write shape to the
   read shape; use a `(user, card, timestamp)` key for idempotent retry.
+- **IEEE negative zero breaks strict equality.** `0 * -0.08` is `-0`;
+  vitest's `toBe(0)` (Object.is) and framer's transform serialization both
+  distinguish it from `0`. Any `scroll * depth` helper must normalise
+  (`y === 0 ? 0 : y`) or the static baseline won't be byte-identical.
 - **Emulator ports shift on restart.** After a reboot 5556 was gone and
   the phone reappeared as 5554 - always re-check `adb devices` plus
   `getprop ro.product.model` instead of trusting remembered ports.
@@ -679,3 +683,44 @@ hue-drifting. Two more traps:
   with different `use()` options is the pattern.
 - The hero's first `<section>` is a hidden react-aria live region; target
   the hero by class or a data attribute, never `section >> nth=0`.
+---
+
+## 2026-09-21 - Android aura: scroll-reactive depth (theme complete)
+
+The last item from "Aurora motion": the Android focus aura now responds to
+scroll, matching the web shell's grammar. Nothing else in the theme remains.
+
+### What shipped
+
+- **`components/native/auraDepth.ts` (pure)** — clamped scroll (cap 900, NaN
+  → 0), per-layer depths (core −0.08, halo −0.05, orbits +0.10, particles
+  +0.18), hue drift 0.05°/px, shared spring {60/20/0.8} kept in sync with
+  NovaDashboardShell's constants. Unit-tested in `src/__tests__/auraDepth.test.ts`.
+- **`AndroidAura.tsx`** — opt-in `scrollY` MotionValue prop. Framer owns `y`
+  on four per-layer `<motion.g>` wrappers and `filter` on the root `<motion.svg>`;
+  the CSS keyframes keep their inner groups. No element has two owners of one
+  property. The two other render sites (welcome screen, previews) pass no prop
+  and render byte-identical to before.
+- **`AndroidOverview`** (`AndroidMobileScreens.tsx`) — rAF-throttled passive
+  listener on `main#nova-main-content`, reset to 0 keyed on
+  `location.pathname` (NOT `navigate` — the stale-navigate trap). Reduced-motion
+  never attaches the listener; overflow-hidden pages simply never scroll.
+
+### Verification
+
+Web type-check + lint green. The vitest runner can't execute on the WSL
+checkout (Windows node_modules, Linux runtime — rollup native module missing);
+the pure module was verified by compiling `auraDepth.ts` with tsc and running
+20 runtime assertions against the real code, which caught two bugs a review
+would have missed: IEEE `-0` from `0 × negative depth` (broke `toBe(0)`) and
+an over-eager `!Number.isFinite` guard sending Infinity to 0 instead of
+saturating. Vitest suite should be run from the Windows side (`npm test`).
+
+### Traps found here
+
+- **`-0` breaks strict equality** (added to Traps above).
+- **Framer's `useSpring` overloads reject `MotionValue | 0`** — pass a stable
+  fallback MotionValue (`useMotionValue(0)`), not a literal, when the source
+  may be absent.
+- **`(900 * 0.05).toFixed(2)` is `"45.00"`, not `"45"`** — the rounding helper
+  trims trailing zeros; don't write test expectations with toFixed against it.
