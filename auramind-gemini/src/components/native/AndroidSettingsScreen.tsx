@@ -34,9 +34,9 @@ import { SPOKEN_REMINDER_MESSAGES, type SpokenReminderMode } from "../../lib/rem
 import {
   resetRandomVoice,
   speak,
-  VOICE_AUTO,
   VOICE_PREF_KEY,
   VOICE_RANDOM,
+  DEFAULT_VOICE,
 } from "../../services/voice/speechOutput";
 import { deleteAvatar, uploadAvatar } from "../../services/user/avatarService";
 import ProfAuraAvatar from "../auramind/ProfAuraAvatar";
@@ -238,7 +238,7 @@ export default function AndroidSettingsScreen() {
   const [weeklySummary, setWeeklySummary] = useStoredValue("auramind_weeklySummary", false);
   const [soundEffects, setSoundEffects] = useStoredValue("auramind_soundEffects", true);
   const [textToSpeech, setTextToSpeech] = useStoredValue("auramind_textToSpeech", false);
-  const [ttsVoice, setTtsVoice] = useStoredValue<string>(VOICE_PREF_KEY, VOICE_AUTO);
+  const [ttsVoice, setTtsVoice] = useStoredValue<string>(VOICE_PREF_KEY, DEFAULT_VOICE);
   const voiceOptions = useVoiceOptions(ttsVoice);
   const [spokenReminder, setSpokenReminder] = useStoredValue<SpokenReminderMode>(
     "auramind_spokenReminder",

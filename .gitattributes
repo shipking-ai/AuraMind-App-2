@@ -1,0 +1,36 @@
+# Line-ending policy — LF everywhere, with explicit exceptions.
+#
+# Why this exists: with no attributes and core.autocrlf unset, git does no
+# conversion in either direction, so an editor that writes CRLF shows every
+# touched file as fully modified (286-file phantom diffs, 75k/75k churn).
+# With `text=auto eol=lf`, the clean filter normalizes CRLF back to LF on
+# comparison and checkout writes LF, so such flips stop appearing at all.
+#
+# The index is already 100% LF; no renormalization is (or was) needed.
+
+* text=auto eol=lf
+
+# Windows scripts that must keep CRLF to run correctly.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Binaries — never diff, never normalize.
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.webp     binary
+*.ico      binary
+*.woff     binary
+*.woff2    binary
+*.ttf      binary
+*.otf      binary
+*.mp3      binary
+*.mp4      binary
+*.pdf      binary
+*.jar      binary
+*.apk      binary
+*.aab      binary
+*.keystore binary
+*.jks      binary

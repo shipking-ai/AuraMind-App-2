@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-21 (classroom portal + graded quizzes, memory sparks, Android listening). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-21 (classroom portal + graded quizzes, memory sparks, Android listening, natural voices, push sender, aurora motion). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,7 +14,7 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main`; open PRs: #79 (Android listening), #85 (natural voices), #68 (Dependabot, needs `@dependabot rebase` now that #78 is merged) |
+| Branch | `main`; open PRs: #85 (natural voices, push sender, aurora motion), #68 (Dependabot, rebase requested after #78) |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks still list `build-and-test (20.x)` until changed in repo settings |
 | Migrations | all applied through `20260921000100_classroom_quiz_grading.sql` (verified live 2026-09-21) |
 
@@ -40,6 +40,13 @@ the traps that cost real time.
 5. **Confirm sign-in works** at auramind.app/auth in a real browser. Automated
    browsers can't reach `challenges.cloudflare.com`, so they always show
    "Couldn't load the verification check".
+6. **Accept the Orpheus model terms** in the Groq console (org admin):
+   console.groq.com/playground?model=canopylabs%2Forpheus-v1-english.
+   Until then `/api/ai/speech` gets `model_terms_required` from Groq, answers
+   503, and every AI voice silently falls back to the device voice. Orpheus is
+   a Groq *preview* model (~$22 per 1M characters); if it is withdrawn, swap
+   `SPEECH_MODEL`/`SPEECH_VOICES` in `api/_aiHandler.ts` and `AI_VOICES` in
+   `src/services/voice/aiVoice.ts`.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -51,7 +58,7 @@ dispatch go live without a console visit.
 Nothing is broken. These are the next things worth doing, roughly in order of
 value:
 
-- **Voice study listening on Android** (PR from `feat/android-speech-recognition`).
+- **Voice study listening on Android** (merged in #79).
   Android WebView has no `SpeechRecognition`, so spoken answers never worked
   in the app. `AuraListenPlugin` wraps `SpeechRecognizer`;
   `services/voice/nativeRecognition.ts` presents it in the Web Speech shape so
@@ -61,11 +68,13 @@ value:
   test with a real spoken answer**, since the emulator mic can't be fed audio.
 - **Dependabot #68** (jsdom 30, vitest 5, jest-dom 7): #78 is merged, so it
   passes once rebased (`@dependabot rebase`, not a plain re-run).
-
-- **Push sender.** `push_tokens` fills as devices opt in, but no server sends
-  FCM messages yet and no `google-services.json` is configured.
-- **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
-  nav) is in; the aurora and prism are still a static gradient and a slow drift.
+- **Push sender — built, awaiting credentials.** Server sender, admin send
+  endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
+  nothing delivers until the Firebase console steps at the end of that
+  section are done (google-services.json + FCM_* env vars).
+- **Aurora motion — shipped** (2026-09-21, below), dashboard shell, landing
+  hero, and (same day) the Android focus aura (see bottom). Nothing remains
+  in this theme.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
@@ -308,6 +317,10 @@ the app.
   window (session replay) but written latest-only (upsert), re-grades
   silently migrate rows out of old windows. Match the write shape to the
   read shape; use a `(user, card, timestamp)` key for idempotent retry.
+- **IEEE negative zero breaks strict equality.** `0 * -0.08` is `-0`;
+  vitest's `toBe(0)` (Object.is) and framer's transform serialization both
+  distinguish it from `0`. Any `scroll * depth` helper must normalise
+  (`y === 0 ? 0 : y`) or the static baseline won't be byte-identical.
 - **Emulator ports shift on restart.** After a reboot 5556 was gone and
   the phone reappeared as 5554 - always re-check `adb devices` plus
   `getprop ro.product.model` instead of trusting remembered ports.
@@ -608,6 +621,165 @@ Service, server push sparks) is explicitly out of scope.
 ### Verification
 
 Web type-check, lint, 455 unit tests (45 new: scheduler 28, composer 9,
-notification planner 8), production build green. No SQL changed. E2E for the
-spark surfaces not yet written (needs the seeded-session harness plus a way
-to force `shouldFireNow` deterministically).
+notification planner 8), production build green. No SQL changed. Spark E2E
+since landed in `82ec13dc` (pop-up, grading, deep-link; skips in CI without
+the service key).
+
+---
+
+## 2026-09-21 - Push sender (FCM), dormant until credentials land
+
+The last piece of the push system: `push_tokens` (2026-09-11 migration), the
+client registration flow (`pushService.ts`), and the conditional Android
+gradle plugin all existed; only the server could not deliver. Now it can —
+the moment credentials arrive. Nothing else in the code changes when they do.
+
+### What shipped
+
+- **`api/_lib/push.ts`** — FCM HTTP v1 sender. Service-account JWT signed with
+  `node:crypto` RS256 (no firebase-admin dependency — every dep must be
+  declared, and crypto does this fine), OAuth token cached ~55 min in module
+  scope. `sendPushToUsers()` reads `public.push_tokens`, caps 5 tokens/user,
+  prunes tokens FCM reports dead (404 / UNREGISTERED) so the table doesn't
+  fill with corpses that slow every future send. Fails closed:
+  unconfigured → `configured: false` report, zero network calls.
+- **`POST /api/push/send`** — admin-only (same `app_metadata` role gate as
+  every privileged route), zod-validated (`auramind://` links only, caps on  
+  title/body/userIds). Used for admin-triggered sends and manual testing.
+- **Daily due-card reminders** — cron job 4 on the existing
+  `/api/cron/dunning` run (14:00 UTC in vercel.json): users with cards due in
+  the next 24h get one quiet push (“Cards are coming due…”) deep-linking to
+  the dashboard, capped at 2000 users/run. Timing is deliberate: NOT
+  morning — in-app habit covers the first session of the day.
+- **Tests** — `api/tests/pushLib.test.ts` (config parsing incl. base64 keys,
+  prune vs transient-failure classification) and `api/tests/pushSend.test.ts`
+  (fails closed unconfigured, 401/403 gates, payload validation, happy path).
+
+### Activation checklist (human, no code)
+
+1. Firebase console → project + Android app `com.auramind.app` (debug build
+   uses `com.auramind.app.debug` — register it too if pushes are wanted in
+   debug).
+2. `google-services.json` → `auramind-gemini/android/app/` and rebuild. The
+   gradle plugin applies itself when the file exists (already wired in
+   `app/build.gradle`).
+3. Service account with `firebase-messaging(sender)` → key JSON → set
+   `FCM_PROJECT_ID` + `FCM_SERVICE_ACCOUNT_KEY` (raw or base64) on the API.
+4. Test: enable push in app Settings on a device (token lands in
+   `push_tokens`), then `POST /api/push/send` as an admin.
+
+### Traps found here
+
+- **Mocks must be URL-aware.** The sender makes two different fetches (OAuth
+  exchange → token endpoint, then FCM). A mock that 404s everything fails
+  before the FCM call, and the test failure points at the wrong thing.
+- **`createSign().sign()` needs a real PEM**, even in tests — throw up a
+  512-bit key with `generateKeyPairSync` rather than stubbing crypto.
+
+### Verification
+
+API 113/113 (14 new). Web type-check, lint green (one doc-comment change).
+No SQL changed, so no migration or `npm run diagnostics` rerun.
+
+---
+
+## 2026-09-21 - Aurora motion (scroll-reactive background)
+
+The dashboard aurora and orbs are no longer a static gradient plus a
+time-only drift: they form a depth stack that responds to scrolling.
+Everything lives in `NovaDashboardShell.tsx`.
+
+### How it works
+
+- The shell scrolls on the **inner** `<main id="nova-main-content">`, not
+  the window — so the effect can't use framer's `useScroll()` default. The
+  shell owns one `useMotionValue` fed by a **rAF-throttled passive scroll
+  listener** on that element, **clamped to 900px** (a long page saturates
+  the effect instead of pushing layers off-screen) and **reset to 0 on
+  route change** so every page starts at the static baseline.
+- Layer depths (per px scrolled, after a shared spring stiffness 60):
+  aurora `y −0.09` + `scale +0.00006` + `hue-rotate 0.04°` (nearest veil,
+  the hue drift), orbs `+0.22 / +0.12 / +0.05` (positive = drifts down =
+  deeper), grid `+0.03` counter-drift (farthest anchor). All MotionValues →
+  zero re-renders; framer composes the transforms on the compositor.
+- **Parallax wrapper pattern:** each orb is wrapped in a `ParallaxLayer`
+  that owns the scroll `y`, while the orb *inside* keeps its original
+  time-drift `animate`. Two elements, two transforms — no property fight
+  (the framer-owns-`style.transform` trap).
+- Reduced-motion (`useRM`): the scroll listener never attaches and orb
+  time-drift stops — the exact pre-change static background. The aurora
+  layer is oversized (`-inset-24`) so translate/scale can't expose an edge.
+- Bleed/study routes have no scroller → scrollTop stays 0 → static.
+
+### Verification
+
+`e2e/aurora.spec.ts` (seeded session, skips in CI like the other seeded
+specs): scrolls `main#nova-main-content` by 700px, reads computed
+transform/filter of both background layers before/after, asserts ≥2 layers
+moved and `.nova-shell` did not. Measured, not eyeballed. Plus web
+type-check, lint, 472 unit tests, production build.
+
+E2E traps worth keeping: the seeder writes its storage state **to the
+`--name` path** (pass the state file path, not a display name), and
+`--with-spark-deck` is the flag that grants `subscription_status: 'active'`
+— a fresh account without entitlement bounces to /subscribe before any
+shell renders.
+
+### Landing hero, same pass
+
+`e2e/landing-aurora.spec.ts` also covers the landing page (public — no
+seeding): the four hero mesh blobs sit in `HeroBlobParallax` wrappers
+( ModernLandingPage.tsx, container tagged `data-hero-mesh`) — depth 0.18 /
+0.10 / 0.04, the last at −0.05 for a near-layer, with the third also
+hue-drifting. Two more traps:
+
+- **Playwright's `reducedMotion` emulation does not reach
+  `window.matchMedia` here** (probed: reduce=false under 'reduce'). The
+  reduced-motion test stubs matchMedia in `addInitScript` instead, and
+  additionally asserts the wrappers are gone entirely (`transform: none`).
+- **`test.use()` must sit at describe level** — inside a `test()` body it
+  throws "did not expect test.use() to be called here". Sibling describes
+  with different `use()` options is the pattern.
+- The hero's first `<section>` is a hidden react-aria live region; target
+  the hero by class or a data attribute, never `section >> nth=0`.
+---
+
+## 2026-09-21 - Android aura: scroll-reactive depth (theme complete)
+
+The last item from "Aurora motion": the Android focus aura now responds to
+scroll, matching the web shell's grammar. Nothing else in the theme remains.
+
+### What shipped
+
+- **`components/native/auraDepth.ts` (pure)** — clamped scroll (cap 900, NaN
+  → 0), per-layer depths (core −0.08, halo −0.05, orbits +0.10, particles
+  +0.18), hue drift 0.05°/px, shared spring {60/20/0.8} kept in sync with
+  NovaDashboardShell's constants. Unit-tested in `src/__tests__/auraDepth.test.ts`.
+- **`AndroidAura.tsx`** — opt-in `scrollY` MotionValue prop. Framer owns `y`
+  on four per-layer `<motion.g>` wrappers and `filter` on the root `<motion.svg>`;
+  the CSS keyframes keep their inner groups. No element has two owners of one
+  property. The two other render sites (welcome screen, previews) pass no prop
+  and render byte-identical to before.
+- **`AndroidOverview`** (`AndroidMobileScreens.tsx`) — rAF-throttled passive
+  listener on `main#nova-main-content`, reset to 0 keyed on
+  `location.pathname` (NOT `navigate` — the stale-navigate trap). Reduced-motion
+  never attaches the listener; overflow-hidden pages simply never scroll.
+
+### Verification
+
+Web type-check + lint green. The vitest runner can't execute on the WSL
+checkout (Windows node_modules, Linux runtime — rollup native module missing);
+the pure module was verified by compiling `auraDepth.ts` with tsc and running
+20 runtime assertions against the real code, which caught two bugs a review
+would have missed: IEEE `-0` from `0 × negative depth` (broke `toBe(0)`) and
+an over-eager `!Number.isFinite` guard sending Infinity to 0 instead of
+saturating. Vitest suite should be run from the Windows side (`npm test`).
+
+### Traps found here
+
+- **`-0` breaks strict equality** (added to Traps above).
+- **Framer's `useSpring` overloads reject `MotionValue | 0`** — pass a stable
+  fallback MotionValue (`useMotionValue(0)`), not a literal, when the source
+  may be absent.
+- **`(900 * 0.05).toFixed(2)` is `"45.00"`, not `"45"`** — the rounding helper
+  trims trailing zeros; don't write test expectations with toFixed against it.

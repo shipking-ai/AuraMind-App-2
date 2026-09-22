@@ -2,13 +2,17 @@ import { Capacitor, LocalNotifications, PushNotifications } from '../../lib/nati
 import { supabase } from '../database/supabase';
 
 /**
- * Server-sent push (FCM), wired but dormant until Firebase is configured.
+ * Server-sent push (FCM), wired end to end but dormant until Firebase is
+ * configured.
  *
- * ACTIVATION CHECKLIST (nothing else in code needs to change):
+ * ACTIVATION CHECKLIST (no further code changes needed):
  *   1. Create a Firebase project, add an Android app with id com.auramind.app.
- *   2. Drop the downloaded file at android/app/google-services.json and rebuild.
- *   3. Ship the server-side sender that reads public.push_tokens (see the
- *      20260911 migration) and delivers via the FCM HTTP v1 API.
+ *   2. Drop the downloaded file at android/app/google-services.json and rebuild
+ *      (the gradle google-services plugin applies itself when present).
+ *   3. Set FCM_PROJECT_ID + FCM_SERVICE_ACCOUNT_KEY (full key JSON, raw or
+ *      base64) on the API. `api/_lib/push.ts` then delivers via FCM HTTP v1:
+ *      admin POST /api/push/send, plus daily due-card reminders on the
+ *      existing /api/cron/dunning run (vercel.json, 14:00 UTC).
  *
  * Until then every entry point here resolves to 'unavailable' and the app
  * behaves exactly as it does today on local notifications alone. The settings

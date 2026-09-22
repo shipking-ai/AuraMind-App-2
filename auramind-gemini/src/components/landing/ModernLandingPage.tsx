@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
 import { Flashcard } from "../auramind/flashcard";
 import { MagneticButton } from "../ui/MagneticButton";
 import { Marquee } from "../ui/Marquee";
@@ -77,6 +77,36 @@ function FeatureCard({ icon, title, desc, index }: { icon: React.ReactNode; titl
       </motion.div>
     </BorderBeam>
   );
+}
+
+/**
+ * Depth-parallax wrapper for the hero mesh blobs. The hero scrolls on the
+ * window, so depth maps off `scrollYProgress` (0→1 over the whole page; the
+ * hero occupies roughly its first fifth). Mirrors the dashboard shell's
+ * ParallaxLayer: framer owns the wrapper's y, the blob inside keeps its CSS
+ * aurora-drift animation — two elements, no transform property fight. With
+ * `hue`, the layer also hue-drifts as the page scrolls (the one accent).
+ * Reduced motion: static, matching the rest of the page's behavior.
+ */
+function HeroBlobParallax({
+  scrollYProgress,
+  depth,
+  hue,
+  reduced,
+  children,
+}: {
+  scrollYProgress: MotionValue<number>;
+  depth: number;
+  hue?: boolean;
+  reduced: boolean;
+  children: React.ReactNode;
+}) {
+  const smooth = useSpring(scrollYProgress, { stiffness: 60, damping: 20, mass: 0.8 });
+  // 0→1 progress × ~1200px page ≈ up to ~210px of travel at depth 0.18.
+  const y = useTransform(smooth, (v) => v * depth * 1200);
+  const filter = useTransform(smooth, (v) => (hue ? `hue-rotate(${(v * 30).toFixed(2)}deg)` : "none"));
+  if (reduced) return <>{children}</>;
+  return <motion.div className="absolute inset-0 will-change-transform" style={{ y, filter }}>{children}</motion.div>;
 }
 
 function ScrollProgress() {
@@ -190,6 +220,7 @@ export default function ModernLandingPage() {
   const featuresGridReveal = useScrollReveal<HTMLDivElement>({
     enter: { duration: 600, opacity: [0, 1], translateY: [20, 0] },
   });
+  const reducedMotion = useReducedMotion() ?? false;
   const heroY = useTransform(scrollYProgress, [0, 0.15], [0, 40]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0.6]);
   const cardRotateX = useTransform(scrollYProgress, [0, 0.1], [0, 8]);
@@ -228,20 +259,31 @@ export default function ModernLandingPage() {
         {/* Ambient particle field — subtle floating particles */}
         <ParticleField density={0.15} color="rgba(124, 58, 237, 0.25)" className="z-[1]" />
 
-        {/* Mesh gradient hero — 4-blob shifted on 18s loop */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.08]"
-            style={{ background: "radial-gradient(circle, #7C3AED 0%, transparent 70%)", filter: "blur(80px)", animation: "aurora-drift 18s ease-in-out infinite" }}
-          />
-          <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.06]"
-            style={{ background: "radial-gradient(circle, #3B82F6 0%, transparent 70%)", filter: "blur(80px)", animation: "aurora-drift 18s ease-in-out infinite 4.5s" }}
-          />
-          <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] rounded-full opacity-[0.05]"
-            style={{ background: "radial-gradient(circle, #4F46E5 0%, transparent 70%)", filter: "blur(80px)", animation: "aurora-drift 18s ease-in-out infinite 9s" }}
-          />
-          <div className="absolute top-1/2 right-1/3 w-[350px] h-[350px] rounded-full opacity-[0.04]"
-            style={{ background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)", filter: "blur(80px)", animation: "aurora-drift 18s ease-in-out infinite 13.5s" }}
-          />
+        {/* Mesh gradient hero — 4-blob depth stack: each blob drifts on an 18s
+            loop inside a scroll-parallax wrapper (framer owns the wrapper
+            transform, CSS owns the blob's; no property fight), with the front
+            blob hue-drifting violet→indigo as the page scrolls. */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" data-hero-mesh>
+          <HeroBlobParallax scrollYProgress={scrollYProgress} depth={0.18} reduced={reducedMotion}>
+            <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.08]"
+              style={{ background: "radial-gradient(circle, #7C3AED 0%, transparent 70%)", filter: "blur(80px)", animation: reducedMotion ? undefined : "aurora-drift 18s ease-in-out infinite" }}
+            />
+          </HeroBlobParallax>
+          <HeroBlobParallax scrollYProgress={scrollYProgress} depth={0.1} reduced={reducedMotion}>
+            <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.06]"
+              style={{ background: "radial-gradient(circle, #3B82F6 0%, transparent 70%)", filter: "blur(80px)", animation: reducedMotion ? undefined : "aurora-drift 18s ease-in-out infinite 4.5s" }}
+            />
+          </HeroBlobParallax>
+          <HeroBlobParallax scrollYProgress={scrollYProgress} depth={0.04} reduced={reducedMotion} hue>
+            <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] rounded-full opacity-[0.05]"
+              style={{ background: "radial-gradient(circle, #4F46E5 0%, transparent 70%)", filter: "blur(80px)", animation: reducedMotion ? undefined : "aurora-drift 18s ease-in-out infinite 9s" }}
+            />
+          </HeroBlobParallax>
+          <HeroBlobParallax scrollYProgress={scrollYProgress} depth={-0.05} reduced={reducedMotion}>
+            <div className="absolute top-1/2 right-1/3 w-[350px] h-[350px] rounded-full opacity-[0.04]"
+              style={{ background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)", filter: "blur(80px)", animation: reducedMotion ? undefined : "aurora-drift 18s ease-in-out infinite 13.5s" }}
+            />
+          </HeroBlobParallax>
         </div>
 
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">

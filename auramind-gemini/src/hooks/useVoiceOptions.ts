@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listVoices, VOICE_AUTO, VOICE_RANDOM } from '../services/voice/speechOutput';
+import { AI_VOICES } from '../services/voice/aiVoice';
 
 export interface VoiceSelectOption {
   value: string;
@@ -7,13 +8,15 @@ export interface VoiceSelectOption {
 }
 
 const BASE_OPTIONS: VoiceSelectOption[] = [
-  { value: VOICE_AUTO, label: 'Automatic (best voice)' },
-  { value: VOICE_RANDOM, label: 'Random voice' },
+  // Server-generated voices first: they sound human on every device.
+  ...AI_VOICES.map((voice) => ({ value: voice.id, label: voice.label })),
+  { value: VOICE_AUTO, label: 'Automatic (best built-in voice)' },
+  { value: VOICE_RANDOM, label: 'Random built-in voice' },
 ];
 
 /**
- * Options for a voice picker: Automatic, Random, then every installed voice
- * for the app language. A saved voice that has since been uninstalled is
+ * Options for a voice picker: the natural AI voices, Automatic, Random, then
+ * every installed voice for the app language, most natural-sounding first. A saved voice that has since been uninstalled is
  * kept in the list so the picker shows the real setting, not a silent
  * switch to Automatic; speaking falls back to Automatic for it.
  */
