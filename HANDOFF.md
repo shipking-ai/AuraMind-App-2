@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-20 (admin hub, notifications, memory sparks in flight). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-21 (classroom portal + graded quizzes, memory sparks, Android listening). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -13,24 +13,33 @@ the traps that cost real time.
 | | |
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
-| Play | versionCode 7, **alpha / closed testing, draft** |
-| Branch | `main`, 4 commits ahead of origin at last update |
-| Migrations | all applied through `20260919000000_classroom_portal.sql`; **pending, apply in order:** `20260921000000_classroom_rpc_only_writes.sql` (security fix), `20260921000100_classroom_quiz_grading.sql` (graded quizzes) |
+| Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
+| Branch | `main`; open PRs: #79 (Android listening), #85 (natural voices), #68 (Dependabot, needs `@dependabot rebase` now that #78 is merged) |
+| CI | Node **22 + 24** (20 dropped, EOL); required checks still list `build-and-test (20.x)` until changed in repo settings |
+| Migrations | all applied through `20260921000100_classroom_quiz_grading.sql` (verified live 2026-09-21) |
 
 ---
 
 ## Outstanding — human, not code
 
-1. **Publish the draft release.** Play Console → Testing → Closed testing →
-   the version 7 release → Publish. It's uploaded but invisible until you do.
-   Play will likely demand the setup checklist first (store listing, content
-   rating, data safety, target audience).
-2. **Add 12 testers** on that same track. Google requires 12 testers for 14
-   *continuous* days before production is unlocked, for personal accounts
-   created after 2023-11-13. The clock doesn't start until the release is
-   published, so this is the long pole.
-3. **Confirm sign-in works** at auramind.app/auth. Turnstile is wired and the
-   site key is correct, but nobody has completed a CAPTCHA end to end.
+1. **Required status checks.** GitHub → Settings → Branches → `main`: replace
+   `build-and-test (20.x)` with `build-and-test (24.x)`. Until then every PR
+   shows BLOCKED waiting for a check that no longer runs.
+2. **Play closed test.** Version 7 was sent for review. Target audience must
+   be **13+** (the Terms say 13+; ticking under-13 pulls in the Families
+   policy). Advertising ID: **No** (none in the merged manifest). Once
+   approved, 12+ testers must stay opted in for **14 continuous days** before
+   *Apply for production* unlocks. Voice features (#77 and the listening
+   branch) reach testers only in the next build (versionCode 8+).
+3. **www.auramind.app certificate expired 2026-08-19.** DNS is correct
+   (CNAME to Vercel, no CAA, Let's Debug passes); the apex is fine. Fix in
+   Vercel → project → Settings → Domains: re-add `www.auramind.app` as a
+   redirect to the apex.
+4. **Stripe live smoke.** One real checkout. It starts a 7-day trial, so the
+   first charge lands after the trial.
+5. **Confirm sign-in works** at auramind.app/auth in a real browser. Automated
+   browsers can't reach `challenges.cloudflare.com`, so they always show
+   "Couldn't load the verification check".
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -42,6 +51,17 @@ dispatch go live without a console visit.
 Nothing is broken. These are the next things worth doing, roughly in order of
 value:
 
+- **Voice study listening on Android** (PR from `feat/android-speech-recognition`).
+  Android WebView has no `SpeechRecognition`, so spoken answers never worked
+  in the app. `AuraListenPlugin` wraps `SpeechRecognizer`;
+  `services/voice/nativeRecognition.ts` presents it in the Web Speech shape so
+  `useVoiceStudy` is unchanged. Verified on the emulator: Android's mic prompt
+  appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
+  loudness streams and silence ends with `no-speech`. **Still needs one phone
+  test with a real spoken answer**, since the emulator mic can't be fed audio.
+- **Dependabot #68** (jsdom 30, vitest 5, jest-dom 7): #78 is merged, so it
+  passes once rebased (`@dependabot rebase`, not a plain re-run).
+
 - **Push sender.** `push_tokens` fills as devices opt in, but no server sends
   FCM messages yet and no `google-services.json` is configured.
 - **Aurora motion.** Scroll-reactive chrome (elevating top bar, hide-on-scroll
@@ -52,7 +72,7 @@ value:
   threat model changes.
 - **Leaked-password protection** is a Supabase Pro feature. Not an oversight.
 - **Tests on Node 25+.** Node's own `localStorage` global shadows jsdom's;
-  `src/test/setup.ts` restores it. CI pins Node 20/22 and never hit this.
+  `src/test/setup.ts` restores it. CI runs Node 22/24 and never hits this.
 
 ---
 
@@ -73,6 +93,38 @@ up outside the repo in `edge-function-backups-2026-09-14/`.
 A function that must not be public checks the user itself
 (`auth.getUser(token)`) or a shared secret, and fails closed when that secret
 is unset.
+
+### Android WebView has no Web Speech API at all
+
+`window.speechSynthesis` and `SpeechRecognition` are both `undefined` inside
+the Capacitor app, while the same code works in Chrome. Every voice feature
+was silent on Android until 2026-09-17. All speaking now goes through
+`services/voice/speechOutput.ts` (native `AuraSpeechPlugin` on Android, Web
+Speech elsewhere). Don't call `window.speechSynthesis` directly.
+
+Related native traps:
+- TextToSpeech and SpeechRecognizer need `<queries>` entries for
+  `TTS_SERVICE` / `RecognitionService` on Android 11+, or they initialise with
+  no engine and fail silently.
+- A `BroadcastReceiver` may not bind services, so `SpokenReminderReceiver`
+  creates TextToSpeech with the *application* context.
+- `am force-stop` wipes the app's alarms. To test a reminder "with the app
+  closed", use `am kill` after pressing Home.
+- Exact alarms aren't granted by default on Android 14+; the spoken reminder
+  falls back to an inexact alarm (up to about a minute late), like the
+  notification it accompanies.
+
+### Required checks are named after the CI matrix
+
+Branch protection lists checks by job name, e.g. `build-and-test (22.x)`.
+Changing the Node matrix renames the jobs, and the old name then blocks every
+PR forever. Change the matrix and the protection rule together.
+
+### Weekly XP is written only by `increment_weekly_xp`
+
+`league_memberships` has no insert/update policy on purpose: users could set
+their own XP with one PostgREST call. Write through the RPC, which adds the
+delta once in a single atomic upsert (the earlier version double-counted).
 
 ### realtime-notify is gated by a Vault secret
 
@@ -156,7 +208,11 @@ reminder simply fires once and never again.
 - **PowerShell has no `&&`.** Use `;` or separate commands.
 - **The Supabase MCP connection is read-only.** Writes go through PostgREST
   with the service-role key from the root `.env`, or through
-  `npm run migrate`.
+  `npm run migrate`. The linked CLI works for reads and rolled-back tests:
+  `npx supabase@latest db query --linked -f file.sql -o json`.
+- **Claude Code's auto mode blocks** `gh pr merge` on unreviewed PRs,
+  branch-protection edits and production migrations. Those are done by hand
+  (or allowed in permission settings).
 
 ---
 
@@ -194,7 +250,11 @@ adb shell am start -n com.auramind.app.debug/com.auramind.app.MainActivity
 adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof com.auramind.app.debug)
 ```
 
-Then drive it with Playwright over `connectOverCDP('http://127.0.0.1:9222')`.
+Then drive it with Playwright over `connectOverCDP('http://127.0.0.1:9222')`,
+or evaluate directly over the page's `webSocketDebuggerUrl` (from
+`curl localhost:9222/json`) to call plugins, e.g.
+`window.Capacitor.Plugins.AuraSpeech.speak({ text: 'hi' })`. Audio can't be
+heard, but `adb shell dumpsys audio` lists the playing track and its usage.
 Navigate by URL rather than tapping coordinates — blind taps on a live account
 deleted a card during this work.
 
