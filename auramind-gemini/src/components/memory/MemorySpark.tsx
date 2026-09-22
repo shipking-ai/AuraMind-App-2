@@ -17,9 +17,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { X, Volume2, Eye } from '@/components/icons';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { Card, Rating } from '../../types';
-import { calculateSRS } from '../../services/study/srs';
-import { dbService } from '../../services/database/dbService';
-import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
+import { reviewCard } from '../../services/study/quickReview';
 import { speak, isSpeechOutputAvailable } from '../../services/voice/speechOutput';
 import { useAppPreference } from '../../lib/appPreferences';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
@@ -83,31 +81,8 @@ export function MemorySpark() {
     setPhase(null);
     recordSpark('popup', card.id);
     try {
-      const res = calculateSRS(card, rating);
-      const update: Partial<Card> = {
-        interval: res.interval,
-        repetition: res.repetition,
-        easeFactor: res.easeFactor,
-        nextReview: Date.now() + res.interval * 86_400_000,
-        lastReviewed: Date.now(),
-      };
-      if (res.fsrsState) update.fsrsState = res.fsrsState;
-      await dbService.updateCard(card.id, update);
+      const update = await reviewCard(card, rating, userId);
       workspace?.updateCardOptimistically?.(card.id, update);
-      if (userId) {
-        cardReviewsService.recordReview({
-          userId,
-          cardId: card.id,
-          rating,
-          srsResult: {
-            interval: res.interval,
-            repetition: res.repetition,
-            easeFactor: res.easeFactor,
-            fsrsState: res.fsrsState,
-          },
-          reviewedAt: Date.now(),
-        }).catch(() => { /* fire-and-forget, same as StudyModePage */ });
-      }
       analyticsService.track('spark_reviewed', { cardId: card.id, surface: 'popup', rating });
     } catch {
       // A failed spark review must never disturb the session. The card stays

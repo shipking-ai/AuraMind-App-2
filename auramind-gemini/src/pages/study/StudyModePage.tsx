@@ -8,6 +8,7 @@ import { useHaptics } from '../../hooks/useNative';
 import { ImpactStyle } from '../../lib/nativeShim';
 import { Capacitor } from '../../lib/nativeShim';
 import { reportDeckUsed } from '../../lib/auraDevice';
+import { startLiveUpdate, updateLiveUpdate, endLiveUpdate } from '../../lib/liveUpdate';
 import { PersonalizationIndicator } from '../../components/study/PersonalizationIndicator';
 import { DifficultyChip } from '../../components/study/DifficultyChip';
 import { PacingOverride, type PacingMode } from '../../components/study/PacingOverride';
@@ -17,7 +18,12 @@ import { dbService } from '../../services/database/dbService';
 import { sessionService } from '../../services/database/modules/sessionService';
 import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
 import { calculateSRS, formatInterval, previewIntervals, retentionFromSetting } from '../../services/study/srs';
-import { startLiveActivity, updateLiveActivity, endLiveActivity } from '../../lib/liveActivity';
+import { LocalAIAssist } from '../../components/study/LocalAIAssist';
+import {
+  startSessionLiveUpdate,
+  updateSessionLiveUpdate,
+  endSessionLiveUpdate,
+} from '../../lib/sessionLiveUpdate';
 import { isOnline, queueCardReview, getCachedDecks, getCachedCards } from '../../services/offline/offlineStudyService';
 import { applyPersonalizedDifficultyInit } from '../../services/study/fsrs';
 import { Rating } from '../../types';
@@ -152,30 +158,31 @@ export default function StudyModePage() {
     // Launcher ranking: decks you open most float up in long-press shortcuts.
     if (isAndroidApp && deckId) void reportDeckUsed(deckId);
   }, [isAndroidApp, deckId]);
-  // Cards graded Again this session; the Live Activity shows how much of the
-  // session is coming back.
-  const [againCount, setAgainCount] = useState(0);
+  // Where in the queue the forgotten cards sat: the Android chip draws a dot
+  // at each one, the iPhone's Live Activity draws the count.
+  const [againAt, setAgainAt] = useState<number[]>([]);
 
-  // iPhone: the session on the Lock Screen and in the Dynamic Island, so
-  // leaving the app to look something up doesn't lose the thread. No-op
-  // everywhere else (see lib/liveActivity).
+  // The open session, on whatever surface the platform gives it: Android's
+  // status-bar chip, the iPhone Lock Screen and Dynamic Island. Leaving the
+  // app to look something up shouldn't lose the thread. Inert on the web.
   useEffect(() => {
     if (!deck || studyCards.length === 0 || completed) return;
     const session = {
       deckTitle: deck.title,
       total: studyCards.length,
       done: sessionStats.total,
-      again: againCount,
+      againAt,
+      deckId: deck.id,
     };
-    if (sessionStats.total === 0) void startLiveActivity(session);
-    else void updateLiveActivity(session);
-  }, [deck, studyCards.length, sessionStats.total, againCount, completed]);
+    if (sessionStats.total === 0) void startSessionLiveUpdate(session);
+    else void updateSessionLiveUpdate(session);
+  }, [deck, studyCards.length, sessionStats.total, againAt, completed]);
 
-  // The activity must never outlive the session it mirrors.
+  // It must never outlive the session it mirrors.
   useEffect(() => {
-    if (completed) void endLiveActivity();
+    if (completed) void endSessionLiveUpdate();
   }, [completed]);
-  useEffect(() => () => { void endLiveActivity(); }, []);
+  useEffect(() => () => { void endSessionLiveUpdate(); }, []);
 
   const [elapsedMs, setElapsedMs] = useState(0);
   const _studyTimer = useTimer({ duration: Infinity, autoplay: true });
@@ -444,7 +451,7 @@ export default function StudyModePage() {
       correct: prev.correct + (rating >= Rating.GOOD ? 1 : 0),
       total: prev.total + 1,
     }));
-    if (rating === Rating.AGAIN) setAgainCount(n => n + 1);
+    if (rating === Rating.AGAIN) setAgainAt(at => [...at, index + 1]);
     if (index >= studyCards.length - 1) {
       // Calculate post-this-rating totals (closure captures sessionStats as
       // of the start of this render, so we add 1 for this rating locally).
@@ -1012,6 +1019,11 @@ export default function StudyModePage() {
             className="android-study-rating px-6 pb-6"
           >
             <div className="max-w-lg mx-auto">
+              {/* Chrome's on-device model: a shorter answer or a translation,
+                  free and offline. Renders only where those APIs exist. */}
+              {!Capacitor.isNativePlatform() && (
+                <LocalAIAssist front={currentCard.front || ''} back={currentCard.back || ''} />
+              )}
               <div className="text-center mb-3">
                 <span className="text-[#7A7A96] text-[11px]">How well did you know this?</span>
               </div>
