@@ -42,6 +42,7 @@ import {
   IOSSwitch,
 } from "./IOSPrimitives";
 import { iosTap } from "./iosHaptics";
+import { IOS_CARD_STYLE_KEY, type IOSCardStyle } from "./IOSStudySession";
 
 const REMINDER_TIMES = [
   "07:00",
@@ -77,7 +78,8 @@ export function IOSSettingsScreen() {
   const [streakReminder, setStreakReminder] = useAppPreference("auramind_streakReminder", true);
   const [reduceMotion, setReduceMotion] = useAppPreference("auramind_reduceMotion", false);
   const voiceOptions = useVoiceOptions(voice);
-  const [sheet, setSheet] = useState<"voice" | "time" | null>(null);
+  const [cardStyle, setCardStyle] = useAppPreference<IOSCardStyle>(IOS_CARD_STYLE_KEY, "paper");
+  const [sheet, setSheet] = useState<"voice" | "time" | "card" | null>(null);
 
   const goal = Math.max(5, Number.parseInt(String(dailyGoal), 10) || 20);
   const voiceLabel =
@@ -133,6 +135,13 @@ export function IOSSettingsScreen() {
               onChange={(n) => setDailyGoal(String(n))}
             />
           }
+        />
+        <IOSRow
+          leading={<IOSIconTile icon={Layers} color="var(--ios-green)" />}
+          title="Card style"
+          value={cardStyle === "glass" ? "Glass" : "Paper"}
+          chevron
+          onClick={() => setSheet("card")}
         />
         <IOSRow
           leading={<IOSIconTile icon={Volume2} color="var(--ios-pink)" />}
@@ -260,6 +269,17 @@ export function IOSSettingsScreen() {
           Natural AI voices need a connection and fall back to this iPhone’s best built-in voice
           when offline.
         </div>
+      </IOSSheet>
+
+      <IOSSheet open={sheet === "card"} title="Card Style" onClose={() => setSheet(null)}>
+        <IOSChoiceList
+          options={[
+            { value: "paper" as IOSCardStyle, label: "Paper — AuraMind’s index card" },
+            { value: "glass" as IOSCardStyle, label: "Glass — dark, lit in the deck’s colour" },
+          ]}
+          value={cardStyle}
+          onChange={(next) => setCardStyle(next)}
+        />
       </IOSSheet>
 
       <IOSSheet open={sheet === "time"} title="Reminder Time" onClose={() => setSheet(null)}>

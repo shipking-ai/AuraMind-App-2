@@ -7,7 +7,7 @@
  * `?tour=1` walks through every screen on a fixed schedule so the simulator
  * can be photographed without tapping: see .github/workflows/mobile-ios.yml.
  */
-import { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import type { Card, Deck, UserProfile } from "../../types";
 import { DashboardWorkspaceProvider } from "../../contexts/DashboardWorkspaceContext";
@@ -15,11 +15,23 @@ import { IOSShell } from "./IOSShell";
 import { IOSLibrary, IOSStudy, IOSToday } from "./IOSScreens";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
+import { StudyPreviewContext } from "../../pages/study/studyPreview";
+
+const AIChatPage = React.lazy(() => import("../chat/AIChatPage"));
+const StudyModePage = React.lazy(() => import("../../pages/study/StudyModePage"));
 
 export const IOS_PREVIEW_BASE = "/__preview/ios";
 
 /** Screens in tour order, and how long each stays up (ms). */
-export const IOS_PREVIEW_TOUR = ["/welcome", "", "/decks", "/study", "/settings"];
+export const IOS_PREVIEW_TOUR = [
+  "/welcome",
+  "",
+  "/decks",
+  "/study",
+  "/settings",
+  "/chat",
+  "/session/neuro",
+];
 export const IOS_PREVIEW_STEP_MS = 6000;
 
 const HOUR = 3_600_000;
@@ -58,6 +70,38 @@ const DECKS: Deck[] = [
   { id: "sql", title: "SQL Window Functions", description: "", createdAt: now, cardCount: 22 },
 ];
 
+/** Real questions for the first cards of each deck, so study screens look real. */
+const CONTENT: Record<string, Array<[string, string]>> = {
+  neuro: [
+    [
+      "What is long-term potentiation?",
+      "A lasting strengthening of a synapse after repeated stimulation — a cellular basis of learning and memory.",
+    ],
+    ["Which structure consolidates new declarative memories?", "The hippocampus."],
+    [
+      "What does myelin do?",
+      "It insulates axons so action potentials travel faster (saltatory conduction).",
+    ],
+    ["Name the main inhibitory neurotransmitter in the brain.", "GABA (gamma-aminobutyric acid)."],
+  ],
+  spanish: [
+    ["How do you say “see you soon”?", "Hasta pronto."],
+    ["“¿Qué tal?” means…", "How’s it going?"],
+  ],
+  pharm: [
+    [
+      "Mechanism of ACE inhibitors?",
+      "Block conversion of angiotensin I to II, lowering blood pressure.",
+    ],
+  ],
+  sql: [
+    [
+      "What does ROW_NUMBER() OVER (PARTITION BY x) do?",
+      "Numbers rows 1, 2, 3… within each group of x.",
+    ],
+  ],
+};
+
 function makeCards(): Card[] {
   const plan: Array<[string, number, number, number]> = [
     // deckId, due, reviewedToday, mastered
@@ -75,8 +119,8 @@ function makeCards(): Card[] {
       cards.push({
         id: `${deckId}-${i}`,
         deckId,
-        front: `Card ${i + 1}`,
-        back: "Answer",
+        front: CONTENT[deckId]?.[i]?.[0] ?? `Card ${i + 1}`,
+        back: CONTENT[deckId]?.[i]?.[1] ?? "Answer",
         repetition: i < mastered + due ? 3 : 1,
         lapses: 0,
         nextReview: isDue ? now - HOUR : now + 3 * DAY,
@@ -108,7 +152,15 @@ function Tour() {
   return null;
 }
 
+/** StudyModePage reads :deckId; the preview route names it the same. */
+function StudySession() {
+  // StudyModePage draws the iOS session itself when given preview data.
+  return <StudyModePage />;
+}
+
 export default function IOSVisualPreview() {
+  const location = useLocation();
+  const isChat = location.pathname.startsWith(`${IOS_PREVIEW_BASE}/chat`);
   return (
     <DashboardWorkspaceProvider
       user={USER}
@@ -123,15 +175,32 @@ export default function IOSVisualPreview() {
       <Tour />
       <Routes>
         <Route path="welcome" element={<IOSWelcomeScreen />} />
+        {/* A study session is full-screen, like in the app (no tab bar). */}
+        <Route
+          path="session/:deckId"
+          element={
+            <StudyPreviewContext.Provider
+              value={{
+                deck: DECKS[0],
+                cards: CARDS.filter((c) => c.deckId === "neuro").slice(0, 4),
+              }}
+            >
+              <Suspense fallback={null}>
+                <StudySession />
+              </Suspense>
+            </StudyPreviewContext.Provider>
+          }
+        />
         <Route
           path="*"
           element={
-            <IOSShell bleed={false} basePath={IOS_PREVIEW_BASE}>
+            <IOSShell bleed={isChat} basePath={IOS_PREVIEW_BASE}>
               <Routes>
                 <Route index element={<IOSToday />} />
                 <Route path="decks" element={<IOSLibrary />} />
                 <Route path="study" element={<IOSStudy />} />
                 <Route path="settings" element={<IOSSettingsScreen />} />
+                <Route path="chat" element={<AIChatPage />} />
                 <Route path="*" element={<Navigate to={IOS_PREVIEW_BASE} replace />} />
               </Routes>
             </IOSShell>

@@ -23,7 +23,7 @@ interface Props {
  * Lightweight markdown renderer — no dependencies needed.
  * Handles: bold, italic, inline code, code blocks, headers, lists, blockquotes, links.
  */
-function renderMarkdown(text: string): React.ReactNode[] {
+export function renderMarkdown(text: string): React.ReactNode[] {
   // Step 1: Extract code blocks first to protect them from paragraph splitting
   const codeBlocks: string[] = [];
   const withoutCodeBlocks = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {

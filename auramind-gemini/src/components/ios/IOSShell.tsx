@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Brain, Home, MessageCircle, Settings, type LucideIcon } from "../icons";
 import { IOS_SCROLLER_ID } from "./IOSPrimitives";
 import { iosSelection } from "./iosHaptics";
+import { IOSDesignContext } from "./iosDesign";
 
 interface Tab {
   path: string;
@@ -45,6 +46,7 @@ const IOS_SCREENS = new Set([
   "/dashboard",
   "/dashboard/decks",
   "/dashboard/study",
+  "/dashboard/chat",
   "/dashboard/settings",
 ]);
 
@@ -116,10 +118,22 @@ export function IOSShell({
         role="main"
         aria-label="Main content"
         className="ios-scroll"
-        style={bleed && !native ? { overflow: "hidden", paddingBottom: 0 } : undefined}
+        style={bleed ? { overflow: "hidden", paddingBottom: 0 } : undefined}
       >
-        <div className={native ? undefined : bleed ? "ios-foreign-bleed" : "ios-foreign"}>
-          <Suspense fallback={null}>{children}</Suspense>
+        <div
+          className={
+            native
+              ? bleed
+                ? "ios-native-bleed"
+                : undefined
+              : bleed
+                ? "ios-foreign-bleed"
+                : "ios-foreign"
+          }
+        >
+          <IOSDesignContext.Provider value={true}>
+            <Suspense fallback={null}>{children}</Suspense>
+          </IOSDesignContext.Provider>
         </div>
       </main>
       <IOSTabBar basePath={basePath} />

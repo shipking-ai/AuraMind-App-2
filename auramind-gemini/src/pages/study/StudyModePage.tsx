@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useContext, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Zap, Lightbulb, Mic, X, Star, ChevronDown, Wind, Timer as TimerIcon, RotateCcw } from '@/components/icons';
@@ -37,6 +37,8 @@ import { assignmentService } from '../../services/classroom/assignmentService';
 import { useTimer, MotionPath } from '../../lib/effects';
 import { VoiceStudyControls } from '../../components/study/VoiceStudyControls';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
+import { StudyPreviewContext } from './studyPreview';
+import { IOSStudyComplete, IOSStudySession } from '../../components/ios/IOSStudySession';
 import { speak as speakAloud, stopSpeaking } from '../../services/voice/speechOutput';
 
 const RATING_BTNS = [
@@ -114,6 +116,7 @@ export default function StudyModePage() {
   const [completed, setCompleted] = useState(false);
   const userId = useCurrentUserId();
   const workspace = useDashboardWorkspace();
+  const preview = useContext(StudyPreviewContext);
   const [dailyGoal] = useAppPreference('auramind_dailyGoal', '20');
   const [newCards] = useAppPreference('auramind_newCards', '10');
   const [maxReviews] = useAppPreference('auramind_maxReviews', '100');
@@ -176,6 +179,12 @@ export default function StudyModePage() {
 
   useEffect(() => {
     const init = async () => {
+      if (preview) {
+        setDeck(preview.deck);
+        setStudyCards(preview.cards);
+        setLoading(false);
+        return;
+      }
       if (userId === undefined) return; // boot still loading
       if (userId === null) { navigate('/auth'); return; }
       try {
@@ -251,7 +260,7 @@ export default function StudyModePage() {
       }
     };
     if (deckId) init();
-  }, [dailyGoal, deckId, maxReviews, navigate, newCards, reviewOrder, userId]);
+  }, [dailyGoal, deckId, maxReviews, navigate, newCards, preview, reviewOrder, userId]);
 
   const spawnParticles = useCallback((_x: number, _y: number) => {
     const colors = ['#7C3AED', '#8B5CF6', '#3B82F6', '#A78BFA'];
@@ -571,7 +580,44 @@ export default function StudyModePage() {
     typeof window !== 'undefined' ? localStorage.getItem('auramind_user_xp') ?? 0 : 0,
   );
 
+  // iPhone gets its own session screen (components/ios/IOSStudySession);
+  // the grading, scheduling and saving above are shared with every platform.
+  const iosDesign = Capacitor.getPlatform() === 'ios' || preview !== null;
+  // When each grade would bring the card back, for the iPhone grade buttons.
+  // Same weights and retention target as handleRate.
+  const gradeIntervals = useMemo(() => {
+    if (!iosDesign || !currentCard) return {};
+    const targetRetention = retention.startsWith('Conservative')
+      ? 0.9
+      : retention.startsWith('Aggressive')
+        ? 0.8
+        : 0.85;
+    const out: Partial<Record<Rating, number>> = {};
+    for (const r of [Rating.AGAIN, Rating.HARD, Rating.GOOD, Rating.EASY]) {
+      try {
+        out[r] = calculateSRS(currentCard, r, personalization.weights, targetRetention).interval;
+      } catch {
+        /* leave this grade unlabelled */
+      }
+    }
+    return out;
+  }, [iosDesign, currentCard, retention, personalization.weights]);
+
   if (loading) return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center"><div className="text-[#7A7A96] text-sm">Loading...</div></div>;
+
+  if (completed && iosDesign) {
+    return (
+      <IOSStudyComplete
+        deckTitle={deck?.title || ''}
+        deckId={deck?.id || ''}
+        reviewed={sessionStats.total}
+        correct={sessionStats.correct}
+        elapsedMs={elapsedMs}
+        onRestart={handleRestart}
+        onDone={() => navigate('/dashboard')}
+      />
+    );
+  }
 
   if (completed) return (
     <>
@@ -608,6 +654,38 @@ export default function StudyModePage() {
       <div className="flex items-center justify-center min-h-screen bg-[#0A0A0F]">
         <div className="text-[#7A7A96] text-sm">No cards to study</div>
       </div>
+    );
+  }
+
+  if (iosDesign && currentCard) {
+    return (
+      <IOSStudySession
+        deckTitle={deck?.title || 'Study'}
+        deckId={deck?.id || ''}
+        card={currentCard}
+        index={index}
+        total={studyCards.length}
+        flipped={flipped}
+        onFlip={toggleFlip}
+        onRate={(r) => void handleRate(r)}
+        onExit={() => navigate('/dashboard')}
+        intervals={gradeIntervals}
+        voiceMode={voiceMode}
+        onToggleVoice={() => setVoiceMode((v) => !v)}
+        voicePanel={
+          voiceMode ? (
+            <VoiceStudyControls
+              question={currentCard.front || currentCard.question || ''}
+              answer={currentCard.back || currentCard.answer || ''}
+              onAnswerEvaluated={() => setFlipped(true)}
+              onRequestNextCard={() => {
+                setFlipped(false);
+                if (index < studyCards.length - 1) setIndex((i) => i + 1);
+              }}
+            />
+          ) : null
+        }
+      />
     );
   }
 

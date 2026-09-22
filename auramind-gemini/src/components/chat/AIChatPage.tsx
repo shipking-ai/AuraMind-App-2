@@ -54,6 +54,8 @@ import { buildPriorSessionMemory } from "../../lib/chatMemory";
 import PageShell from "../dashboard/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
 import { isAndroidApp } from "../../lib/platform";
+import { useIOSDesign } from "../ios/iosDesign";
+import IOSChatView from "../ios/IOSChatView";
 import { useAppPreference } from "../../lib/appPreferences";
 
 const MODE_LABELS: Record<ChatMode, string> = {
@@ -164,6 +166,7 @@ function getStarterPrompts(context: ChatContext) {
 export default function AIChatPage() {
   const navigate = useNavigate();
   const isMobileApp = isAndroidApp();
+  const iosDesign = useIOSDesign();
   const workspace = useDashboardWorkspace();
   const userId = useCurrentUserId();
   // Real study data (streak, 7-day retention, last-session accuracy) fed into
@@ -176,8 +179,7 @@ export default function AIChatPage() {
   const [saveChatHistory] = useAppPreference("auramind_saveChatHistory", true);
   const [personality, setPersonalityState] = useState<ProfAuraPersonality>(getStoredPersonality);
   const userMeta = workspace?.user as
-    | { streakCount?: number; lastStudyAt?: number; accuracy7d?: number }
-    | undefined;
+    { streakCount?: number; lastStudyAt?: number; accuracy7d?: number } | undefined;
   // Cross-session memory — computed once per page load (reads localStorage).
   const priorMemory = useMemo(
     () => (saveChatHistory ? buildPriorSessionMemory() || "" : ""),
@@ -480,6 +482,31 @@ export default function AIChatPage() {
   const starterPrompts = getStarterPrompts(context);
   const hasMessages = chat.messages.length > 0;
 
+  if (iosDesign) {
+    return (
+      <IOSChatView
+        messages={chat.messages}
+        isStreaming={chat.isStreaming}
+        input={input}
+        setInput={setInput}
+        onSend={handleSend}
+        onSendPrompt={chat.sendMessage}
+        onAbort={chat.abort}
+        onNewChat={chat.clearMessages}
+        onSaveCard={chat.saveCard}
+        onAnswerQuiz={chat.answerQuiz}
+        decks={decks}
+        selectedDeckId={selectedDeck?.id ?? ""}
+        onSelectDeck={setSelectedDeckId}
+        starters={starterPrompts}
+        listening={mic.isActive || sr.isListening}
+        onToggleMic={toggleMic}
+        speaking={tts.isEnabled}
+        onToggleSpeaking={tts.toggle}
+      />
+    );
+  }
+
   return (
     <PageShell>
       {/* First-visit tour overlay. localStorage flag is set ONLY on
@@ -567,10 +594,7 @@ export default function AIChatPage() {
               </button>
               {showOverflow && (
                 <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowOverflow(false)}
-                  />
+                  <div className="fixed inset-0 z-40" onClick={() => setShowOverflow(false)} />
                   <div className="absolute right-0 top-10 z-50 w-72 p-3 rounded-2xl bg-[#111118] border border-[#2A2A3A] shadow-2xl shadow-black/50">
                     {/* Voice OUT */}
                     <button
@@ -838,8 +862,7 @@ export default function AIChatPage() {
                     <strong className="text-[#F0EFFE]">
                       {cards.length} {cards.length === 1 ? "card" : "cards"}
                     </strong>
-                    , and your FSRS
-                    schedule.
+                    , and your FSRS schedule.
                   </p>
                 </motion.div>
 

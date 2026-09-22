@@ -837,3 +837,669 @@ a.ios-row:active {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* A full-height iOS screen that manages its own scrolling (chat). */
+.ios-scroll > .ios-native-bleed {
+  height: 100%;
+}
+
+/* ── Chat (Prof. Aura, Messages-style) ─────────────────────────────── */
+
+.ios-chat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ios-chat-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 64%;
+  border: 0;
+  background: none;
+  color: var(--ios-label);
+  text-align: left;
+}
+
+.ios-chat-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #ec4899 60%, #06b6d4);
+}
+
+.ios-chat-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.ios-chat-sub {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 190px;
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--ios-label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-chat-sub svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.ios-chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 150px);
+}
+
+.ios-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ios-chat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ios-chat-row.is-mine {
+  align-items: flex-end;
+}
+
+.ios-bubble {
+  max-width: 82%;
+  padding: 9px 14px;
+  border-radius: 20px;
+  font-size: 17px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.ios-bubble-mine {
+  background: linear-gradient(180deg, #9b6dff, #7c3aed);
+  color: #fff;
+  border-bottom-right-radius: 6px;
+}
+
+.ios-bubble-aura {
+  background: #26262a;
+  color: var(--ios-label);
+  border-bottom-left-radius: 6px;
+}
+
+.ios-bubble-markdown p,
+.ios-bubble-markdown ul,
+.ios-bubble-markdown ol {
+  margin: 0 0 8px;
+}
+
+.ios-bubble-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.ios-bubble-markdown ul,
+.ios-bubble-markdown ol {
+  padding-left: 20px;
+}
+
+.ios-bubble-markdown code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 15px;
+}
+
+.ios-bubble-actions {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 2px 6px;
+}
+
+.ios-bubble-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  color: var(--ios-label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ios-bubble-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ios-chat-empty {
+  padding: 28px 4px 0;
+  text-align: center;
+}
+
+.ios-chat-orb {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #ec4899 60%, #06b6d4);
+  box-shadow: 0 16px 50px rgba(139, 92, 246, 0.45);
+}
+
+.ios-chat-empty h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+}
+
+.ios-chat-empty p {
+  margin: 6px 12px 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ios-label-2);
+}
+
+.ios-chat-starters {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.ios-chat-starters button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--ios-cell);
+  color: var(--ios-label);
+}
+
+.ios-chat-starters button:active {
+  background: var(--ios-cell-pressed);
+}
+
+.ios-chat-starters svg {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: var(--ios-tint);
+}
+
+.ios-chat-starter-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ios-chat-starter-detail {
+  display: block;
+  font-size: 13px;
+  color: var(--ios-label-2);
+}
+
+.ios-composer {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 5px 5px 5px 16px;
+  border-radius: 24px;
+}
+
+.ios-composer textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 120px;
+  padding: 7px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.ios-composer textarea::placeholder {
+  color: var(--ios-label-3);
+}
+
+.ios-app .ios-composer-mic,
+.ios-app .ios-composer-send {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ios-composer-mic {
+  background: transparent;
+  color: var(--ios-label-2);
+}
+
+.ios-composer-mic.is-on {
+  background: var(--ios-red);
+  color: #fff;
+}
+
+.ios-composer-send {
+  background: var(--ios-tint-fill);
+  color: #fff;
+}
+
+.ios-composer-mic svg,
+.ios-composer-send svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* ── Study session ─────────────────────────────────────────────────── */
+
+.ios-study {
+  overflow: hidden;
+}
+
+.ios-study-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 130vw;
+  height: 70vh;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0.16;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.ios-study-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 16px 10px;
+}
+
+.ios-app .ios-study-round {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ios-label);
+}
+
+.ios-study-round svg {
+  width: 19px;
+  height: 19px;
+}
+
+.ios-study-round.is-on {
+  background: var(--ios-tint-fill);
+}
+
+.ios-study-title {
+  min-width: 0;
+  text-align: center;
+}
+
+.ios-study-deck {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-study-count {
+  font-size: 13px;
+  color: var(--ios-label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-study-progress {
+  position: relative;
+  z-index: 2;
+  height: 4px;
+  margin: 0 20px;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.ios-study-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ios-tint-fill);
+}
+
+.ios-study-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 0;
+  min-height: 0;
+}
+
+.ios-card-wrap {
+  position: relative;
+  width: min(88vw, 400px);
+  height: min(58vh, 500px);
+  perspective: 1400px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ios-card-3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.ios-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.ios-card-face.is-back {
+  transform: rotateY(180deg);
+}
+
+/* Paper — AuraMind's index card, on a calm background. */
+.ios-card-paper {
+  border-radius: 14px;
+  padding: 28px 24px 28px 52px;
+  color: #1a1828;
+  background:
+    repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        rgba(150, 135, 90, 0.26) 31px,
+        rgba(150, 135, 90, 0.26) 32px
+      )
+      0 70px / 100% 100% no-repeat,
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.6), transparent 30%),
+    linear-gradient(180deg, #fefce8 0%, #f7ecc8 100%);
+  border: 1px solid rgba(120, 91, 45, 0.22);
+  box-shadow:
+    0 1px 0 #e8e4cc,
+    0 2px 0 #f5f0d8,
+    0 3px 0 #ede8c8,
+    0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.ios-card-margin {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 38px;
+  width: 1px;
+  background: rgba(239, 68, 68, 0.32);
+}
+
+.ios-card-paper-deck {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8570;
+}
+
+.ios-card-paper-question {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.ios-card-paper-recall {
+  font-size: 15px;
+  color: #6b6550;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #d4cfa8;
+}
+
+.ios-card-paper-label {
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8570;
+}
+
+.ios-card-paper-answer {
+  margin-top: 6px;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 600;
+}
+
+/* Glass — dark, lit in the deck's colour. */
+.ios-card-glass {
+  border-radius: 32px;
+  padding: 28px;
+  background: #16161a;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.ios-card-glass-glow {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 80%;
+  opacity: 0.35;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.ios-card-glass-label {
+  position: relative;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ios-label-2);
+}
+
+.ios-card-glass-question {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+}
+
+.ios-card-glass-recall {
+  position: relative;
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--ios-label-2);
+}
+
+.ios-card-glass-answer {
+  position: relative;
+  margin-top: 16px;
+  font-size: 24px;
+  line-height: 31px;
+  font-weight: 600;
+}
+
+/* Swipe stamps. */
+.ios-swipe-stamp {
+  position: absolute;
+  top: 26px;
+  padding: 4px 12px;
+  border: 3px solid currentColor;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.ios-swipe-stamp.is-good {
+  left: 22px;
+  color: var(--ios-green);
+  transform: rotate(-12deg);
+}
+
+.ios-swipe-stamp.is-again {
+  right: 22px;
+  color: var(--ios-red);
+  transform: rotate(12deg);
+}
+
+.ios-swipe-stamp.is-easy {
+  left: 50%;
+  top: auto;
+  bottom: 26px;
+  color: var(--ios-blue);
+  transform: translateX(-50%);
+}
+
+.ios-study-voice {
+  position: relative;
+  z-index: 2;
+  padding: 0 16px 8px;
+}
+
+.ios-study-footer {
+  position: relative;
+  z-index: 2;
+  min-height: 118px;
+  padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.ios-grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.ios-app .ios-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 62px;
+  min-height: 0;
+  border-radius: 20px;
+  color: var(--grade);
+  transition: transform 0.12s ease;
+}
+
+.ios-grade:active {
+  transform: scale(0.94);
+}
+
+.ios-grade-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ios-grade-when {
+  font-size: 13px;
+  color: var(--ios-label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-study-hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ios-label-3);
+}
+
+/* Session complete. */
+.ios-complete {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 60px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 16px);
+  text-align: center;
+}
+
+.ios-complete-sub {
+  margin: 4px 0 0;
+  color: var(--ios-label-2);
+  font-size: 17px;
+}
+
+.ios-complete-actions {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+}
