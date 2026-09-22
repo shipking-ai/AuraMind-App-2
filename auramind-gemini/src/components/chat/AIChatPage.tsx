@@ -55,7 +55,8 @@ import PageShell from "../dashboard/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
 import { isAndroidApp } from "../../lib/platform";
 import { useIOSDesign } from "../ios/iosDesign";
-import IOSChatView from "../ios/IOSChatView";
+import IOSChatView, { type AuraChatMode } from "../ios/IOSChatView";
+import { toast } from "sonner";
 import { useAppPreference } from "../../lib/appPreferences";
 
 const MODE_LABELS: Record<ChatMode, string> = {
@@ -482,6 +483,54 @@ export default function AIChatPage() {
   const starterPrompts = getStarterPrompts(context);
   const hasMessages = chat.messages.length > 0;
 
+  // ── iPhone-only helpers (Talk mode, making cards from the notebook) ──
+  const liveTranscript = [sr.transcript, sr.interimTranscript].filter(Boolean).join(" ").trim();
+  const liveTranscriptRef = useRef("");
+  liveTranscriptRef.current = liveTranscript;
+  const holdTimerRef = useRef<number | null>(null);
+  const handleHoldStart = useCallback(() => {
+    if (chat.isStreaming) return;
+    if (holdTimerRef.current) window.clearTimeout(holdTimerRef.current);
+    sr.resetTranscript();
+    sr.startListening();
+  }, [chat.isStreaming, sr]);
+  const handleHoldEnd = useCallback(() => {
+    sr.stopListening();
+    // The recogniser delivers its final words just after it stops.
+    holdTimerRef.current = window.setTimeout(() => {
+      const spoken = liveTranscriptRef.current.trim();
+      sr.resetTranscript();
+      if (spoken) chat.sendMessage(spoken);
+    }, 900);
+  }, [chat, sr]);
+  const handleModeChange = useCallback(
+    (mode: AuraChatMode) => {
+      // Talk mode is a spoken conversation: Aura answers out loud.
+      if (mode === "talk" && !tts.isEnabled) tts.setEnabled(true);
+    },
+    [tts],
+  );
+  const handleMakeCard = useCallback(
+    async (front: string, back: string) => {
+      if (!workspace || !selectedDeck) {
+        toast.error("Pick a deck first");
+        return false;
+      }
+      try {
+        const added = await workspace.addCardsToDeck(selectedDeck.id, [{ front, back }]);
+        if (added) {
+          toast.success(`Added to ${selectedDeck.title}`);
+          return true;
+        }
+      } catch {
+        /* reported below */
+      }
+      toast.error("Couldn't save that card");
+      return false;
+    },
+    [workspace, selectedDeck],
+  );
+
   if (iosDesign) {
     return (
       <IOSChatView
@@ -500,9 +549,15 @@ export default function AIChatPage() {
         onSelectDeck={setSelectedDeckId}
         starters={starterPrompts}
         listening={mic.isActive || sr.isListening}
+        liveTranscript={liveTranscript}
         onToggleMic={toggleMic}
+        onHoldStart={handleHoldStart}
+        onHoldEnd={handleHoldEnd}
+        onMakeCard={handleMakeCard}
         speaking={tts.isEnabled}
         onToggleSpeaking={tts.toggle}
+        voicePlaying={tts.isSpeaking}
+        onModeChange={handleModeChange}
       />
     );
   }

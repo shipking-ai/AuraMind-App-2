@@ -31,7 +31,7 @@ const TABS: Tab[] = [
     path: "/dashboard/chat",
     label: "Aura",
     icon: MessageCircle,
-    match: (p) => p.startsWith("/dashboard/chat"),
+    match: (p) => p.startsWith("/dashboard/chat") || p.startsWith("/dashboard/aura"),
   },
   {
     path: "/dashboard/settings",
@@ -49,6 +49,11 @@ const IOS_SCREENS = new Set([
   "/dashboard/chat",
   "/dashboard/settings",
 ]);
+
+/** iOS-designed screens, plus the preview's chat demo routes. */
+function isNativeScreen(pathname: string): boolean {
+  return IOS_SCREENS.has(pathname) || pathname.startsWith("/dashboard/aura");
+}
 
 /** The route as if the shell were mounted at /dashboard (the preview mounts it elsewhere). */
 function dashboardPath(pathname: string, basePath: string): string {
@@ -110,7 +115,7 @@ export function IOSShell({
 }) {
   const location = useLocation();
   const pathname = dashboardPath(location.pathname, basePath);
-  const native = IOS_SCREENS.has(pathname);
+  const native = isNativeScreen(pathname);
   return (
     <div className="ios-app" data-testid="ios-shell">
       <main

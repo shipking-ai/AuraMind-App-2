@@ -15,6 +15,7 @@ import { IOSShell } from "./IOSShell";
 import { IOSLibrary, IOSStudy, IOSToday } from "./IOSScreens";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
+import IOSChatDemo from "./IOSChatDemo";
 import { StudyPreviewContext } from "../../pages/study/studyPreview";
 
 const AIChatPage = React.lazy(() => import("../chat/AIChatPage"));
@@ -29,7 +30,9 @@ export const IOS_PREVIEW_TOUR = [
   "/decks",
   "/study",
   "/settings",
-  "/chat",
+  "/aura/talk/speaking",
+  "/aura/notebook",
+  "/aura/cards",
   "/session/neuro",
 ];
 export const IOS_PREVIEW_STEP_MS = 6000;
@@ -160,7 +163,9 @@ function StudySession() {
 
 export default function IOSVisualPreview() {
   const location = useLocation();
-  const isChat = location.pathname.startsWith(`${IOS_PREVIEW_BASE}/chat`);
+  const isChat =
+    location.pathname.startsWith(`${IOS_PREVIEW_BASE}/chat`) ||
+    location.pathname.startsWith(`${IOS_PREVIEW_BASE}/aura`);
   return (
     <DashboardWorkspaceProvider
       user={USER}
@@ -201,6 +206,7 @@ export default function IOSVisualPreview() {
                 <Route path="study" element={<IOSStudy />} />
                 <Route path="settings" element={<IOSSettingsScreen />} />
                 <Route path="chat" element={<AIChatPage />} />
+                <Route path="aura/:mode/:state?" element={<IOSChatDemo />} />
                 <Route path="*" element={<Navigate to={IOS_PREVIEW_BASE} replace />} />
               </Routes>
             </IOSShell>
