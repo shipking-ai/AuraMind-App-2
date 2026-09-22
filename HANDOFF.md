@@ -58,6 +58,28 @@ dispatch go live without a console visit.
 Nothing is broken. These are the next things worth doing, roughly in order of
 value:
 
+- **iOS app — builds in CI, not yet signed.** `auramind-gemini/ios/` (Capacitor
+  8, Swift Package Manager, generated on Windows — no CocoaPods). The
+  `Mobile iOS` workflow builds it unsigned on a GitHub Mac, runs it in an
+  iPhone simulator and uploads a screenshot. What differs from Android:
+  - Both apps share the phone layout; `src/lib/platform.ts` gates the
+    Android-only parts (spoken reminders, widgets, push for now).
+  - Listening: WKWebView exposes `webkitSpeechRecognition` but it never
+    returns results (WebKit bug 239816), so `AuraListenPlugin.swift`
+    (SFSpeechRecognizer) is used; both apps now listen natively. App-local
+    plugins register in `MainViewController.swift`. Needs a real iPhone to
+    verify transcription.
+  - Read-aloud uses WKWebView's `speechSynthesis`; AI voices play via `<audio>`.
+  - API CORS: production sent none, so the apps' web views blocked API
+    responses. `_middleware.ts` now allowlists the site, `https://localhost`
+    (Android) and `capacitor://localhost` (iOS).
+  - Payments: Stripe checkout opens in Safari (Capacitor sends outside links
+    there), which Apple allows **on the US storefront only** (guideline
+    3.1.1, May 2025). Other countries need In-App Purchase, so ship iOS
+    US-only until that exists. The app re-checks the subscription on resume.
+  - Push on iOS needs APNs (Apple Developer account) plus Firebase iOS
+    config; until then `pushService` reports it unavailable.
+  - Next: Apple Developer Program, then a signed TestFlight job.
 - **Personal FSRS tuning needs rebuilding.** The scheduler now uses the
   official `ts-fsrs` (FSRS-6, long-term mode, whole-day intervals). The old
   hand-written scheduler made intervals ~140x too long (Hard could schedule

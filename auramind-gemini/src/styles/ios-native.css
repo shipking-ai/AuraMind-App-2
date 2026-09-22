@@ -1,0 +1,2157 @@
+/*
+ * AuraMind for iPhone — its own design language, not the Android one.
+ *
+ * Built on Apple's platform conventions (Human Interface Guidelines, iOS 26
+ * Liquid Glass): true-black OLED canvas, the system font, large titles that
+ * collapse into a glass navigation bar, inset grouped lists, a floating glass
+ * tab bar, activity rings, green switches and bottom sheets. AuraMind's
+ * violet is the tint colour; everything else follows iOS system colours so
+ * the app feels at home next to Apple's own.
+ *
+ * Every rule is scoped under .ios-app so nothing leaks into the web or
+ * Android layouts.
+ */
+
+.ios-app {
+  --ios-bg: #000;
+  --ios-cell: #1c1c1e;
+  --ios-cell-pressed: #2c2c2e;
+  --ios-fill: rgba(118, 118, 128, 0.24);
+  --ios-fill-2: rgba(118, 118, 128, 0.18);
+  --ios-sep: rgba(84, 84, 88, 0.6);
+  --ios-label: #fff;
+  --ios-label-2: rgba(235, 235, 245, 0.6);
+  --ios-label-3: rgba(235, 235, 245, 0.3);
+  --ios-tint: #b69cff;
+  --ios-tint-fill: #8b5cf6;
+  --ios-green: #30d158;
+  --ios-red: #ff453a;
+  --ios-orange: #ff9f0a;
+  --ios-yellow: #ffd60a;
+  --ios-blue: #0a84ff;
+  --ios-teal: #64d2ff;
+  --ios-pink: #ff375f;
+  --ios-indigo: #5e5ce6;
+  --ios-ring-move: #fa114f;
+  --ios-ring-exercise: #a6ff00;
+  --ios-ring-stand: #00d8ff;
+  --ios-glass: rgba(40, 40, 44, 0.5);
+  --ios-glass-border: rgba(255, 255, 255, 0.14);
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", system-ui,
+    sans-serif;
+  font-size: 17px;
+  letter-spacing: -0.41px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ios-app button {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+/* Fixed-size controls: keep global touch-target minimums from resizing them. */
+.ios-app .ios-switch,
+.ios-app .ios-stepper button,
+.ios-app .ios-segmented button,
+.ios-app .ios-bar-glass-button {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* The web app's global button hover/focus fills don't belong on iOS. */
+.ios-app button:focus,
+.ios-app button:hover {
+  outline: none;
+}
+
+.ios-app button:focus-visible {
+  outline: 2px solid var(--ios-tint);
+  outline-offset: 2px;
+}
+
+.ios-app input,
+.ios-app textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* A faint brand aura behind the large title — the one place AuraMind's
+   identity shows through the system chrome. */
+.ios-app::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 420px;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 15% 0%, rgba(139, 92, 246, 0.28), transparent 60%),
+    radial-gradient(90% 60% at 95% 0%, rgba(34, 211, 238, 0.14), transparent 65%);
+  z-index: 0;
+}
+
+.ios-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Pages the iOS design has not re-drawn yet still clear the status bar. */
+.ios-scroll > .ios-foreign {
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px 0;
+}
+
+.ios-scroll > .ios-foreign-bleed {
+  height: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Glass ─────────────────────────────────────────────────────────── */
+
+.ios-glass {
+  background: var(--ios-glass);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
+  border: 0.5px solid var(--ios-glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Navigation bar + large title ──────────────────────────────────── */
+
+.ios-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: env(safe-area-inset-top, 0px);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  border-bottom: 0.5px solid transparent;
+}
+
+.ios-navbar.is-collapsed {
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-bottom-color: var(--ios-sep);
+}
+
+.ios-navbar-row {
+  position: relative;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.ios-navbar-inline-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 17px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ios-navbar.is-collapsed .ios-navbar-inline-title {
+  opacity: 1;
+}
+
+.ios-navbar-side {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+}
+
+.ios-navbar-side.is-trailing {
+  justify-content: flex-end;
+}
+
+.ios-bar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 8px;
+  color: var(--ios-tint);
+  font-size: 17px;
+  background: none;
+  border: 0;
+}
+
+.ios-bar-button:active {
+  opacity: 0.4;
+}
+
+.ios-bar-glass-button {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-radius: 999px;
+  color: var(--ios-label);
+}
+
+.ios-large-title-block {
+  padding: 2px 20px 10px;
+}
+
+.ios-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ios-label-2);
+}
+
+.ios-large-title {
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: 0.37px;
+  margin: 0;
+}
+
+/* ── Inset grouped lists ───────────────────────────────────────────── */
+
+.ios-section {
+  margin: 0 16px 34px;
+}
+
+.ios-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px 7px;
+}
+
+.ios-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.38px;
+}
+
+.ios-section-caption {
+  padding: 0 16px 7px;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--ios-label-2);
+  letter-spacing: -0.08px;
+}
+
+.ios-section-footer {
+  padding: 7px 16px 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ios-label-2);
+  letter-spacing: -0.08px;
+}
+
+.ios-list {
+  background: var(--ios-cell);
+  border-radius: 26px;
+  overflow: hidden;
+}
+
+.ios-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 16px;
+  text-align: left;
+  color: var(--ios-label);
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+
+button.ios-row:active,
+a.ios-row:active {
+  background: var(--ios-cell-pressed);
+}
+
+/* Hairline separators inset to the text, as in Apple's lists. */
+.ios-row + .ios-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: var(--ios-sep-inset, 60px);
+  height: 0.5px;
+  background: var(--ios-sep);
+}
+
+.ios-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ios-row-title {
+  font-size: 17px;
+  line-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-row-subtitle {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ios-label-2);
+  letter-spacing: -0.24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-row-value {
+  flex-shrink: 0;
+  color: var(--ios-label-2);
+}
+
+.ios-chevron {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--ios-label-3);
+}
+
+.ios-row-destructive .ios-row-title {
+  color: var(--ios-red);
+  text-align: center;
+  width: 100%;
+}
+
+/* Settings-style rounded icon tile. */
+.ios-icon-tile {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.ios-icon-tile svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ios-deck-tile {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.ios-badge {
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: var(--ios-tint-fill);
+}
+
+/* ── Controls ──────────────────────────────────────────────────────── */
+
+.ios-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: rgba(120, 120, 128, 0.32);
+  transition: background-color 0.25s ease;
+}
+
+.ios-switch[aria-checked="true"] {
+  background: var(--ios-green);
+}
+
+.ios-app .ios-switch::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  top: 2px;
+  left: 2px;
+  opacity: 1;
+  pointer-events: none;
+  width: 27px;
+  height: 27px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.15),
+    0 3px 1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.ios-app .ios-switch[aria-checked="true"]::after {
+  transform: translateX(20px);
+}
+
+.ios-stepper {
+  display: inline-flex;
+  flex-shrink: 0;
+  background: var(--ios-fill);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.ios-stepper button {
+  width: 47px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--ios-label);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ios-stepper button + button {
+  border-left: 0.5px solid var(--ios-sep);
+}
+
+.ios-stepper button:active {
+  background: var(--ios-fill-2);
+}
+
+.ios-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  margin: 0 16px 12px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label-2);
+}
+
+.ios-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--ios-label);
+  font-size: 17px;
+}
+
+.ios-search input::placeholder {
+  color: var(--ios-label-2);
+}
+
+.ios-segmented {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: 32px;
+  margin: 0 16px 20px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--ios-fill);
+}
+
+.ios-segmented button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0;
+  line-height: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ios-label);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ios-segmented button[aria-selected="true"] {
+  font-weight: 600;
+}
+
+.ios-segmented-thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: #636366;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ios-button-filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-tint-fill);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ios-button-filled:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.ios-button-tinted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--ios-tint);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ── Today: activity rings card ────────────────────────────────────── */
+
+.ios-rings-card {
+  margin: 4px 16px 34px;
+  padding: 18px;
+  border-radius: 28px;
+  background: var(--ios-cell);
+}
+
+.ios-rings-layout {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.ios-ring-legend {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.ios-ring-legend-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ios-ring-legend-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.35px;
+  line-height: 26px;
+}
+
+.ios-ring-legend-value small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ios-label-2);
+}
+
+/* ── Study mode tiles ──────────────────────────────────────────────── */
+
+.ios-tile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 16px 34px;
+}
+
+.ios-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 132px;
+  padding: 16px;
+  border: 0;
+  border-radius: 24px;
+  text-align: left;
+  color: #fff;
+  font: inherit;
+  transition: transform 0.15s ease;
+}
+
+.ios-tile:active {
+  transform: scale(0.97);
+}
+
+.ios-tile-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ios-tile-caption {
+  margin-top: 2px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: -0.08px;
+}
+
+/* ── Floating glass tab bar ────────────────────────────────────────── */
+
+.ios-tabbar {
+  position: fixed;
+  z-index: 40;
+  left: 16px;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 64px;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.ios-tab {
+  position: relative;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--ios-label);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+.ios-tab svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ios-tab[aria-current="page"] {
+  color: var(--ios-tint);
+}
+
+.ios-tab-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ios-tab > :not(.ios-tab-pill) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Sheets (action sheet + picker) ────────────────────────────────── */
+
+.ios-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ios-action-sheet {
+  position: fixed;
+  z-index: 61;
+  left: 8px;
+  right: 8px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  display: grid;
+  gap: 8px;
+}
+
+.ios-action-group {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.ios-action-title {
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ios-label-2);
+  border-bottom: 0.5px solid var(--ios-sep);
+}
+
+.ios-action {
+  display: block;
+  width: 100%;
+  height: 57px;
+  border: 0;
+  background: transparent;
+  color: var(--ios-tint);
+  font-size: 20px;
+}
+
+.ios-action + .ios-action {
+  border-top: 0.5px solid var(--ios-sep);
+}
+
+.ios-action:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ios-action.is-destructive {
+  color: var(--ios-red);
+}
+
+.ios-action.is-cancel {
+  font-weight: 600;
+}
+
+.ios-sheet {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 34px 34px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.ios-sheet-grabber {
+  width: 36px;
+  height: 5px;
+  margin: 6px auto 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ios-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 8px 20px;
+}
+
+.ios-sheet-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ios-sheet-body {
+  overflow-y: auto;
+  padding: 4px 0 16px;
+}
+
+.ios-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--ios-tint);
+}
+
+/* ── Empty state ───────────────────────────────────────────────────── */
+
+.ios-empty {
+  margin: 40px 32px;
+  text-align: center;
+}
+
+.ios-empty-title {
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.ios-empty-body {
+  margin: 6px 0 20px;
+  color: var(--ios-label-2);
+  font-size: 15px;
+  line-height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ios-app *,
+  .ios-app *::before,
+  .ios-app *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* A full-height iOS screen that manages its own scrolling (chat). */
+.ios-scroll > .ios-native-bleed {
+  height: 100%;
+}
+
+/* ── Chat (Prof. Aura, Messages-style) ─────────────────────────────── */
+
+.ios-chat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ios-chat-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 64%;
+  border: 0;
+  background: none;
+  color: var(--ios-label);
+  text-align: left;
+}
+
+.ios-chat-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #ec4899 60%, #06b6d4);
+}
+
+.ios-chat-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.ios-chat-sub {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 190px;
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--ios-label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-chat-sub svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.ios-chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 150px);
+}
+
+.ios-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ios-chat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ios-chat-row.is-mine {
+  align-items: flex-end;
+}
+
+.ios-bubble {
+  max-width: 82%;
+  padding: 9px 14px;
+  border-radius: 20px;
+  font-size: 17px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.ios-bubble-mine {
+  background: linear-gradient(180deg, #9b6dff, #7c3aed);
+  color: #fff;
+  border-bottom-right-radius: 6px;
+}
+
+.ios-bubble-aura {
+  background: #26262a;
+  color: var(--ios-label);
+  border-bottom-left-radius: 6px;
+}
+
+.ios-bubble-markdown p,
+.ios-bubble-markdown ul,
+.ios-bubble-markdown ol {
+  margin: 0 0 8px;
+}
+
+.ios-bubble-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.ios-bubble-markdown ul,
+.ios-bubble-markdown ol {
+  padding-left: 20px;
+}
+
+.ios-bubble-markdown code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 15px;
+}
+
+.ios-bubble-actions {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 2px 6px;
+}
+
+.ios-bubble-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  color: var(--ios-label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ios-bubble-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ios-chat-empty {
+  padding: 28px 4px 0;
+  text-align: center;
+}
+
+.ios-chat-orb {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #ec4899 60%, #06b6d4);
+  box-shadow: 0 16px 50px rgba(139, 92, 246, 0.45);
+}
+
+.ios-chat-empty h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+}
+
+.ios-chat-empty p {
+  margin: 6px 12px 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ios-label-2);
+}
+
+.ios-chat-starters {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.ios-chat-starters button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--ios-cell);
+  color: var(--ios-label);
+}
+
+.ios-chat-starters button:active {
+  background: var(--ios-cell-pressed);
+}
+
+.ios-chat-starters svg {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: var(--ios-tint);
+}
+
+.ios-chat-starter-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ios-chat-starter-detail {
+  display: block;
+  font-size: 13px;
+  color: var(--ios-label-2);
+}
+
+.ios-composer {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 5px 5px 5px 16px;
+  border-radius: 24px;
+}
+
+.ios-composer textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 120px;
+  padding: 7px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.ios-composer textarea::placeholder {
+  color: var(--ios-label-3);
+}
+
+.ios-app .ios-composer-mic,
+.ios-app .ios-composer-send {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ios-composer-mic {
+  background: transparent;
+  color: var(--ios-label-2);
+}
+
+.ios-composer-mic.is-on {
+  background: var(--ios-red);
+  color: #fff;
+}
+
+.ios-composer-send {
+  background: var(--ios-tint-fill);
+  color: #fff;
+}
+
+.ios-composer-mic svg,
+.ios-composer-send svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* ── Study session ─────────────────────────────────────────────────── */
+
+.ios-study {
+  overflow: hidden;
+}
+
+.ios-study-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 130vw;
+  height: 70vh;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0.16;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.ios-study-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 16px 10px;
+}
+
+.ios-app .ios-study-round {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ios-label);
+}
+
+.ios-study-round svg {
+  width: 19px;
+  height: 19px;
+}
+
+.ios-study-round.is-on {
+  background: var(--ios-tint-fill);
+}
+
+.ios-study-title {
+  min-width: 0;
+  text-align: center;
+}
+
+.ios-study-deck {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-study-count {
+  font-size: 13px;
+  color: var(--ios-label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-study-progress {
+  position: relative;
+  z-index: 2;
+  height: 4px;
+  margin: 0 20px;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.ios-study-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ios-tint-fill);
+}
+
+.ios-study-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 0;
+  min-height: 0;
+}
+
+.ios-card-wrap {
+  position: relative;
+  width: min(88vw, 400px);
+  height: min(58vh, 500px);
+  perspective: 1400px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ios-card-3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.ios-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.ios-card-face.is-back {
+  transform: rotateY(180deg);
+}
+
+/* Paper — AuraMind's index card, on a calm background. */
+.ios-card-paper {
+  border-radius: 14px;
+  padding: 28px 24px 28px 52px;
+  color: #1a1828;
+  background:
+    repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        rgba(150, 135, 90, 0.26) 31px,
+        rgba(150, 135, 90, 0.26) 32px
+      )
+      0 70px / 100% 100% no-repeat,
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.6), transparent 30%),
+    linear-gradient(180deg, #fefce8 0%, #f7ecc8 100%);
+  border: 1px solid rgba(120, 91, 45, 0.22);
+  box-shadow:
+    0 1px 0 #e8e4cc,
+    0 2px 0 #f5f0d8,
+    0 3px 0 #ede8c8,
+    0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.ios-card-margin {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 38px;
+  width: 1px;
+  background: rgba(239, 68, 68, 0.32);
+}
+
+.ios-card-paper-deck {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8570;
+}
+
+.ios-card-paper-question {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.ios-card-paper-recall {
+  font-size: 15px;
+  color: #6b6550;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #d4cfa8;
+}
+
+.ios-card-paper-label {
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8570;
+}
+
+.ios-card-paper-answer {
+  margin-top: 6px;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 600;
+}
+
+/* Glass — dark, lit in the deck's colour. */
+.ios-card-glass {
+  border-radius: 32px;
+  padding: 28px;
+  background: #16161a;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.ios-card-glass-glow {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 80%;
+  opacity: 0.35;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.ios-card-glass-label {
+  position: relative;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ios-label-2);
+}
+
+.ios-card-glass-question {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+}
+
+.ios-card-glass-recall {
+  position: relative;
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--ios-label-2);
+}
+
+.ios-card-glass-answer {
+  position: relative;
+  margin-top: 16px;
+  font-size: 24px;
+  line-height: 31px;
+  font-weight: 600;
+}
+
+/* Swipe stamps. */
+.ios-swipe-stamp {
+  position: absolute;
+  top: 26px;
+  padding: 4px 12px;
+  border: 3px solid currentColor;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.ios-swipe-stamp.is-good {
+  left: 22px;
+  color: var(--ios-green);
+  transform: rotate(-12deg);
+}
+
+.ios-swipe-stamp.is-again {
+  right: 22px;
+  color: var(--ios-red);
+  transform: rotate(12deg);
+}
+
+.ios-swipe-stamp.is-easy {
+  left: 50%;
+  top: auto;
+  bottom: 26px;
+  color: var(--ios-blue);
+  transform: translateX(-50%);
+}
+
+.ios-study-voice {
+  position: relative;
+  z-index: 2;
+  padding: 0 16px 8px;
+}
+
+.ios-study-footer {
+  position: relative;
+  z-index: 2;
+  min-height: 118px;
+  padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.ios-grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.ios-app .ios-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 62px;
+  min-height: 0;
+  border-radius: 20px;
+  color: var(--grade);
+  transition: transform 0.12s ease;
+}
+
+.ios-grade:active {
+  transform: scale(0.94);
+}
+
+.ios-grade-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ios-grade-when {
+  font-size: 13px;
+  color: var(--ios-label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-study-hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ios-label-3);
+}
+
+/* Session complete. */
+.ios-complete {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 60px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 16px);
+  text-align: center;
+}
+
+.ios-complete-sub {
+  margin: 4px 0 0;
+  color: var(--ios-label-2);
+  font-size: 17px;
+}
+
+.ios-complete-actions {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* ── Aura modes: switcher ──────────────────────────────────────────── */
+
+.ios-chat-modes .ios-segmented {
+  margin: 2px 16px 10px;
+}
+
+/* ── Talk: the living orb ──────────────────────────────────────────── */
+
+.ios-talk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: calc(100dvh - 124px - env(safe-area-inset-top, 0px));
+  padding: 18px 20px 0;
+  text-align: center;
+}
+
+.ios-talk-orb {
+  position: relative;
+  flex-shrink: 1;
+  width: min(240px, 30dvh);
+  height: min(240px, 30dvh);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ios-talk-orb::before {
+  content: "";
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.55),
+    rgba(236, 72, 153, 0.25) 45%,
+    transparent 70%
+  );
+  filter: blur(20px);
+  animation: ios-orb-breathe 4.5s ease-in-out infinite;
+}
+
+.ios-talk-ring {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(182, 156, 255, 0.35);
+  opacity: 0;
+}
+
+.ios-talk-orb.is-listening .ios-talk-ring,
+.ios-talk-orb.is-speaking .ios-talk-ring {
+  animation: ios-orb-ripple 1.8s ease-out infinite;
+}
+
+.ios-talk-orb .ios-talk-ring.is-2 {
+  animation-delay: 0.9s;
+}
+
+.ios-talk-orb.is-listening::before {
+  background: radial-gradient(
+    circle,
+    rgba(34, 211, 238, 0.55),
+    rgba(139, 92, 246, 0.3) 45%,
+    transparent 70%
+  );
+  animation-duration: 1.6s;
+}
+
+.ios-talk-orb.is-thinking::before {
+  animation: ios-orb-spin 2.4s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    rgba(139, 92, 246, 0.6),
+    rgba(236, 72, 153, 0.45),
+    rgba(34, 211, 238, 0.5),
+    rgba(139, 92, 246, 0.6)
+  );
+}
+
+.ios-talk-orb > svg,
+.ios-talk-orb > div {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes ios-orb-breathe {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes ios-orb-ripple {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@keyframes ios-orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ios-talk-status {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ios-tint);
+}
+
+.ios-talk-caption {
+  margin-top: 10px;
+  flex-shrink: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 340px;
+  font-size: 21px;
+  line-height: 27px;
+  font-weight: 600;
+  letter-spacing: 0.35px;
+  color: var(--ios-label);
+}
+
+.ios-talk-starters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ios-talk-starters button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ios-talk-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 320px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.ios-app .ios-talk-side {
+  width: 48px;
+  height: 48px;
+  min-height: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ios-label);
+}
+
+.ios-talk-side svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ios-talk-side-spacer {
+  width: 48px;
+}
+
+.ios-app .ios-talk-hold {
+  width: 92px;
+  height: 92px;
+  min-height: 0;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  box-shadow:
+    0 14px 40px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  touch-action: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.15s ease;
+}
+
+.ios-talk-hold svg {
+  width: 36px;
+  height: 36px;
+}
+
+.ios-talk-hold.is-on {
+  transform: scale(1.12);
+  background: linear-gradient(135deg, #22d3ee, #8b5cf6);
+}
+
+.ios-talk-hint {
+  margin: 10px 0 calc(env(safe-area-inset-bottom, 0px) + 84px);
+  font-size: 13px;
+  color: var(--ios-label-2);
+}
+
+/* ── Notebook: the conversation on paper ───────────────────────────── */
+
+.ios-notebook {
+  position: relative;
+  margin: 4px 10px 0;
+  padding: 18px 18px 36px 58px;
+  min-height: calc(100dvh - 260px);
+  border-radius: 16px;
+  color: #1a1828;
+  background:
+    repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        rgba(150, 135, 90, 0.24) 31px,
+        rgba(150, 135, 90, 0.24) 32px
+      )
+      0 56px / 100% 100% no-repeat,
+    linear-gradient(180deg, #fefce8 0%, #f7ecc8 100%);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.ios-notebook-margin {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 44px;
+  width: 1px;
+  background: rgba(239, 68, 68, 0.35);
+}
+
+.ios-notebook-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  height: 38px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8570;
+}
+
+.ios-note-hand {
+  font-family: "Noteworthy", "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 20px;
+  line-height: 32px;
+  color: #5b3fc4;
+  margin: 0;
+}
+
+.ios-note-q {
+  margin: 8px 0 6px -30px;
+}
+
+.ios-note-q::before {
+  content: "\270E  ";
+  color: #8b5cf6;
+}
+
+.ios-note-a {
+  margin-bottom: 18px;
+}
+
+.ios-note-typeset {
+  font-family: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  font-size: 18px;
+  line-height: 32px;
+  letter-spacing: 0;
+}
+
+.ios-note-typeset p,
+.ios-note-typeset ul,
+.ios-note-typeset ol {
+  margin: 0;
+}
+
+.ios-note-typeset ul,
+.ios-note-typeset ol {
+  padding-left: 18px;
+}
+
+/* Marker highlight: tap to make a card. */
+.ios-note-typeset strong {
+  font-weight: 600;
+  padding: 0 2px;
+  border-radius: 3px;
+  background: linear-gradient(transparent 52%, rgba(255, 214, 10, 0.6) 52%);
+  cursor: pointer;
+}
+
+.ios-note-typeset strong.is-carded {
+  background: linear-gradient(transparent 52%, rgba(48, 209, 88, 0.45) 52%);
+}
+
+.ios-note-typeset strong.is-carded::after {
+  content: " \2713";
+  color: #1f8f3a;
+  font-size: 14px;
+}
+
+.ios-note-writing {
+  font-style: italic;
+  color: #8a8570;
+}
+
+.ios-note-small {
+  margin: 4px 0 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6b6550;
+}
+
+.ios-app .ios-note-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  margin-top: 6px;
+  padding: 5px 12px;
+  border: 1px solid rgba(91, 63, 196, 0.35);
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #5b3fc4;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ios-note-save svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ios-note-made {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f8f3a;
+}
+
+.ios-note-made svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ios-chat-starters.is-paper button {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(120, 91, 45, 0.18);
+  color: #1a1828;
+}
+
+.ios-chat-starters.is-paper svg {
+  color: #5b3fc4;
+}
+
+.ios-chat-starters.is-paper .ios-chat-starter-detail {
+  color: #6b6550;
+}
+
+.ios-composer.is-paper {
+  background: #fdf8e4;
+  border: 1px solid rgba(120, 91, 45, 0.22);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.ios-composer.is-paper textarea {
+  color: #1a1828;
+  font-family: "Noteworthy", "Bradley Hand", "Segoe Print", cursive;
+  font-size: 18px;
+}
+
+.ios-composer.is-paper textarea::placeholder {
+  color: #a39c80;
+}
+
+.ios-composer.is-paper .ios-composer-mic {
+  color: #6b6550;
+}
+
+/* ── Cards: answers as swipeable knowledge cards ───────────────────── */
+
+.ios-kthread {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ios-kask {
+  align-self: flex-end;
+  max-width: 80%;
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.ios-kstack {
+  margin: 0 -12px;
+}
+
+.ios-krail {
+  display: flex;
+  gap: 12px;
+  padding: 2px 12px 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ios-krail::-webkit-scrollbar {
+  display: none;
+}
+
+.ios-kcard {
+  flex: 0 0 86%;
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  padding: 18px 18px 14px;
+  border-radius: 26px;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(139, 92, 246, 0.28), transparent 60%), #1c1c1e;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ios-kcard.is-quiz {
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(48, 209, 88, 0.22), transparent 60%), #1c1c1e;
+}
+
+.ios-kcard.is-loading {
+  flex: none;
+  min-height: 0;
+  width: 120px;
+  padding: 14px 18px;
+}
+
+.ios-kcard header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ios-kcard-kind {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ios-tint);
+}
+
+.ios-kcard.is-quiz .ios-kcard-kind {
+  color: var(--ios-green);
+}
+
+.ios-kcard-index {
+  font-size: 12px;
+  color: var(--ios-label-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-kcard-body {
+  flex: 1;
+  font-size: 18px;
+  line-height: 25px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.ios-kcard-body p,
+.ios-kcard-body ul,
+.ios-kcard-body ol {
+  margin: 0 0 8px;
+}
+
+.ios-kcard-body ul,
+.ios-kcard-body ol {
+  padding-left: 20px;
+}
+
+.ios-kcard-body strong {
+  color: #d9ccff;
+}
+
+.ios-app .ios-kcard-save {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  margin-top: 12px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.22);
+  color: var(--ios-tint);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ios-kcard-save.is-saved {
+  background: rgba(48, 209, 88, 0.18);
+  color: var(--ios-green);
+}
+
+.ios-kcard-save svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ios-kdots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 24px 0;
+}
+
+.ios-kdots span:not(.ios-kdots-hint) {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ios-label-3);
+  transition:
+    width 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.ios-kdots span.is-on {
+  width: 18px;
+  background: var(--ios-tint);
+}
+
+.ios-kdots-hint {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--ios-label-3);
+}
+
+.ios-kcard-demo {
+  position: relative;
+  width: 150px;
+  height: 110px;
+  margin: 6px auto 20px;
+}
+
+.ios-kcard-demo span {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: #1c1c1e;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ios-kcard-demo span:nth-child(1) {
+  transform: rotate(-8deg) translateX(-18px);
+  opacity: 0.6;
+}
+
+.ios-kcard-demo span:nth-child(2) {
+  transform: rotate(6deg) translateX(18px);
+  opacity: 0.8;
+}
+
+.ios-kcard-demo span:nth-child(3) {
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(139, 92, 246, 0.45), transparent 60%), #1c1c1e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ios-talk-orb::before,
+  .ios-talk-ring {
+    animation: none !important;
+  }
+}
+
+/* Talk is one fixed screen, not a scrolling thread. */
+.ios-chat.is-talk .ios-chat-scroll {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+@media (max-height: 700px) {
+  .ios-talk-caption {
+    font-size: 18px;
+    line-height: 23px;
+  }
+  .ios-app .ios-talk-hold {
+    width: 76px;
+    height: 76px;
+  }
+}
+
+@media (max-height: 620px) {
+  .ios-talk-orb {
+    width: 22dvh;
+    height: 22dvh;
+  }
+  .ios-talk-caption {
+    -webkit-line-clamp: 2;
+  }
+  .ios-talk-hint {
+    display: none;
+  }
+}
+
+/* The shared markdown renderer colours text for dark bubbles; on paper it is ink. */
+.ios-note-typeset,
+.ios-note-typeset * {
+  color: #1a1828 !important;
+}
+
+.ios-note-typeset a {
+  color: #5b3fc4 !important;
+}
+
+.ios-note-typeset code {
+  background: rgba(120, 91, 45, 0.12) !important;
+}

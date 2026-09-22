@@ -1,0 +1,159 @@
+name: Mobile iOS
+
+# Builds the iOS app for the simulator on a GitHub-hosted Mac, launches it in
+# an iPhone simulator and uploads a screenshot plus the app's log. No Apple
+# Developer account or signing is needed for this; TestFlight uploads come
+# later as a separate, signed job.
+
+on:
+  pull_request:
+    paths:
+      - 'auramind-gemini/**'
+      - '.github/workflows/mobile-ios.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'auramind-gemini/**'
+      - '.github/workflows/mobile-ios.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: auramind-gemini
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency-path: auramind-gemini/package-lock.json
+
+      # Same public build values as the Android release. Secrets are absent
+      # on Dependabot and fork PRs; the app still builds and boots to its
+      # welcome screen with placeholders, which is all this job checks.
+      - name: Write build env
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          {
+            printf 'VITE_SUPABASE_URL=%s\n'           "${VITE_SUPABASE_URL:-https://placeholder.supabase.co}"
+            printf 'VITE_SUPABASE_ANON_KEY=%s\n'      "${VITE_SUPABASE_ANON_KEY:-placeholder}"
+            printf 'VITE_STRIPE_PUBLISHABLE_KEY=%s\n' "${VITE_STRIPE_PUBLISHABLE_KEY:-}"
+            printf 'VITE_API_BASE_URL=%s\n'           'https://auramind.app'
+            printf 'VITE_SSE_BASE=%s\n'               'https://auramind.app'
+            printf 'VITE_APP_URL=%s\n'                'https://auramind.app'
+            printf 'VITE_USE_PUTER=%s\n'              'true'
+            printf 'VITE_TURNSTILE_SITE_KEY=%s\n'     '0x4AAAAAAAEsHm7dsqEhBi3Nr'
+          } > .env
+          echo "Wrote .env with $(grep -c '=' .env) entries (values not echoed)."
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web bundle and sync iOS
+        run: npm run build:ios
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes | tail -5
+
+      - name: Build for the iOS simulator (unsigned)
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build/xcodebuild.log | grep -E "error:|warning: .*AuraListen|BUILD (SUCCEEDED|FAILED)" || true
+          test -d build/ios/Build/Products/Debug-iphonesimulator/App.app
+
+      - name: Launch in an iPhone simulator and screenshot
+        run: |
+          set -euo pipefail
+          DEVICE=$(xcrun simctl list devices available -j \
+            | node -e "const d=JSON.parse(require('fs').readFileSync(0)).devices;const all=Object.entries(d).filter(([r])=>r.includes('iOS')).flatMap(([,v])=>v);const p=all.find(x=>/^iPhone \d+( Pro)?$/.test(x.name))||all.find(x=>x.name.startsWith('iPhone'));console.log(p.udid)")
+          echo "Simulator: $DEVICE"
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$DEVICE" com.auramind.app
+          sleep 25
+          mkdir -p ../ios-artifacts
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/launch.png
+          # Still running 25 s after launch = no crash on start.
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q "com.auramind.app"; then
+            echo "App is running."
+          else
+            echo "::error::App is not running after launch (crashed?)"
+            xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "App"' > ../ios-artifacts/app.log || true
+            exit 1
+          fi
+          xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "App"' > ../ios-artifacts/app.log || true
+          echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
+
+      # Same app, built with VITE_IOS_PREVIEW=true: it opens on sample-data
+      # screens and walks through them by itself (IOSVisualPreview's tour),
+      # so every screen can be photographed without an account or taps.
+      - name: Screenshot every iOS screen (sample data)
+        run: |
+          set -euo pipefail
+          echo 'VITE_IOS_PREVIEW=true' >> .env
+          npx vite build --mode mobile
+          npx cap copy ios
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build/xcodebuild-preview.log
+          xcrun simctl terminate "$DEVICE" com.auramind.app || true
+          xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
+          mkdir -p ../ios-artifacts/screens
+          xcrun simctl io "$DEVICE" recordVideo --codec=h264 --force ../ios-artifacts/screens/tour.mp4 &
+          REC=$!
+          xcrun simctl launch "$DEVICE" com.auramind.app
+          # The tour shows a screen every 6 s once the app has loaded;
+          # shooting every 3 s catches each one at least once.
+          for i in $(seq -w 1 22); do
+            sleep 3
+            xcrun simctl io "$DEVICE" screenshot "../ios-artifacts/screens/shot-$i.png" >/dev/null
+          done
+          kill -INT "$REC" || true
+          wait "$REC" || true
+
+      - name: Upload screenshot and logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-simulator
+          path: |
+            ios-artifacts
+            auramind-gemini/build/xcodebuild*.log
+          if-no-files-found: ignore

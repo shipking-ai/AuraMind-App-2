@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { deviceName } from "../../lib/platform";
 
 export default function AndroidWelcomeScreen() {
   const navigate = useNavigate();
@@ -118,7 +119,7 @@ export default function AndroidWelcomeScreen() {
         className="pointer-events-none absolute inset-0 bg-[#0a0a0a]"
       />
 
-      <div className="relative pb-[max(14px,env(safe-area-inset-bottom))] pt-2 text-center text-[11px] tracking-wide text-white/20">AuraMind for Android · Material 3 Expressive</div>
+      <div className="relative pb-[max(14px,env(safe-area-inset-bottom))] pt-2 text-center text-[11px] tracking-wide text-white/20">AuraMind for {deviceName()}</div>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { Capacitor, LocalNotifications, PushNotifications } from '../../lib/nativeShim';
 import { supabase } from '../database/supabase';
+import { isAndroidApp } from '../../lib/platform';
 
 /**
  * Server-sent push (FCM), wired end to end but dormant until Firebase is
@@ -14,6 +15,10 @@ import { supabase } from '../database/supabase';
  *      admin POST /api/push/send, plus daily due-card reminders on the
  *      existing /api/cron/dunning run (vercel.json, 14:00 UTC).
  *
+ * iOS is not wired yet: register() there yields a raw APNs token, which the
+ * FCM sender cannot use, and APNs needs an Apple Developer account. Push is
+ * reported 'unavailable' on iOS until that is set up; local reminders work.
+ *
  * Until then every entry point here resolves to 'unavailable' and the app
  * behaves exactly as it does today on local notifications alone. The settings
  * toggle stays visible so the flow is testable the moment credentials land —
@@ -24,7 +29,7 @@ import { supabase } from '../database/supabase';
 export type PushState = 'unavailable' | 'prompt' | 'denied' | 'granted' | 'registered';
 
 export async function getPushState(): Promise<PushState> {
-  if (!Capacitor.isNativePlatform()) return 'unavailable';
+  if (!Capacitor.isNativePlatform() || !isAndroidApp()) return 'unavailable';
   try {
     const { receive } = await PushNotifications.checkPermissions();
     if (receive === 'granted') return 'granted';
@@ -43,7 +48,7 @@ export async function getPushState(): Promise<PushState> {
  * diagnosing Firebase from the UI.
  */
 export async function enablePush(userId: string): Promise<boolean> {
-  if (!Capacitor.isNativePlatform() || !userId) return false;
+  if (!Capacitor.isNativePlatform() || !isAndroidApp() || !userId) return false;
   try {
     const { receive } = await PushNotifications.requestPermissions();
     if (receive !== 'granted') return false;

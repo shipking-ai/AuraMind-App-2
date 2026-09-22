@@ -55,7 +55,7 @@ import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
 import { initPushListeners } from "./services/notifications/pushService";
-import { Capacitor, SplashScreen } from "./lib/nativeShim";
+import { App as NativeApp, Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
 import { useSparkSync } from "./hooks/useSparkSync";
 import { useShareTarget } from "./hooks/useShareTarget";
@@ -67,6 +67,7 @@ import { CommandPalette } from "./components/auramind/CommandPalette";
 import { CinematicLoader } from "./components/ui/CinematicLoader";
 import { CustomCursor } from "./components/ui/CustomCursor";
 import { registerWorkspaceRefresh } from "./lib/workspaceRefresh";
+import { readClientEnv } from "./lib/env";
 
 function loadWorkspaceData(userId: string) {
   return loadOfflineAwareData(userId, {
@@ -117,7 +118,11 @@ const AdminAppCheckRoute = React.lazy(() => import("./pages/admin/AdminAppCheckP
 
 const AuraLandingPage = React.lazy(() => import("./components/landing/ModernLandingPage"));
 const AndroidWelcomeScreen = React.lazy(() => import("./components/native/AndroidWelcomeScreen"));
+const IOSWelcomeScreen = React.lazy(() => import("./components/ios/IOSWelcomeScreen"));
 const AndroidVisualPreview = React.lazy(() => import("./components/native/AndroidVisualPreview"));
+const IOSVisualPreview = React.lazy(() => import("./components/ios/IOSVisualPreview"));
+// Sample-data iPhone screens for CI screenshots; never set in a release build.
+const IOS_PREVIEW_ENABLED = import.meta.env.DEV || readClientEnv("VITE_IOS_PREVIEW") === "true";
 const AuthPage = React.lazy(() => import("./components/auth/AuthPage"));
 const DeckDetailRoute = React.lazy(() => import("./pages/deck/DeckDetailRoute"));
 const DocsPage = React.lazy(() => import("./pages/legal/DocsPage"));
@@ -785,12 +790,40 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
     return () => clearTimeout(bail);
   }, [authChecked]);
 
+  /**
+   * Checkout opens in the phone's browser (Apple requires that on iOS, and
+   * Capacitor sends every outside link there), so the purchase finishes
+   * outside the app. Re-check the subscription whenever the app comes back to
+   * the foreground so a new subscriber is let in without restarting the app.
+   */
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !user || subscriptionStatus === "active") return;
+    let listener: { remove: () => Promise<void> } | null = null;
+    let disposed = false;
+    void NativeApp.addListener("appStateChange", ({ isActive }) => {
+      // No forced retry loop: that shows a loading screen on every resume.
+      if (isActive) void checkSubscription(user.id, user.email || "");
+    })
+      .then((handle) => {
+        if (disposed) void handle.remove();
+        else listener = handle;
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+      void listener?.remove();
+    };
+    // checkSubscription is recreated each render; the listener only needs the
+    // current user and whether they still lack access.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, subscriptionStatus]);
+
   const isNativeShell = Capacitor.isNativePlatform();
   // /__e2e/* is a DEV-only harness that renders the Android shell in
   // isolation for the visual-contract tests. The boot screen is not part of
   // that contract, and letting it paint over the harness made every surface
   // snapshot fail on a wordmark that has nothing to do with the shell.
-  const isVisualHarness = location.pathname.startsWith("/__e2e");
+  const isVisualHarness = location.pathname.startsWith("/__e2e") || location.pathname.startsWith("/__preview");
 
   return (
     <>
@@ -843,14 +876,20 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                 }
               />
               <Route
+                path="/__preview/ios/*"
+                element={IOS_PREVIEW_ENABLED ? <IOSVisualPreview /> : <Navigate to="/" replace />}
+              />
+              <Route
                 path="/"
                 element={
-                  Capacitor.isNativePlatform() ? (
+                  readClientEnv("VITE_IOS_PREVIEW") === "true" && Capacitor.getPlatform() === "ios" ? (
+                    <Navigate to="/__preview/ios?tour=1" replace />
+                  ) : Capacitor.isNativePlatform() ? (
                     user ? (
                       <Navigate to="/dashboard" replace />
                     ) : (
                       <PageTransition variant="lite">
-                        <AndroidWelcomeScreen />
+                        {Capacitor.getPlatform() === "ios" ? <IOSWelcomeScreen /> : <AndroidWelcomeScreen />}
                       </PageTransition>
                     )
                   ) : (

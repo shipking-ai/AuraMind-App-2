@@ -53,7 +53,10 @@ import { buildConceptWeaknesses, cardLapses, WEAK_LAPSE_THRESHOLD } from "../../
 import { buildPriorSessionMemory } from "../../lib/chatMemory";
 import PageShell from "../dashboard/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
-import { Capacitor } from "../../lib/nativeShim";
+import { isAndroidApp } from "../../lib/platform";
+import { useIOSDesign } from "../ios/iosDesign";
+import IOSChatView, { type AuraChatMode } from "../ios/IOSChatView";
+import { toast } from "sonner";
 import { useAppPreference } from "../../lib/appPreferences";
 
 const MODE_LABELS: Record<ChatMode, string> = {
@@ -163,7 +166,8 @@ function getStarterPrompts(context: ChatContext) {
 
 export default function AIChatPage() {
   const navigate = useNavigate();
-  const isAndroidApp = Capacitor.getPlatform() === "android";
+  const isMobileApp = isAndroidApp();
+  const iosDesign = useIOSDesign();
   const workspace = useDashboardWorkspace();
   const userId = useCurrentUserId();
   // Real study data (streak, 7-day retention, last-session accuracy) fed into
@@ -176,8 +180,7 @@ export default function AIChatPage() {
   const [saveChatHistory] = useAppPreference("auramind_saveChatHistory", true);
   const [personality, setPersonalityState] = useState<ProfAuraPersonality>(getStoredPersonality);
   const userMeta = workspace?.user as
-    | { streakCount?: number; lastStudyAt?: number; accuracy7d?: number }
-    | undefined;
+    { streakCount?: number; lastStudyAt?: number; accuracy7d?: number } | undefined;
   // Cross-session memory — computed once per page load (reads localStorage).
   const priorMemory = useMemo(
     () => (saveChatHistory ? buildPriorSessionMemory() || "" : ""),
@@ -480,6 +483,85 @@ export default function AIChatPage() {
   const starterPrompts = getStarterPrompts(context);
   const hasMessages = chat.messages.length > 0;
 
+  // ── iPhone-only helpers (Talk mode, making cards from the notebook) ──
+  const liveTranscript = [sr.transcript, sr.interimTranscript].filter(Boolean).join(" ").trim();
+  const liveTranscriptRef = useRef("");
+  liveTranscriptRef.current = liveTranscript;
+  const holdTimerRef = useRef<number | null>(null);
+  const handleHoldStart = useCallback(() => {
+    if (chat.isStreaming) return;
+    if (holdTimerRef.current) window.clearTimeout(holdTimerRef.current);
+    sr.resetTranscript();
+    sr.startListening();
+  }, [chat.isStreaming, sr]);
+  const handleHoldEnd = useCallback(() => {
+    sr.stopListening();
+    // The recogniser delivers its final words just after it stops.
+    holdTimerRef.current = window.setTimeout(() => {
+      const spoken = liveTranscriptRef.current.trim();
+      sr.resetTranscript();
+      if (spoken) chat.sendMessage(spoken);
+    }, 900);
+  }, [chat, sr]);
+  const handleModeChange = useCallback(
+    (mode: AuraChatMode) => {
+      // Talk mode is a spoken conversation: Aura answers out loud.
+      if (mode === "talk" && !tts.isEnabled) tts.setEnabled(true);
+    },
+    [tts],
+  );
+  const handleMakeCard = useCallback(
+    async (front: string, back: string) => {
+      if (!workspace || !selectedDeck) {
+        toast.error("Pick a deck first");
+        return false;
+      }
+      try {
+        const added = await workspace.addCardsToDeck(selectedDeck.id, [{ front, back }]);
+        if (added) {
+          toast.success(`Added to ${selectedDeck.title}`);
+          return true;
+        }
+      } catch {
+        /* reported below */
+      }
+      toast.error("Couldn't save that card");
+      return false;
+    },
+    [workspace, selectedDeck],
+  );
+
+  if (iosDesign) {
+    return (
+      <IOSChatView
+        messages={chat.messages}
+        isStreaming={chat.isStreaming}
+        input={input}
+        setInput={setInput}
+        onSend={handleSend}
+        onSendPrompt={chat.sendMessage}
+        onAbort={chat.abort}
+        onNewChat={chat.clearMessages}
+        onSaveCard={chat.saveCard}
+        onAnswerQuiz={chat.answerQuiz}
+        decks={decks}
+        selectedDeckId={selectedDeck?.id ?? ""}
+        onSelectDeck={setSelectedDeckId}
+        starters={starterPrompts}
+        listening={mic.isActive || sr.isListening}
+        liveTranscript={liveTranscript}
+        onToggleMic={toggleMic}
+        onHoldStart={handleHoldStart}
+        onHoldEnd={handleHoldEnd}
+        onMakeCard={handleMakeCard}
+        speaking={tts.isEnabled}
+        onToggleSpeaking={tts.toggle}
+        voicePlaying={tts.isSpeaking}
+        onModeChange={handleModeChange}
+      />
+    );
+  }
+
   return (
     <PageShell>
       {/* First-visit tour overlay. localStorage flag is set ONLY on
@@ -496,7 +578,7 @@ export default function AIChatPage() {
           without prop-drilling. Single-shot for the duration of this page. */}
       <ReplayEventBridge onOpen={() => setReplayOpen(true)} />
       <div
-        className={`flex flex-col h-full min-h-0 bg-transparent relative overflow-hidden ${isAndroidApp ? "android-chat-page" : ""}`}
+        className={`flex flex-col h-full min-h-0 bg-transparent relative overflow-hidden ${isMobileApp ? "android-chat-page" : ""}`}
       >
         {/* Ambient background glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -567,10 +649,7 @@ export default function AIChatPage() {
               </button>
               {showOverflow && (
                 <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowOverflow(false)}
-                  />
+                  <div className="fixed inset-0 z-40" onClick={() => setShowOverflow(false)} />
                   <div className="absolute right-0 top-10 z-50 w-72 p-3 rounded-2xl bg-[#111118] border border-[#2A2A3A] shadow-2xl shadow-black/50">
                     {/* Voice OUT */}
                     <button
@@ -838,8 +917,7 @@ export default function AIChatPage() {
                     <strong className="text-[#F0EFFE]">
                       {cards.length} {cards.length === 1 ? "card" : "cards"}
                     </strong>
-                    , and your FSRS
-                    schedule.
+                    , and your FSRS schedule.
                   </p>
                 </motion.div>
 

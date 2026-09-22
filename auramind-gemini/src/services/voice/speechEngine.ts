@@ -20,6 +20,7 @@
 
 import { hasNativeSpeech } from '../../lib/auraSpeech';
 import { createNativeRecognition } from './nativeRecognition';
+import { isIOSApp, isNativeApp } from '../../lib/platform';
 
 // ── Capabilities ────────────────────────────────────────────────────────
 
@@ -47,14 +48,16 @@ export function getSpeechCapabilities(): SpeechCapabilities {
     // The Android app's WebView has no speechSynthesis; it speaks through
     // the native AuraSpeech plugin instead (see speechOutput.ts).
     tts: 'speechSynthesis' in window || hasNativeSpeech(),
-    // Likewise no SpeechRecognition; AuraListen wraps Android's recogniser.
-    stt: getRecognitionCtor() !== null || hasNativeSpeech(),
+    // Listening in either app goes through AuraListen: Android's WebView has
+    // no SpeechRecognition, and iOS's WKWebView exposes one that never
+    // delivers results (WebKit bug 239816).
+    stt: isNativeApp() || getRecognitionCtor() !== null,
   };
 }
 
-/** True when listening goes through Android's native recogniser. */
+/** True when listening goes through the app's native recogniser. */
 export function usesNativeRecognition(): boolean {
-  return getRecognitionCtor() === null && hasNativeSpeech();
+  return isNativeApp();
 }
 
 // ── Voice loading ───────────────────────────────────────────────────────
@@ -205,7 +208,9 @@ export function describeSpeechError(raw: string): SpeechError {
     case 'service-not-allowed':
       return {
         code: raw as SpeechErrorCode,
-        message: hasNativeSpeech()
+        message: isIOSApp()
+          ? 'Microphone or speech recognition is off for AuraMind. Turn both on in Settings › AuraMind, then try again.'
+          : hasNativeSpeech()
           ? 'Microphone access is off for AuraMind. Turn it on in Settings › Apps › AuraMind › Permissions, then try again.'
           : 'Microphone access is blocked. Allow the mic for this site in your browser’s address-bar icon, then try again.',
         recoverable: false,
@@ -214,8 +219,9 @@ export function describeSpeechError(raw: string): SpeechError {
     case 'unavailable':
       return {
         code: 'unavailable',
-        message:
-          'This phone has no speech recognition service. Install or enable the Google app, then try again.',
+        message: isIOSApp()
+          ? 'Speech recognition isn’t available right now. Check that Siri & Dictation aren’t restricted in Screen Time, then try again.'
+          : 'This phone has no speech recognition service. Install or enable the Google app, then try again.',
         recoverable: false,
         needsPermission: false,
       };
@@ -282,8 +288,9 @@ export function createRecognition(opts: {
   continuous?: boolean;
   interimResults?: boolean;
 }): SpeechRecognitionLike | null {
+  if (isNativeApp()) return createNativeRecognition(opts);
   const Ctor = getRecognitionCtor();
-  if (!Ctor) return hasNativeSpeech() ? createNativeRecognition(opts) : null;
+  if (!Ctor) return null;
   const rec = new Ctor();
   rec.lang = opts.lang ?? 'en-US';
   rec.continuous = opts.continuous ?? false;

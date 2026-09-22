@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useContext, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Zap, Lightbulb, Mic, X, Star, ChevronDown, Wind, Timer as TimerIcon, RotateCcw } from '@/components/icons';
@@ -19,6 +19,11 @@ import { sessionService } from '../../services/database/modules/sessionService';
 import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
 import { calculateSRS, formatInterval, previewIntervals, retentionFromSetting } from '../../services/study/srs';
 import { LocalAIAssist } from '../../components/study/LocalAIAssist';
+import {
+  startSessionLiveUpdate,
+  updateSessionLiveUpdate,
+  endSessionLiveUpdate,
+} from '../../lib/sessionLiveUpdate';
 import { isOnline, queueCardReview, getCachedDecks, getCachedCards } from '../../services/offline/offlineStudyService';
 import { applyPersonalizedDifficultyInit } from '../../services/study/fsrs';
 import { Rating } from '../../types';
@@ -39,6 +44,8 @@ import { assignmentService } from '../../services/classroom/assignmentService';
 import { useTimer, MotionPath } from '../../lib/effects';
 import { VoiceStudyControls } from '../../components/study/VoiceStudyControls';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
+import { StudyPreviewContext } from './studyPreview';
+import { IOSStudyComplete, IOSStudySession } from '../../components/ios/IOSStudySession';
 import { speak as speakAloud, stopSpeaking } from '../../services/voice/speechOutput';
 
 // The interval under each button is computed per card (previewIntervals).
@@ -117,6 +124,7 @@ export default function StudyModePage() {
   const [completed, setCompleted] = useState(false);
   const userId = useCurrentUserId();
   const workspace = useDashboardWorkspace();
+  const preview = useContext(StudyPreviewContext);
   const [dailyGoal] = useAppPreference('auramind_dailyGoal', '20');
   const [newCards] = useAppPreference('auramind_newCards', '10');
   const [maxReviews] = useAppPreference('auramind_maxReviews', '100');
@@ -150,30 +158,31 @@ export default function StudyModePage() {
     // Launcher ranking: decks you open most float up in long-press shortcuts.
     if (isAndroidApp && deckId) void reportDeckUsed(deckId);
   }, [isAndroidApp, deckId]);
-  // Where in the queue the forgotten cards sat; drawn as dots on the Live
-  // Update bar so the notification shows how much is coming back.
+  // Where in the queue the forgotten cards sat: the Android chip draws a dot
+  // at each one, the iPhone's Live Activity draws the count.
   const [againAt, setAgainAt] = useState<number[]>([]);
-  // Android 16 Live Update: while the session is open the status-bar chip
-  // and lock screen show how far along it is, so leaving the app to look
-  // something up doesn't lose the thread. No-op on every other platform.
+
+  // The open session, on whatever surface the platform gives it: Android's
+  // status-bar chip, the iPhone Lock Screen and Dynamic Island. Leaving the
+  // app to look something up shouldn't lose the thread. Inert on the web.
   useEffect(() => {
-    if (!isAndroidApp || !deck || studyCards.length === 0 || completed) return;
+    if (!deck || studyCards.length === 0 || completed) return;
     const session = {
       deckTitle: deck.title,
       total: studyCards.length,
       done: sessionStats.total,
       againAt,
-      deepLink: `auramind://app/dashboard/study/${deck.id}`,
+      deckId: deck.id,
     };
-    if (sessionStats.total === 0) void startLiveUpdate(session);
-    else void updateLiveUpdate(session);
-  }, [isAndroidApp, deck, studyCards.length, sessionStats.total, againAt, completed]);
+    if (sessionStats.total === 0) void startSessionLiveUpdate(session);
+    else void updateSessionLiveUpdate(session);
+  }, [deck, studyCards.length, sessionStats.total, againAt, completed]);
 
-  // The Live Update must never outlive the session it mirrors.
+  // It must never outlive the session it mirrors.
   useEffect(() => {
-    if (completed) void endLiveUpdate();
+    if (completed) void endSessionLiveUpdate();
   }, [completed]);
-  useEffect(() => () => { void endLiveUpdate(); }, []);
+  useEffect(() => () => { void endSessionLiveUpdate(); }, []);
 
   const [elapsedMs, setElapsedMs] = useState(0);
   const _studyTimer = useTimer({ duration: Infinity, autoplay: true });
@@ -204,6 +213,12 @@ export default function StudyModePage() {
 
   useEffect(() => {
     const init = async () => {
+      if (preview) {
+        setDeck(preview.deck);
+        setStudyCards(preview.cards);
+        setLoading(false);
+        return;
+      }
       if (userId === undefined) return; // boot still loading
       if (userId === null) { navigate('/auth'); return; }
       try {
@@ -279,7 +294,7 @@ export default function StudyModePage() {
       }
     };
     if (deckId) init();
-  }, [dailyGoal, deckId, maxReviews, navigate, newCards, reviewOrder, userId]);
+  }, [dailyGoal, deckId, maxReviews, navigate, newCards, preview, reviewOrder, userId]);
 
   const spawnParticles = useCallback((_x: number, _y: number) => {
     const colors = ['#7C3AED', '#8B5CF6', '#3B82F6', '#A78BFA'];
@@ -605,7 +620,25 @@ export default function StudyModePage() {
     typeof window !== 'undefined' ? localStorage.getItem('auramind_user_xp') ?? 0 : 0,
   );
 
+  // iPhone gets its own session screen (components/ios/IOSStudySession);
+  // the grading, scheduling and saving above are shared with every platform.
+  const iosDesign = Capacitor.getPlatform() === 'ios' || preview !== null;
+
   if (loading) return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center"><div className="text-[#7A7A96] text-sm">Loading...</div></div>;
+
+  if (completed && iosDesign) {
+    return (
+      <IOSStudyComplete
+        deckTitle={deck?.title || ''}
+        deckId={deck?.id || ''}
+        reviewed={sessionStats.total}
+        correct={sessionStats.correct}
+        elapsedMs={elapsedMs}
+        onRestart={handleRestart}
+        onDone={() => navigate('/dashboard')}
+      />
+    );
+  }
 
   if (completed) return (
     <>
@@ -642,6 +675,38 @@ export default function StudyModePage() {
       <div className="flex items-center justify-center min-h-screen bg-[#0A0A0F]">
         <div className="text-[#7A7A96] text-sm">No cards to study</div>
       </div>
+    );
+  }
+
+  if (iosDesign && currentCard) {
+    return (
+      <IOSStudySession
+        deckTitle={deck?.title || 'Study'}
+        deckId={deck?.id || ''}
+        card={currentCard}
+        index={index}
+        total={studyCards.length}
+        flipped={flipped}
+        onFlip={toggleFlip}
+        onRate={(r) => void handleRate(r)}
+        onExit={() => navigate('/dashboard')}
+        intervals={gradeIntervals ?? {}}
+        voiceMode={voiceMode}
+        onToggleVoice={() => setVoiceMode((v) => !v)}
+        voicePanel={
+          voiceMode ? (
+            <VoiceStudyControls
+              question={currentCard.front || currentCard.question || ''}
+              answer={currentCard.back || currentCard.answer || ''}
+              onAnswerEvaluated={() => setFlipped(true)}
+              onRequestNextCard={() => {
+                setFlipped(false);
+                if (index < studyCards.length - 1) setIndex((i) => i + 1);
+              }}
+            />
+          ) : null
+        }
+      />
     );
   }
 

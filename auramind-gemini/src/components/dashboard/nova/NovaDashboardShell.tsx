@@ -25,7 +25,8 @@ import { useAndroidScrollChrome } from '../../native/useAndroidScrollChrome';
 
 const ANDROID_REFRESHABLE_PATHS = new Set(['/dashboard', '/dashboard/decks', '/dashboard/study']);
 import { MobileWebBottomNav } from './MobileWebBottomNav';
-import { Capacitor } from '../../../lib/nativeShim';
+import { appPlatform } from '../../../lib/platform';
+import { IOSShell } from '../../ios/IOSShell';
 
 // ─── Navigation config ──────────────────────────────────────────────────────
 
@@ -704,10 +705,13 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
   }, [location.pathname, scrollMotion]);
   const workspace = useDashboardWorkspace();
   const user = workspace?.user;
-  const isAndroidApp = Capacitor.getPlatform() === 'android';
-  const isAndroidMobile = isAndroidApp && !isOnAdminRoute && !immersive;
+  // Each app gets its own shell: Material on Android, iOS design on iPhone.
+  const platform = appPlatform();
+  const isMobileApp = platform !== 'web';
+  const isAndroidMobile = platform === 'android' && !isOnAdminRoute && !immersive;
+  const isIOSMobile = platform === 'ios' && !isOnAdminRoute && !immersive;
   const showAndroidBottomNav = isAndroidMobile;
-  const showMobileWebNav = !isAndroidApp && !isOnAdminRoute && !immersive;
+  const showMobileWebNav = !isMobileApp && !isOnAdminRoute && !immersive;
   const { scrolled, navHidden } = useAndroidScrollChrome(
     'nova-main-content',
     isAndroidMobile && !bleed,
@@ -754,6 +758,22 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
       </div>
     </>
   );
+
+  if (isIOSMobile) {
+    return (
+      <IOSShell
+        bleed={bleed}
+        overlays={
+          <>
+            <MemorySpark />
+            <FirstRunGate />
+          </>
+        }
+      >
+        <PageTransition pathname={location.pathname}>{children}</PageTransition>
+      </IOSShell>
+    );
+  }
 
   return (
     <div

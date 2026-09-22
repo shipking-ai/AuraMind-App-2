@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * Capacitor configuration for the AuraMind Android app.
+ * Capacitor configuration for the AuraMind Android and iOS apps.
  *
  * - appId is fixed forever: `com.auramind.app`. Changing it after the first
  *   Play Store upload makes the store treat the app as a brand-new package.
@@ -17,6 +17,12 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     cleartext: false,
+  },
+  ios: {
+    // The web layer draws under the status bar and home indicator and pads
+    // with env(safe-area-inset-*), same as edge-to-edge Android.
+    contentInset: 'never',
+    backgroundColor: '#0a0a0a',
   },
   plugins: {
     SplashScreen: {

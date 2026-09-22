@@ -11,6 +11,9 @@
  */
 const ALLOWED_PREFIXES = ["/dashboard", "/generator", "/study", "/decks", "/chat", "/settings"];
 
+/** Where a native surface asked the app to go before it had finished booting. */
+export const PENDING_ROUTE_KEY = "auramind_pending_route";
+
 export function parseDeepLink(url: string): string | null {
   let parsed: URL;
   try {
@@ -29,4 +32,26 @@ export function parseDeepLink(url: string): string | null {
   const normalized =
     path === "/dashboard" || path.startsWith("/dashboard/") ? path : `/dashboard${path}`;
   return normalized + parsed.search + parsed.hash;
+}
+
+/**
+ * A route left by a native surface that opened the app itself rather than
+ * through a URL — today the iOS App Intents ("quiz me", the Action button,
+ * a Shortcuts automation), which write it before the web layer exists.
+ *
+ * Read once and cleared, so a cold start honours it and nothing replays it
+ * later. Same allowlist as a deep link: the value comes from outside the web
+ * app, so it is a claim about where to go, not permission to go anywhere.
+ */
+export async function consumePendingRoute(): Promise<string | null> {
+  try {
+    const { Capacitor, Preferences } = await import("./nativeShim");
+    if (!Capacitor.isNativePlatform()) return null;
+    const { value } = await Preferences.get({ key: PENDING_ROUTE_KEY });
+    if (value) await Preferences.remove({ key: PENDING_ROUTE_KEY });
+    if (!value) return null;
+    return parseDeepLink(`auramind://app${value.startsWith("/") ? value : `/${value}`}`);
+  } catch {
+    return null;
+  }
 }

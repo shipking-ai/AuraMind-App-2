@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { App, Capacitor, StatusBar, Style } from "../../lib/nativeShim";
-import { parseDeepLink } from "../../lib/deepLinks";
+import { consumePendingRoute, parseDeepLink } from "../../lib/deepLinks";
 import { initPlayEngagement } from "../../lib/playEngagement";
 import { initDynamicColor } from "../../lib/dynamicColor";
 import { consumeBackPress } from "../../lib/backStack";
@@ -52,6 +52,12 @@ export function NativeRuntime() {
       const path = parseDeepLink(url);
       if (path && path !== locationRef.current) navigateRef.current(path);
     };
+
+    // A Siri phrase or Shortcut starts the app without a URL, leaving the
+    // route in Preferences for this first read (see consumePendingRoute).
+    void consumePendingRoute().then((path) => {
+      if (!disposed && path && path !== locationRef.current) navigateRef.current(path);
+    });
 
     void App.getLaunchUrl()
       .then((result) => {
