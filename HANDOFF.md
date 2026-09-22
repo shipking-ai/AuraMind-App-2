@@ -53,10 +53,9 @@ value:
   endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
   nothing delivers until the Firebase console steps at the end of that
   section are done (google-services.json + FCM_* env vars).
-- **Aurora motion — shipped** (2026-09-21, below). What remains in this
-  theme: the landing-page hero blobs and the Android aura are still
-  time-animated only; the scroll-reactive depth stack covers the dashboard
-  shell.
+- **Aurora motion — shipped** (2026-09-21, below), dashboard shell and
+  landing hero both. What remains in this theme: the Android aura is still
+  time-animated only.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
@@ -662,3 +661,21 @@ E2E traps worth keeping: the seeder writes its storage state **to the
 `--with-spark-deck` is the flag that grants `subscription_status: 'active'`
 — a fresh account without entitlement bounces to /subscribe before any
 shell renders.
+
+### Landing hero, same pass
+
+`e2e/landing-aurora.spec.ts` also covers the landing page (public — no
+seeding): the four hero mesh blobs sit in `HeroBlobParallax` wrappers
+( ModernLandingPage.tsx, container tagged `data-hero-mesh`) — depth 0.18 /
+0.10 / 0.04, the last at −0.05 for a near-layer, with the third also
+hue-drifting. Two more traps:
+
+- **Playwright's `reducedMotion` emulation does not reach
+  `window.matchMedia` here** (probed: reduce=false under 'reduce'). The
+  reduced-motion test stubs matchMedia in `addInitScript` instead, and
+  additionally asserts the wrappers are gone entirely (`transform: none`).
+- **`test.use()` must sit at describe level** — inside a `test()` body it
+  throws "did not expect test.use() to be called here". Sibling describes
+  with different `use()` options is the pattern.
+- The hero's first `<section>` is a hidden react-aria live region; target
+  the hero by class or a data attribute, never `section >> nth=0`.
