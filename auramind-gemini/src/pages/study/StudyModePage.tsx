@@ -8,6 +8,7 @@ import { useHaptics } from '../../hooks/useNative';
 import { ImpactStyle } from '../../lib/nativeShim';
 import { Capacitor } from '../../lib/nativeShim';
 import { reportDeckUsed } from '../../lib/auraDevice';
+import { startLiveUpdate, updateLiveUpdate, endLiveUpdate } from '../../lib/liveUpdate';
 import { PersonalizationIndicator } from '../../components/study/PersonalizationIndicator';
 import { DifficultyChip } from '../../components/study/DifficultyChip';
 import { PacingOverride, type PacingMode } from '../../components/study/PacingOverride';
@@ -149,6 +150,31 @@ export default function StudyModePage() {
     // Launcher ranking: decks you open most float up in long-press shortcuts.
     if (isAndroidApp && deckId) void reportDeckUsed(deckId);
   }, [isAndroidApp, deckId]);
+  // Where in the queue the forgotten cards sat; drawn as dots on the Live
+  // Update bar so the notification shows how much is coming back.
+  const [againAt, setAgainAt] = useState<number[]>([]);
+  // Android 16 Live Update: while the session is open the status-bar chip
+  // and lock screen show how far along it is, so leaving the app to look
+  // something up doesn't lose the thread. No-op on every other platform.
+  useEffect(() => {
+    if (!isAndroidApp || !deck || studyCards.length === 0 || completed) return;
+    const session = {
+      deckTitle: deck.title,
+      total: studyCards.length,
+      done: sessionStats.total,
+      againAt,
+      deepLink: `auramind://app/dashboard/study/${deck.id}`,
+    };
+    if (sessionStats.total === 0) void startLiveUpdate(session);
+    else void updateLiveUpdate(session);
+  }, [isAndroidApp, deck, studyCards.length, sessionStats.total, againAt, completed]);
+
+  // The Live Update must never outlive the session it mirrors.
+  useEffect(() => {
+    if (completed) void endLiveUpdate();
+  }, [completed]);
+  useEffect(() => () => { void endLiveUpdate(); }, []);
+
   const [elapsedMs, setElapsedMs] = useState(0);
   const _studyTimer = useTimer({ duration: Infinity, autoplay: true });
   const { impact, success, warning } = useHaptics();
@@ -410,6 +436,7 @@ export default function StudyModePage() {
       correct: prev.correct + (rating >= Rating.GOOD ? 1 : 0),
       total: prev.total + 1,
     }));
+    if (rating === Rating.AGAIN) setAgainAt(at => [...at, index + 1]);
     if (index >= studyCards.length - 1) {
       // Calculate post-this-rating totals (closure captures sessionStats as
       // of the start of this render, so we add 1 for this rating locally).

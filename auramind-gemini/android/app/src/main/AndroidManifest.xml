@@ -163,6 +163,11 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Review reminders on Android 13+ (local notifications) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Android 16 Live Updates: promotes the ongoing study-session
+         notification to the status bar chip and the lock screen. Normal
+         permission; the user can still turn Live Updates off per app. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- Widget redraw and spoken-reminder re-arm after reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>
