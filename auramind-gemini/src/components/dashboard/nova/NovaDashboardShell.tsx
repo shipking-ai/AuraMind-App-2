@@ -14,6 +14,7 @@ import { AnimatedBrandMark, PulsingDot } from './icons';
 import { NotificationPanel, useUnreadCount } from './NotificationPanel';
 // Memory sparks: sporadic FSRS-driven card resurfacing (Surface 1 — in-app).
 import { MemorySpark } from '../../memory/MemorySpark';
+import { WindowsWidgetSync } from '../WindowsWidgetSync';
 import { PageTransition, Shimmer, useRM } from './motion';
 import OnboardingTutorial from '../../shared/OnboardingTutorial';
 import AndroidBottomNav from '../../native/AndroidBottomNav';
@@ -828,6 +829,7 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
       {isAndroidMobile && <AndroidBottomNav />}
       {showMobileWebNav && <MobileWebBottomNav />}
       <MemorySpark />
+      <WindowsWidgetSync />
       <FirstRunGate />
     </div>
   );
