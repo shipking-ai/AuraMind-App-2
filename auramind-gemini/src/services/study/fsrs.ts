@@ -1,48 +1,66 @@
 /**
- * FSRS (Free Spaced Repetition Scheduler) v5 Algorithm Implementation
- * 
- * FSRS is a modern spaced repetition algorithm that outperforms SM-2 by up to 30%.
- * It uses a forgetting curve model with optimized parameters based on user performance.
- * 
+ * FSRS (Free Spaced Repetition Scheduler) — scheduling for every review.
+ *
+ * The math is the official implementation, `ts-fsrs` (FSRS-6), used in
+ * long-term mode: intervals are whole days, matching the `cards.interval`
+ * INTEGER column, and "Again" brings a card back the next day.
+ *
+ * Why not our own formulas any more: the previous hand-written version
+ * mis-mapped grades and used a weight as the forgetting-curve factor, which
+ * made intervals ~140x too long: "Hard" could schedule a card 100 years out
+ * and "Good" several years. Tests pin the corrected behaviour.
+ *
  * Key concepts:
- * - Stability (S): How long a memory can be retained (in days)
- * - Difficulty (D): How difficult a card is to remember (0-10 scale)
- * - Retrievability (R): Probability of recalling a card at a given time (0-1)
- * - Target retention: Optimal recall probability (default 0.9)
- * 
- * Reference: https://github.com/open-spaced-repetition/fsrs4anki
+ * - Stability (S): days until recall probability falls to 90%
+ * - Difficulty (D): 1-10, how hard the card is for this learner
+ * - Retrievability (R): probability of recall right now
+ * - Target retention: the recall probability reviews are scheduled at
+ *
+ * Reference: https://github.com/open-spaced-repetition/ts-fsrs
  */
 
+import {
+  State,
+  Rating as FsrsRating,
+  createEmptyCard,
+  default_w,
+  forgetting_curve,
+  fsrs,
+  generatorParameters,
+  type Card as FsrsCard,
+  type Grade,
+} from 'ts-fsrs';
 import { Card, Rating } from '../../types';
 
-// FSRS default weights (optimized for general use)
-// These are the default parameters from FSRS v5
+/**
+ * The FSRS-6 parameters the scheduler uses (the published defaults).
+ */
+export const FSRS_PARAMETERS: readonly number[] = default_w;
+
+/**
+ * The 20-number vector the personal-profile tuner (fsrsAdaptation) was built
+ * on. It belongs to the old, incorrect model, so the scheduler no longer
+ * applies it: scheduleFSRS only accepts a full FSRS-6 parameter vector.
+ * Kept under its historical name so the profile/catalog code and its stored
+ * rows keep working until the tuner is rebuilt on the FSRS-6 optimizer.
+ */
 export const DEFAULT_WEIGHTS: number[] = [
   0.4072, 1.1829, 3.1262, 15.4722, 7.2102, 0.5316, 1.0659,
   0.0234, 1.616, 0.1544, 0.6621, 1.0, 0.8, 0.2, 0.05,
   0.1, 0.7, 0.2, 2.5, 0.3
 ];
 
-// FSRS configuration
-interface FSRSConfig {
-  requestRetention: number;  // Target retention rate (default 0.9)
-  maximumInterval: number;   // Maximum interval in days (default 36500)
-  weights: number[];         // FSRS model weights
-}
-
-const DEFAULT_CONFIG: FSRSConfig = {
-  requestRetention: 0.9,
-  maximumInterval: 36500,
-  weights: DEFAULT_WEIGHTS,
-};
+const DEFAULT_RETENTION = 0.9;
+const MAXIMUM_INTERVAL = 36500;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // FSRS card state
 export interface FSRSCardState {
   stability: number;    // Memory stability in days
-  difficulty: number;   // Card difficulty (0-10)
+  difficulty: number;   // Card difficulty (1-10 scale)
   elapsedDays: number;  // Days since last review
   scheduledDays: number;// Days until next review
-  repetitions: number;  // Number of reviews
+  repetitions: number;  // Consecutive successful reviews (resets on Again)
   lapses: number;       // Number of times forgotten
   lastReview: number;   // Timestamp of last review
 }
@@ -51,45 +69,41 @@ export interface FSRSCardState {
 export interface FSRSScheduleResult {
   stability: number;
   difficulty: number;
-  interval: number;      // Days until next review
-  retrievability: number;// Current recall probability
+  interval: number;      // Days until next review (whole days, >= 1)
+  retrievability: number;// Recall probability at the moment of this review
   repetitions: number;
   lapses: number;
 }
 
-// Rating to FSRS grade mapping
-// FSRS uses grades 0-4: Again=0, Hard=1, Good=2, Easy=3, Manual=4
-const RATING_TO_GRADE: Record<number, number> = {
-  0: 0, // AGAIN -> grade 0
-  3: 1, // HARD -> grade 1
-  4: 2, // GOOD -> grade 2
-  5: 3, // EASY -> grade 3
+/** App rating (0/3/4/5) to FSRS grade (Again/Hard/Good/Easy). */
+const RATING_TO_GRADE: Record<number, Grade> = {
+  [Rating.AGAIN]: FsrsRating.Again,
+  [Rating.HARD]: FsrsRating.Hard,
+  [Rating.GOOD]: FsrsRating.Good,
+  [Rating.EASY]: FsrsRating.Easy,
 };
 
 /**
- * Calculate the forgetting curve: R = (1 + factor * elapsed / stability) ^ -1
+ * Recall probability after `elapsedDays` for a memory of `stability` days,
+ * on the FSRS-6 forgetting curve (R = 0.9 when elapsed === stability).
  *
  * Exported so downstream simulators (e.g. profileSimulator) can reuse the
- * exact same shape without copying the formula.
+ * exact same shape without copying the formula. `_factor` is accepted for
+ * compatibility and ignored.
  */
-export function forgettingCurve(elapsedDays: number, stability: number, factor: number = 1.0): number {
+export function forgettingCurve(elapsedDays: number, stability: number, _factor?: number): number {
   if (stability <= 0) return 0;
-  return Math.pow(1 + (factor * elapsedDays) / stability, -1);
+  return forgetting_curve(FSRS_PARAMETERS, Math.max(0, elapsedDays), stability);
 }
 
 /**
- * Initialize a new FSRS card state
+ * Inverse of forgettingCurve: how many days after a review recall has fallen
+ * to `retrievability` for a memory of `stability` days.
  */
-function _initFSRSState(): FSRSCardState {
-  return {
-    stability: DEFAULT_WEIGHTS[0],
-    difficulty: DEFAULT_WEIGHTS[1],
-    elapsedDays: 0,
-    scheduledDays: 0,
-    repetitions: 0,
-    lapses: 0,
-    lastReview: 0,
-  };
+export function elapsedForRetrievability(retrievability: number, stability: number): number {
+  const decay = -FSRS_PARAMETERS[20];
+  const factor = Math.pow(0.9, 1 / decay) - 1;
+  return (stability / factor) * (Math.pow(retrievability, 1 / decay) - 1);
 }
 
 /**
@@ -99,115 +113,54 @@ function _initFSRSState(): FSRSCardState {
 export function getFSRSState(card: Card): FSRSCardState {
   // Check if card has FSRS-specific fields
   const fsrsState = (card as any).fsrsState as FSRSCardState | undefined;
-  
+
   if (fsrsState && fsrsState.stability > 0) {
     return fsrsState;
   }
-  
-  // Convert from SM-2 state to FSRS state
-  // This provides backward compatibility for existing cards
+
+  // Convert from SM-2 state to FSRS state. An SM-2 interval is roughly the
+  // time to ~90% recall, which is what FSRS stability means.
   const easeFactor = card.easeFactor || 2.5;
   const interval = card.interval || 0;
   const repetition = card.repetition || 0;
-  
-  // Estimate stability from interval (rough conversion)
-  // For SM-2: interval = stability * easeFactor for mature cards
-  const estimatedStability = repetition > 0 ? interval / Math.max(easeFactor, 1.3) : DEFAULT_WEIGHTS[0];
-  
-  // Estimate difficulty from ease factor
+  const estimatedStability = repetition > 0 ? Math.max(0.5, interval) : 0;
+
   // SM-2 ease factor 2.5 maps to FSRS difficulty ~5 (middle)
-  const estimatedDifficulty = Math.max(1, Math.min(10, 10 - (easeFactor - 1.3) * 2));
-  
+  const estimatedDifficulty = Math.max(1, Math.min(10, 10 - (easeFactor - 1.3) * 4));
+
   const elapsedDays = card.lastReviewed
-    ? Math.max(0, (Date.now() - card.lastReviewed) / (24 * 60 * 60 * 1000))
+    ? Math.max(0, (Date.now() - card.lastReviewed) / DAY_MS)
     : 0;
-  
+
   return {
-    stability: Math.max(0.1, estimatedStability),
+    stability: estimatedStability,
     difficulty: estimatedDifficulty,
     elapsedDays,
     scheduledDays: interval,
     repetitions: repetition,
-    lapses: 0,
+    lapses: card.lapses ?? 0,
     lastReview: card.lastReviewed || 0,
   };
 }
 
-/**
- * Calculate next interval based on FSRS algorithm
- */
-function nextInterval(stability: number, config: FSRSConfig): number {
-  // R = requestRetention
-  // R = (1 + factor * interval / stability) ^ -1
-  // Solving for interval: interval = stability * (R^(-1/factor) - 1) / factor
-  
-  const R = config.requestRetention;
-  const factor = DEFAULT_WEIGHTS[14]; // factor parameter
-  
-  let interval = stability * (Math.pow(R, -1 / factor) - 1) / factor;
-  
-  // Apply interval modifiers based on FSRS weights
-  interval = Math.round(interval);
-  
-  // Apply bounds
-  interval = Math.max(1, Math.min(config.maximumInterval, interval));
-  
-  return interval;
-}
-
-/**
- * Calculate next stability after a review
- */
-function nextStability(
-  state: FSRSCardState,
-  grade: number,
-  config: FSRSConfig
-): number {
-  const { stability, difficulty, elapsedDays: _elapsedDays, repetitions: _repetitions } = state;
-  const w = config.weights;
-  
-  if (grade === 0) {
-    // Again - reset stability based on difficulty
-    // S_new = w[15] * difficulty^(-w[16]) * (stability^w[17] * w[18] * e^(w[19]*(1-difficulty/10)) + 1)
-    const preStability = Math.pow(stability, w[17]) * w[18] * Math.exp(w[19] * (1 - difficulty / 10));
-    return w[15] * Math.pow(difficulty, -w[16]) * (preStability + 1);
-  }
-  
-  // For successful reviews (Hard=1, Good=2, Easy=3)
-  // S_new = S_old * (1 + exp(w[8]) * (grade+1)^(-w[9]) * (S_old^w[10] - 1) * exp((w[11]-w[12]*difficulty)*(grade-2)))
-  
-  const gradeFactor = Math.pow(grade + 1, -w[9]);
-  const stabilityFactor = Math.pow(stability, w[10]) - 1;
-  const difficultyFactor = Math.exp((w[11] - w[12] * difficulty) * (grade - 2));
-  
-  return stability * (1 + Math.exp(w[8]) * gradeFactor * stabilityFactor * difficultyFactor);
-}
-
-/**
- * Calculate next difficulty after a review
- */
-function nextDifficulty(
-  state: FSRSCardState,
-  grade: number,
-  config: FSRSConfig
-): number {
-  const { difficulty } = state;
-  const w = config.weights;
-  
-  if (grade === 0) {
-    // Again - increase difficulty
-    // D_new = min(10, D_old + w[6])
-    return Math.min(10, difficulty + w[6]);
-  }
-  
-  // For successful reviews
-  // D_new = D_old - w[5] * (grade - 2)
-  // Hard decreases difficulty less, Easy decreases it more
-  const newDifficulty = difficulty - w[5] * (grade - 2);
-  
-  // Mean reversion toward initial difficulty
-  const initialDifficulty = w[4];
-  return w[7] * initialDifficulty + (1 - w[7]) * Math.max(1, Math.min(10, newDifficulty));
+/** Our stored state as a ts-fsrs card. Never-reviewed cards start empty. */
+function toFsrsCard(card: Card, now: Date): FsrsCard {
+  const state = getFSRSState(card);
+  const reviewed = state.lastReview > 0 && state.stability > 0;
+  if (!reviewed) return createEmptyCard(now);
+  const lastReview = new Date(state.lastReview);
+  return {
+    due: new Date(card.nextReview ?? state.lastReview + state.scheduledDays * DAY_MS),
+    stability: Math.min(MAXIMUM_INTERVAL, state.stability),
+    difficulty: Math.max(1, Math.min(10, state.difficulty)),
+    elapsed_days: Math.max(0, Math.floor((now.getTime() - lastReview.getTime()) / DAY_MS)),
+    scheduled_days: Math.max(0, Math.round(state.scheduledDays)),
+    learning_steps: 0,
+    reps: Math.max(1, state.repetitions),
+    lapses: state.lapses,
+    state: State.Review,
+    last_review: lastReview,
+  };
 }
 
 /**
@@ -218,13 +171,21 @@ export function calculateRetrievability(state: FSRSCardState): number {
   return forgettingCurve(state.elapsedDays, state.stability);
 }
 
+function isFsrs6Parameters(weights: number[] | undefined): weights is number[] {
+  return (
+    Array.isArray(weights) &&
+    weights.length === FSRS_PARAMETERS.length &&
+    weights.every((w) => Number.isFinite(w))
+  );
+}
+
 /**
  * Main FSRS scheduling function
  * Takes a card and rating, returns new FSRS state and interval
  *
- * `weightsOverride` is the optional per-user tuned weight vector produced
- * by loadPersonalizedFsrs in ./fsrsAdaptation. When undefined the global
- * DEFAULT_WEIGHTS are used.
+ * `weightsOverride` is used only when it is a complete FSRS-6 parameter
+ * vector; anything else (e.g. the legacy 20-number profile weights) falls
+ * back to the published defaults.
  */
 export function scheduleFSRS(
   card: Card,
@@ -234,50 +195,41 @@ export function scheduleFSRS(
 ): FSRSScheduleResult {
   const requestRetention = Number.isFinite(retentionOverride)
     ? Math.min(0.99, Math.max(0.7, retentionOverride as number))
-    : DEFAULT_CONFIG.requestRetention;
-  const config: FSRSConfig = {
-    ...DEFAULT_CONFIG,
-    requestRetention,
-    ...(weightsOverride && weightsOverride.length === DEFAULT_WEIGHTS.length
-      ? { weights: weightsOverride }
-      : {}),
-  };
-  const state = getFSRSState(card);
-  const grade = RATING_TO_GRADE[rating] ?? 2;
-  
-  // Calculate elapsed days since last review
-  const now = Date.now();
-  const elapsedDays = state.lastReview > 0
-    ? Math.max(0, (now - state.lastReview) / (24 * 60 * 60 * 1000))
-    : state.scheduledDays;
-  
-  // Update state with current elapsed time
-  const currentState: FSRSCardState = {
-    ...state,
-    elapsedDays,
-  };
-  
-  // Calculate new difficulty and stability
-  const newDifficulty = nextDifficulty(currentState, grade, config);
-  const newStability = nextStability(currentState, grade, config);
-  
-  // Calculate next interval
-  const newInterval = nextInterval(newStability, config);
-  
-  // Calculate current retrievability
-  const retrievability = calculateRetrievability(currentState);
-  
-  // Update repetition and lapse counts
-  const newRepetitions = grade > 0 ? currentState.repetitions + 1 : 0;
-  const newLapses = grade === 0 ? currentState.lapses + 1 : currentState.lapses;
-  
+    : DEFAULT_RETENTION;
+  const scheduler = fsrs(
+    generatorParameters({
+      request_retention: requestRetention,
+      maximum_interval: MAXIMUM_INTERVAL,
+      w: isFsrs6Parameters(weightsOverride) ? weightsOverride : FSRS_PARAMETERS,
+      enable_fuzz: false,
+      enable_short_term: false,
+    }),
+  );
+
+  const now = new Date();
+  const before = toFsrsCard(card, now);
+  const grade = RATING_TO_GRADE[rating] ?? FsrsRating.Good;
+  const retrievability = before.state === State.New
+    ? 0
+    : scheduler.get_retrievability(before, now, false);
+  const { card: after } = scheduler.next(before, now, grade);
+
+  // A personalised starting difficulty (applyPersonalizedDifficultyInit)
+  // nudges a brand-new card's first difficulty halfway toward that target.
+  const previous = (card as any).fsrsState as FSRSCardState | undefined;
+  let difficulty = after.difficulty;
+  if (before.state === State.New && previous && previous.repetitions === 0 && previous.difficulty > 0) {
+    difficulty = (after.difficulty + previous.difficulty) / 2;
+  }
+
+  const priorStreak = getFSRSState(card).repetitions;
   return {
-    stability: Math.max(0.1, newStability),
-    difficulty: Math.max(1, Math.min(10, newDifficulty)),
-    interval: Math.max(1, Math.min(config.maximumInterval, Math.round(newInterval))),
+    stability: Math.max(0.1, after.stability),
+    difficulty: Math.max(1, Math.min(10, difficulty)),
+    interval: Math.max(1, Math.min(MAXIMUM_INTERVAL, Math.round(after.scheduled_days))),
     retrievability: Math.max(0, Math.min(1, retrievability)),
-    repetitions: newRepetitions,
-    lapses: newLapses,
+    repetitions: grade === FsrsRating.Again ? 0 : priorStreak + 1,
+    lapses: after.lapses,
   };
 }
 
@@ -286,8 +238,8 @@ export function scheduleFSRS(
  */
 export function createInitialFSRSState(): FSRSCardState {
   return {
-    stability: DEFAULT_WEIGHTS[0],
-    difficulty: DEFAULT_WEIGHTS[4], // Initial difficulty
+    stability: 0,
+    difficulty: DEFAULT_WEIGHTS[4], // Starting difficulty target
     elapsedDays: 0,
     scheduledDays: 0,
     repetitions: 0,
@@ -412,12 +364,13 @@ export function predictRetention(stability: number, intervalDays: number): numbe
 }
 
 /**
- * Calculate optimal interval for target retention
+ * Days until recall falls to `targetRetention` for a memory of `stability`.
  */
 export function optimalInterval(stability: number, targetRetention: number = 0.9): number {
-  const factor = DEFAULT_WEIGHTS[14];
-  const interval = stability * (Math.pow(targetRetention, -1 / factor) - 1) / factor;
-  return Math.max(1, Math.round(interval));
+  const scheduler = fsrs(
+    generatorParameters({ request_retention: targetRetention, enable_short_term: false }),
+  );
+  return Math.max(1, scheduler.next_interval(stability, 0));
 }
 
 /**

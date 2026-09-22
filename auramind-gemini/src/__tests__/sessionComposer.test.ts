@@ -6,6 +6,7 @@ import {
   composeSessionQueue,
 } from '../services/memory/sessionComposer';
 import type { Card } from '../types';
+import { elapsedForRetrievability } from '../services/study/fsrs';
 
 // Fixed "now": 2026-09-20 12:00 local.
 const NOW = new Date(2026, 8, 20, 12, 0, 0).getTime();
@@ -20,7 +21,7 @@ function card(id: string, opts: { deckId: string; lastReviewed?: number; targetR
   const target = opts.targetR ?? 0.8;
   const elapsedDays = opts.lastReviewed != null
     ? (NOW - opts.lastReviewed) / DAY
-    : stabilityDays * (1 / target - 1);
+    : elapsedForRetrievability(target, stabilityDays);
   return {
     id,
     deckId: opts.deckId,
