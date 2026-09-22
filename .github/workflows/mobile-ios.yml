@@ -141,7 +141,7 @@ jobs:
           xcrun simctl launch "$DEVICE" com.auramind.app
           # The tour shows a screen every 6 s once the app has loaded;
           # shooting every 3 s catches each one at least once.
-          for i in $(seq -w 1 14); do
+          for i in $(seq -w 1 22); do
             sleep 3
             xcrun simctl io "$DEVICE" screenshot "../ios-artifacts/screens/shot-$i.png" >/dev/null
           done
