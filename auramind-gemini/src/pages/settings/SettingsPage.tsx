@@ -18,9 +18,9 @@ import {
   isSpeechOutputAvailable,
   resetRandomVoice,
   speak,
-  VOICE_AUTO,
   VOICE_PREF_KEY,
   VOICE_RANDOM,
+  DEFAULT_VOICE,
 } from '../../services/voice/speechOutput';
 import { getAIProvider, setAIProvider, type AIProvider } from '../../lib/aiProvider';
 import {
@@ -298,7 +298,7 @@ export default function SettingsPage() {
   const [fontSize, setFontSize] = useLocalStorage('auramind_fontSize', 'Medium');
   const [highContrast, setHighContrast] = useLocalStorage('auramind_highContrast', false);
   const [textToSpeech, setTextToSpeech] = useLocalStorage('auramind_textToSpeech', false);
-  const [ttsVoice, setTtsVoice] = useLocalStorage<string>(VOICE_PREF_KEY, VOICE_AUTO);
+  const [ttsVoice, setTtsVoice] = useLocalStorage<string>(VOICE_PREF_KEY, DEFAULT_VOICE);
   const voiceOptions = useVoiceOptions(ttsVoice);
   const chooseVoice = (next: string) => {
     if (next === VOICE_RANDOM) resetRandomVoice();

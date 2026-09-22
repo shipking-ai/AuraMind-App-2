@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useMotionValue } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BookOpen,
@@ -27,6 +28,8 @@ import { canPinDecks, pinDeckToHomeScreen, publishRecentDecks } from "../../lib/
 import { useAppPreference } from "../../lib/appPreferences";
 import { Share as NativeShare } from "../../lib/nativeShim";
 import AndroidAura from "./AndroidAura";
+import { clampAuraScroll } from "./auraDepth";
+import { useRM } from "../dashboard/nova/motion";
 import { AndroidSheet, AndroidSheetAction } from "./AndroidSheet";
 import { useLongPress } from "./useLongPress";
 import type { Card, Deck } from "../../types";
@@ -309,8 +312,44 @@ function AndroidDeckRow({
 
 export function AndroidOverview() {
   const navigate = useNavigate();
+  const location = useLocation();
   const workspace = useDashboardWorkspace();
   const { user, decks, cards, startQuickStudy, startStudyForDeck } = workspace!;
+
+  // Scroll-reactive aura — the native counterpart of the web shell's aurora
+  // (NovaDashboardShell). Same grammar: a rAF-throttled, clamped MotionValue
+  // fed from the one scroller (`main#nova-main-content`), a per-route reset
+  // to the static baseline, and zero re-renders (MotionValues update outside
+  // React). Reduced-motion users keep the original still mark — the listener
+  // never attaches. The reset deliberately keys on `location.pathname`, NOT
+  // `navigate` — this build returns a fresh navigate identity every render,
+  // and a [navigate] dep re-applies effects ~79 ms after every navigation.
+  const reduced = useRM();
+  const auraScroll = useMotionValue(0);
+  const auraResetRef = useRef(location.pathname);
+  auraResetRef.current = location.pathname;
+  useEffect(() => {
+    if (reduced) return;
+    const el = document.getElementById("nova-main-content");
+    if (!el) return;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        auraScroll.set(clampAuraScroll(el.scrollTop));
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [reduced, location.pathname, auraScroll]);
+  useEffect(() => {
+    auraScroll.set(0);
+  }, [location.pathname, auraScroll]);
   const today = startOfToday();
   const dueCount = cards.filter((card) => (card.nextReview ?? 0) <= Date.now()).length;
   const studiedToday = cards.filter((card) => (card.lastReviewed ?? 0) >= today).length;
@@ -372,7 +411,7 @@ export function AndroidOverview() {
       </div>
 
       <section className="android-focus-card">
-        <AndroidAura className="android-focus-aura" />
+        <AndroidAura className="android-focus-aura" scrollY={auraScroll} />
         <div className="relative z-10">
           <div className="flex items-center justify-between gap-3">
             <span className="android-focus-label">

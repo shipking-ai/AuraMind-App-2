@@ -1,10 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyMiddleware } from './_middleware.js';
 import { distributedLimiterConfigured } from './_rateLimit.js';
-import { handleAI, handleAITranscribe } from './_aiHandler.js';
+import { handleAI, handleAISpeech, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
 import { readSubscriptionStatus } from './_lib/entitlement.js';
+import { isPushConfigured, readPushConfig, sendPushToUsers } from './_lib/push.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
@@ -309,6 +310,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (action === 'transcribe') {
           return await handleAITranscribe(req, res);
         }
+        if (action === 'speech') {
+          return await handleAISpeech(req, res);
+        }
         return await handleAI(req, res, action);
       case 'stripe':
         return await handleStripe(req, res, action);
@@ -328,6 +332,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleFetchYouTubeTranscript(req, res);
       case 'cron':
         return await handleCron(req, res, action);
+      case 'push':
+        return await handlePush(req, res, action);
       default:
         return json(res, 404, { error: 'Endpoint not found' });
     }
@@ -1843,6 +1849,8 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
 //   2. Trial reminders — trialing users get a nudge 3 days and 1 day before
 //      their trial ends (each sent at most once, guarded by metadata flags).
 //   3. Ledger pruning — webhook idempotency entries older than 90 days.
+//   4. Due-card push reminders — one quiet FCM push per user with cards due
+//      in the next 24h (no-op until FCM env vars are set).
 
 async function* paginateUsers(supabase: any) {
   const perPage = 500;
@@ -1889,6 +1897,7 @@ async function handleCron(req: VercelRequest, res: VercelResponse, action?: stri
     trialReminders3d: 0,
     trialReminders1d: 0,
     emailErrors: 0,
+    pushSent: 0,
   };
 
   try {
@@ -1972,7 +1981,17 @@ async function handleCron(req: VercelRequest, res: VercelResponse, action?: stri
       // Migration may not be applied yet — non-fatal.
     }
 
-    return json(res, 200, { ok: true, ...summary, ledgerPruned: pruned });
+    // --- Job 4: due-card push reminders (no-op until FCM is configured) ---
+    let pushSummary: Record<string, unknown> = { configured: false };
+    try {
+      pushSummary = await runDueReminderPushes(supabase);
+      summary.pushSent = Number(pushSummary.sent || 0);
+    } catch (pushErr: any) {
+      console.error('Due-reminder push failed:', pushErr);
+      pushSummary = { configured: true, error: String(pushErr?.message || pushErr).slice(0, 200) };
+    }
+
+    return json(res, 200, { ok: true, ...summary, ledgerPruned: pruned, push: pushSummary });
   } catch (err: any) {
     console.error('Cron dunning failed:', err);
     return json(res, 500, { error: isProdLike() ? 'Cron job failed' : (err.message || 'Cron job failed') });
@@ -1981,6 +2000,101 @@ async function handleCron(req: VercelRequest, res: VercelResponse, action?: stri
 
 function isProdLike(): boolean {
   return process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+}
+
+// --- Push (FCM) endpoints ---
+
+const PushSendSchema = z.object({
+  userIds: z.array(z.string().uuid()).min(1).max(500),
+  title: z.string().min(1).max(120),
+  body: z.string().min(1).max(300),
+  link: z
+    .string()
+    .max(200)
+    .refine((v) => v.startsWith('auramind://'), { message: 'link must be an auramind:// deep link' })
+    .optional(),
+});
+
+/**
+ * POST /api/push/send — deliver an FCM message to the named users' devices.
+ * Admin-only (same app_metadata role gate as every other privileged route):
+ * an unauthenticated or non-admin caller must not be able to ring arbitrary
+ * users' phones. Fails closed when FCM credentials are absent — the response
+ * says `configured: false` so the admin UI can explain instead of error.
+ */
+async function handlePush(req: VercelRequest, res: VercelResponse, action?: string) {
+  if (action !== 'send') return json(res, 404, { error: 'Unknown push action' });
+  if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+
+  if (!isPushConfigured()) {
+    return json(res, 200, { configured: false, error: 'FCM not configured (set FCM_PROJECT_ID and FCM_SERVICE_ACCOUNT_KEY)' });
+  }
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
+    process.env.SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return json(res, 500, { error: 'Server configuration error' });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return json(res, 401, { error: 'Missing authorization' });
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) return json(res, 401, { error: 'Invalid token' });
+  if (!isAdminUser(user)) return json(res, 403, { error: 'Forbidden' });
+
+  const parsed = validateBody(res, PushSendSchema, req.body);
+  if (!parsed.ok) return;
+
+  const report = await sendPushToUsers(supabase, parsed.data.userIds, {
+    title: parsed.data.title,
+    body: parsed.data.body,
+    link: parsed.data.link,
+  });
+  return json(res, 200, { configured: true, ...report });
+}
+
+/**
+ * Cron job 4: due-card reminders. For each user with cards due in the next
+ * 24h, push one quiet reminder with their due count. The cron fires at
+ * 14:00 UTC so the push lands in the afternoon across the Americas and
+ * evening in western Europe — deliberately NOT morning, when in-app study
+ * habit already covers the day's first session.
+ */
+async function runDueReminderPushes(supabase: any) {
+  const summary = { usersTargeted: 0, sent: 0, failed: 0, pruned: 0, skipped: 0 };
+  if (!isPushConfigured()) return { ...summary, configured: false };
+
+  const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const { data: rows, error } = await supabase
+    .from('cards')
+    .select('user_id')
+    .gt('next_review', new Date().toISOString())
+    .lt('next_review', cutoff);
+  if (error) throw new Error(`due cards query failed: ${error.message}`);
+  if (!rows || rows.length === 0) return { ...summary, configured: true };
+
+  const counts = new Map<string, number>();
+  for (const row of rows) counts.set(row.user_id, (counts.get(row.user_id) || 0) + 1);
+  // Hard cap so a runaway deck count can't fan out thousands of pushes.
+  const userIds = [...counts.keys()].slice(0, 2000);
+
+  const report = await sendPushToUsers(
+    supabase,
+    userIds,
+    { title: 'AuraMind', body: 'Cards are coming due — a short session keeps them fresh.', link: 'auramind://app/dashboard' },
+  );
+  return {
+    configured: true,
+    usersTargeted: userIds.length,
+    sent: report.sent,
+    failed: report.failed,
+    pruned: report.pruned,
+    skipped: report.skipped,
+  };
 }
 
 // --- URL extraction endpoints (used by GeneratorPage) ---

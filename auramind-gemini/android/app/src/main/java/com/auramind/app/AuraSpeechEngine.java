@@ -135,10 +135,20 @@ final class AuraSpeechEngine {
         }
 
         if (VOICE_RANDOM.equals(choice)) {
-            List<Voice> candidates = new ArrayList<>();
+            // Only the best quality tier the engine offers offline, so a
+            // random pick never lands on an old low-fidelity voice.
+            int bestQuality = Integer.MIN_VALUE;
             for (Voice voice : voices) {
                 if (!voice.isNetworkConnectionRequired()
                         && voice.getLocale().getLanguage().equals(locale.getLanguage())) {
+                    bestQuality = Math.max(bestQuality, voice.getQuality());
+                }
+            }
+            List<Voice> candidates = new ArrayList<>();
+            for (Voice voice : voices) {
+                if (!voice.isNetworkConnectionRequired()
+                        && voice.getLocale().getLanguage().equals(locale.getLanguage())
+                        && voice.getQuality() == bestQuality) {
                     candidates.add(voice);
                 }
             }

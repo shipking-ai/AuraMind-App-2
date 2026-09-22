@@ -1,5 +1,5 @@
-import React, { Suspense, useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { Suspense, useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import {
   LayoutDashboard, BookOpen, Brain, Settings, GraduationCap, Sparkles,
   Search, Bell, Menu, X, Flame,
@@ -14,7 +14,7 @@ import { AnimatedBrandMark, PulsingDot } from './icons';
 import { NotificationPanel, useUnreadCount } from './NotificationPanel';
 // Memory sparks: sporadic FSRS-driven card resurfacing (Surface 1 — in-app).
 import { MemorySpark } from '../../memory/MemorySpark';
-import { PageTransition, Shimmer } from './motion';
+import { PageTransition, Shimmer, useRM } from './motion';
 import OnboardingTutorial from '../../shared/OnboardingTutorial';
 import AndroidBottomNav from '../../native/AndroidBottomNav';
 import AndroidMobileTopBar from '../../native/AndroidMobileTopBar';
@@ -91,45 +91,94 @@ function buildAdminNavSections(_role: UserRole | undefined): NavSection[] {
 
 // ─── Background layers ──────────────────────────────────────────────────────
 
-function FloatingOrbs() {
+// Depth factors for the scroll-reactive background layers. The scroller
+// (main#nova-main-content) feeds a clamped MotionValue; each layer reads it
+// through a spring so motion stays fluid under fast scrolls. Positive depth
+// drifts the layer DOWN while content scrolls up → reads as deeper than the
+// content; the aurora's small negative factor reads as the nearest veil. All
+// scroll motion is dead-zero at the top of any page, so routes without
+// scrolling (or bleed/study runs, or reduced-motion users) render exactly
+// the static background this shell always had.
+const SCROLL_CAP_PX = 900;
+const SCROLL_SPRING = { stiffness: 60, damping: 20, mass: 0.8 };
+
+/** Wraps a child in a depth-parallax layer: y = scroll · depth. Framer owns
+ *  the wrapper's transform; time-drift `animate` stays on the inner element,
+ *  so the two motions never fight over the same property. */
+function ParallaxLayer({
+  scrollY,
+  depth,
+  children,
+}: {
+  scrollY: MotionValue<number>;
+  depth: number;
+  children: React.ReactNode;
+}) {
+  const rise = useSpring(scrollY, SCROLL_SPRING);
+  const y = useTransform(rise, (v) => v * depth);
+  return (
+    <motion.div className="absolute inset-0 will-change-transform" style={{ y }}>
+      {children}
+    </motion.div>
+  );
+}
+
+function FloatingOrbs({ scrollY, reduced }: { scrollY: MotionValue<number>; reduced: boolean }) {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
-      <motion.div
-        className="absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full opacity-[0.07]"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(124,58,237,0.5), transparent 70%)',
-          willChange: 'transform',
-        }}
-        animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0], scale: [1, 1.05, 0.95, 1] }}
-        transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute -right-48 top-1/3 h-[420px] w-[420px] rounded-full opacity-[0.06]"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(34,211,238,0.45), transparent 70%)',
-          willChange: 'transform',
-        }}
-        animate={{ x: [0, -40, 20, 0], y: [0, 30, -20, 0], scale: [1, 0.95, 1.05, 1] }}
-        transition={{ duration: 26, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute -bottom-32 left-1/4 h-[380px] w-[380px] rounded-full opacity-[0.05]"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(236,72,153,0.4), transparent 70%)',
-          willChange: 'transform',
-        }}
-        animate={{ x: [0, 20, -30, 0], y: [0, -30, 20, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      <ParallaxLayer scrollY={scrollY} depth={0.22}>
+        <motion.div
+          className="absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full opacity-[0.07]"
+          style={{
+            background: 'radial-gradient(circle at center, rgba(124,58,237,0.5), transparent 70%)',
+            willChange: 'transform',
+          }}
+          animate={reduced ? undefined : { x: [0, 30, -20, 0], y: [0, -20, 30, 0], scale: [1, 1.05, 0.95, 1] }}
+          transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </ParallaxLayer>
+      <ParallaxLayer scrollY={scrollY} depth={0.12}>
+        <motion.div
+          className="absolute -right-48 top-1/3 h-[420px] w-[420px] rounded-full opacity-[0.06]"
+          style={{
+            background: 'radial-gradient(circle at center, rgba(34,211,238,0.45), transparent 70%)',
+            willChange: 'transform',
+          }}
+          animate={reduced ? undefined : { x: [0, -40, 20, 0], y: [0, 30, -20, 0], scale: [1, 0.95, 1.05, 1] }}
+          transition={{ duration: 26, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </ParallaxLayer>
+      <ParallaxLayer scrollY={scrollY} depth={0.05}>
+        <motion.div
+          className="absolute -bottom-32 left-1/4 h-[380px] w-[380px] rounded-full opacity-[0.05]"
+          style={{
+            background: 'radial-gradient(circle at center, rgba(236,72,153,0.4), transparent 70%)',
+            willChange: 'transform',
+          }}
+          animate={reduced ? undefined : { x: [0, 20, -30, 0], y: [0, -30, 20, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </ParallaxLayer>
     </div>
   );
 }
 
-function AuroraGradient({ admin }: { admin: boolean }) {
+function AuroraGradient({ admin, scrollY }: { admin: boolean; scrollY: MotionValue<number> }) {
+  // The aurora is the nearest layer: it rises slightly against the scroll,
+  // breathes wider, and its hue drifts — violet toward indigo over a long
+  // read. Oversized (-inset-24) so translate/scale never expose an edge.
+  const rise = useSpring(scrollY, SCROLL_SPRING);
+  const y = useTransform(rise, (v) => v * -0.09);
+  const scale = useTransform(rise, (v) => 1 + v * 0.00006);
+  const filter = useTransform(rise, (v) => `hue-rotate(${(v * 0.04).toFixed(2)}deg)`);
+  // The grid sits farthest: counter-drifts barely, anchoring the depth stack.
+  const gridRise = useSpring(scrollY, SCROLL_SPRING);
+  const gridY = useTransform(gridRise, (v) => v * 0.03);
+
   return (
     <div className="pointer-events-none fixed inset-0 -z-20" aria-hidden>
-      <div
-        className="absolute inset-0"
+      <motion.div
+        className="absolute -inset-24 will-change-transform"
         style={{
           background: admin
             ? 'radial-gradient(60% 50% at 20% 0%, rgba(254,205,211,0.18) 0%, transparent 60%),' +
@@ -138,9 +187,12 @@ function AuroraGradient({ admin }: { admin: boolean }) {
             : 'radial-gradient(60% 50% at 18% 0%, rgba(196,181,253,0.24) 0%, transparent 58%),' +
               'radial-gradient(50% 42% at 88% 28%, rgba(244,114,182,0.14) 0%, transparent 68%),' +
               'radial-gradient(70% 55% at 55% 100%, rgba(34,211,238,0.14) 0%, transparent 68%)',
+          y,
+          scale,
+          filter,
         }}
       />
-      <div className="absolute inset-0 nova-page-grid opacity-35" />
+      <motion.div className="absolute -inset-12 nova-page-grid opacity-35 will-change-transform" style={{ y: gridY }} />
     </div>
   );
 }
@@ -612,6 +664,40 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
   const isOnAdminRoute = location.pathname.startsWith('/admin');
   const immersive = isImmersivePath(location.pathname);
   const bleed = isBleedPath(location.pathname);
+
+  // Scroll-reactive background: the shell scrolls on the inner <main>, not
+  // the window, so the aurora/orbs track that element. rAF-throttled (never
+  // re-renders — MotionValues update outside React), clamped so a long page
+  // saturates the effect instead of pushing layers off-screen, and reset on
+  // route change so every page starts at the static baseline. Reduced-motion
+  // users get the original static background — motion hooks still run but
+  // nothing consumes them.
+  const mainRef = useRef<HTMLElement | null>(null);
+  const reduced = useRM();
+  const scrollMotion = useMotionValue(0);
+  useEffect(() => {
+    if (reduced) return;
+    const el = document.getElementById('nova-main-content');
+    if (!el) return;
+    mainRef.current = el;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        scrollMotion.set(Math.min(Math.max(el.scrollTop, 0), SCROLL_CAP_PX));
+      });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [reduced, location.pathname, scrollMotion]);
+  useEffect(() => {
+    scrollMotion.set(0);
+  }, [location.pathname, scrollMotion]);
   const workspace = useDashboardWorkspace();
   const user = workspace?.user;
   const isAndroidApp = Capacitor.getPlatform() === 'android';
@@ -670,8 +756,8 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
       className={`nova-shell relative flex h-screen overflow-hidden bg-transparent text-white ${isAndroidMobile ? 'android-mobile-shell' : ''} ${scrolled ? 'is-scrolled' : ''} ${navHidden ? 'is-nav-hidden' : ''}`}
     >
       <SkipLink />
-      <AuroraGradient admin={isOnAdminRoute} />
-      <FloatingOrbs />
+      <AuroraGradient admin={isOnAdminRoute} scrollY={scrollMotion} />
+      <FloatingOrbs scrollY={scrollMotion} reduced={reduced} />
 
       {!immersive && !isAndroidMobile && (
         <div className="hidden lg:flex">
