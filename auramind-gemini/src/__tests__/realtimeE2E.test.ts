@@ -69,6 +69,11 @@ const hasCreds = Boolean(
     }
 
     beforeAll(async () => {
+      // Real sockets: under jsdom 30 the environment's WebSocket is undici's,
+      // which dispatches Node events into jsdom's EventTarget and throws
+      // ("must be an instance of Event"), so no message ever round-trips.
+      const { WebSocket: NodeWebSocket } = await import('ws');
+      vi.stubGlobal('WebSocket', NodeWebSocket);
       // Dynamically import supabase client
       const mod = await import('../services/database/supabase');
       supabaseClient = mod.supabase;
