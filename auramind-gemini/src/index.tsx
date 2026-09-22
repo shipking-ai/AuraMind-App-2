@@ -9,6 +9,7 @@ import { Capacitor } from './lib/nativeShim';
 // values by cascade order rather than !important.
 import './styles/editorial.css';
 import './styles/android-native.css';
+import './styles/ios-native.css';
 
 // Environment validation
 import { validateEnv, logEnvValidation } from './lib/env';

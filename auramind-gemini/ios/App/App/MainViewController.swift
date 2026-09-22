@@ -7,5 +7,8 @@ import UIKit
 class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(AuraListenPlugin())
+        // Swipe from the left edge goes back, as in every iOS app. The web
+        // app's router uses history, so this walks back through its screens.
+        webView?.allowsBackForwardNavigationGestures = true
     }
 }

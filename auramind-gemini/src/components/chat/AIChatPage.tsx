@@ -53,7 +53,7 @@ import { buildConceptWeaknesses, cardLapses, WEAK_LAPSE_THRESHOLD } from "../../
 import { buildPriorSessionMemory } from "../../lib/chatMemory";
 import PageShell from "../dashboard/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
-import { isNativeApp } from "../../lib/platform";
+import { isAndroidApp } from "../../lib/platform";
 import { useAppPreference } from "../../lib/appPreferences";
 
 const MODE_LABELS: Record<ChatMode, string> = {
@@ -163,7 +163,7 @@ function getStarterPrompts(context: ChatContext) {
 
 export default function AIChatPage() {
   const navigate = useNavigate();
-  const isMobileApp = isNativeApp();
+  const isMobileApp = isAndroidApp();
   const workspace = useDashboardWorkspace();
   const userId = useCurrentUserId();
   // Real study data (streak, 7-day retention, last-session accuracy) fed into

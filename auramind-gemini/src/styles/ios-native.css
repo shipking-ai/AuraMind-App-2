@@ -1,0 +1,839 @@
+/*
+ * AuraMind for iPhone — its own design language, not the Android one.
+ *
+ * Built on Apple's platform conventions (Human Interface Guidelines, iOS 26
+ * Liquid Glass): true-black OLED canvas, the system font, large titles that
+ * collapse into a glass navigation bar, inset grouped lists, a floating glass
+ * tab bar, activity rings, green switches and bottom sheets. AuraMind's
+ * violet is the tint colour; everything else follows iOS system colours so
+ * the app feels at home next to Apple's own.
+ *
+ * Every rule is scoped under .ios-app so nothing leaks into the web or
+ * Android layouts.
+ */
+
+.ios-app {
+  --ios-bg: #000;
+  --ios-cell: #1c1c1e;
+  --ios-cell-pressed: #2c2c2e;
+  --ios-fill: rgba(118, 118, 128, 0.24);
+  --ios-fill-2: rgba(118, 118, 128, 0.18);
+  --ios-sep: rgba(84, 84, 88, 0.6);
+  --ios-label: #fff;
+  --ios-label-2: rgba(235, 235, 245, 0.6);
+  --ios-label-3: rgba(235, 235, 245, 0.3);
+  --ios-tint: #b69cff;
+  --ios-tint-fill: #8b5cf6;
+  --ios-green: #30d158;
+  --ios-red: #ff453a;
+  --ios-orange: #ff9f0a;
+  --ios-yellow: #ffd60a;
+  --ios-blue: #0a84ff;
+  --ios-teal: #64d2ff;
+  --ios-pink: #ff375f;
+  --ios-indigo: #5e5ce6;
+  --ios-ring-move: #fa114f;
+  --ios-ring-exercise: #a6ff00;
+  --ios-ring-stand: #00d8ff;
+  --ios-glass: rgba(40, 40, 44, 0.5);
+  --ios-glass-border: rgba(255, 255, 255, 0.14);
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", system-ui,
+    sans-serif;
+  font-size: 17px;
+  letter-spacing: -0.41px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ios-app button {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+/* Fixed-size controls: keep global touch-target minimums from resizing them. */
+.ios-app .ios-switch,
+.ios-app .ios-stepper button,
+.ios-app .ios-segmented button,
+.ios-app .ios-bar-glass-button {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* The web app's global button hover/focus fills don't belong on iOS. */
+.ios-app button:focus,
+.ios-app button:hover {
+  outline: none;
+}
+
+.ios-app button:focus-visible {
+  outline: 2px solid var(--ios-tint);
+  outline-offset: 2px;
+}
+
+.ios-app input,
+.ios-app textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* A faint brand aura behind the large title — the one place AuraMind's
+   identity shows through the system chrome. */
+.ios-app::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 420px;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 15% 0%, rgba(139, 92, 246, 0.28), transparent 60%),
+    radial-gradient(90% 60% at 95% 0%, rgba(34, 211, 238, 0.14), transparent 65%);
+  z-index: 0;
+}
+
+.ios-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Pages the iOS design has not re-drawn yet still clear the status bar. */
+.ios-scroll > .ios-foreign {
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px 0;
+}
+
+.ios-scroll > .ios-foreign-bleed {
+  height: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Glass ─────────────────────────────────────────────────────────── */
+
+.ios-glass {
+  background: var(--ios-glass);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
+  border: 0.5px solid var(--ios-glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Navigation bar + large title ──────────────────────────────────── */
+
+.ios-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: env(safe-area-inset-top, 0px);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  border-bottom: 0.5px solid transparent;
+}
+
+.ios-navbar.is-collapsed {
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-bottom-color: var(--ios-sep);
+}
+
+.ios-navbar-row {
+  position: relative;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.ios-navbar-inline-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 17px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ios-navbar.is-collapsed .ios-navbar-inline-title {
+  opacity: 1;
+}
+
+.ios-navbar-side {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+}
+
+.ios-navbar-side.is-trailing {
+  justify-content: flex-end;
+}
+
+.ios-bar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 8px;
+  color: var(--ios-tint);
+  font-size: 17px;
+  background: none;
+  border: 0;
+}
+
+.ios-bar-button:active {
+  opacity: 0.4;
+}
+
+.ios-bar-glass-button {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-radius: 999px;
+  color: var(--ios-label);
+}
+
+.ios-large-title-block {
+  padding: 2px 20px 10px;
+}
+
+.ios-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ios-label-2);
+}
+
+.ios-large-title {
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: 0.37px;
+  margin: 0;
+}
+
+/* ── Inset grouped lists ───────────────────────────────────────────── */
+
+.ios-section {
+  margin: 0 16px 34px;
+}
+
+.ios-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px 7px;
+}
+
+.ios-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.38px;
+}
+
+.ios-section-caption {
+  padding: 0 16px 7px;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--ios-label-2);
+  letter-spacing: -0.08px;
+}
+
+.ios-section-footer {
+  padding: 7px 16px 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ios-label-2);
+  letter-spacing: -0.08px;
+}
+
+.ios-list {
+  background: var(--ios-cell);
+  border-radius: 26px;
+  overflow: hidden;
+}
+
+.ios-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 16px;
+  text-align: left;
+  color: var(--ios-label);
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+
+button.ios-row:active,
+a.ios-row:active {
+  background: var(--ios-cell-pressed);
+}
+
+/* Hairline separators inset to the text, as in Apple's lists. */
+.ios-row + .ios-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: var(--ios-sep-inset, 60px);
+  height: 0.5px;
+  background: var(--ios-sep);
+}
+
+.ios-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ios-row-title {
+  font-size: 17px;
+  line-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-row-subtitle {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ios-label-2);
+  letter-spacing: -0.24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-row-value {
+  flex-shrink: 0;
+  color: var(--ios-label-2);
+}
+
+.ios-chevron {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--ios-label-3);
+}
+
+.ios-row-destructive .ios-row-title {
+  color: var(--ios-red);
+  text-align: center;
+  width: 100%;
+}
+
+/* Settings-style rounded icon tile. */
+.ios-icon-tile {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.ios-icon-tile svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ios-deck-tile {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.ios-badge {
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: var(--ios-tint-fill);
+}
+
+/* ── Controls ──────────────────────────────────────────────────────── */
+
+.ios-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: rgba(120, 120, 128, 0.32);
+  transition: background-color 0.25s ease;
+}
+
+.ios-switch[aria-checked="true"] {
+  background: var(--ios-green);
+}
+
+.ios-app .ios-switch::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  top: 2px;
+  left: 2px;
+  opacity: 1;
+  pointer-events: none;
+  width: 27px;
+  height: 27px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.15),
+    0 3px 1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.ios-app .ios-switch[aria-checked="true"]::after {
+  transform: translateX(20px);
+}
+
+.ios-stepper {
+  display: inline-flex;
+  flex-shrink: 0;
+  background: var(--ios-fill);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.ios-stepper button {
+  width: 47px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--ios-label);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ios-stepper button + button {
+  border-left: 0.5px solid var(--ios-sep);
+}
+
+.ios-stepper button:active {
+  background: var(--ios-fill-2);
+}
+
+.ios-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  margin: 0 16px 12px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label-2);
+}
+
+.ios-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--ios-label);
+  font-size: 17px;
+}
+
+.ios-search input::placeholder {
+  color: var(--ios-label-2);
+}
+
+.ios-segmented {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: 32px;
+  margin: 0 16px 20px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--ios-fill);
+}
+
+.ios-segmented button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0;
+  line-height: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ios-label);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ios-segmented button[aria-selected="true"] {
+  font-weight: 600;
+}
+
+.ios-segmented-thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: #636366;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ios-button-filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-tint-fill);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ios-button-filled:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.ios-button-tinted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--ios-tint);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ── Today: activity rings card ────────────────────────────────────── */
+
+.ios-rings-card {
+  margin: 4px 16px 34px;
+  padding: 18px;
+  border-radius: 28px;
+  background: var(--ios-cell);
+}
+
+.ios-rings-layout {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.ios-ring-legend {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.ios-ring-legend-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ios-ring-legend-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.35px;
+  line-height: 26px;
+}
+
+.ios-ring-legend-value small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ios-label-2);
+}
+
+/* ── Study mode tiles ──────────────────────────────────────────────── */
+
+.ios-tile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 16px 34px;
+}
+
+.ios-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 132px;
+  padding: 16px;
+  border: 0;
+  border-radius: 24px;
+  text-align: left;
+  color: #fff;
+  font: inherit;
+  transition: transform 0.15s ease;
+}
+
+.ios-tile:active {
+  transform: scale(0.97);
+}
+
+.ios-tile-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ios-tile-caption {
+  margin-top: 2px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: -0.08px;
+}
+
+/* ── Floating glass tab bar ────────────────────────────────────────── */
+
+.ios-tabbar {
+  position: fixed;
+  z-index: 40;
+  left: 16px;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 64px;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.ios-tab {
+  position: relative;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--ios-label);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+.ios-tab svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ios-tab[aria-current="page"] {
+  color: var(--ios-tint);
+}
+
+.ios-tab-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ios-tab > :not(.ios-tab-pill) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Sheets (action sheet + picker) ────────────────────────────────── */
+
+.ios-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ios-action-sheet {
+  position: fixed;
+  z-index: 61;
+  left: 8px;
+  right: 8px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  display: grid;
+  gap: 8px;
+}
+
+.ios-action-group {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.ios-action-title {
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ios-label-2);
+  border-bottom: 0.5px solid var(--ios-sep);
+}
+
+.ios-action {
+  display: block;
+  width: 100%;
+  height: 57px;
+  border: 0;
+  background: transparent;
+  color: var(--ios-tint);
+  font-size: 20px;
+}
+
+.ios-action + .ios-action {
+  border-top: 0.5px solid var(--ios-sep);
+}
+
+.ios-action:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ios-action.is-destructive {
+  color: var(--ios-red);
+}
+
+.ios-action.is-cancel {
+  font-weight: 600;
+}
+
+.ios-sheet {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 34px 34px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.ios-sheet-grabber {
+  width: 36px;
+  height: 5px;
+  margin: 6px auto 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ios-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 8px 20px;
+}
+
+.ios-sheet-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ios-sheet-body {
+  overflow-y: auto;
+  padding: 4px 0 16px;
+}
+
+.ios-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--ios-tint);
+}
+
+/* ── Empty state ───────────────────────────────────────────────────── */
+
+.ios-empty {
+  margin: 40px 32px;
+  text-align: center;
+}
+
+.ios-empty-title {
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.ios-empty-body {
+  margin: 6px 0 20px;
+  color: var(--ios-label-2);
+  font-size: 15px;
+  line-height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ios-app *,
+  .ios-app *::before,
+  .ios-app *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

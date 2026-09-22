@@ -6,30 +6,30 @@
  * genuinely Android-only features (widgets, spoken reminders, the back
  * gesture's exit hint) from appearing on iPhone.
  */
-import { Capacitor } from './nativeShim';
+import { Capacitor } from "./nativeShim";
 
-export type AppPlatform = 'android' | 'ios' | 'web';
+export type AppPlatform = "android" | "ios" | "web";
 
 export function appPlatform(): AppPlatform {
-  if (!Capacitor.isNativePlatform()) return 'web';
+  if (!Capacitor.isNativePlatform()) return "web";
   const platform = Capacitor.getPlatform();
-  return platform === 'ios' ? 'ios' : platform === 'android' ? 'android' : 'web';
+  return platform === "ios" ? "ios" : platform === "android" ? "android" : "web";
 }
 
 /** Either native app — the phone layout applies. */
 export function isNativeApp(): boolean {
-  return appPlatform() !== 'web';
+  return appPlatform() !== "web";
 }
 
 export function isAndroidApp(): boolean {
-  return appPlatform() === 'android';
+  return appPlatform() === "android";
 }
 
 export function isIOSApp(): boolean {
-  return appPlatform() === 'ios';
+  return appPlatform() === "ios";
 }
 
 /** "Android" or "iPhone", for copy that names the device. */
 export function deviceName(): string {
-  return isIOSApp() ? 'iPhone' : 'Android';
+  return isIOSApp() ? "iPhone" : "Android";
 }

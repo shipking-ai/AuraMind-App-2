@@ -19,7 +19,9 @@ import AndroidGeneratorScreen from "../../components/native/AndroidGeneratorScre
 import AndroidSettingsScreen from "../../components/native/AndroidSettingsScreen";
 import { resolveDashboardSurface } from "../../components/native/androidSurface";
 import WearSyncWiring from "../../components/wear/WearSyncWiring";
-import { isNativeApp } from "../../lib/platform";
+import { appPlatform } from "../../lib/platform";
+import { IOSLibrary, IOSStudy, IOSToday } from "../../components/ios/IOSScreens";
+import IOSSettingsScreen from "../../components/ios/IOSSettingsScreen";
 
 const AIChatPage = React.lazy(() => import("../../components/chat/AIChatPage"));
 const GeneratorPage = React.lazy(() => import("../generator/GeneratorPage"));
@@ -64,8 +66,11 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
     createDeck, deleteDeck, addCardsToDeck,
     updateProfile, onLogout,
   } = props;
-  // Both native apps use the phone layout (built first for Android).
-  const isMobileApp = isNativeApp();
+  // Each platform gets its own screens: Android's Material layout, the
+  // iPhone's iOS design, and the web dashboard.
+  const platform = appPlatform();
+  const isMobileApp = platform === 'android';
+  const isIOS = platform === 'ios';
 
   return (
     <DashboardWorkspaceProvider
@@ -82,9 +87,9 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
       <NovaDashboardShell>
         <Suspense fallback={<LazyFallback />}>
           <Routes>
-            <Route path="/" element={isMobileApp ? <AndroidOverview /> : <NovaOverview />} />
-            <Route path="/decks" element={isMobileApp ? <AndroidLibrary /> : <NovaLibrary />} />
-            <Route path="/study" element={isMobileApp ? <AndroidStudy /> : <NovaStudy />} />
+            <Route path="/" element={isIOS ? <IOSToday /> : isMobileApp ? <AndroidOverview /> : <NovaOverview />} />
+            <Route path="/decks" element={isIOS ? <IOSLibrary /> : isMobileApp ? <AndroidLibrary /> : <NovaLibrary />} />
+            <Route path="/study" element={isIOS ? <IOSStudy /> : isMobileApp ? <AndroidStudy /> : <NovaStudy />} />
             <Route path="/study/:deckId" element={<StudyModeRoute />} />
             {/* Memory spark notification deep-link (tap-to-speak + grade). */}
             <Route path="/spark/:cardId" element={<SparkReviewRoute />} />
@@ -93,7 +98,9 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
             <Route path="/study-tools" element={<StudyToolsRoute />} />
             <Route path="/classes" element={<ClassroomsPage />} />
             <Route path="/classes/:id" element={<ClassDetailPage />} />
-            <Route path="/settings" element={resolveDashboardSurface(isMobileApp, '/settings') === 'android-settings' ? <AndroidSettingsScreen /> : <SettingsPage />} />
+            <Route path="/settings" element={isIOS ? <IOSSettingsScreen /> : resolveDashboardSurface(isMobileApp, '/settings') === 'android-settings' ? <AndroidSettingsScreen /> : <SettingsPage />} />
+            {/* The full settings page, reached from the iPhone's Settings screen. */}
+            <Route path="/settings/all" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

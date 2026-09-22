@@ -113,6 +113,40 @@ jobs:
             exit 1
           fi
           xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "App"' > ../ios-artifacts/app.log || true
+          echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
+
+      # Same app, built with VITE_IOS_PREVIEW=true: it opens on sample-data
+      # screens and walks through them by itself (IOSVisualPreview's tour),
+      # so every screen can be photographed without an account or taps.
+      - name: Screenshot every iOS screen (sample data)
+        run: |
+          set -euo pipefail
+          echo 'VITE_IOS_PREVIEW=true' >> .env
+          npx vite build --mode mobile
+          npx cap copy ios
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build/xcodebuild-preview.log
+          xcrun simctl terminate "$DEVICE" com.auramind.app || true
+          xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
+          mkdir -p ../ios-artifacts/screens
+          xcrun simctl io "$DEVICE" recordVideo --codec=h264 --force ../ios-artifacts/screens/tour.mp4 &
+          REC=$!
+          xcrun simctl launch "$DEVICE" com.auramind.app
+          # The tour shows a screen every 6 s once the app has loaded;
+          # shooting every 3 s catches each one at least once.
+          for i in $(seq -w 1 14); do
+            sleep 3
+            xcrun simctl io "$DEVICE" screenshot "../ios-artifacts/screens/shot-$i.png" >/dev/null
+          done
+          kill -INT "$REC" || true
+          wait "$REC" || true
 
       - name: Upload screenshot and logs
         if: always()
@@ -121,5 +155,5 @@ jobs:
           name: ios-simulator
           path: |
             ios-artifacts
-            auramind-gemini/build/xcodebuild.log
+            auramind-gemini/build/xcodebuild*.log
           if-no-files-found: ignore
