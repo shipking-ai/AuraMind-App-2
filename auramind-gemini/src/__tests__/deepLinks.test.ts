@@ -29,3 +29,47 @@ describe('parseDeepLink', () => {
     expect(parseDeepLink('not a url')).toBeNull();
   });
 });
+
+describe('consumePendingRoute', () => {
+  const store = new Map<string, string>();
+  const native = { value: true };
+
+  beforeEach(() => {
+    store.clear();
+    native.value = true;
+    vi.resetModules();
+    vi.doMock('../lib/nativeShim', () => ({
+      Capacitor: { isNativePlatform: () => native.value },
+      Preferences: {
+        get: async ({ key }: { key: string }) => ({ value: store.get(key) ?? null }),
+        remove: async ({ key }: { key: string }) => { store.delete(key); },
+      },
+    }));
+  });
+
+  const load = () => import('../lib/deepLinks');
+
+  it('returns the route a native surface left, once', async () => {
+    store.set('auramind_pending_route', '/dashboard/study');
+    const { consumePendingRoute } = await load();
+    expect(await consumePendingRoute()).toBe('/dashboard/study');
+    expect(store.has('auramind_pending_route')).toBe(false);
+    expect(await consumePendingRoute()).toBeNull();
+  });
+
+  it('normalizes a bare path and applies the same allowlist as a deep link', async () => {
+    store.set('auramind_pending_route', 'study/deck-1');
+    const { consumePendingRoute } = await load();
+    expect(await consumePendingRoute()).toBe('/dashboard/study/deck-1');
+
+    store.set('auramind_pending_route', '/admin/backdoor');
+    expect(await consumePendingRoute()).toBeNull();
+  });
+
+  it('is null on the web', async () => {
+    native.value = false;
+    store.set('auramind_pending_route', '/dashboard/study');
+    const { consumePendingRoute } = await load();
+    expect(await consumePendingRoute()).toBeNull();
+  });
+});
