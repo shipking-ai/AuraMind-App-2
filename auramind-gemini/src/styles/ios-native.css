@@ -2141,3 +2141,17 @@ a.ios-row:active {
     display: none;
   }
 }
+
+/* The shared markdown renderer colours text for dark bubbles; on paper it is ink. */
+.ios-note-typeset,
+.ios-note-typeset * {
+  color: #1a1828 !important;
+}
+
+.ios-note-typeset a {
+  color: #5b3fc4 !important;
+}
+
+.ios-note-typeset code {
+  background: rgba(120, 91, 45, 0.12) !important;
+}
