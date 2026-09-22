@@ -14,6 +14,7 @@ import { AnimatedBrandMark, PulsingDot } from './icons';
 import { NotificationPanel, useUnreadCount } from './NotificationPanel';
 // Memory sparks: sporadic FSRS-driven card resurfacing (Surface 1 — in-app).
 import { MemorySpark } from '../../memory/MemorySpark';
+import { StudyFloatButton } from '../../float/StudyFloat';
 import { PageTransition, Shimmer, useRM } from './motion';
 import OnboardingTutorial from '../../shared/OnboardingTutorial';
 import AndroidBottomNav from '../../native/AndroidBottomNav';
@@ -490,6 +491,8 @@ function TopBar({
             {due > 0 ? `Study ${due}` : 'Study'}
           </motion.button>
         )}
+
+        {!isAdmin && <StudyFloatButton />}
 
         {(user?.streak ?? 0) > 0 && (
           <div className="hidden items-center gap-1.5 rounded-xl border border-amber-400/15 bg-amber-400/10 px-2.5 py-1.5 md:flex">
