@@ -109,7 +109,6 @@ describe('widget service worker', () => {
       }),
     };
     const fetch = vi.fn(async () => new Response('{"type":"AdaptiveCard"}'));
-    // eslint-disable-next-line no-new-func
     new Function('self', 'caches', 'fetch', 'Response', source)(self, caches, fetch, Response);
 
     const fire = async (type: string, event: Record<string, unknown>) => {
