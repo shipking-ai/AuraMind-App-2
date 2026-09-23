@@ -16,6 +16,11 @@ on:
       - 'auramind-gemini/**'
       - '.github/workflows/mobile-ios.yml'
   workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Live reload: load the web app from this URL instead of the bundle (e.g. https://your-preview.vercel.app or http://192.168.1.20:3000). Leave empty for a normal build.'
+        required: false
+        default: ''
 
 concurrency:
   group: mobile-ios-${{ github.ref }}
@@ -220,6 +225,37 @@ jobs:
       - name: Build web bundle and sync iOS
         run: npm run build:ios
 
+      # The Expo-Go-shaped trick: point the shell at a URL instead of its own
+      # bundled files. Sideload this once and every web change shows up with a
+      # pull-to-refresh — only Swift changes need a new IPA after that.
+      - name: Load the web app from a live server
+        if: inputs.server_url != ''
+        env:
+          SERVER_URL: ${{ inputs.server_url }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const path = "ios/App/App/capacitor.config.json";
+            const config = JSON.parse(fs.readFileSync(path, "utf8"));
+            const url = process.env.SERVER_URL.trim().replace(/\/+$/, "");
+            if (!/^https?:\/\//.test(url)) throw new Error("server_url must start with http:// or https://");
+            config.server = { ...(config.server || {}), url, cleartext: url.startsWith("http://") };
+            fs.writeFileSync(path, JSON.stringify(config, null, 2));
+            console.log("Loading the web app from", url);
+          '
+          # iOS blocks plain HTTP by default, so a LAN dev server needs an
+          # exception and the local-network prompt. HTTPS needs neither.
+          case "$SERVER_URL" in
+            http://*)
+              plutil -insert NSAppTransportSecurity -json '{"NSAllowsLocalNetworking": true}' ios/App/App/Info.plist
+              plutil -insert NSLocalNetworkUsageDescription \
+                -string 'AuraMind loads its development server from your local network.' \
+                ios/App/App/Info.plist
+              echo "Added a local-network exception for a plain-HTTP dev server."
+              ;;
+          esac
+
       - name: Build for a real device (unsigned)
         run: |
           set -o pipefail
@@ -255,6 +291,6 @@ jobs:
       - name: Upload the IPA
         uses: actions/upload-artifact@v7
         with:
-          name: auramind-ios-unsigned-ipa
+          name: ${{ inputs.server_url != '' && 'auramind-ios-live-reload-ipa' || 'auramind-ios-unsigned-ipa' }}
           path: auramind-gemini/build/AuraMind-unsigned.ipa
           if-no-files-found: error
