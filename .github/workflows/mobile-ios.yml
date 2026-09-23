@@ -16,6 +16,11 @@ on:
       - 'auramind-gemini/**'
       - '.github/workflows/mobile-ios.yml'
   workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Live reload: load the web app from this URL instead of the bundle (e.g. https://your-preview.vercel.app or http://192.168.1.20:3000). Leave empty for a normal build.'
+        required: false
+        default: ''
 
 concurrency:
   group: mobile-ios-${{ github.ref }}
@@ -157,3 +162,135 @@ jobs:
             ios-artifacts
             auramind-gemini/build/xcodebuild*.log
           if-no-files-found: ignore
+
+  # An unsigned device build, for putting the app on a real iPhone without a
+  # Mac and without an Apple Developer Program membership: download the
+  # artifact on Windows and let Sideloadly (or AltStore) sign it with a free
+  # Apple ID over USB. Signatures from a free account last 7 days.
+  #
+  # Two things matter for this app in particular:
+  #   - the widget extension rides along inside App.app/PlugIns, so the Live
+  #     Activity works; the sideloader must not strip app extensions.
+  #   - the Live Activity is requested with pushType: nil, which is what lets
+  #     it run under a free "personal team" signature at all: a push token
+  #     needs an APNs entitlement that free accounts do not get.
+  #
+  # `build` rather than `archive`: with signing off, archiving does not
+  # reliably place App.app inside the .xcarchive on recent Xcode, so the IPA
+  # is packaged by hand from the build products.
+  ios-device-ipa:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: auramind-gemini
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency-path: auramind-gemini/package-lock.json
+
+      - name: Write build env
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          {
+            echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-https://placeholder.supabase.co}"
+            echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-placeholder}"
+            echo "VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY:-}"
+            echo "VITE_API_BASE_URL=https://auramind.app"
+            echo "VITE_SSE_BASE=https://auramind.app"
+            echo "VITE_APP_URL=https://auramind.app"
+            echo "VITE_USE_PUTER=true"
+            echo "VITE_TURNSTILE_SITE_KEY=0x4AAAAAAAEsHm7dsqEhBi3Nr"
+          } > .env
+          echo "Wrote .env with $(grep -c '=' .env) entries (values not echoed)."
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web bundle and sync iOS
+        run: npm run build:ios
+
+      # The Expo-Go-shaped trick: point the shell at a URL instead of its own
+      # bundled files. Sideload this once and every web change shows up with a
+      # pull-to-refresh — only Swift changes need a new IPA after that.
+      - name: Load the web app from a live server
+        if: inputs.server_url != ''
+        env:
+          SERVER_URL: ${{ inputs.server_url }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const path = "ios/App/App/capacitor.config.json";
+            const config = JSON.parse(fs.readFileSync(path, "utf8"));
+            const url = process.env.SERVER_URL.trim().replace(/\/+$/, "");
+            if (!/^https?:\/\//.test(url)) throw new Error("server_url must start with http:// or https://");
+            config.server = { ...(config.server || {}), url, cleartext: url.startsWith("http://") };
+            fs.writeFileSync(path, JSON.stringify(config, null, 2));
+            console.log("Loading the web app from", url);
+          '
+          # iOS blocks plain HTTP by default, so a LAN dev server needs an
+          # exception and the local-network prompt. HTTPS needs neither.
+          case "$SERVER_URL" in
+            http://*)
+              plutil -insert NSAppTransportSecurity -json '{"NSAllowsLocalNetworking": true}' ios/App/App/Info.plist
+              plutil -insert NSLocalNetworkUsageDescription \
+                -string 'AuraMind loads its development server from your local network.' \
+                ios/App/App/Info.plist
+              echo "Added a local-network exception for a plain-HTTP dev server."
+              ;;
+          esac
+
+      - name: Build for a real device (unsigned)
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build | tee build/xcodebuild-device.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+          test -d build/device/Build/Products/Release-iphoneos/App.app
+
+      - name: Package the IPA
+        run: |
+          set -euo pipefail
+          APP=build/device/Build/Products/Release-iphoneos/App.app
+          # The Live Activity is useless if the extension did not come along.
+          if [ ! -d "$APP/PlugIns/AuraMindWidgets.appex" ]; then
+            echo "::error::widget extension missing from the app bundle"
+            exit 1
+          fi
+          rm -rf build/Payload
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          cd build && zip -qry AuraMind-unsigned.ipa Payload
+          ls -lh AuraMind-unsigned.ipa
+
+      - name: Upload the IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.server_url != '' && 'auramind-ios-live-reload-ipa' || 'auramind-ios-unsigned-ipa' }}
+          path: auramind-gemini/build/AuraMind-unsigned.ipa
+          if-no-files-found: error
