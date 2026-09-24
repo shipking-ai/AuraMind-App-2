@@ -3,9 +3,10 @@ name: Mobile iOS
 # Builds the iOS app for the simulator on a GitHub-hosted Mac, launches it in
 # an iPhone simulator and uploads a screenshot plus the app's log. The tour's
 # last step drives a real Live Activity (start + update) and the job fails
-# unless the plugin confirms both — the Dynamic Island layout proof. No Apple
-# Developer account or signing is needed for this; TestFlight uploads come
-# later as a separate, signed job.
+# unless the driver confirms both — read back from UserDefaults, so no log
+# capture is involved. A live-boot rebuild repeats the proof deterministically
+# (no tour timing). No Apple Developer account or signing is needed for this;
+# TestFlight uploads come later as a separate, signed job.
 
 on:
   pull_request:
@@ -168,12 +169,20 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity-updated.png
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-activity.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-activity.log || echo "(no Live Activity lines at all — the plugin was never called)"
-          grep -q "LIVE_ACTIVITY_STARTED:true" ../ios-artifacts/live-activity.log || {
-            echo "::error::Live Activity never started (missing LIVE_ACTIVITY_STARTED:true in the app log)"
+          # Ground truth that needs no log capture: the driver records every
+          # milestone to Preferences (UserDefaults), read back here. Values
+          # come from the bridge itself, so started=true IS native proof.
+          seen=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_seen 2>/dev/null || echo MISSING)
+          available=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_available 2>/dev/null || echo MISSING)
+          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_started 2>/dev/null || echo MISSING)
+          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_updated 2>/dev/null || echo MISSING)
+          echo "driver saw: $seen | available: $available | started: $started | updated: $updated"
+          [ "$started" = true ] || {
+            echo "::error::Live Activity never started (seen=$seen available=$available)"
             exit 1
           }
-          grep -q "LIVE_ACTIVITY_UPDATED:true" ../ios-artifacts/live-activity.log || {
-            echo "::error::Live Activity never updated (missing LIVE_ACTIVITY_UPDATED:true in the app log)"
+          [ "$updated" = true ] || {
+            echo "::error::Live Activity never updated (started=$started)"
             exit 1
           }
           echo "Live Activity started and updated."
@@ -206,11 +215,14 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
-          grep -q "LIVE_ACTIVITY_STARTED:true" ../ios-artifacts/live-boot.log || {
+          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_started 2>/dev/null || echo MISSING)
+          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_updated 2>/dev/null || echo MISSING)
+          echo "live-boot started: $started | updated: $updated"
+          [ "$started" = true ] || {
             echo "::error::Live Activity never started on live-boot"
             exit 1
           }
-          grep -q "LIVE_ACTIVITY_UPDATED:true" ../ios-artifacts/live-boot.log || {
+          [ "$updated" = true ] || {
             echo "::error::Live Activity never updated on live-boot"
             exit 1
           }

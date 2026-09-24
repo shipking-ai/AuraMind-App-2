@@ -18,6 +18,7 @@ import {
   startLiveActivity,
   updateLiveActivity,
 } from "../../lib/liveActivity";
+import { Preferences } from "../../lib/nativeShim";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
 import IOSChatDemo from "./IOSChatDemo";
@@ -59,6 +60,26 @@ export const IOS_PREVIEW_STEP_MS = 6000;
 export function previewTourUrl(path: string): string {
   const sep = path.includes("?") ? "&" : "?";
   return `${IOS_PREVIEW_BASE}${path}${sep}tour=1`;
+}
+
+/**
+ * Keys the driver records under (Capacitor Preferences → UserDefaults on
+ * iOS). CI reads them with `simctl spawn defaults read` — the one channel
+ * back from the simulator that doesn't depend on log capture at all.
+ */
+export const CI_LIVE_KEYS = {
+  seen: "auramind_ci_live_seen",
+  available: "auramind_ci_live_available",
+  started: "auramind_ci_live_started",
+  updated: "auramind_ci_live_updated",
+} as const;
+
+async function recordLiveMilestone(key: string, value: string): Promise<void> {
+  try {
+    await Preferences.set({ key, value });
+  } catch {
+    // Telemetry only — a driven session must never break over this.
+  }
 }
 
 /**
@@ -203,6 +224,7 @@ function Tour() {
  */
 function LiveActivityDriver() {
   const location = useLocation();
+  const routeKey = `${location.pathname}${location.search}`;
   const live = new URLSearchParams(location.search).get("live") === "1";
   useEffect(() => {
     if (!live) return;
@@ -216,11 +238,16 @@ function LiveActivityDriver() {
     void (async () => {
       // Probe first: its Swift side logs LIVE_ACTIVITY_PROBE, which tells CI
       // whether the bridge was reached at all (vs. a later request failure).
+      // Every milestone is also recorded to Preferences (UserDefaults), which
+      // CI reads back via `defaults read` — independent of log capture.
+      await recordLiveMilestone(CI_LIVE_KEYS.seen, routeKey);
       const available = await isLiveActivityAvailable();
+      await recordLiveMilestone(CI_LIVE_KEYS.available, String(available));
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_AVAILABLE:${available}`);
       const started = await startLiveActivity(payload(3));
+      await recordLiveMilestone(CI_LIVE_KEYS.started, String(started));
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_STARTED:${started}`);
@@ -228,6 +255,7 @@ function LiveActivityDriver() {
     const timer = window.setTimeout(() => {
       void (async () => {
         const updated = await updateLiveActivity(payload(5));
+        await recordLiveMilestone(CI_LIVE_KEYS.updated, String(updated));
         // Intentional: local-debug signal for the driven CI session.
         // eslint-disable-next-line no-console
         if (!cancelled) console.log(`LIVE_ACTIVITY_UPDATED:${updated}`);
@@ -237,7 +265,7 @@ function LiveActivityDriver() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [live]);
+  }, [live, routeKey]);
   return null;
 }
 
