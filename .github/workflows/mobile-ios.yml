@@ -166,7 +166,8 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity.png
           sleep 5
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity-updated.png
-          xcrun simctl spawn "$DEVICE" log show --last 5m --predicate 'process == "App"' > ../ios-artifacts/live-activity.log || true
+          xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-activity.log || true
+          grep "LIVE_ACTIVITY_" ../ios-artifacts/live-activity.log || echo "(no Live Activity lines at all — the plugin was never called)"
           grep -q "LIVE_ACTIVITY_STARTED:true" ../ios-artifacts/live-activity.log || {
             echo "::error::Live Activity never started (missing LIVE_ACTIVITY_STARTED:true in the app log)"
             exit 1

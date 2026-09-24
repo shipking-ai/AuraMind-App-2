@@ -1,6 +1,7 @@
 import ActivityKit
 import Capacitor
 import Foundation
+import os
 
 /**
  AuraLiveActivity — the study session on the Lock Screen and in the Dynamic
@@ -31,6 +32,13 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     /// The session currently on screen, if any.
     private var current: Any?
 
+    /// CI signal: the simulator log is the only channel back from this
+    /// process (WKWebView console never reaches it, and Swift `print` is not
+    /// reliably captured either). `os_log` always lands in the log store, so
+    /// `mobile-ios.yml` greps for these lines. Release builds are unaffected.
+    private static let ciLog = Logger(
+        subsystem: "com.auramind.app", category: "LiveActivity")
+
     @objc func isSupported(_ call: CAPPluginCall) {
         if #available(iOS 16.1, *) {
             call.resolve([
@@ -46,7 +54,7 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         guard #available(iOS 16.1, *), ActivityAuthorizationInfo().areActivitiesEnabled else {
             call.resolve(["started": false])
             #if DEBUG
-            print("[AuraMind] LIVE_ACTIVITY_STARTED:false (unsupported or not permitted)")
+            Self.ciLog.notice("LIVE_ACTIVITY_STARTED:false (unsupported or not permitted)")
             #endif
             return
         }
@@ -63,13 +71,13 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             current = activity
             call.resolve(["started": true, "id": activity.id])
             #if DEBUG
-            print("[AuraMind] LIVE_ACTIVITY_STARTED:true id=\(activity.id)")
+            Self.ciLog.notice("LIVE_ACTIVITY_STARTED:true id=\(activity.id, privacy: .public)")
             #endif
         } catch {
             // Out of activity slots, or the user revoked permission mid-session.
             call.resolve(["started": false])
             #if DEBUG
-            print("[AuraMind] LIVE_ACTIVITY_STARTED:false (request threw)")
+            Self.ciLog.notice("LIVE_ACTIVITY_STARTED:false (request threw)")
             #endif
         }
     }
@@ -85,7 +93,7 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             await activity.update(using: next)
             call.resolve(["updated": true])
             #if DEBUG
-            print("[AuraMind] LIVE_ACTIVITY_UPDATED:true")
+            Self.ciLog.notice("LIVE_ACTIVITY_UPDATED:true")
             #endif
         }
     }
