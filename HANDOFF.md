@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-21 (classroom portal + graded quizzes, memory sparks, Android listening, natural voices, push sender, aurora motion). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-22 (FSRS scheduler repair, the iPhone app, one special capability per platform, unsigned device IPA). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,9 +14,11 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main`; open PRs: #85 (natural voices, push sender, aurora motion), #68 (Dependabot, rebase requested after #78) |
+| Branch | `main` @ `1690bfc0`; open PRs: #88, #89 (both Dependabot, `api/`) |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks still list `build-and-test (20.x)` until changed in repo settings |
-| Migrations | all applied through `20260921000100_classroom_quiz_grading.sql` (verified live 2026-09-21) |
+| Migrations | all applied through `20260922000000_fsrs_scheduler_repair.sql` (verified live 2026-09-22) |
+| iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
+| Tests | 530 passed / 17 skipped on `main`, type-check clean (2026-09-22) |
 
 ---
 
@@ -47,6 +49,18 @@ the traps that cost real time.
    a Groq *preview* model (~$22 per 1M characters); if it is withdrawn, swap
    `SPEECH_MODEL`/`SPEECH_VOICES` in `api/_aiHandler.ts` and `AI_VOICES` in
    `src/services/voice/aiVoice.ts`.
+7. **Put the iPhone build on a phone.** Everything iOS is CI-verified only.
+   Run `mobile-ios.yml` (workflow_dispatch), download
+   `auramind-ios-unsigned-ipa`, sign it with Sideloadly and a free Apple ID —
+   full steps under "Getting the app onto an iPhone from Windows" below. The
+   three things that have never executed on hardware: Siri (`AuraMindIntents`),
+   the Live Activity, and native dictation (`SFSpeechRecognizer`).
+8. **Apple Developer Program ($99/yr) is the only way past the 7-day wall.**
+   A free Apple ID signature expires weekly, allows 3 sideloaded apps, and
+   grants no App Groups (so Home Screen widgets can't read the due count) and
+   no APNs. Paying also unlocks TestFlight, where internal testers get builds
+   without App Review. Nothing in the code depends on this; it's purely a
+   distribution ceiling.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -98,8 +112,23 @@ value:
   appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
   loudness streams and silence ends with `no-speech`. **Still needs one phone
   test with a real spoken answer**, since the emulator mic can't be fed audio.
-- **Dependabot #68** (jsdom 30, vitest 5, jest-dom 7): #78 is merged, so it
-  passes once rebased (`@dependabot rebase`, not a plain re-run).
+- **Per-platform capabilities — shipped** (2026-09-22, below): Study Float
+  (desktop PiP), Chrome built-in AI, the Windows 11 widget board, Android 16
+  Live Updates, iOS Live Activity + Siri. Each is additive and invisible where
+  unsupported. What's *not* done: none of the iOS half has run on hardware.
+- **A personal FSRS tuner.** #87 replaced the broken scheduler with ts-fsrs and
+  fixed default weights. The per-user optimizer that used to exist was removed
+  with the old math; rebuilding it on the FSRS-6 optimizer against
+  `card_reviews` is the natural follow-up, and there are now 38 reviewed cards
+  of real data to fit against (too few to fit today — wait for a few hundred).
+- **Drive a Live Activity in CI.** `mobile-ios.yml` screenshots the simulator,
+  but nothing starts a session, so the Dynamic Island layout is unverified by
+  anything except the compiler. A `simctl`-driven session plus a screenshot
+  would catch layout regressions the type checker can't see.
+- **An iOS-preview web deploy.** The iOS shell already renders in a browser at
+  `/__preview/ios` behind `VITE_IOS_PREVIEW=true` (see `App.tsx:125`);
+  deploying that would let the iPhone design be reviewed in mobile Safari
+  without sideloading anything.
 - **Push sender — built, awaiting credentials.** Server sender, admin send
   endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
   nothing delivers until the Firebase console steps at the end of that
@@ -238,6 +267,70 @@ Capacitor treats a `schedule.on` pattern as one-shot unless the flag is set.
 Everything looks healthy — permission granted, notifications pending — and the
 reminder simply fires once and never again.
 
+### `setRequestPromotedOngoing` is API 36.1, not 36
+
+Android 16's promoted (Live Update) notifications look like one API level.
+They aren't: `Notification.ProgressStyle` landed in 36, but
+`setRequestPromotedOngoing` only exists in **36.1**, and compileSdk 36 rev 2
+fails to compile a direct call. `AuraLiveUpdatePlugin.requestPromotion` calls
+it reflectively and no-ops when absent, which also keeps the plugin working on
+older Androids. If a platform method "should exist" and doesn't, check it with
+`javap -classpath $ANDROID_HOME/platforms/android-36/android.jar` before
+believing the docs.
+
+### Document Picture-in-Picture needs a gesture and a real browser window
+
+`documentPictureInPicture.requestWindow()` throws `NotAllowedError` without
+user activation, so the Study Float button opens the window inside the click
+handler — never after an await. The PiP document starts with no styles at all;
+`copyStyles` clones every stylesheet in, and cross-origin sheets throw on
+`cssRules`, so each one is copied inside its own try.
+
+Embedded/automation browser panes **cannot host a PiP window** at all — it
+fails with `InvalidStateError: Internal error: no window`. That is the harness,
+not the feature. Verify the reviewer UI by mounting `FloatReviewer` at float
+size in a normal page; the window itself needs a real Chrome or Edge.
+
+### The Xcode project file is hand-maintained
+
+There is no Mac here, so `ios/App/App.xcodeproj/project.pbxproj` is edited as
+text. Every object needs a **globally unique 24-hex ID** — copying a nearby
+block and keeping its IDs produces a project that still parses and then builds
+the wrong file (this happened once with `AuraMindIntents.swift` inheriting
+`MainViewController.swift`'s IDs). After any pbxproj edit, check: unique keys,
+no reference to an undefined ID, balanced braces. CI is a slow way to find out.
+
+### Free provisioning is why the Live Activity uses `pushType: nil`
+
+`Activity.request(..., pushType: nil)` is the only mode a free Apple ID can
+sign: a push token needs an APNs entitlement that personal teams don't get.
+Free accounts also have no App Groups, so anything that shares data between the
+app and the widget extension silently reads nothing on a sideloaded build.
+Keep the Live Activity's state flowing through ActivityKit in-process.
+
+### iOS blocks plain HTTP, which breaks a LAN dev server silently
+
+A live-reload IPA pointed at `http://192.168.x.x:3000` installs fine and then
+shows a white screen — App Transport Security refuses the connection with
+nothing in the UI. `mobile-ios.yml` adds `NSAllowsLocalNetworking` plus
+`NSLocalNetworkUsageDescription` when the URL is `http://`. HTTPS needs
+neither.
+
+### A real `Cache` hands out a fresh `Response` for every match
+
+A `Map`-based Cache stub does not: the second read gets a body that the first
+already consumed, so the code under test sees an empty payload. A widget-worker
+test failed this way and the bug was entirely in the stub. Store the body
+*text* in the stub and build a new `Response` per match before suspecting the
+worker.
+
+### Green vitest does not mean green CI
+
+`vi.fn()` with no type argument gives `mock.calls` an empty tuple type, so
+indexing it is a type error that only `tsc` sees — the tests pass locally and
+the PR fails on type-check. Run `npm run type-check` after *adding tests*, not
+only after changing source.
+
 ---
 
 ## Environment quirks (this machine)
@@ -249,7 +342,16 @@ reminder simply fires once and never again.
 - **PowerShell has no `&&`.** Use `;` or separate commands.
 - **The Supabase MCP connection is read-only.** Writes go through PostgREST
   with the service-role key from the root `.env`, or through
-  `npm run migrate`. The linked CLI works for reads and rolled-back tests:
+  `npm run migrate`.
+- **WSL sandboxes reach Windows npm via `powershell.exe`.** The repo lives on
+  `/mnt/c/...` and its `node_modules` hold Windows native binaries, so Linux
+  tools that need them (vitest → rollup) fail with "Cannot find module
+  @rollup/rollup-linux-x64-gnu" — never `npm install` from the Linux side,
+  it would replace the Windows binaries. Instead run Windows tooling:
+  `powershell.exe -NoProfile -Command 'Set-Location "auramind-gemini"; npm test -- --run'`.
+  It starts in the project root, so the Set-Location is optional there. Bash
+  eats `$variables` inside double-quoted -Command strings — single-quote the
+  whole command and use double quotes inside. Allow ~2 min for the suite. The linked CLI works for reads and rolled-back tests:
   `npx supabase@latest db query --linked -f file.sql -o json`.
 - **Claude Code's auto mode blocks** `gh pr merge` on unreviewed PRs,
   branch-protection edits and production migrations. Those are done by hand
@@ -305,6 +407,44 @@ the app.
 
 ---
 
+## Verifying iOS changes (no Mac)
+
+Everything iOS happens on GitHub's macOS runners via `.github/workflows/mobile-ios.yml`:
+
+- **`ios-simulator`** — builds for the simulator, boots it, and screenshots
+  the `/__preview/ios` tour. This is the fast loop: push, read the artifact.
+- **`ios-device-ipa`** (workflow_dispatch) — builds `-sdk iphoneos` with
+  `CODE_SIGNING_ALLOWED=NO`, asserts `App.app/PlugIns/AuraMindWidgets.appex`
+  exists, and zips `Payload/` by hand into `AuraMind-unsigned.ipa`. It uses
+  `build`, not `archive`: with signing off, archiving doesn't reliably place
+  `App.app` in the `.xcarchive`.
+  Optional `server_url` input rewrites `capacitor.config.json` to load the web
+  app from a URL instead of its own bundle — the Expo-Go-shaped trick. Sideload
+  once and every web change arrives with a pull-to-refresh; only Swift changes
+  need a new IPA.
+
+Swift that only CI compiles is still unverified behaviour. Compiling proves the
+types line up and nothing else.
+
+### Getting the app onto an iPhone from Windows
+
+1. Run `mobile-ios.yml` (Actions → Run workflow), then
+   `gh run download <id> -n auramind-ios-unsigned-ipa -D <dir>`. `gh` unzips
+   the artifact, so what lands is the real `.ipa`, ~70 MB.
+2. Install **Sideloadly**. It needs Apple's own iTunes *and* iCloud from
+   apple.com — the Microsoft Store versions don't expose the device.
+3. Plug the phone in, trust the computer, drag the IPA into Sideloadly, enter
+   the Apple ID, Start. **Leave "Remove app extensions" unchecked** — that
+   checkbox strips the widget extension, i.e. the Live Activity.
+4. On the phone: Settings → General → VPN & Device Management → the Apple ID →
+   Trust. Until then launching fails with a vague "Untrusted Developer".
+
+Signatures last **7 days** on a free account (re-run Sideloadly, or use AltStore
+Classic which re-signs over Wi-Fi), 3 apps at a time, 10 app IDs per week — the
+app plus its extension burn two per sideload.
+
+---
+
 ## What changed recently
 
 `git log --oneline -20` covers it, but the themes:
@@ -318,6 +458,11 @@ the app.
   de-boxed home and library, real type scale
 - **Native** — haptics on the study loop, home-screen widget, one loading
   screen instead of two, reminders synced at app start
+- **Platform reach** — an iPhone app with its own design rather than a port,
+  and one capability per platform that only that platform can offer (PiP float,
+  on-device AI, Windows widget board, Live Updates, Live Activity + Siri)
+- **Scheduling** — the FSRS implementation was arithmetically wrong and is now
+  ts-fsrs; bad intervals in production were repaired by migration
 
 ---
 
@@ -805,7 +950,8 @@ the pure module was verified by compiling `auraDepth.ts` with tsc and running
 20 runtime assertions against the real code, which caught two bugs a review
 would have missed: IEEE `-0` from `0 × negative depth` (broke `toBe(0)`) and
 an over-eager `!Number.isFinite` guard sending Infinity to 0 instead of
-saturating. Vitest suite should be run from the Windows side (`npm test`).
+saturating. Vitest suite run Windows-side after commit: **57 files / 484
+tests green** (472 existing + 12 new), via the powershell.exe bridge below.
 
 ### Traps found here
 
@@ -815,3 +961,136 @@ saturating. Vitest suite should be run from the Windows side (`npm test`).
   may be absent.
 - **`(900 * 0.05).toFixed(2)` is `"45.00"`, not `"45"`** — the rounding helper
   trims trailing zeros; don't write test expectations with toFixed against it.
+
+---
+
+## 2026-09-22 - FSRS was arithmetically wrong (#87)
+
+The scheduler had been hand-rolled and the math was broken: intervals came out
+roughly **140x too long**, so a Hard rating could schedule a card 36,500 days
+out. Nobody noticed because a wrong interval looks exactly like a right one
+until the card fails to come back.
+
+### What shipped
+
+- **`services/study/fsrs.ts` now delegates to `ts-fsrs` (FSRS-6)** — the
+  official implementation, instead of a reimplementation of the paper.
+  `calculateSRS` / `previewIntervals` / `formatInterval` /
+  `retentionFromSetting` in `services/study/srs.ts` keep their signatures, so
+  callers are unchanged.
+- **`supabase/migrations/20260922000000_fsrs_scheduler_repair.sql`** — one-off
+  repair of schedules already written by the broken code: reviewed cards drop
+  their stored `fsrs_state` (the scheduler rebuilds it from the interval on the
+  next review, via `getFSRSState`'s fallback), intervals are capped at 30 days,
+  and anything due more than 30 days out is due now. Never-reviewed cards are
+  untouched — their `fsrs_state` may hold a personalised starting difficulty.
+- The **UPDATE is gated on the `schema_migrations` ledger**, so re-running the
+  file can't wipe progress made under the new scheduler. Worth copying: a
+  repair migration is the one kind that is actively dangerous to re-run.
+
+### Verification
+
+Applied to production by hand (2026-09-22 14:34Z) and checked after:
+`still_far_future=0`, `interval_over_30=0`, `reviewed_cards=38`,
+`reviewed_with_state=0`, `max_interval=30`.
+
+### Traps found here
+
+- **The personal FSRS tuner went with the old math.** `fsrsAdaptation`'s
+  weight vector was fitted to the broken scheduler, so it had to go; a
+  replacement should use the FSRS-6 optimizer against `card_reviews`. 38
+  reviewed cards is far too little to fit — leave it until there are hundreds.
+- **A migration only on `main` is not in your working copy.** Checking out a
+  branch that predates it and running `npm run migrate` gives a confusing
+  "file not found"; `git checkout origin/main -- supabase/migrations/<file>`
+  first. Apply with the repo's own runner (`node run-migrations.js`), not the
+  Supabase CLI, which needs the file under a linked project.
+
+---
+
+## 2026-09-22 - The iPhone app (#86)
+
+The brief was explicit: **not** a reskinned Android build. iOS gets its own
+design language and the capabilities only iOS has.
+
+### What shipped
+
+- **`components/ios/`** — `IOSShell`, `IOSScreens`, `IOSStudySession`,
+  `IOSChatView`, `IOSSettingsScreen`, `IOSWelcomeScreen`, plus `iosDesign.ts`
+  (tokens) and `iosHaptics.ts`. Large titles that collapse on scroll, grouped
+  inset lists, a real tab bar, sheet-style presentation — the platform's
+  grammar, not a translation of the Android one.
+- **Study, two ways** — the card can be a *deck* (swipe to grade) or a
+  *notebook* page, chosen by the learner rather than by us.
+- **Chat that isn't a message list.** Three modes: Talk, Notebook and Cards.
+- **Siri** — `ios/App/App/AuraMindIntents.swift` exposes "Quiz me" and "Cards
+  due" through `AppShortcutsProvider`. The spoken due count comes from what the
+  app last published, so it's stale until the app has been opened once.
+- **Live Activity + Dynamic Island** — `AuraLiveActivityPlugin.swift` and the
+  `AuraMindWidgets` extension (`StudySessionAttributes`,
+  `StudySessionLiveActivity`). Requested with `pushType: nil`; see the trap.
+- **Native dictation** — `SFSpeechRecognizer` behind the same Web Speech shape
+  the Android plugin uses, so `useVoiceStudy` is untouched on both.
+- **CI screenshots** — `mobile-ios.yml` boots a simulator and photographs the
+  `/__preview/ios` tour, which is how this was designed without a Mac.
+
+### Verification
+
+Type-check, lint and vitest green (`iosScreens.test.tsx`,
+`iosStudyAndChat.test.tsx`); simulator screenshots reviewed each push.
+**Nothing here has run on a physical phone** — Siri, the Live Activity and
+dictation in particular are compile-verified only.
+
+---
+
+## 2026-09-22 - One capability per platform (#90, #92, #93, #91)
+
+The principle: each platform gets something it alone can do, and every one of
+them is additive — absent the API, the app is exactly what it was.
+
+- **Study Float (#90), desktop web.** A Document Picture-in-Picture window that
+  floats review cards over everything else. `components/float/StudyFloat.tsx`:
+  `isStudyFloatSupported`, `buildFloatQueue` (due cards, capped at 50),
+  `copyStyles`, and `FloatReviewer` — Space/Enter flips, 1–4 grade, Esc closes,
+  and the grade labels are the real intervals from `previewIntervals`.
+  Grading goes through the new **`services/study/quickReview.ts`**, shared with
+  MemorySpark so there is one grade path, not three.
+- **On-device AI (#92), Chrome/Edge.** `lib/builtInAI.ts` wraps Summarizer,
+  Translator and LanguageDetector (Gemini Nano, in the browser): free, offline,
+  and the card text never leaves the machine. `LocalAIAssist` adds "Key idea"
+  and "Translate" to the rating bar, web-only. Every call is raced against a
+  timeout because `availability()` can hang on the component updater, and every
+  failure resolves to "unavailable" rather than a permanent spinner.
+- **The Windows 11 widget board (#93).** `public/widget-sw.js` plus an Adaptive
+  Card template and data; `lib/windowsWidget.ts` publishes due count, deck and
+  streak from the app, deduped, and `WindowsWidgetSync` mounts it next to
+  `MemorySpark`. The manifest `widgets` member and `workbox.importScripts` are
+  wired in `lib/pwa.ts`.
+- **Android 16 Live Updates (#91).** `AuraLiveUpdatePlugin.java` posts the
+  session as a promoted ongoing notification: `Notification.ProgressStyle` with
+  a segment per card, points for the ones still to come back, and
+  `setShortCriticalText` for the count. Verified on a real Android 17 emulator
+  image, not just compiled.
+- **The facade that stopped the duplication** — `lib/sessionLiveUpdate.ts`.
+  Android's Live Update and iOS's Live Activity want the same three facts in
+  different shapes, and `StudyModePage` was growing one effect for each.
+  `startSessionLiveUpdate` takes the session and fans out; adding a third
+  platform means editing one file.
+
+### Traps found here
+
+See Traps above: PiP needs a gesture (and can't run in an embedded pane),
+`setRequestPromotedOngoing` is 36.1, a stubbed `Cache` replays consumed bodies,
+and vitest passing doesn't mean `tsc` passes.
+
+---
+
+## 2026-09-23 - An IPA you can sideload (#94)
+
+`mobile-ios.yml` gained `ios-device-ipa`, so an iPhone build can be installed
+without a Mac and without the $99 program — full runbook under "Verifying iOS
+changes (no Mac)" above. The `server_url` input turns it into a live-reload
+shell that loads the web app from a URL, which makes iteration a refresh
+instead of a 15-minute round trip.
+
+Run 35805655820 on `main`: both jobs green, `auramind-ios-unsigned-ipa`, 70 MB.
