@@ -32,7 +32,7 @@ describe('liveActivity bridge', () => {
 
   it('starts a session on iOS', async () => {
     const la = await load();
-    await la.startLiveActivity(session);
+    await expect(la.startLiveActivity(session)).resolves.toBe(true);
     expect(plugin.start).toHaveBeenCalledWith(session);
   });
 
@@ -45,10 +45,10 @@ describe('liveActivity bridge', () => {
 
   it('skips identical updates and re-pushes when progress moves', async () => {
     const la = await load();
-    await la.updateLiveActivity(session);
-    await la.updateLiveActivity({ ...session });
+    await expect(la.updateLiveActivity(session)).resolves.toBe(true);
+    await expect(la.updateLiveActivity({ ...session })).resolves.toBe(false);
     expect(plugin.update).toHaveBeenCalledTimes(1);
-    await la.updateLiveActivity({ ...session, done: 4 });
+    await expect(la.updateLiveActivity({ ...session, done: 4 })).resolves.toBe(true);
     expect(plugin.update).toHaveBeenCalledTimes(2);
     await la.endLiveActivity();
     await la.updateLiveActivity({ ...session, done: 4 });
@@ -74,7 +74,7 @@ describe('liveActivity bridge', () => {
     plugin.start.mockRejectedValueOnce(new Error('no bridge'));
     plugin.isSupported.mockRejectedValueOnce(new Error('no bridge'));
     const la = await load();
-    await expect(la.startLiveActivity(session)).resolves.toBeUndefined();
+    await expect(la.startLiveActivity(session)).resolves.toBe(false);
     expect(await la.isLiveActivityAvailable()).toBe(false);
   });
 });

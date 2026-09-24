@@ -45,6 +45,9 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func start(_ call: CAPPluginCall) {
         guard #available(iOS 16.1, *), ActivityAuthorizationInfo().areActivitiesEnabled else {
             call.resolve(["started": false])
+            #if DEBUG
+            print("[AuraMind] LIVE_ACTIVITY_STARTED:false (unsupported or not permitted)")
+            #endif
             return
         }
         // Starting twice would leave the first activity stranded on the Lock
@@ -59,9 +62,15 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 pushType: nil)
             current = activity
             call.resolve(["started": true, "id": activity.id])
+            #if DEBUG
+            print("[AuraMind] LIVE_ACTIVITY_STARTED:true id=\(activity.id)")
+            #endif
         } catch {
             // Out of activity slots, or the user revoked permission mid-session.
             call.resolve(["started": false])
+            #if DEBUG
+            print("[AuraMind] LIVE_ACTIVITY_STARTED:false (request threw)")
+            #endif
         }
     }
 
@@ -75,6 +84,9 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             await activity.update(using: next)
             call.resolve(["updated": true])
+            #if DEBUG
+            print("[AuraMind] LIVE_ACTIVITY_UPDATED:true")
+            #endif
         }
     }
 

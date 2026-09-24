@@ -59,6 +59,29 @@ npm run build
 
 The built files will be in `auramind-gemini/dist/`.
 
+## iOS Preview Deploy
+
+A public build of the sample-data iPhone screens (`/__preview/ios?tour=1`)
+for reviewing the iOS design in mobile Safari — no sideloading, no account.
+The tour uses bundled sample data and makes no network calls, so placeholder
+Supabase env is enough.
+
+```bash
+cd auramind-gemini
+npm run build:ios-preview
+```
+
+Then host `dist/` anywhere static, or create a second Vercel project on the
+same repo with:
+
+- Build command: `cd auramind-gemini && npm run build:ios-preview`
+- Output directory: `auramind-gemini/dist`
+- Env: `VITE_IOS_PREVIEW=true`, plus `VITE_SUPABASE_URL` /
+  `VITE_SUPABASE_ANON_KEY` (placeholders are fine — the tour never calls them)
+
+Release builds are unaffected: with `VITE_IOS_PREVIEW` unset, `/__preview/ios`
+redirects to `/`.
+
 ## Environment Variables
 
 ### Required

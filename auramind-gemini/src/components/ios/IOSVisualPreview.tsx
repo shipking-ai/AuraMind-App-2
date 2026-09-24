@@ -13,6 +13,7 @@ import type { Card, Deck, UserProfile } from "../../types";
 import { DashboardWorkspaceProvider } from "../../contexts/DashboardWorkspaceContext";
 import { IOSShell } from "./IOSShell";
 import { IOSLibrary, IOSStudy, IOSToday } from "./IOSScreens";
+import { startLiveActivity, updateLiveActivity } from "../../lib/liveActivity";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
 import IOSChatDemo from "./IOSChatDemo";
@@ -22,6 +23,15 @@ const AIChatPage = React.lazy(() => import("../chat/AIChatPage"));
 const StudyModePage = React.lazy(() => import("../../pages/study/StudyModePage"));
 
 export const IOS_PREVIEW_BASE = "/__preview/ios";
+
+/**
+ * The tour's Live Activity step: a study session URL that also drives a real
+ * ActivityKit session. Off-iOS the bridge no-ops, so the step is an ordinary
+ * session screenshot everywhere else.
+ */
+export const IOS_PREVIEW_LIVE_STEP = "/session/neuro?live=1";
+/** Delay between the driven start and update, inside one tour step. */
+export const LIVE_ACTIVITY_UPDATE_MS = 4000;
 
 /** Screens in tour order, and how long each stays up (ms). */
 export const IOS_PREVIEW_TOUR = [
@@ -34,8 +44,17 @@ export const IOS_PREVIEW_TOUR = [
   "/aura/notebook",
   "/aura/cards",
   "/session/neuro",
+  // Last: a live study session that drives a real Live Activity (start +
+  // update, never ended) so CI photographs the Dynamic Island for real.
+  IOS_PREVIEW_LIVE_STEP,
 ];
 export const IOS_PREVIEW_STEP_MS = 6000;
+
+/** Tour navigation that preserves a step's own query string (?live=1). */
+export function previewTourUrl(path: string): string {
+  const sep = path.includes("?") ? "&" : "?";
+  return `${IOS_PREVIEW_BASE}${path}${sep}tour=1`;
+}
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -144,7 +163,7 @@ function Tour() {
     if (!touring) return;
     const timers = IOS_PREVIEW_TOUR.map((path, i) =>
       window.setTimeout(
-        () => navigate(`${IOS_PREVIEW_BASE}${path}?tour=1`),
+        () => navigate(previewTourUrl(path)),
         i * IOS_PREVIEW_STEP_MS,
       ),
     );
@@ -152,6 +171,47 @@ function Tour() {
     // Runs once per tour start; the tour drives its own navigation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [touring]);
+  return null;
+}
+
+/**
+ * Drives a real Live Activity on the tour's live step (`?live=1`): start on
+ * mount, one update mid-step, never ended (the tour holds the screen for CI's
+ * screenshots). Results are logged for local debugging; CI asserts on the
+ * Swift plugin's own log lines instead (WKWebView console never reaches the
+ * simulator log). Preview-only; the route never exists in release builds.
+ */
+function LiveActivityDriver() {
+  const location = useLocation();
+  const live = new URLSearchParams(location.search).get("live") === "1";
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    const payload = (done: number) => ({
+      deckTitle: "Neuroscience Foundations",
+      total: 9,
+      done,
+      again: 1,
+    });
+    void (async () => {
+      const started = await startLiveActivity(payload(3));
+      // Intentional: local-debug signal for the driven CI session.
+      // eslint-disable-next-line no-console
+      if (!cancelled) console.log(`LIVE_ACTIVITY_STARTED:${started}`);
+    })();
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const updated = await updateLiveActivity(payload(5));
+        // Intentional: local-debug signal for the driven CI session.
+        // eslint-disable-next-line no-console
+        if (!cancelled) console.log(`LIVE_ACTIVITY_UPDATED:${updated}`);
+      })();
+    }, LIVE_ACTIVITY_UPDATE_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [live]);
   return null;
 }
 
@@ -178,6 +238,7 @@ export default function IOSVisualPreview() {
       onLogout={() => undefined}
     >
       <Tour />
+      <LiveActivityDriver />
       <Routes>
         <Route path="welcome" element={<IOSWelcomeScreen />} />
         {/* A study session is full-screen, like in the app (no tab bar). */}

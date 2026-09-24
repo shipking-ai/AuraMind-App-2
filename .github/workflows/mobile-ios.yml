@@ -1,7 +1,9 @@
 name: Mobile iOS
 
 # Builds the iOS app for the simulator on a GitHub-hosted Mac, launches it in
-# an iPhone simulator and uploads a screenshot plus the app's log. No Apple
+# an iPhone simulator and uploads a screenshot plus the app's log. The tour's
+# last step drives a real Live Activity (start + update) and the job fails
+# unless the plugin confirms both — the Dynamic Island layout proof. No Apple
 # Developer account or signing is needed for this; TestFlight uploads come
 # later as a separate, signed job.
 
@@ -100,7 +102,7 @@ jobs:
         run: |
           set -euo pipefail
           DEVICE=$(xcrun simctl list devices available -j \
-            | node -e "const d=JSON.parse(require('fs').readFileSync(0)).devices;const all=Object.entries(d).filter(([r])=>r.includes('iOS')).flatMap(([,v])=>v);const p=all.find(x=>/^iPhone \d+( Pro)?$/.test(x.name))||all.find(x=>x.name.startsWith('iPhone'));console.log(p.udid)")
+            | node -e "const d=JSON.parse(require('fs').readFileSync(0)).devices;const all=Object.entries(d).filter(([r])=>r.includes('iOS')).flatMap(([,v])=>v);const p=all.find(x=>/^iPhone \d+ Pro( Max)?$/.test(x.name))||all.find(x=>/^iPhone \d+( Pro)?$/.test(x.name))||all.find(x=>x.name.startsWith('iPhone'));console.log(p.udid)")
           echo "Simulator: $DEVICE"
           xcrun simctl boot "$DEVICE"
           xcrun simctl bootstatus "$DEVICE" -b
@@ -144,14 +146,36 @@ jobs:
           xcrun simctl io "$DEVICE" recordVideo --codec=h264 --force ../ios-artifacts/screens/tour.mp4 &
           REC=$!
           xcrun simctl launch "$DEVICE" com.auramind.app
-          # The tour shows a screen every 6 s once the app has loaded;
-          # shooting every 3 s catches each one at least once.
-          for i in $(seq -w 1 22); do
+          # The tour shows a screen every 6 s once the app has loaded (10
+          # steps incl. the Live Activity finale); shooting every 3 s catches
+          # each one at least once.
+          for i in $(seq -w 1 24); do
             sleep 3
             xcrun simctl io "$DEVICE" screenshot "../ios-artifacts/screens/shot-$i.png" >/dev/null
           done
           kill -INT "$REC" || true
           wait "$REC" || true
+
+      # The tour's last step holds a live study session with a real ActivityKit
+      # session (start + update, never ended). Photograph the Dynamic Island
+      # and fail closed if the plugin never confirmed start+update — that is
+      # the layout proof the type checker can't give.
+      - name: Drive a Live Activity and photograph it
+        run: |
+          set -euo pipefail
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity.png
+          sleep 5
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity-updated.png
+          xcrun simctl spawn "$DEVICE" log show --last 5m --predicate 'process == "App"' > ../ios-artifacts/live-activity.log || true
+          grep -q "LIVE_ACTIVITY_STARTED:true" ../ios-artifacts/live-activity.log || {
+            echo "::error::Live Activity never started (missing LIVE_ACTIVITY_STARTED:true in the app log)"
+            exit 1
+          }
+          grep -q "LIVE_ACTIVITY_UPDATED:true" ../ios-artifacts/live-activity.log || {
+            echo "::error::Live Activity never updated (missing LIVE_ACTIVITY_UPDATED:true in the app log)"
+            exit 1
+          }
+          echo "Live Activity started and updated."
 
       - name: Upload screenshot and logs
         if: always()

@@ -815,3 +815,29 @@ saturating. Vitest suite should be run from the Windows side (`npm test`).
   may be absent.
 - **`(900 * 0.05).toFixed(2)` is `"45.00"`, not `"45"`** — the rounding helper
   trims trailing zeros; don't write test expectations with toFixed against it.
+
+---
+
+## 2026-09-24 - Live Activity in CI + iOS preview deploy
+
+- **Live Activity is driven in CI now.** The preview tour ends on a live step
+  (`/session/neuro?live=1`, `LiveActivityDriver` in `IOSVisualPreview.tsx`):
+  real `startSessionLiveUpdate`, one `updateSessionLiveUpdate` 4s later, never
+  ended. The Swift plugin prints `LIVE_ACTIVITY_STARTED/UPDATED` under
+  `#if DEBUG` only; `mobile-ios.yml` fails closed unless both `true` lines are
+  in the sim log, and uploads `live-activity*.png` (Pro device, island
+  in-frame). `start/updateLiveActivity` now resolve `boolean` instead of
+  `void` (callers ignore it; `liveActivity.test.ts` updated). Tour entries
+  with query strings need `previewTourUrl` — naive string concat produced
+  `?live=1?tour=1`.
+- **iOS preview deploy:** `npm run build:ios-preview`
+  (`scripts/build-ios-preview.mjs` — a wrapper because PowerShell has no
+  inline-env syntax) bakes `VITE_IOS_PREVIEW=true`; verified present in the
+  preview bundle and absent (`void 0`) in release. Hosting is a second Vercel
+  project (steps in DEPLOYMENT.md); release builds redirect `/__preview/ios`
+  to `/`.
+- **Incidental:** removed dead `liveUpdate` direct imports in
+  `StudyModePage.tsx` (the facade replaced them; lint was red on `main`);
+  `npm ci` was required first — `node_modules` was missing `ts-fsrs`/`ws`.
+
+Full suite 553 green at the time.
