@@ -13,11 +13,16 @@ import type { Card, Deck, UserProfile } from "../../types";
 import { DashboardWorkspaceProvider } from "../../contexts/DashboardWorkspaceContext";
 import { IOSShell } from "./IOSShell";
 import { IOSLibrary, IOSStudy, IOSToday } from "./IOSScreens";
-import { startLiveActivity, updateLiveActivity } from "../../lib/liveActivity";
+import {
+  isLiveActivityAvailable,
+  startLiveActivity,
+  updateLiveActivity,
+} from "../../lib/liveActivity";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
 import IOSChatDemo from "./IOSChatDemo";
 import { StudyPreviewContext } from "../../pages/study/studyPreview";
+import { readClientEnv } from "../../lib/env";
 
 const AIChatPage = React.lazy(() => import("../chat/AIChatPage"));
 const StudyModePage = React.lazy(() => import("../../pages/study/StudyModePage"));
@@ -54,6 +59,16 @@ export const IOS_PREVIEW_STEP_MS = 6000;
 export function previewTourUrl(path: string): string {
   const sep = path.includes("?") ? "&" : "?";
   return `${IOS_PREVIEW_BASE}${path}${sep}tour=1`;
+}
+
+/**
+ * Deterministic Live Activity boot for CI: when the build sets
+ * `VITE_IOS_PREVIEW=live`, the preview opens straight on the live session
+ * step instead of walking the tour — no 60 s timing dependency, no
+ * screenshot-loop race. The regular `true` build keeps the full tour.
+ */
+export function isLiveBoot(): boolean {
+  return readClientEnv("VITE_IOS_PREVIEW") === "live";
 }
 
 const HOUR = 3_600_000;
@@ -160,6 +175,11 @@ function Tour() {
   const location = useLocation();
   const touring = new URLSearchParams(location.search).get("tour") === "1";
   useEffect(() => {
+    // Live-boot goes straight to the driven session; the tour is skipped.
+    if (isLiveBoot()) {
+      navigate(`${IOS_PREVIEW_BASE}${IOS_PREVIEW_LIVE_STEP}`);
+      return;
+    }
     if (!touring) return;
     const timers = IOS_PREVIEW_TOUR.map((path, i) =>
       window.setTimeout(
@@ -194,6 +214,12 @@ function LiveActivityDriver() {
       again: 1,
     });
     void (async () => {
+      // Probe first: its Swift side logs LIVE_ACTIVITY_PROBE, which tells CI
+      // whether the bridge was reached at all (vs. a later request failure).
+      const available = await isLiveActivityAvailable();
+      // Intentional: local-debug signal for the driven CI session.
+      // eslint-disable-next-line no-console
+      if (!cancelled) console.log(`LIVE_ACTIVITY_AVAILABLE:${available}`);
       const started = await startLiveActivity(payload(3));
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console

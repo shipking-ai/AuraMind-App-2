@@ -178,6 +178,44 @@ jobs:
           }
           echo "Live Activity started and updated."
 
+      # Deterministic proof without any tour timing: rebuild the web bundle
+      # with VITE_IOS_PREVIEW=live so the app boots straight into a driven
+      # session (probe + start + update), then assert on the plugin's log.
+      # NOTE: dotenv keeps the FIRST of duplicate keys, so the true value
+      # from the step above must be replaced, not appended to.
+      - name: Live-boot a driven Live Activity session
+        run: |
+          set -euo pipefail
+          sed -i '' 's/^VITE_IOS_PREVIEW=.*/VITE_IOS_PREVIEW=live/' .env
+          grep -q '^VITE_IOS_PREVIEW=live$' .env
+          npx vite build --mode mobile
+          npx cap copy ios
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build/xcodebuild-liveboot.log
+          xcrun simctl terminate "$DEVICE" com.auramind.app || true
+          xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$DEVICE" com.auramind.app
+          sleep 12
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
+          xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
+          grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
+          grep -q "LIVE_ACTIVITY_STARTED:true" ../ios-artifacts/live-boot.log || {
+            echo "::error::Live Activity never started on live-boot"
+            exit 1
+          }
+          grep -q "LIVE_ACTIVITY_UPDATED:true" ../ios-artifacts/live-boot.log || {
+            echo "::error::Live Activity never updated on live-boot"
+            exit 1
+          }
+          echo "Live Activity live-boot started and updated."
+
       - name: Upload screenshot and logs
         if: always()
         uses: actions/upload-artifact@v7

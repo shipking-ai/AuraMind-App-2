@@ -35,4 +35,21 @@ describe('iOS preview tour Live Activity finale', () => {
   it('fires the driven update inside the step hold', () => {
     expect(LIVE_ACTIVITY_UPDATE_MS).toBeLessThan(IOS_PREVIEW_STEP_MS);
   });
+
+  it('live-boot opens straight on the driven session (CI, no tour timing)', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_IOS_PREVIEW', 'live');
+    const mod = await import('../components/ios/IOSVisualPreview');
+    expect(mod.isLiveBoot()).toBe(true);
+  });
+
+  it('regular preview and release builds do not live-boot', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_IOS_PREVIEW', 'true');
+    expect((await import('../components/ios/IOSVisualPreview')).isLiveBoot()).toBe(false);
+    vi.resetModules();
+    vi.stubEnv('VITE_IOS_PREVIEW', '');
+    expect((await import('../components/ios/IOSVisualPreview')).isLiveBoot()).toBe(false);
+    vi.unstubAllEnvs();
+  });
 });

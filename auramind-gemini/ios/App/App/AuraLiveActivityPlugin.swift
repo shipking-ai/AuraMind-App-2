@@ -41,12 +41,19 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func isSupported(_ call: CAPPluginCall) {
         if #available(iOS 16.1, *) {
+            let enabled = ActivityAuthorizationInfo().areActivitiesEnabled
             call.resolve([
                 "supported": true,
-                "enabled": ActivityAuthorizationInfo().areActivitiesEnabled,
+                "enabled": enabled,
             ])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_PROBE supported=true enabled=\(enabled, privacy: .public)")
+            #endif
         } else {
             call.resolve(["supported": false, "enabled": false])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_PROBE supported=false")
+            #endif
         }
     }
 
