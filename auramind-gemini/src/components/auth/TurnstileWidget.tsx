@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { readClientEnv } from '../../lib/env';
+import { Capacitor } from '../../lib/nativeShim';
 
 /**
  * Cloudflare Turnstile, wrapped for Supabase auth.
@@ -56,6 +57,11 @@ function loadTurnstileScript(): Promise<void> {
 
 /** True when a site key is configured, so callers know whether to require a token. */
 export function isTurnstileEnabled(): boolean {
+  // Native shells run from capacitor://localhost, which Cloudflare Turnstile
+  // can never issue a token for. Requiring one bricks password auth on iOS /
+  // Android with "Couldn't load the verification check". Server-side captcha
+  // must be OFF in Supabase (Auth -> Protection) for native logins to succeed.
+  if (Capacitor.isNativePlatform()) return false;
   return Boolean(readClientEnv('VITE_TURNSTILE_SITE_KEY'));
 }
 
@@ -175,6 +181,9 @@ const TurnstileWidget: React.FC<Props> = ({ onToken, handleRef, className }) => 
   }, [siteKey]);
 
   if (!siteKey) return null;
+  // Native shells never get a token (see isTurnstileEnabled). Render nothing
+  // instead of a perpetually failing widget.
+  if (Capacitor.isNativePlatform()) return null;
 
   return (
     <div className={className}>
