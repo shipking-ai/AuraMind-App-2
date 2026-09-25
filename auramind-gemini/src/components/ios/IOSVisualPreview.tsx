@@ -71,6 +71,7 @@ export function previewTourUrl(path: string): string {
  */
 export const CI_LIVE_KEYS = {
   seen: "auramind_ci_live_seen",
+  session: "auramind_ci_live_session",
   available: "auramind_ci_live_available",
   started: "auramind_ci_live_started",
   updated: "auramind_ci_live_updated",
@@ -274,6 +275,17 @@ function LiveActivityDriver() {
 /** StudyModePage reads :deckId; the preview route names it the same. */
 function StudySession() {
   // StudyModePage draws the iOS session itself when given preview data.
+  // The mount recording proves (via UserDefaults) that a session screen
+  // rendered at all — it discriminates "tour never got here" from "the
+  // Live Activity bridge failed" when the driver keys are missing.
+  const location = useLocation();
+  useEffect(() => {
+    void recordLiveMilestone(
+      CI_LIVE_KEYS.session,
+      `session-mounted:${location.pathname}${location.search}`,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return <StudyModePage />;
 }
 

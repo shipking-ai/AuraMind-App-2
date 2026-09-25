@@ -172,14 +172,15 @@ jobs:
           # Ground truth that needs no log capture: the driver records every
           # milestone to Preferences. Both web and native prefix keys with
           # `CapacitorStorage.` — reading the bare key always misses.
-          seen=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_seen 2>/dev/null || echo MISSING)
-          available=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_available 2>/dev/null || echo MISSING)
+          for k in session seen available started updated; do
+            v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
+            echo "driver $k: $v"
+          done
           started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
           updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
-          echo "driver saw: $seen | available: $available | started: $started | updated: $updated"
           # Advisory only: this step inherits the tour's timing, so a miss
           # here is timing evidence, not proof. The live-boot step below gates.
-          [ "$started" = true ] && [ "$updated" = true ] && echo "Live Activity started and updated." || echo "::warning::Tour-timed Live Activity proof missed (seen=$seen available=$available started=$started updated=$updated)"
+          [ "$started" = true ] && [ "$updated" = true ] && echo "Live Activity started and updated." || echo "::warning::Tour-timed Live Activity proof missed (started=$started updated=$updated, see driver lines above)"
 
       # Deterministic proof without any tour timing: rebuild the web bundle
       # with VITE_IOS_PREVIEW=live so the app boots straight into a driven
@@ -205,10 +206,14 @@ jobs:
           xcrun simctl terminate "$DEVICE" com.auramind.app || true
           xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
           xcrun simctl launch "$DEVICE" com.auramind.app
-          sleep 12
+          sleep 25
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
+          for k in session seen available started updated; do
+            v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
+            echo "live-boot $k: $v"
+          done
           started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
           updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
           echo "live-boot started: $started | updated: $updated"
