@@ -19,7 +19,7 @@ import {
   updateLiveActivity,
 } from "../../lib/liveActivity";
 import { Preferences } from "../../lib/nativeShim";
-import { Device } from "../../lib/nativeShim";
+import { Capacitor, Device } from "../../lib/nativeShim";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
 import IOSChatDemo from "./IOSChatDemo";
@@ -238,12 +238,17 @@ function LiveActivityDriver() {
   const routeKey = `${location.pathname}${location.search}`;
   const live = new URLSearchParams(location.search).get("live") === "1";
   // Visible state for screenshots: the simulator has no debugger, so the
-  // driver paints its own progress (preview-only, live step only). A human
-  // reading the CI artifact can tell pending (bridge hung) from resolved.
-  const [badge, setBadge] = useState("live:waiting-bridge");
+  // driver paints its own progress (preview-only, live step only). Cumulative
+  // tokens — a human reading the CI artifact sees exactly how far the chain
+  // got (bridge → registration → request → update).
+  const [badge, setBadge] = useState("live:boot");
   useEffect(() => {
     if (!live) return;
     let cancelled = false;
+    let finished = false;
+    const mark = (token: string) => {
+      if (!cancelled) setBadge((b) => `${b} ${token}`);
+    };
     const payload = (done: number) => ({
       deckTitle: "Neuroscience Foundations",
       total: 9,
@@ -253,12 +258,16 @@ function LiveActivityDriver() {
     void (async () => {
       // Bridge health first: Device is a core plugin with no custom code, so
       // this discriminates "bridge dead" from "plugin not registered".
+      // isPluginAvailable is synchronous registry truth (no native call).
+      const known = `plugs=LiveActivity:${Capacitor.isPluginAvailable("AuraLiveActivity")},Preferences:${Capacitor.isPluginAvailable("Preferences")}`;
+      await recordLiveMilestone(CI_LIVE_KEYS.device, known);
+      mark(known);
       try {
         const info = await Device.getInfo();
         await recordLiveMilestone(CI_LIVE_KEYS.device, `${info.model}:${info.osVersion}`);
-        if (!cancelled) setBadge(`live:device=${info.model}`);
+        mark(`dvc=${info.model}`);
       } catch {
-        if (!cancelled) setBadge("live:device-unreachable");
+        mark("dvc=unreachable");
         await recordLiveMilestone(CI_LIVE_KEYS.device, "unreachable");
       }
       // Probe first: its Swift side logs LIVE_ACTIVITY_PROBE, which tells CI
@@ -268,13 +277,13 @@ function LiveActivityDriver() {
       await recordLiveMilestone(CI_LIVE_KEYS.seen, routeKey);
       const available = await isLiveActivityAvailable();
       await recordLiveMilestone(CI_LIVE_KEYS.available, String(available));
-      if (!cancelled) setBadge(`live:available=${available}`);
+      mark(`av=${available}`);
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_AVAILABLE:${available}`);
       const started = await startLiveActivity(payload(3));
       await recordLiveMilestone(CI_LIVE_KEYS.started, String(started));
-      if (!cancelled) setBadge(`live:started=${started}`);
+      mark(`st=${started}`);
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_STARTED:${started}`);
@@ -283,14 +292,15 @@ function LiveActivityDriver() {
       void (async () => {
         const updated = await updateLiveActivity(payload(5));
         await recordLiveMilestone(CI_LIVE_KEYS.updated, String(updated));
-        if (!cancelled) setBadge(`live:updated=${updated}`);
+        finished = true;
+        mark(`up=${updated}`);
         // Intentional: local-debug signal for the driven CI session.
         // eslint-disable-next-line no-console
         if (!cancelled) console.log(`LIVE_ACTIVITY_UPDATED:${updated}`);
       })();
     }, LIVE_ACTIVITY_UPDATE_MS);
     const hungTimer = window.setTimeout(() => {
-      if (!cancelled) setBadge((b) => (b === "live:waiting-bridge" ? "live:bridge-hung" : b));
+      if (!cancelled && !finished) mark("hung?");
     }, 10000);
     return () => {
       cancelled = true;
