@@ -841,3 +841,25 @@ saturating. Vitest suite should be run from the Windows side (`npm test`).
   `npm ci` was required first — `node_modules` was missing `ts-fsrs`/`ws`.
 
 Full suite 553 green at the time.
+
+---
+
+## 2026-09-25 - Admin oracle closed (migration, not yet applied)
+
+- **Finding:** `is_admin(uuid)` / `is_super_admin(uuid)` take an arbitrary
+  uuid, so any signed-in user could probe whether an account is an admin. The
+  only in-repo consumer of either form was the `audit_events` SELECT policy
+  (always with `auth.uid()`).
+- **Fix:** `supabase/migrations/20260925_close_admin_oracle.sql` moves the
+  policy onto `current_user_is_admin()` (verified self-contained, no
+  dependency on the uuid forms) and revokes client EXECUTE on both uuid
+  functions (service_role kept). JWT is the canonical admin source, so a
+  legacy table-only admin loses audit reads — glance at the admin list before
+  applying with `npm run migrate` (never self-applied from a PR).
+- **Pinned by `adminOracle.test.ts`:** replays GRANT/REVOKE per function in
+  filename order and asserts the effective grant denies client roles; fails
+  without the migration (verified both directions).
+- **Left open:** `promote_admin` / `deactivate_admin` are granted to
+  `authenticated` but their bodies live only in the live DB (not in any
+  migration file) — unauditable from here. Needs
+  `pg_get_functiondef()` output before touching.
