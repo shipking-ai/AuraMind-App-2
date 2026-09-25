@@ -7,7 +7,7 @@
  * `?tour=1` walks through every screen on a fixed schedule so the simulator
  * can be photographed without tapping: see .github/workflows/mobile-ios.yml.
  */
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import type { Card, Deck, UserProfile } from "../../types";
 import { DashboardWorkspaceProvider } from "../../contexts/DashboardWorkspaceContext";
@@ -229,6 +229,10 @@ function LiveActivityDriver() {
   const location = useLocation();
   const routeKey = `${location.pathname}${location.search}`;
   const live = new URLSearchParams(location.search).get("live") === "1";
+  // Visible state for screenshots: the simulator has no debugger, so the
+  // driver paints its own progress (preview-only, live step only). A human
+  // reading the CI artifact can tell pending (bridge hung) from resolved.
+  const [badge, setBadge] = useState("live:waiting-bridge");
   useEffect(() => {
     if (!live) return;
     let cancelled = false;
@@ -246,11 +250,13 @@ function LiveActivityDriver() {
       await recordLiveMilestone(CI_LIVE_KEYS.seen, routeKey);
       const available = await isLiveActivityAvailable();
       await recordLiveMilestone(CI_LIVE_KEYS.available, String(available));
+      if (!cancelled) setBadge(`live:available=${available}`);
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_AVAILABLE:${available}`);
       const started = await startLiveActivity(payload(3));
       await recordLiveMilestone(CI_LIVE_KEYS.started, String(started));
+      if (!cancelled) setBadge(`live:started=${started}`);
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_STARTED:${started}`);
@@ -259,17 +265,42 @@ function LiveActivityDriver() {
       void (async () => {
         const updated = await updateLiveActivity(payload(5));
         await recordLiveMilestone(CI_LIVE_KEYS.updated, String(updated));
+        if (!cancelled) setBadge(`live:updated=${updated}`);
         // Intentional: local-debug signal for the driven CI session.
         // eslint-disable-next-line no-console
         if (!cancelled) console.log(`LIVE_ACTIVITY_UPDATED:${updated}`);
       })();
     }, LIVE_ACTIVITY_UPDATE_MS);
+    const hungTimer = window.setTimeout(() => {
+      if (!cancelled) setBadge((b) => (b === "live:waiting-bridge" ? "live:bridge-hung" : b));
+    }, 10000);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      window.clearTimeout(hungTimer);
     };
   }, [live, routeKey]);
-  return null;
+  if (!live) return null;
+  return (
+    <div
+      data-testid="live-activity-driver"
+      style={{
+        position: "fixed",
+        left: 8,
+        bottom: 8,
+        zIndex: 99999,
+        fontFamily: "monospace",
+        fontSize: 10,
+        color: "#fff",
+        background: "rgba(0,0,0,0.7)",
+        padding: "2px 6px",
+        borderRadius: 4,
+        pointerEvents: "none",
+      }}
+    >
+      {badge}
+    </div>
+  );
 }
 
 /** StudyModePage reads :deckId; the preview route names it the same. */
