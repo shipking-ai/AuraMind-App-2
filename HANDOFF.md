@@ -815,3 +815,51 @@ saturating. Vitest suite should be run from the Windows side (`npm test`).
   may be absent.
 - **`(900 * 0.05).toFixed(2)` is `"45.00"`, not `"45"`** — the rounding helper
   trims trailing zeros; don't write test expectations with toFixed against it.
+
+---
+
+## 2026-09-24 - Live Activity in CI + iOS preview deploy
+
+- **Live Activity is driven in CI now.** The preview tour ends on a live step
+  (`/session/neuro?live=1`, `LiveActivityDriver` in `IOSVisualPreview.tsx`):
+  real `startSessionLiveUpdate`, one `updateSessionLiveUpdate` 4s later, never
+  ended. The Swift plugin prints `LIVE_ACTIVITY_STARTED/UPDATED` under
+  `#if DEBUG` only; `mobile-ios.yml` fails closed unless both `true` lines are
+  in the sim log, and uploads `live-activity*.png` (Pro device, island
+  in-frame). `start/updateLiveActivity` now resolve `boolean` instead of
+  `void` (callers ignore it; `liveActivity.test.ts` updated). Tour entries
+  with query strings need `previewTourUrl` — naive string concat produced
+  `?live=1?tour=1`.
+- **iOS preview deploy:** `npm run build:ios-preview`
+  (`scripts/build-ios-preview.mjs` — a wrapper because PowerShell has no
+  inline-env syntax) bakes `VITE_IOS_PREVIEW=true`; verified present in the
+  preview bundle and absent (`void 0`) in release. Hosting is a second Vercel
+  project (steps in DEPLOYMENT.md); release builds redirect `/__preview/ios`
+  to `/`.
+- **Incidental:** removed dead `liveUpdate` direct imports in
+  `StudyModePage.tsx` (the facade replaced them; lint was red on `main`);
+  `npm ci` was required first — `node_modules` was missing `ts-fsrs`/`ws`.
+
+Full suite 553 green at the time.
+
+---
+
+## 2026-09-25 - Admin oracle closed (migration, not yet applied)
+
+- **Finding:** `is_admin(uuid)` / `is_super_admin(uuid)` take an arbitrary
+  uuid, so any signed-in user could probe whether an account is an admin. The
+  only in-repo consumer of either form was the `audit_events` SELECT policy
+  (always with `auth.uid()`).
+- **Fix:** `supabase/migrations/20260925_close_admin_oracle.sql` moves the
+  policy onto `current_user_is_admin()` (verified self-contained, no
+  dependency on the uuid forms) and revokes client EXECUTE on both uuid
+  functions (service_role kept). JWT is the canonical admin source, so a
+  legacy table-only admin loses audit reads — glance at the admin list before
+  applying with `npm run migrate` (never self-applied from a PR).
+- **Pinned by `adminOracle.test.ts`:** replays GRANT/REVOKE per function in
+  filename order and asserts the effective grant denies client roles; fails
+  without the migration (verified both directions).
+- **Left open:** `promote_admin` / `deactivate_admin` are granted to
+  `authenticated` but their bodies live only in the live DB (not in any
+  migration file) — unauditable from here. Needs
+  `pg_get_functiondef()` output before touching.

@@ -43,12 +43,13 @@ export async function isLiveActivityAvailable(): Promise<boolean> {
   }
 }
 
-export async function startLiveActivity(session: LiveActivitySession): Promise<void> {
-  if (!isIOSApp()) return;
+export async function startLiveActivity(session: LiveActivitySession): Promise<boolean> {
+  if (!isIOSApp()) return false;
   try {
-    await AuraLiveActivity.start(session);
+    const { started } = await AuraLiveActivity.start(session);
+    return started === true;
   } catch {
-    /* accessory surface */
+    return false;
   }
 }
 
@@ -57,16 +58,19 @@ let lastPushed = '';
 /**
  * Move the progress. Deduped on the values that are actually drawn, so a
  * re-render mid-card doesn't push an identical update through ActivityKit.
+ * Resolves true only when the plugin confirms the update — CI greps the
+ * simulator log for a driven session (see IOSVisualPreview's live step).
  */
-export async function updateLiveActivity(session: LiveActivitySession): Promise<void> {
-  if (!isIOSApp()) return;
+export async function updateLiveActivity(session: LiveActivitySession): Promise<boolean> {
+  if (!isIOSApp()) return false;
   const key = `${session.deckTitle}|${session.done}/${session.total}|${session.again ?? 0}`;
-  if (key === lastPushed) return;
+  if (key === lastPushed) return false;
   lastPushed = key;
   try {
-    await AuraLiveActivity.update(session);
+    const { updated } = await AuraLiveActivity.update(session);
+    return updated === true;
   } catch {
-    /* accessory surface */
+    return false;
   }
 }
 

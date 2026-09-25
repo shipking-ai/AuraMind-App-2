@@ -1,6 +1,7 @@
 import ActivityKit
 import Capacitor
 import Foundation
+import os
 
 /**
  AuraLiveActivity — the study session on the Lock Screen and in the Dynamic
@@ -31,20 +32,37 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     /// The session currently on screen, if any.
     private var current: Any?
 
+    /// CI signal: the simulator log is the only channel back from this
+    /// process (WKWebView console never reaches it, and Swift `print` is not
+    /// reliably captured either). `os_log` always lands in the log store, so
+    /// `mobile-ios.yml` greps for these lines. Release builds are unaffected.
+    private static let ciLog = Logger(
+        subsystem: "com.auramind.app", category: "LiveActivity")
+
     @objc func isSupported(_ call: CAPPluginCall) {
         if #available(iOS 16.1, *) {
+            let enabled = ActivityAuthorizationInfo().areActivitiesEnabled
             call.resolve([
                 "supported": true,
-                "enabled": ActivityAuthorizationInfo().areActivitiesEnabled,
+                "enabled": enabled,
             ])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_PROBE supported=true enabled=\(enabled, privacy: .public)")
+            #endif
         } else {
             call.resolve(["supported": false, "enabled": false])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_PROBE supported=false")
+            #endif
         }
     }
 
     @objc func start(_ call: CAPPluginCall) {
         guard #available(iOS 16.1, *), ActivityAuthorizationInfo().areActivitiesEnabled else {
             call.resolve(["started": false])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_STARTED:false (unsupported or not permitted)")
+            #endif
             return
         }
         // Starting twice would leave the first activity stranded on the Lock
@@ -59,9 +77,15 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 pushType: nil)
             current = activity
             call.resolve(["started": true, "id": activity.id])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_STARTED:true id=\(activity.id, privacy: .public)")
+            #endif
         } catch {
             // Out of activity slots, or the user revoked permission mid-session.
             call.resolve(["started": false])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_STARTED:false (request threw)")
+            #endif
         }
     }
 
@@ -75,6 +99,9 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             await activity.update(using: next)
             call.resolve(["updated": true])
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_UPDATED:true")
+            #endif
         }
     }
 
