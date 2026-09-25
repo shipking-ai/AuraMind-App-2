@@ -66,6 +66,8 @@ export function previewTourUrl(path: string): string {
  * Keys the driver records under (Capacitor Preferences → UserDefaults on
  * iOS). CI reads them with `simctl spawn defaults read` — the one channel
  * back from the simulator that doesn't depend on log capture at all.
+ * TRAP: both the web and native implementations prefix keys with
+ * `CapacitorStorage.` — reading the bare key always misses.
  */
 export const CI_LIVE_KEYS = {
   seen: "auramind_ci_live_seen",

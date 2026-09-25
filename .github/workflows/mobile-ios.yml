@@ -170,22 +170,16 @@ jobs:
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-activity.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-activity.log || echo "(no Live Activity lines at all — the plugin was never called)"
           # Ground truth that needs no log capture: the driver records every
-          # milestone to Preferences (UserDefaults), read back here. Values
-          # come from the bridge itself, so started=true IS native proof.
-          seen=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_seen 2>/dev/null || echo MISSING)
-          available=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_available 2>/dev/null || echo MISSING)
-          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_started 2>/dev/null || echo MISSING)
-          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_updated 2>/dev/null || echo MISSING)
+          # milestone to Preferences. Both web and native prefix keys with
+          # `CapacitorStorage.` — reading the bare key always misses.
+          seen=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_seen 2>/dev/null || echo MISSING)
+          available=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_available 2>/dev/null || echo MISSING)
+          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
+          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
           echo "driver saw: $seen | available: $available | started: $started | updated: $updated"
-          [ "$started" = true ] || {
-            echo "::error::Live Activity never started (seen=$seen available=$available)"
-            exit 1
-          }
-          [ "$updated" = true ] || {
-            echo "::error::Live Activity never updated (started=$started)"
-            exit 1
-          }
-          echo "Live Activity started and updated."
+          # Advisory only: this step inherits the tour's timing, so a miss
+          # here is timing evidence, not proof. The live-boot step below gates.
+          [ "$started" = true ] && [ "$updated" = true ] && echo "Live Activity started and updated." || echo "::warning::Tour-timed Live Activity proof missed (seen=$seen available=$available started=$started updated=$updated)"
 
       # Deterministic proof without any tour timing: rebuild the web bundle
       # with VITE_IOS_PREVIEW=live so the app boots straight into a driven
@@ -215,8 +209,8 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
-          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_started 2>/dev/null || echo MISSING)
-          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app auramind_ci_live_updated 2>/dev/null || echo MISSING)
+          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
+          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
           echo "live-boot started: $started | updated: $updated"
           [ "$started" = true ] || {
             echo "::error::Live Activity never started on live-boot"
