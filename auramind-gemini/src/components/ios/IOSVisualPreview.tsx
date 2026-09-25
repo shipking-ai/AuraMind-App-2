@@ -19,6 +19,7 @@ import {
   updateLiveActivity,
 } from "../../lib/liveActivity";
 import { Preferences } from "../../lib/nativeShim";
+import { Device } from "../../lib/nativeShim";
 import IOSSettingsScreen from "./IOSSettingsScreen";
 import IOSWelcomeScreen from "./IOSWelcomeScreen";
 import IOSChatDemo from "./IOSChatDemo";
@@ -72,6 +73,7 @@ export function previewTourUrl(path: string): string {
 export const CI_LIVE_KEYS = {
   seen: "auramind_ci_live_seen",
   session: "auramind_ci_live_session",
+  device: "auramind_ci_live_device",
   available: "auramind_ci_live_available",
   started: "auramind_ci_live_started",
   updated: "auramind_ci_live_updated",
@@ -249,6 +251,16 @@ function LiveActivityDriver() {
       again: 1,
     });
     void (async () => {
+      // Bridge health first: Device is a core plugin with no custom code, so
+      // this discriminates "bridge dead" from "plugin not registered".
+      try {
+        const info = await Device.getInfo();
+        await recordLiveMilestone(CI_LIVE_KEYS.device, `${info.model}:${info.osVersion}`);
+        if (!cancelled) setBadge(`live:device=${info.model}`);
+      } catch {
+        if (!cancelled) setBadge("live:device-unreachable");
+        await recordLiveMilestone(CI_LIVE_KEYS.device, "unreachable");
+      }
       // Probe first: its Swift side logs LIVE_ACTIVITY_PROBE, which tells CI
       // whether the bridge was reached at all (vs. a later request failure).
       // Every milestone is also recorded to Preferences (UserDefaults), which

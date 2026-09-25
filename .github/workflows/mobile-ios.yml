@@ -172,7 +172,7 @@ jobs:
           # Ground truth that needs no log capture: the driver records every
           # milestone to Preferences. Both web and native prefix keys with
           # `CapacitorStorage.` — reading the bare key always misses.
-          for k in session seen available started updated; do
+          for k in session seen device available started updated; do
             v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
             echo "driver $k: $v"
           done
@@ -211,7 +211,7 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
-          for k in session seen available started updated; do
+          for k in session seen device available started updated; do
             v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
             echo "live-boot $k: $v"
           done
