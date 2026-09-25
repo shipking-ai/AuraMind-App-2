@@ -176,6 +176,7 @@ jobs:
             v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
             echo "driver $k: $v"
           done
+          echo "tour: $(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_tour_step 2>/dev/null || echo MISSING)"
           started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
           updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
           # Advisory only: this step inherits the tour's timing, so a miss
@@ -214,6 +215,7 @@ jobs:
             v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
             echo "live-boot $k: $v"
           done
+          echo "tour: $(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_tour_step 2>/dev/null || echo MISSING)"
           started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
           updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
           echo "live-boot started: $started | updated: $updated"

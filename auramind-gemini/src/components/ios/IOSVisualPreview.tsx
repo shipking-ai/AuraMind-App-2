@@ -207,7 +207,13 @@ function Tour() {
     if (!touring) return;
     const timers = IOS_PREVIEW_TOUR.map((path, i) =>
       window.setTimeout(
-        () => navigate(previewTourUrl(path)),
+        () => {
+          // Preview-only tour telemetry (see CI_LIVE_KEYS): which step was
+          // commanded and when, so a frozen tour is distinguishable from a
+          // dead bridge in the simulator artifacts.
+          void recordLiveMilestone("auramind_ci_tour_step", `${i}:${path}@${Date.now()}`);
+          navigate(previewTourUrl(path));
+        },
         i * IOS_PREVIEW_STEP_MS,
       ),
     );

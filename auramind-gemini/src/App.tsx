@@ -887,7 +887,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
               <Route
                 path="/"
                 element={
-                  readClientEnv("VITE_IOS_PREVIEW") === "true" && Capacitor.getPlatform() === "ios" ? (
+                  readClientEnv("VITE_IOS_PREVIEW") === "live" && Capacitor.getPlatform() === "ios" ? (
+                    // CI live-boot: straight into the driven session, no tour.
+                    <Navigate to="/__preview/ios/session/neuro?live=1" replace />
+                  ) : readClientEnv("VITE_IOS_PREVIEW") === "true" && Capacitor.getPlatform() === "ios" ? (
                     <Navigate to="/__preview/ios?tour=1" replace />
                   ) : Capacitor.isNativePlatform() ? (
                     user ? (
