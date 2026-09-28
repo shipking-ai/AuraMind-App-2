@@ -10,7 +10,7 @@ three things most contributors trip on:
 ## Local setup
 
 ```bash
-git clone https://github.com/mattycigemp-crypto/AuraMind-App-2.git
+git clone https://github.com/shipking-ai/AuraMind-App-2.git
 cd AuraMind-App-2
 
 npm install                  # orchestration scripts at the root

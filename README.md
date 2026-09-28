@@ -6,8 +6,8 @@
 
 <div align="center">
 
-[![CI](https://img.shields.io/github/actions/workflow/status/mattycigemp-crypto/AuraMind-App-2/ci.yml?branch=main&style=flat-square)](https://github.com/mattycigemp-crypto/AuraMind-App-2/actions/workflows/ci.yml)
-[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8b?style=flat-square)](https://github.com/mattycigemp-crypto/AuraMind-App-2/network/dependencies)
+[![CI](https://img.shields.io/github/actions/workflow/status/shipking-ai/AuraMind-App-2/ci.yml?branch=main&style=flat-square)](https://github.com/shipking-ai/AuraMind-App-2/actions/workflows/ci.yml)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8b?style=flat-square)](https://github.com/shipking-ai/AuraMind-App-2/network/dependencies)
 [![Code style: Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4?style=flat-square)](https://github.com/prettier/prettier)
 [![TypeScript: strict](https://img.shields.io/badge/typescript-strict-blue?style=flat-square)](https://www.typescriptlang.org)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-orange?style=flat-square)](#license)
@@ -49,7 +49,7 @@ An **adaptive AI learning system** — turn anything you're studying (a PDF, a v
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/mattycigemp-crypto/AuraMind-App-2.git
+   git clone https://github.com/shipking-ai/AuraMind-App-2.git
    cd AuraMind-App-2
    ```
 

@@ -17,7 +17,7 @@ reports seriously and respond within the SLAs below.
 
 Open a **GitHub Security Advisory** privately:
 
-[https://github.com/mattycigemp-crypto/AuraMind-App-2/security/advisories/new](https://github.com/mattycigemp-crypto/AuraMind-App-2/security/advisories/new)
+[https://github.com/shipking-ai/AuraMind-App-2/security/advisories/new](https://github.com/shipking-ai/AuraMind-App-2/security/advisories/new)
 
 Include:
 - a clear description of the vulnerability and the impact you observed
