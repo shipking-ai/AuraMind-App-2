@@ -91,7 +91,7 @@ maintainer triages by:
    Larger ones get split or requested as drafts.
 2. **Test coverage** — behavior changes without a test get sent back.
 3. **Schema risk** — migrations require CODEOWNERS review from
-   `@mattycigemp-crypto` and a recorded live-DB dry-run.
+   `@shipking-ai` and a recorded live-DB dry-run.
 
 ## Code style
 
