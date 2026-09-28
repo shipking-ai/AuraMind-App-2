@@ -7,7 +7,8 @@ shipped in `lib/branding.ts`.
 
 **Android is the only wired release pipeline.** `mobile-android.yml`
 builds and signs the AAB; `deploy.yml` ships the web app to Vercel.
-There is no iOS or desktop build.
+`mobile-ios.yml` builds the iOS app **unsigned** and runs it in a simulator —
+there is no signed iOS release or TestFlight job yet, and no desktop build.
 
 Run `node scripts/check-mobile-env.js` (from `auramind-gemini/`) to see
 which secrets are missing. Items marked **🟠 MUST provision** block the
@@ -36,15 +37,16 @@ These are consumed by workflows that exist in `.github/workflows/`.
 | 🟠 `VERCEL_TOKEN`                    | deploy.yml         | Web deploy to Vercel |
 | 🟠 `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | deploy.yml | Client Supabase config (public) |
 | 🟠 `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`   | migration-drift.yml | Server-side schema checks |
-| 🟠 `VITE_STRIPE_PUBLISHABLE_KEY`     | deploy.yml         | Client Stripe config (public) |
-| 🟡 `VITE_POSTHOG_KEY`                | deploy.yml         | Product analytics |
+| 🟠 `VITE_STRIPE_PUBLISHABLE_KEY`     | deploy.yml, mobile-*.yml | Client Stripe config (public) |
+| 🟡 `VITE_POSTHOG_KEY`                | mobile-android.yml | Product analytics in the Android build (the web build reads it from Vercel env) |
 
 Generate the Android release keystore first. **The backup is
 irreplaceable**: losing the keystore means you cannot upload updates to
 the existing Play listing. Keep two offline copies.
 
-Android is the only native target. There is no iOS project, so no Apple
-secrets are needed.
+No Apple secrets are needed yet: the iOS workflow builds unsigned. Signing
+and TestFlight need an Apple Developer Program membership first (see
+`HANDOFF.md`).
 
 ---
 

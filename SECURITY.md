@@ -47,33 +47,51 @@ notes unless you ask to remain anonymous.
 These are the rules every PR must respect — if you find drift, please
 flag it:
 
-- Every `UPDATE` RLS policy carries a `WITH CHECK` clause.
+- Authorization (roles, admin, subscription status) is read from
+  `app_metadata` only. `user_metadata` is writable by the signed-in user
+  and is never trusted.
+- No provider or server key is ever `VITE_`-prefixed; client env reads go
+  through the `CLIENT_ENV` allowlist (enforced by
+  `src/__tests__/clientSecretExposure.test.ts`).
+- SECURITY DEFINER functions pin `search_path`, `REVOKE EXECUTE` from
+  `PUBLIC, anon`, and guard themselves with `auth.uid()`.
+- Every new `UPDATE` RLS policy carries a `WITH CHECK` clause.
 - No `FOR INSERT|UPDATE|DELETE` policy may be named ending in `(dev)`.
-- The schema intentionally has only one policy per `(cmd, table)` pair —
-  see `docs/M6-store-submission-playbook.md`.
+- New tables get at most one permissive policy per `(cmd, table)` pair,
+  scoped `TO authenticated` unless anonymous access is intended.
 - `.env*` and any `*keystore*/*credentials*` files are `.gitignore`d;
   their absence from the repo is by design.
 - Supabase migration files are append-only and idempotent (`ADD COLUMN
   IF NOT EXISTS`, `DROP POLICY IF EXISTS`, etc.).
 
-## Dependency audit status (Aug 9, 2026)
+### Known drift in the live database (checked 2026-09-28)
 
-`npm audit --omit=dev` reports **7 residual advisories** (2 high,
-5 moderate), all requiring breaking upgrades:
+The last three rules are not yet true of every table. Policies created
+before the migrations became the source of truth still exist in the live
+project:
 
-- **js-yaml** (high, transitive of `@vercel/build-utils` + `shadcn`):
-  parse-time DoS; fix needs js-yaml 5.x which those tools don't accept.
-  No runtime path parses untrusted YAML.
-- **ws / engine.io-client** (high, via `@heyputer/puter.js`): the only
-  safe fix is downgrading puter.js to 2.5.4 — rejected to avoid
-  regressing the Puter sign-in flow.
-- **react-router 6.x** (moderate): same-origin open redirect for
-  `//`-prefixed paths; fix requires the v7 major upgrade.
+- Duplicate permissive policies on the same `(cmd, table)` pair, e.g.
+  `cards` (4 commands), `profiles`, `decks`, `league_memberships`.
+- `UPDATE` policies without an explicit `WITH CHECK` on `decks`,
+  `study_sessions`, `learning_path_enrollments`, `profiles`. Postgres
+  falls back to the `USING` expression, so this is a hygiene issue, not an
+  open write.
+- A legacy `profiles` table has a `USING (true)` SELECT policy. It is not
+  reachable from the client — `anon` and `authenticated` hold no grant on
+  it — and it is empty; the app uses `user_profiles`.
 
-The app never passes untrusted input to these libraries, and none of
-them ship in the initial browser payload. Re-audit after upgrading
-`@heyputer/puter.js`, migrating to react-router v7, or when Vercel
-releases build-utils with js-yaml 5.
+Consolidating these needs a migration and a live-DB dry-run; until then,
+treat them as known and don't copy their pattern.
+
+## Dependency audit status (Sep 28, 2026)
+
+`npm audit --omit=dev` reports **0 vulnerabilities** in all three
+packages (`auramind-gemini/`, `api/`, and the repo root). The residuals
+listed in the August audit (js-yaml, ws/engine.io-client via puter.js,
+react-router 6.x) are resolved.
+
+The weekly `scheduled-checks.yml` run gates at **critical** severity.
+Re-run the audit after any major dependency upgrade.
 
 ## Recognition
 

@@ -14,27 +14,25 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main`; open PRs: #85 (natural voices, push sender, aurora motion), #68 (Dependabot, rebase requested after #78) |
-| CI | Node **22 + 24** (20 dropped, EOL); required checks still list `build-and-test (20.x)` until changed in repo settings |
-| Migrations | all applied through `20260921000100_classroom_quiz_grading.sql` (verified live 2026-09-21) |
+| Branch | `main`; open PRs (2026-09-28): #95 (HANDOFF update, conflicts with `main`), #100–#104 (Dependabot, `auramind-gemini/`) |
+| CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
+| Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28) |
 
 ---
 
 ## Outstanding — human, not code
 
-1. **Required status checks.** GitHub → Settings → Branches → `main`: replace
-   `build-and-test (20.x)` with `build-and-test (24.x)`. Until then every PR
-   shows BLOCKED waiting for a check that no longer runs.
+1. ~~**Required status checks.**~~ Done — `main` requires
+   `build-and-test (22.x)` and `(24.x)`.
 2. **Play closed test.** Version 7 was sent for review. Target audience must
    be **13+** (the Terms say 13+; ticking under-13 pulls in the Families
    policy). Advertising ID: **No** (none in the merged manifest). Once
    approved, 12+ testers must stay opted in for **14 continuous days** before
    *Apply for production* unlocks. Voice features (#77 and the listening
    branch) reach testers only in the next build (versionCode 8+).
-3. **www.auramind.app certificate expired 2026-08-19.** DNS is correct
-   (CNAME to Vercel, no CAA, Let's Debug passes); the apex is fine. Fix in
-   Vercel → project → Settings → Domains: re-add `www.auramind.app` as a
-   redirect to the apex.
+3. ~~**www.auramind.app certificate.**~~ Fixed — `www` serves a valid
+   certificate (expires 2026-12-21, checked 2026-09-28) and 308-redirects to
+   the apex.
 4. **Stripe live smoke.** One real checkout. It starts a 7-day trial, so the
    first charge lands after the trial.
 5. **Confirm sign-in works** at auramind.app/auth in a real browser. Automated
@@ -98,8 +96,6 @@ value:
   appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
   loudness streams and silence ends with `no-speech`. **Still needs one phone
   test with a real spoken answer**, since the emulator mic can't be fed audio.
-- **Dependabot #68** (jsdom 30, vitest 5, jest-dom 7): #78 is merged, so it
-  passes once rebased (`@dependabot rebase`, not a plain re-run).
 - **Push sender — built, awaiting credentials.** Server sender, admin send
   endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
   nothing delivers until the Firebase console steps at the end of that
@@ -844,7 +840,7 @@ Full suite 553 green at the time.
 
 ---
 
-## 2026-09-25 - Admin oracle closed (migration, not yet applied)
+## 2026-09-25 - Admin oracle closed (applied 2026-09-25)
 
 - **Finding:** `is_admin(uuid)` / `is_super_admin(uuid)` take an arbitrary
   uuid, so any signed-in user could probe whether an account is an admin. The
@@ -854,8 +850,8 @@ Full suite 553 green at the time.
   policy onto `current_user_is_admin()` (verified self-contained, no
   dependency on the uuid forms) and revokes client EXECUTE on both uuid
   functions (service_role kept). JWT is the canonical admin source, so a
-  legacy table-only admin loses audit reads — glance at the admin list before
-  applying with `npm run migrate` (never self-applied from a PR).
+  legacy table-only admin loses audit reads. Applied to the live project on
+  2026-09-25 (`schema_migrations`).
 - **Pinned by `adminOracle.test.ts`:** replays GRANT/REVOKE per function in
   filename order and asserts the effective grant denies client roles; fails
   without the migration (verified both directions).
