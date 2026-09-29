@@ -8,6 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Classroom portal** - teachers create classes, students join with a
+  6-character code or deep link, and teachers assign decks and
+  multiple-choice quizzes graded on the server, with per-student progress
+  and most-missed terms. Every write goes through a SECURITY DEFINER RPC
+- **Memory sparks** - cards that are fading (not yet forgotten) resurface
+  as in-app pop-ups, native notifications, and cards mixed into study
+  sessions, all driven by one FSRS-based scheduler
+- **Onboarding flow** - role and topic, with a starter deck created before
+  the paywall so the library is never empty
+- **Tester role** - an internal QA role that skips the paywall with no
+  staff powers
+- **Unified admin hub** - every `/admin/*` page in the dashboard shell, a new
+  Overview and Settings page, a working notification panel, and review
+  charts built from real `card_reviews` history
+- **Push sender** - FCM HTTP v1 sender, admin `POST /api/push/send`, and a
+  daily due-card reminder; dormant until Firebase credentials are set
+- **Voice on Android** - read-aloud and spoken-answer listening through
+  native plugins (the WebView has no Web Speech API), spoken reminders,
+  and natural AI voices with the device voice as fallback
+- **iOS app** - Capacitor 8 project built unsigned in CI, with an
+  iOS-native design, Prof. Aura chat (Talk / Notebook / Cards), the study
+  session as a Live Activity, and Siri / Shortcuts ("quiz me", "what's
+  due"). A public sample-data preview builds with `npm run build:ios-preview`
+- **Android 16 Live Update** for study sessions, plus launcher shortcuts,
+  a Quick Settings tile, deck pinning, and a Material shell
+- **Desktop web extras** - Study Float (an always-on-top review window),
+  a Windows 11 widget board widget, and on-device key-idea / translation
+  with Chrome's built-in AI
+- **Scroll-reactive aurora** - depth parallax and hue drift on the
+  dashboard, landing hero, and Android aura; off under reduced motion
+- **"Accept only necessary"** option on the cookie banner
 - **Admin bulk email** - the endpoint now sends through Resend with
   per-recipient `{sent, failed}` accounting instead of logging and
   reporting a fake success
@@ -15,7 +46,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   skips until Accept, Decline keeps it off, legacy Settings opt-outs
   are honored silently
 
+### Changed
+- **Scheduler is now the official `ts-fsrs` (FSRS-6)** - see Fixed.
+  Per-user FSRS tuning is ignored until it is rebuilt for FSRS-6
+- **CI runs on Node 22 and 24**; Node 20 (end of life) was dropped
+- Reminders sync at app start as well as from Settings
+- Turnstile is disabled and OAuth buttons hidden inside the native apps
+- Unused files, routes and dependencies removed, including the legacy
+  unentitled chat endpoint and the learning-paths feature
+
 ### Fixed
+- **FSRS intervals were ~140x too long** - the hand-written scheduler
+  mis-mapped grades, so "Hard" could schedule a card 100 years out. Replaced
+  with `ts-fsrs`; a migration reset the schedules it had written
+- **Weekly league XP double-counted** - now added once, written only through
+  the `increment_weekly_xp` RPC
+- **Memory sparks** ignored the global gap between sparks, and re-plans
+  used up the daily cap
 - **Review ratings of 5 rejected** - `record_card_review` still capped
   at 0..4 after the table went 0..5; Easy/perfect-recall reviews 22000'd
 - **Session replay lost re-graded cards** - `card_reviews` kept one row
@@ -33,6 +80,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `domcontentloaded` plus locator assertions instead
 
 ### Security
+- **Admin oracle closed** - any signed-in user could call `is_admin(uuid)` /
+  `is_super_admin(uuid)` to learn whether an account was an admin. Client
+  EXECUTE revoked; the `audit_events` policy uses `current_user_is_admin()`
+- **Client role came from `user_metadata`** - one `auth.updateUser` call
+  could set `role: 'admin'` and unlock the paywall in the UI. Roles now come
+  from `app_metadata` only, on client and server alike
+- **Metadata wiped on billing events** - `updateUserById` replaces
+  `app_metadata` wholesale, so a purchase or dunning event could demote
+  staff. Every call site now merges the existing metadata
+- **Classroom writes are RPC-only**, and a student can no longer copy
+  another user's private deck through an assignment
+- **Production dependency audit is clean** in the app, API, and root
 - **`fetch-url` / `fetch-youtube-transcript` required no auth** - open
   fetch-and-parse proxy behind only IP rate limiting; both now require
   the session bearer token, which the generator screens send
