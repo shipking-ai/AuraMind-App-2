@@ -62,13 +62,26 @@ export interface SparkEvent {
 const SPARK_LOG_KEY = 'auramind:sparkLog';
 const LOG_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function getSparkLog(): SparkEvent[] {
+/**
+ * Read the persisted spark log, dropping anything past the retention window.
+ *
+ * `now` is a parameter, not an ambient `Date.now()`, for the same reason every
+ * other function in this module takes one: the retention filter is a pure
+ * function of the clock, and reading the wall clock here made the log's
+ * contents depend on when the *reader* ran rather than when the event
+ * happened. Every other caller already passed its own `now`; this one didn't,
+ * so the log was silently time-dependent. `sparkScheduler.test.ts` pinned a
+ * fixed NOW and aged every event it wrote out of the 7-day window on
+ * 2026-09-27 — the day the test started failing, seven days after it was
+ * written.
+ */
+export function getSparkLog(now: number = Date.now()): SparkEvent[] {
   try {
     const raw = localStorage.getItem(SPARK_LOG_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    const cutoff = Date.now() - LOG_RETENTION_MS;
+    const cutoff = now - LOG_RETENTION_MS;
     return parsed.filter(
       (e: SparkEvent) => e && typeof e.cardId === 'string' && Number.isFinite(e.ts) && e.ts > cutoff,
     );
@@ -80,7 +93,7 @@ export function getSparkLog(): SparkEvent[] {
 /** Append one event and persist. Fire-and-forget safe: storage failures are swallowed. */
 export function recordSpark(surface: SparkSurface, cardId: string, now: number = Date.now()): void {
   try {
-    const log = getSparkLog().filter((e) => e.ts > now - LOG_RETENTION_MS);
+    const log = getSparkLog(now).filter((e) => e.ts > now - LOG_RETENTION_MS);
     log.push({ cardId, ts: now, surface });
     localStorage.setItem(SPARK_LOG_KEY, JSON.stringify(log.slice(-500)));
   } catch {
@@ -96,7 +109,7 @@ export function recordSpark(surface: SparkSurface, cardId: string, now: number =
  */
 export function dropPendingSparks(surface: SparkSurface, now: number = Date.now()): void {
   try {
-    const log = getSparkLog();
+    const log = getSparkLog(now);
     const kept = log.filter((e) => !(e.surface === surface && e.ts > now));
     if (kept.length !== log.length) localStorage.setItem(SPARK_LOG_KEY, JSON.stringify(kept));
   } catch {

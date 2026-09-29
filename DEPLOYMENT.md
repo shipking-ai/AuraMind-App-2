@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. **Node.js 18+** - [Download](https://nodejs.org/)
+1. **Node.js 22+** (22.19 or newer; CI runs 22 and 24) - [Download](https://nodejs.org/)
 2. **npm** or **yarn**
 3. **Supabase account** - [Sign up](https://supabase.com)
 4. **Vercel account** - [Sign up](https://vercel.com)
@@ -29,7 +29,9 @@ cp .env.example .env
 Fill in the required values:
 - `VITE_SUPABASE_URL` - Your Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Your Supabase anon key
-- At least one AI provider key (Groq recommended)
+
+AI provider keys (`GROQ_API_KEY`, …) are server-side only and must stay
+**unprefixed** — anything `VITE_`-prefixed is published in the browser bundle.
 
 ### 3. Deploy to Vercel
 
@@ -41,7 +43,7 @@ vercel
 
 Set environment variables in Vercel dashboard:
 - Go to Project → Settings → Environment Variables
-- Add all variables from `.env.example`
+- Add the variables from `.env.example` (client and server-only; see below)
 
 ### 4. Production Deploy
 
@@ -84,23 +86,26 @@ redirects to `/`.
 
 ## Environment Variables
 
-### Required
+README.md has the full tables. The short version:
+
+### Client (public — shipped in the browser bundle)
 | Variable | Description | Where to get |
 |----------|-------------|--------------|
-| `VITE_SUPABASE_URL` | Supabase project URL | Supabase Dashboard → API |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon key | Supabase Dashboard → API |
+| `VITE_SUPABASE_URL` | Supabase project URL (required) | Supabase Dashboard → API |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key (required) | Supabase Dashboard → API |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe for payments | Stripe Dashboard |
+| `VITE_POSTHOG_KEY` | PostHog analytics | PostHog project settings |
 
-### Recommended
-| Variable | Description | Where to get |
-|----------|-------------|--------------|
-| `VITE_GROQ_API_KEY` | Groq AI API key | console.groq.com |
-
-### Optional
+### Server (Vercel only — never `VITE_`-prefixed)
 | Variable | Description |
 |----------|-------------|
-| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe for payments |
-| `VITE_POSTHOG_KEY` | PostHog analytics |
-| `RESEND_API_KEY` | Resend for emails |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase access |
+| `GROQ_API_KEY` | First AI provider (console.groq.com). `CEREBRAS_API_KEY`, `GEMINI_API_KEY` and `OPENROUTER_API_KEY` are failover providers; any one key is enough |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Payments |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Transactional email |
+
+Never set `VITE_GROQ_API_KEY` (or any provider key with a `VITE_` prefix): the
+app does not read it, and Vite would publish it to every visitor.
 
 ## PWA Setup
 
