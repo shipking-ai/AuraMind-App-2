@@ -2,6 +2,9 @@
   "name": "auramind",
   "version": "2.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.19"
+  },
   "description": "AuraMind — adaptive AI learning system for web, PWA, and native Android.",
   "scripts": {
     "dev": "concurrently -n \"vite,api\" -c \"cyan,yellow\" \"cd auramind-gemini && npm run dev\" \"cd api && npx tsx server.js\"",
