@@ -3,12 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen, Plus, Search, Trash2, AlertTriangle, Brain, Edit3,
 } from '@/components/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDashboardWorkspace } from '../../../contexts/DashboardWorkspaceContext';
 import {
   FadeUp, StaggerList, StaggerItem, HoverLift, AnimatedBar,
 } from './motion';
 import { MiniSparkle } from './icons';
+import { NovaCommunity } from './NovaCommunity';
+
+type LibraryTab = 'mine' | 'community';
+
+const LIBRARY_TABS: Array<{ id: LibraryTab; label: string }> = [
+  { id: 'mine', label: 'My decks' },
+  { id: 'community', label: 'Community' },
+];
 
 // ─── Deck Card ──────────────────────────────────────────────────────────────
 
@@ -201,6 +209,14 @@ export function NovaLibrary() {
   const [showNewDeck, setShowNewDeck] = useState(false);
   const [query, setQuery] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  // The tab lives in the URL so /dashboard/decks?tab=community is linkable.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: LibraryTab = searchParams.get('tab') === 'community' ? 'community' : 'mine';
+  const selectTab = (next: LibraryTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'mine') params.delete('tab'); else params.set('tab', next);
+    setSearchParams(params, { replace: true });
+  };
 
   const filtered = decks.filter(d =>
     d.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -236,6 +252,30 @@ export function NovaLibrary() {
         </div>
       </FadeUp>
 
+      {/* Tabs */}
+      <div role="tablist" aria-label="Library" className="flex gap-1 border-b border-white/[0.06]">
+        {LIBRARY_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            id={`library-tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`library-panel-${t.id}`}
+            onClick={() => selectTab(t.id)}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 ${tab === t.id ? 'border-violet-400 text-white' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'community' ? (
+        <div role="tabpanel" id="library-panel-community" aria-labelledby="library-tab-community">
+          <NovaCommunity />
+        </div>
+      ) : (
+      <div role="tabpanel" id="library-panel-mine" aria-labelledby="library-tab-mine" className="space-y-6">
       {/* Search */}
       <FadeUp delay={0.05}>
         <div className="relative max-w-md focus-within:max-w-lg transition-all duration-300">
@@ -288,6 +328,8 @@ export function NovaLibrary() {
             )}
           </div>
         </FadeUp>
+      )}
+      </div>
       )}
 
       {/* Delete Confirmation */}

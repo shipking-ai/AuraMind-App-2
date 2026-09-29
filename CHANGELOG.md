@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Community tab in the Library** - browse decks other learners published
+  (search, category, popular/newest) and add one to your library. Adding
+  forks the deck on the server, so the copy and its cards are yours. Shows a
+  real empty state instead of the hard-coded demo decks the old browse code
+  fell back to
 - **Classroom portal** - teachers create classes, students join with a
   6-character code or deep link, and teachers assign decks and
   multiple-choice quizzes graded on the server, with per-student progress
@@ -56,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unentitled chat endpoint and the learning-paths feature
 
 ### Fixed
+- **Forking a marketplace deck always failed** - it selected a `cards.image`
+  column that doesn't exist, and would have copied zero cards anyway (RLS
+  hides other users' cards from the client). Forking is now one server-side
+  RPC, and `fork_count` can no longer be bumped without actually forking
 - **FSRS intervals were ~140x too long** - the hand-written scheduler
   mis-mapped grades, so "Hard" could schedule a card 100 years out. Replaced
   with `ts-fsrs`; a migration reset the schedules it had written

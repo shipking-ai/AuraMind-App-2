@@ -30,6 +30,7 @@ don't validate column names until they run.
 - **Study core** — `decks`, `cards` (FSRS state as JSONB in `cards.fsrs_state`), `card_reviews` (one row per review, idempotency key `(user_id, card_id, reviewed_at)`), `study_sessions` (also the streak source), `user_fsrs_params`
 - **Users** — `user_profiles` (`role` synced from `app_metadata` by `sync_auth_role_to_profiles`), `push_tokens`
 - **Classroom portal** — `classrooms`, `classroom_memberships`, `assignments`, `assignment_progress` (client read-only; every write goes through a SECURITY DEFINER RPC)
+- **Marketplace** — published decks are `decks` rows with `is_public`. The Library's Community tab lists them with `list_public_decks()` and forks with `fork_public_deck()` (both SECURITY DEFINER); the client never reads another user's cards
 - **Leagues** — `league_seasons`, `league_memberships` (XP written only by `increment_weekly_xp`)
 - **Ops** — `audit_events`, `chat_logs` (AI usage), `processed_webhook_events` (Stripe idempotency), `schema_migrations`
 
@@ -175,7 +176,7 @@ explorer (read-only), bulk operations, CSV export, Stripe revenue metrics.
 - **Dev/preview only**: `/__e2e/android`, `/__preview/ios/*` (redirects to `/` unless `VITE_IOS_PREVIEW` is set)
 
 `/dashboard/*` renders `NovaHub` inside `NovaDashboardShell`: `/` (overview),
-`/decks`, `/study`, `/study/:deckId`, `/spark/:cardId`, `/chat`,
+`/decks` (`?tab=community` for the Community tab), `/study`, `/study/:deckId`, `/spark/:cardId`, `/chat`,
 `/generator`, `/study-tools`, `/classes`, `/classes/:id`, `/settings`,
 `/settings/all`. Every `/admin/*` path renders in the same shell via
 `pages/admin/AdminHub.tsx`.
