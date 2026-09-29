@@ -1,53 +1,66 @@
 # AuraMind Architecture & Reference
 
-> Consolidated from all planning documents on 2026-07-08. Refer to `README.md` for setup, `CHANGELOG.md` for version history, `DEPLOYMENT.md` for deployment.
+> Consolidated from the planning documents on 2026-07-08; re-verified against the code and the live database on 2026-09-28. Refer to `README.md` for setup, `CHANGELOG.md` for version history, `DEPLOYMENT.md` for deployment, and `HANDOFF.md` for current state and traps.
 
 ---
 
 ## System Overview
 
-AuraMind is a full-stack adaptive AI learning system — it turns any input (PDF, video, lecture, topic) into a personalized course, schedules review with FSRS v5, and tutors with a knowledge model of the user's actual weaknesses. Deployable units:
+AuraMind is a full-stack adaptive AI learning system — it turns any input (PDF, video, lecture, topic) into a personalized course, schedules review with FSRS (the official `ts-fsrs`, FSRS-6), and tutors with a knowledge model of the user's actual weaknesses. Deployable units:
 
 | Unit | Path | Tech | Purpose |
 |---|---|---|---|
-| Web SPA | `auramind-gemini/` | React 19 + Vite 6 + Tailwind 4 | Main application (PWA) |
-| Android app | `auramind-gemini/android/` | Capacitor 8 | Active native build |
-| Backend API | `api/` | Express + Vercel Serverless | Auth, Stripe, admin, chat |
+| Web SPA | `auramind-gemini/` | React 19 + Vite 8 + Tailwind 4 | Main application (PWA) |
+| Android app | `auramind-gemini/android/` | Capacitor 8 | Active native build (Play closed testing) |
+| iOS app | `auramind-gemini/ios/` | Capacitor 8 (Swift Package Manager) | Built unsigned in CI; not yet on TestFlight |
+| Backend API | `api/` | Vercel Serverless + Express dev server | Auth, AI proxy, Stripe, admin, push, cron |
 
-**Key dependencies:** Supabase (auth + DB), Stripe (payments), Resend (email), PostHog (analytics). AI providers: Groq, Cerebras, Gemini, OpenRouter (server-side failover), plus Puter (user-pays) and local Ollama/LM Studio.
+**Key dependencies:** Supabase (auth + DB), Stripe (payments), Resend (email), PostHog (analytics), Upstash Redis (distributed rate limiting), Firebase Cloud Messaging (push, dormant until credentials are set). AI providers: Groq, Cerebras, Gemini, OpenRouter (server-side failover), plus Puter (user-pays) and local Ollama/LM Studio.
 
 ---
 
 ## Database Schema (Supabase PostgreSQL)
 
-### Core tables
-- **decks** — id, user_id, title, description, created_at, source_label, is_sample
-- **cards** — id, user_id, deck_id, front/back, next_review, interval, ease_factor, repetition, last_reviewed, source_type, citations (JSONB), trust_score, fsrs_state (JSONB), verified (BOOL)
-- **learning_paths** — id, title, description, icon, level, duration, modules, enrolled_count, rating, color
-- **learning_path_enrollments** — id, user_id, learning_path_id, progress
-- **fact_check_history** — id, user_id, card_id, verified, confidence, checked_at
-- **audit_events** — id, actor_id, actor_email, action, category, target_id, target_email, details, severity, created_at
-- **chat_logs** — id, user_id, messages, response_preview, tokens_generated, model, duration_ms
-- **schema_migrations** — version tracking
+The migrations in `supabase/migrations/` are the source of truth; this is a
+map, not a column reference. Check columns against
+`information_schema.columns` before writing SQL — PL/pgSQL function bodies
+don't validate column names until they run.
 
-All tables have Row Level Security (RLS) policies: users can only access their own data.
+### Tables the app uses
+- **Study core** — `decks`, `cards` (FSRS state as JSONB in `cards.fsrs_state`), `card_reviews` (one row per review, idempotency key `(user_id, card_id, reviewed_at)`), `study_sessions` (also the streak source), `user_fsrs_params`
+- **Users** — `user_profiles` (`role` synced from `app_metadata` by `sync_auth_role_to_profiles`), `push_tokens`
+- **Classroom portal** — `classrooms`, `classroom_memberships`, `assignments`, `assignment_progress` (client read-only; every write goes through a SECURITY DEFINER RPC)
+- **Leagues** — `league_seasons`, `league_memberships` (XP written only by `increment_weekly_xp`)
+- **Ops** — `audit_events`, `chat_logs` (AI usage), `processed_webhook_events` (Stripe idempotency), `schema_migrations`
+
+The live project also holds legacy tables that predate the migrations
+(`profiles`, `subscriptions`, `stripe_*`, `learning_paths`, …). The app does
+not read them; see `SECURITY.md` → *Known drift*.
+
+All tables have Row Level Security enabled; users can only access their own
+data unless a policy says otherwise (class members, for example, can read
+their own class's roster).
 
 ---
 
 ## Role-Based Permission System
 
-| Permission | Owner | CEO | Admin | Employee | User |
-|---|---|---|---|---|---|
-| Access Admin Panel | ✓ | ✓ | ✓ | ✓ | ✗ |
-| Manage Users | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Manage Roles | ✓ | ✓ | ✗ | ✗ | ✗ |
-| View Analytics | ✓ | ✓ | ✓ | ✓ | ✗ |
-| Manage Coupons | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Manage Settings | ✓ | ✓ | ✗ | ✗ | ✗ |
-| Delete Users | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Free Access | ✓ | ✓ | ✓ | ✗ | ✗ |
+| Permission | Owner | CEO | Admin | Employee | Tester | User |
+|---|---|---|---|---|---|---|
+| Access Admin Panel | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Manage Users | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Manage Roles | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| View Analytics | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
+| Manage Coupons | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Manage Settings | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Delete Users | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Free Access | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ |
 
-Role is read from `app_metadata.role` (synced into `user_profiles.role` by `sync_auth_role_to_profiles`); `user_metadata` is attacker-writable and is **not** trusted for authorization. The owner email is configured via `VITE_OWNER_EMAIL`. Admins skip subscription checks automatically.
+Derived from the role hierarchy in `utils/permissions.ts` (owner 100, CEO 90,
+admin 80, employee 50, tester 30, user 10). Tester is an internal QA role:
+it skips the paywall and has no staff powers.
+
+Role is read from `app_metadata.role` only — via `resolveAuthorizationRole()` on the client and `isEntitledWithRoleAccess()` in `api/_lib/entitlement.ts` on the server — and synced into `user_profiles.role` by `sync_auth_role_to_profiles`. `user_metadata` is attacker-writable and is **not** trusted for authorization; `user_metadata.role` is only a display persona. The owner email is configured via `VITE_OWNER_EMAIL`. Roles with free access skip subscription checks on both client and server.
 
 ---
 
@@ -61,7 +74,7 @@ over server-side across every provider that has a key configured:
 1. **Groq** — `openai/gpt-oss-120b` (default; fastest)
 2. **Cerebras** — `llama-3.3-70b`
 3. **Gemini** — `gemini-2.0-flash`, via Google's OpenAI-compatible endpoint
-4. **OpenRouter** — a `:free` model; broadest choice, easiest to swap
+4. **OpenRouter** — `meta-llama/llama-3.3-70b-instruct:free`; broadest choice, easiest to swap
 
 All four speak the OpenAI chat-completions shape, so there is one request
 path and no per-provider adapter. A provider with no key is skipped; on
@@ -79,8 +92,10 @@ is deterministic offline template generation.
 **Local AI** (LM Studio / Ollama on port 1234, proxied via Vite at
 `/local-ai`) is a separate opt-in path enabled with `VITE_USE_LOCAL_AI=true`.
 
-Audio transcription still goes to Groq Whisper specifically and does not
-participate in the failover chain.
+Audio transcription (`/api/ai/transcribe`, Groq Whisper) and AI voices
+(`/api/ai/speech`, Groq Orpheus) go to Groq specifically and do not
+participate in the failover chain. Both are entitlement-gated like chat; when
+speech is unavailable the client falls back to the device voice.
 
 ### Key AI services
 - `api/_providers.ts` — provider registry + failover policy
@@ -89,93 +104,104 @@ participate in the failover chain.
 - `auraAiService.ts` — multi-provider unified chat
 - `puterProvider.ts` — user-pays Puter fallback (SDK loaded from its CDN)
 - `templateDeckGenerator.ts` — deterministic offline generation
-- `_chatHandler.ts` (API) — SSE streaming chat
 
 > `model-service/` (Python FastAPI) is gitignored and local-only — it is not
 > part of a fresh clone or the deployed app.
 
 ### Chat streaming flow
-Client → `/api/chat/stream?message=...&token=...` → Express router → `_chatHandler.ts` → SSE stream from model-service → token-by-token to client. Rate limited: 30 req/min per IP. Responses logged to `chat_logs`.
+Client → `POST /api/ai/chat/stream` (Supabase bearer token) → `_aiHandler.ts`
+(auth + entitlement) → the same provider failover chain → OpenAI-style SSE
+deltas relayed token-by-token to the client. Non-streaming calls use
+`/api/ai/chat`. Rate limited at 30 req/min (the `ai` bucket); usage logged to
+`chat_logs`.
 
 ---
 
 ## Spaced Repetition
 
-### SM-2 Algorithm (`src/services/study/srs.ts`)
-- Ratings: Again(0), Hard(3), Good(4), Easy(5)
-- Successful recall: interval grows geometrically (1d → 6d → interval × easeFactor)
-- Failed recall: full reset to 1 day
-- Ease factor adjusted by quality (min 1.3)
+### FSRS-6 (`src/services/study/fsrs.ts`)
+- The math is the official `ts-fsrs` (FSRS-6) in long-term mode: intervals are
+  whole days (matching the `cards.interval` INTEGER column), and "Again"
+  brings a card back the next day
+- State stored as JSONB in `cards.fsrs_state`; SM-2 cards are converted on
+  their first review
+- `srs.ts` (`calculateSRS`) is the entry point every review path calls; it
+  delegates to `scheduleFSRS`
+- Replaced an earlier hand-written FSRS whose intervals ran ~140x too long;
+  `20260922000000_fsrs_scheduler_repair.sql` reset the cards it had written
+- Per-user tuning (`fsrsAdaptation.ts`) still produces a vector for the old
+  model, so `scheduleFSRS` ignores it until the tuner is rebuilt on the
+  FSRS-6 optimizer (see `HANDOFF.md`)
 
-### FSRS v5 (`src/services/study/fsrs.ts`)
-- Replaced SM-2 as primary engine (v2.0.0)
-- Stores state as JSONB in `cards.fsrs_state`
-- Up to 30% better retention efficiency
+### Memory sparks (`src/services/memory/`)
+Cards in the retrievability band ~0.65–0.90 (fading, not forgotten) resurface
+as in-app pop-ups, native notifications, and interleaved cards in study
+sessions. One pure scheduler (`sparkScheduler.ts`) drives all three.
 
 ---
 
 ## API Endpoints
 
-All under `/api` — routed from `api/index.ts`:
+All under `/api` — routed from `api/index.ts` (the Express dev server in
+`api/server.js` mounts the same handlers):
 
 | Endpoint | Actions | Auth |
 |---|---|---|
-| `/api/admin` | list, toggle, utility, test, query, revenue, bulk, audit | Admin JWT |
+| `/api/ai` | chat, chat/stream, transcribe, speech | User JWT + entitlement |
+| `/api/admin` | list, toggle, utility, test, health, query, revenue, bulk, audit, set_role, set_subscription, create_test_user, get_user_details, delete_user | Admin JWT |
 | `/api/coupons` | list, create, delete | Admin JWT |
-| `/api/subscription` | verify | None |
-| `/api/chat` | stream (SSE) | Optional |
-| `/api/stripe` | checkout, portal | Varies |
-| `/api/account` | delete | User JWT |
 | `/api/audit` | list, create | Admin JWT |
+| `/api/push` | send | Admin JWT |
+| `/api/subscription` | verify (self only) | User JWT |
+| `/api/stripe` | checkout, portal | User JWT |
+| `/api/stripe-webhook` | Stripe events | Stripe signature |
+| `/api/account` | delete | User JWT |
+| `/api/email` | transactional email | User JWT |
+| `/api/search` | Google Programmable Search | User JWT |
 | `/api/integrations` | notion, anki, obsidian, schoology connect/disconnect | User JWT |
+| `/api/fetch-url`, `/api/fetch-youtube-transcript` | fetch and parse a source | User JWT |
+| `/api/cron` | dunning (also sends daily due-card pushes) | `CRON_SECRET` |
 
-Admin API includes: user role management, test user creation, SQL query explorer (read-only), bulk operations, CSV export, Stripe revenue metrics.
+Admin API includes: user role management, test user creation, SQL query
+explorer (read-only), bulk operations, CSV export, Stripe revenue metrics.
 
 ---
 
 ## Frontend Architecture
 
 ### Route structure (`App.tsx`)
-- **Public**: `/` (landing), `/auth`, `/subscribe`, `/docs`, `/privacy`, `/terms`, `/download`, `/reset-password`, `/restore-account`, `/auth/callback`, `/auth/schoology/callback`
-- **Protected**: `/dashboard/*`, `/deck/:id`, `/admin/users`, `/admin/check`
-- Redirects: old routes → new dashboard routes
+- **Public**: `/` (landing), `/auth`, `/subscribe`, `/onboarding`, `/docs`, `/privacy`, `/terms`, `/download`, `/about`, `/status`, `/reset-password`, `/restore-account`, `/auth/callback`, `/auth/schoology/callback`
+- **Protected**: `/dashboard/*`, `/deck/:id`, `/admin` (overview), `/admin/users`, `/admin/check`, `/admin/settings`
+- **Dev/preview only**: `/__e2e/android`, `/__preview/ios/*` (redirects to `/` unless `VITE_IOS_PREVIEW` is set)
 
-### Component tree
+`/dashboard/*` renders `NovaHub` inside `NovaDashboardShell`: `/` (overview),
+`/decks`, `/study`, `/study/:deckId`, `/spark/:cardId`, `/chat`,
+`/generator`, `/study-tools`, `/classes`, `/classes/:id`, `/settings`,
+`/settings/all`. Every `/admin/*` path renders in the same shell via
+`pages/admin/AdminHub.tsx`.
+
+### Source layout
 ```
-src/components/
-├── achievements/    — Achievement unlock, celebratory feedback
-├── auth/            — AuthPage, PaymentPage
-├── background/      — Visual effects, neural grid
-├── challenges/      — DailyChallenges (dev-mode gated)
-├── chat/            — AuraChat, AIChatPage, NotebookLM components
-├── dashboard/       — DashboardLayout, Sidebar, MainDashboard, CardsDecks, AIChat, Settings, Analytics
-├── deck/            — FlashcardCreator, deck management
-├── landing/         — ModernLandingPage (with ProfessionalNavbar, PricingSection, etc.)
-├── study/           — Study mode, SRS components
-├── quiz/            — Quiz generation and display
-├── ui/              — CinematicLoader, CustomCursor, base UI components
-├── shared/          — ErrorBoundary, KeyboardAware, HmrRefreshNotice
-└── icons/           — CustomIcons
+src/
+├── pages/          — admin, auth, classroom, dashboard (NovaHub), deck, generator,
+│                     legal, onboarding, settings, study, system
+├── components/
+│   ├── dashboard/nova/  — NovaDashboardShell, NovaOverview, NovaLibrary, NovaStudy, NotificationPanel
+│   ├── native/          — Android screens and shell (AndroidMobileScreens, AndroidAura)
+│   ├── ios/             — iOS screens and the design preview tour
+│   ├── classroom/, memory/, study/, quiz/, chat/, generator/, settings/
+│   ├── landing/         — ModernLandingPage
+│   └── shared/, ui/, icons/, brand/, graphics/, notifications/, achievements/, gamification/, wear/, float/
+├── services/       — api (AI clients), study (FSRS), memory (sparks), classroom,
+│                     voice, offline, notifications, database, decks
+├── lib/            — pure logic: env allowlist, deep links, platform gates, back stack
+└── contexts/       — LayoutContext, DashboardWorkspaceContext
 ```
 
 ### State management
-- React Contexts: `LayoutContext`, `DashboardWorkspaceContext`, `SourceDocumentsContext`, `AuraContext`
+- React Contexts: `LayoutContext`, `DashboardWorkspaceContext`
 - Zustand store in `src/lib/auramind/store.ts` (only `cmdOpen` powers the command palette)
 - Main app state in `App.tsx` via `useState` + Supabase auth listener
-
----
-
-## Learning Paths
-
-Six courses, 86 lessons in `src/data/learningPathsData.ts`:
-- JavaScript Mastery (ES5 → ES2026)
-- React & Modern Frontend (through React 19 hooks)
-- Database & SQL (through PostgreSQL 18)
-- Machine Learning & AI (RAG, MCP, agentic AI)
-- Data Structures & Algorithms
-- TypeScript Deep Dive (through TS 6.0)
-
-Enrollment: localStorage-first with best-effort Supabase sync. Lessons open as popups with markdown, breadcrumbs, Previous/Next navigation.
 
 ---
 
@@ -186,8 +212,7 @@ Enrollment: localStorage-first with best-effort Supabase sync. Lessons open as p
 - **Obsidian** — vault path import
 - **Quizlet** — username-based connection
 - **Schoology** — LMS OAuth (consumer key + access token)
-- **Wordnik** — Dictionary definitions
-- **Google Search** — Custom search API for research
+- **Google Search** — Programmable Search via `/api/search`, for grounded answers
 
 ---
 
@@ -196,6 +221,11 @@ Enrollment: localStorage-first with best-effort Supabase sync. Lessons open as p
 - **Android** — active Capacitor 8 app at `auramind-gemini/android/`, built
   from the same React source with a native bottom nav, status-bar/back
   handling, haptics, local reminders, and system sharing.
+- **iOS** — Capacitor 8 app at `auramind-gemini/ios/`. The `Mobile iOS`
+  workflow builds it unsigned, runs it in a simulator, and checks the Live
+  Activity. Both apps share the phone layout; `src/lib/platform.ts` gates the
+  Android-only parts. Listening uses a native `AuraListenPlugin` on both
+  platforms, because neither WebView's speech recognition works.
 
 ### Android platform integrations
 
@@ -300,17 +330,17 @@ the layout was made for the device rather than ported to it.
 
 Key differentiators vs competitors (Quizlet, Anki, Knowt, RemNote, StudyFetch, Brainscape):
 - AI-powered content generation from multiple input formats
-- FSRS v5 algorithm (matching Anki's latest)
-- Multi-platform: web + native Android (desktop stack archived)
+- FSRS-6 via the official `ts-fsrs` (the same algorithm family as Anki)
+- Multi-platform: web + native Android, iOS in progress (no desktop build)
 - Source-grounded flashcards with citations
 - Multi-provider AI with local fallback (no API costs)
-- Integrated learning paths with structured curricula
+- Classroom portal: classes, assignments, and per-student progress
 
 ---
 
 ## Animation Reference
 
-AuraMind uses Framer Motion + GSAP + Three.js. Key patterns:
+AuraMind uses Framer Motion + GSAP + anime.js. Key patterns:
 - Staggered containers with `staggerChildren: 0.06`
 - `whileInView` with `viewport: { once: true }` for scroll reveals
 - Spring physics for natural motion: `stiffness: 300, damping: 30`
@@ -320,4 +350,4 @@ AuraMind uses Framer Motion + GSAP + Three.js. Key patterns:
 
 ---
 
-*Last updated: 2026-07-08*
+*Last updated: 2026-09-28*

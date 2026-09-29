@@ -135,8 +135,8 @@ verifies every response, and **always restores `api/.env`** — even on failure.
 - **Weekly automated checks** — `.github/workflows/scheduled-checks.yml`
   (Mondays 09:00 UTC, also manually runnable):
   - Stripe webhook signature smoke tests (side-effect-free, placeholder keys)
-  - Dependency audit gated at **critical** severity (known moderate/high
-    residuals in `SECURITY.md` are expected to stay green)
+  - Dependency audit gated at **critical** severity (the production
+    audit was clean as of 2026-09-28; see `SECURITY.md`)
 - **Stripe dashboard:** monitor payments, payouts, disputes, and failed
   invoices. `invoice.payment_failed` is handled — check the webhook logs for
   those deliveries.
