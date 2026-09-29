@@ -80,6 +80,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `domcontentloaded` plus locator assertions instead
 
 ### Security
+- **Cross-user card injection** - `cards` had two permissive policies per
+  command that OR'd together, so a user could insert or move their own card
+  into another user's deck (where the owner would then see and study it),
+  and a deck owner could reassign a card to another user. Every command now
+  requires both card and deck ownership. The same migration drops leftover
+  public league policies that let signed-out visitors list every user id
+  and weekly XP
 - **Admin oracle closed** - any signed-in user could call `is_admin(uuid)` /
   `is_super_admin(uuid)` to learn whether an account was an admin. Client
   EXECUTE revoked; the `audit_events` policy uses `current_user_is_admin()`

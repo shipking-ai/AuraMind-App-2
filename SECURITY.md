@@ -64,24 +64,38 @@ flag it:
 - Supabase migration files are append-only and idempotent (`ADD COLUMN
   IF NOT EXISTS`, `DROP POLICY IF EXISTS`, etc.).
 
-### Known drift in the live database (checked 2026-09-28)
+### Known drift in the live database (checked 2026-09-29)
 
 The last three rules are not yet true of every table. Policies created
 before the migrations became the source of truth still exist in the live
-project:
+project.
 
-- Duplicate permissive policies on the same `(cmd, table)` pair, e.g.
-  `cards` (4 commands), `profiles`, `decks`, `league_memberships`.
-- `UPDATE` policies without an explicit `WITH CHECK` on `decks`,
-  `study_sessions`, `learning_path_enrollments`, `profiles`. Postgres
-  falls back to the `USING` expression, so this is a hygiene issue, not an
-  open write.
-- A legacy `profiles` table has a `USING (true)` SELECT policy. It is not
-  reachable from the client — `anon` and `authenticated` hold no grant on
-  it — and it is empty; the app uses `user_profiles`.
+**Fixed by `20260929_cards_rls_owner_and_deck.sql`** (apply it with
+`npm run migrate` after merge):
 
-Consolidating these needs a migration and a live-DB dry-run; until then,
-treat them as known and don't copy their pattern.
+- `cards` had two permissive policies per command ("own cards" and "cards
+  in own decks"). They OR together, so a user could write their own card
+  into another user's deck, and a deck owner could reassign a card to
+  another user. Every command now requires card **and** deck ownership.
+- Duplicate SELECT policies on `decks`, `league_memberships` and
+  `league_seasons` (the leftover `league_*` ones also let `anon` list every
+  user id and weekly XP), and `UPDATE` without explicit `WITH CHECK` on
+  `decks` and `study_sessions`.
+
+**Still open — legacy tables the app does not read:**
+
+- Duplicate policies on `profiles`, `shared_decks`, `stripe_*`,
+  `email_preferences`, and a few log tables. Most pair a user's own-row
+  read with an admin read, which is intended; the `profiles` ones are not.
+- `UPDATE` without explicit `WITH CHECK` on `learning_path_enrollments`
+  and `profiles`. Postgres falls back to the `USING` expression, so this is
+  hygiene, not an open write.
+- `profiles` has a `USING (true)` SELECT policy. It is not reachable from
+  the client — `anon` and `authenticated` hold no grant on it — and it is
+  empty; the app uses `user_profiles`. Dropping these tables is the real
+  fix.
+
+Don't copy their pattern.
 
 ## Dependency audit status (Sep 28, 2026)
 
