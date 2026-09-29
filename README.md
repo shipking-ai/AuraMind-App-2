@@ -41,7 +41,7 @@ An **adaptive AI learning system** — turn anything you're studying (a PDF, a v
 
 ### Prerequisites
 
-- Node.js 22+ (22.19 or newer — jsdom and Vite 8 need it; CI runs 22 and 24)
+- Node.js 22.22.2 or newer (jsdom and Vite 8 need it, and the testing toolchain requires `^22.22.2 || ^24.15.0 || >=26`; CI runs 22 and 24)
 - npm
 - Git
 
