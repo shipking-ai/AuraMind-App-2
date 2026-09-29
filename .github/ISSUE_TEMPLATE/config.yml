@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Discussions (Q&A, ideas, show-and-tell)
-    url: https://github.com/mattycigemp-crypto/AuraMind-App-2/discussions
+    url: https://github.com/shipking-ai/AuraMind-App-2/discussions
     about: Ask the community before opening an issue.
   - name: 🔒 Security disclosure
-    url: https://github.com/mattycigemp-crypto/AuraMind-App-2/security/advisories/new
+    url: https://github.com/shipking-ai/AuraMind-App-2/security/advisories/new
     about: Report a security vulnerability privately — see SECURITY.md.
   - name: 📖 Documentation
-    url: https://github.com/mattycigemp-crypto/AuraMind-App-2#readme
+    url: https://github.com/shipking-ai/AuraMind-App-2#readme
     about: README, CONTRIBUTING.md and the Supabase migration guide live here.

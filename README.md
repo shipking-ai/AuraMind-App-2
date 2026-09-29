@@ -6,8 +6,8 @@
 
 <div align="center">
 
-[![CI](https://img.shields.io/github/actions/workflow/status/mattycigemp-crypto/AuraMind-App-2/ci.yml?branch=main&style=flat-square)](https://github.com/mattycigemp-crypto/AuraMind-App-2/actions/workflows/ci.yml)
-[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8b?style=flat-square)](https://github.com/mattycigemp-crypto/AuraMind-App-2/network/dependencies)
+[![CI](https://img.shields.io/github/actions/workflow/status/shipking-ai/AuraMind-App-2/ci.yml?branch=main&style=flat-square)](https://github.com/shipking-ai/AuraMind-App-2/actions/workflows/ci.yml)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8b?style=flat-square)](https://github.com/shipking-ai/AuraMind-App-2/network/dependencies)
 [![Code style: Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4?style=flat-square)](https://github.com/prettier/prettier)
 [![TypeScript: strict](https://img.shields.io/badge/typescript-strict-blue?style=flat-square)](https://www.typescriptlang.org)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-orange?style=flat-square)](#license)
@@ -19,18 +19,21 @@
 
 </div>
 
-An **adaptive AI learning system** — turn anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course of cards, lessons, and quizzes. FSRS v5 spaced repetition schedules your reviews; Prof. Aura, the AI tutor, remembers what you actually struggle with — weak cards, concepts, retention, and past conversations — and teaches to those gaps. Freemium via Stripe, all in one repo.
+An **adaptive AI learning system** — turn anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course of cards, lessons, and quizzes. FSRS spaced repetition (the official `ts-fsrs`, FSRS-6) schedules your reviews; Prof. Aura, the AI tutor, remembers what you actually struggle with — weak cards, concepts, retention, and past conversations — and teaches to those gaps. Freemium via Stripe, all in one repo.
 
-> **Status:** active development · pre-M6 release · deployed via Vercel (web) with an active Capacitor 8 Android build.
+> **Status:** v2.0.0 · web deployed via Vercel · Android in Google Play
+> closed testing · iOS builds (unsigned) in CI.
 >
-> The Tauri 2 desktop stack remains archived. The Android app uses the shared
-> learning UI plus native status-bar/back navigation, haptics, local study
-> reminders, system sharing, and mobile navigation.
+> There is no desktop build; an earlier Tauri 2 stack was removed (recover it
+> from git history if ever needed). The Android app uses the shared learning
+> UI plus native status-bar/back navigation, haptics, local study reminders,
+> system sharing, and mobile navigation.
 
 ## ✅ What's in here
 
-- **Web app** — React 19 + Vite 6 + Tailwind, served by Vercel (PWA with offline support).
+- **Web app** — React 19 + Vite 8 + Tailwind 4, served by Vercel (PWA with offline support).
 - **Android app** — a first-class Capacitor 8 build (`auramind-gemini/android/`) generated from the same React source, with a native bottom nav, status-bar/back-button handling, haptics, local reminders, and system sharing.
+- **iOS app** — a Capacitor 8 project (`auramind-gemini/ios/`) that the `Mobile iOS` workflow builds unsigned and runs in a simulator. Not yet signed or on TestFlight.
 - **Backend** — Vercel serverless functions under `/api`.
 - **Database** — Supabase (Postgres) with append-only migrations in `./supabase/migrations/`.
 
@@ -38,7 +41,7 @@ An **adaptive AI learning system** — turn anything you're studying (a PDF, a v
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (22.19 or newer — jsdom and Vite 8 need it; CI runs 22 and 24)
 - npm
 - Git
 
@@ -46,7 +49,7 @@ An **adaptive AI learning system** — turn anything you're studying (a PDF, a v
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/mattycigemp-crypto/AuraMind-App-2.git
+   git clone https://github.com/shipking-ai/AuraMind-App-2.git
    cd AuraMind-App-2
    ```
 
@@ -129,12 +132,13 @@ AuraMind-App-2/
 │   │   ├── types/            # TypeScript type definitions
 │   │   └── __tests__/        # Vitest suite
 │   ├── android/              # Capacitor 8 Android project
+│   ├── ios/                  # Capacitor 8 iOS project (CI-built, unsigned)
 │   ├── public/               # Static assets (PWA manifest, icons)
 │   └── package.json
 ├── supabase/
 │   └── migrations/           # Append-only, idempotent SQL migrations
-├── model-service/            # Optional Python streaming-chat backend (FastAPI)
-├── docs/                     # Store-submission playbooks
+├── model-service/            # Gitignored, local-only Python experiment (not deployed)
+├── docs/                     # Store-submission playbook + README assets
 ├── store/                    # App store listings, screenshots, checklists
 ├── vercel.json               # Vercel deployment configuration
 ├── run-migrations.js         # Migration runner (node run-migrations.js)
@@ -149,15 +153,21 @@ AuraMind-App-2/
 |----------|-------------|--------------|
 | `VITE_SUPABASE_URL` | Supabase project URL | Supabase Dashboard → Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Supabase Dashboard → Settings → API |
-| `RESEND_FROM_EMAIL` | Sender email for notifications (must use verified domain) | Resend Dashboard → Domains |
-| `RESEND_API_KEY` | Resend API key for email sending | Resend Dashboard → API Keys |
+
+These two are the only variables the app refuses to start without. Email,
+AI, and payments are configured server-side (see the backend table below).
 
 ### Optional Variables
 
+Client variables are read only if they are listed in the `CLIENT_ENV`
+allowlist in `src/lib/env.ts`.
+
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `VITE_API_BASE_URL` | API origin, for builds not served from the API's own origin (e.g. native) | same origin |
 | `VITE_USE_LOCAL_AI` | Enable local AI server (LM Studio/Ollama) | `false` |
-| `VITE_AI_MODEL` | Custom AI model selection | `deepseek/deepseek-r1-0528:free` |
+| `VITE_USE_PUTER` | Offer the user-pays Puter fallback | `true` |
+| `VITE_AI_MODEL` | Model name shown in the admin settings readout. The server picks models itself (`GROQ_MODEL`, …) | - |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key | - |
 | `VITE_STRIPE_PRICE_ID_MONTHLY` | Stripe monthly price ID | - |
 | `VITE_STRIPE_PRICE_ID_ANNUAL` | Stripe annual price ID | - |
@@ -178,7 +188,7 @@ None of these may be `VITE_`-prefixed — that would publish them to the browser
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `RESEND_API_KEY` | Resend API key for emails |
-| `RESEND_FROM_EMAIL` | Verified sender domain (must end with @mail.auramind.app) |
+| `RESEND_FROM_EMAIL` | Sender address on a Resend-verified domain. Defaults to `noreply@mail.auramind.app` |
 | `GROQ_API_KEY` | First AI provider in the chain |
 | `CEREBRAS_API_KEY` | Second — tried when Groq returns 429/5xx |
 | `GEMINI_API_KEY` | Third |
@@ -189,6 +199,8 @@ None of these may be `VITE_`-prefixed — that would publish them to the browser
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash token |
 | `CRON_SECRET` | Authenticates scheduled jobs (dunning). Unset means those endpoints reject every call |
 | `ADMIN_EMAIL` | Operational alerts |
+| `FCM_PROJECT_ID` | Firebase project for push. Push stays off (fails closed) until both FCM vars are set |
+| `FCM_SERVICE_ACCOUNT_KEY` | Firebase service-account key JSON, raw or base64 |
 
 The Turnstile **secret** is not here — it belongs in Supabase under
 Authentication → Attack Protection, since Supabase verifies the token.
@@ -311,6 +323,7 @@ ORDER  BY applied_at DESC;
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
+   - `customer.subscription.trial_will_end`
    - `invoice.payment_succeeded`
    - `invoice.payment_failed`
 
@@ -327,19 +340,21 @@ ORDER  BY applied_at DESC;
 
 - **AI tutor (Prof. Aura)** — a conversational coach that remembers your weak cards, concepts, retention, and past conversations, then teaches to the gaps.
 - **AI generation** — turn a topic, PDF, video, URL, or voice memo into flashcards, quizzes, and narrated slides.
-- **FSRS v5 spaced repetition** — reviews scheduled by the Free Spaced Repetition Scheduler, not a fixed interval.
+- **FSRS spaced repetition** — reviews scheduled by the official `ts-fsrs` (FSRS-6), not a fixed interval.
+- **Classroom portal** — teachers create classes, students join with a 6-character code, and teachers assign decks and graded quizzes and track per-student progress.
+- **Memory sparks** — cards that are fading (not yet forgotten) resurface as in-app pop-ups, notifications, and mixed into study sessions.
 - **Native Android app** — Capacitor 8 shell with status-bar/back navigation, haptics, local reminders, system sharing, and offline study.
 - **Offline-first PWA** — cached decks and cards, queued reviews, and reconnect sync.
 - **Voice study** — text-to-speech cards and hands-free review.
 - **Gamification** — streaks, mastery stats, and progress analytics.
-- **Freemium via Stripe** — subscription checks, webhooks, and entitlement fallback.
+- **Freemium via Stripe** — hosted Checkout, signed webhooks, and entitlement read from `app_metadata` only.
 - **Multiple AI providers** — server-side failover across Groq, Cerebras, Gemini and OpenRouter (any one key is enough), with a user-pays Puter fallback, optional local Ollama/LM Studio, and deterministic offline generation as the floor.
 
 ## 📊 Tech Stack
 
-- **Frontend**: React 19, TypeScript (strict), Vite 6, Tailwind CSS 4, React Router 7
-- **UI Components**: Radix UI, Framer Motion, custom SVG icon set
-- **Mobile**: Capacitor 8 (Android)
+- **Frontend**: React 19, TypeScript 6 (strict), Vite 8, Tailwind CSS 4, React Router 7
+- **UI Components**: Base UI and Radix primitives, Framer Motion, GSAP, custom SVG icon set
+- **Mobile**: Capacitor 8 (Android; iOS in CI)
 - **Backend**: Vercel Serverless Functions (Express dev server locally)
 - **Database**: Supabase (PostgreSQL, RLS)
 - **Payments**: Stripe
@@ -363,7 +378,7 @@ npm install
 
 - Ensure your `.env` file is in the `auramind-gemini/` directory
 - Restart the development server after changing environment variables
-- Variables must start with `VITE_` to be available in the browser
+- Variables must start with `VITE_` **and** be listed in `CLIENT_ENV` (`src/lib/env.ts`) to be available in the browser
 
 ### API Errors
 

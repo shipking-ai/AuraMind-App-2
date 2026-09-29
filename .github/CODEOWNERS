@@ -2,19 +2,19 @@
 #
 # Path-scoped reviewer assignments. GitHub will auto-tag a matching
 # reviewer on every PR that touches one of the lines below; if no
-# narrower rule matches, the * @mattycigemp-crypto default applies.
+# narrower rule matches, the * @shipking-ai default applies.
 #
 # Pattern format is the same as .gitignore. Last-match wins, so
 # more-specific paths MUST come AFTER less-specific ones below.
 
 # ── Default reviewer for everything in the repo ──
-* @mattycigemp-crypto
+* @shipking-ai
 
 # ── Schema migrations: misapplied migration = production data loss ──
-/supabase/migrations/ @mattycigemp-crypto
+/supabase/migrations/ @shipking-ai
 
 # ── Release / mobile build pipelines — they gate what ships ──
-/.github/workflows/release*.yml @mattycigemp-crypto
-/.github/workflows/mobile-*.yml @mattycigemp-crypto
+/.github/workflows/release*.yml @shipking-ai
+/.github/workflows/mobile-*.yml @shipking-ai
 
 # ── Native stacks are archived (web-only); re-add owners if restored ──
