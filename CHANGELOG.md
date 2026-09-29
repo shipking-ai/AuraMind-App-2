@@ -56,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unentitled chat endpoint and the learning-paths feature
 
 ### Fixed
+- **Download page offered installers that don't exist** - the macOS and
+  Linux buttons 404'd and the Windows one served an unmaintained June build
+  of the removed Tauri app. The page now explains installing the web app
+  from the browser, shows Android as in closed testing, and no longer
+  publishes the internal store-submission checklist
 - **FSRS intervals were ~140x too long** - the hand-written scheduler
   mis-mapped grades, so "Hard" could schedule a card 100 years out. Replaced
   with `ts-fsrs`; a migration reset the schedules it had written
