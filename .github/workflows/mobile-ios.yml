@@ -113,10 +113,22 @@ jobs:
           mkdir -p ../ios-artifacts
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/launch.png
           # Still running 25 s after launch = no crash on start.
-          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q "com.auramind.app"; then
+          #
+          # `launchctl list | grep -q ...` cannot be used under `pipefail`:
+          # grep -q exits the instant it matches, the pipe closes, launchctl
+          # dies on SIGPIPE (141), and pipefail promotes that to the
+          # pipeline's status - so the check reported "App is not running
+          # (crashed?)" for an app that was running with a live PID, and
+          # wrote its screenshot first. Capture the list, then match on the
+          # variable so no pipe is involved.
+          APPS=$(xcrun simctl spawn "$DEVICE" launchctl list 2>/dev/null || true)
+          if grep -q "com.auramind.app" <<<"$APPS"; then
             echo "App is running."
           else
             echo "::error::App is not running after launch (crashed?)"
+            echo "--- launchctl list (last 40) ---"
+            tail -n 40 <<<"$APPS"
+            echo "-----------------------------"
             xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "App"' > ../ios-artifacts/app.log || true
             exit 1
           fi
@@ -172,13 +184,22 @@ jobs:
           # Ground truth that needs no log capture: the driver records every
           # milestone to Preferences. Both web and native prefix keys with
           # `CapacitorStorage.` — reading the bare key always misses.
+          #
+          # Read the plist inside the app's data container rather than
+          # `defaults read <bundle-id>`: the latter resolves against the
+          # *host* user domain and returned MISSING for every key, including
+          # ones the app had certainly written, which is why this step could
+          # not tell "driver never ran" from "we looked in the wrong place".
+          PLIST="$(xcrun simctl get_app_container "$DEVICE" com.auramind.app data)/Library/Preferences/com.auramind.app.plist"
+          echo "prefs plist: ${PLIST:-<container unavailable>}"
+          [ -f "$PLIST" ] && echo "prefs plist exists" || echo "::warning::prefs plist missing"
+          read_prefs() { /usr/libexec/PlistBuddy -c "Print :CapacitorStorage.$1" "$PLIST" 2>/dev/null || echo MISSING; }
           for k in session seen device available started updated; do
-            v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
-            echo "driver $k: $v"
+            echo "driver $k: $(read_prefs auramind_ci_live_$k)"
           done
-          echo "tour: $(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_tour_step 2>/dev/null || echo MISSING)"
-          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
-          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
+          echo "tour: $(read_prefs auramind_ci_tour_step)"
+          started=$(read_prefs auramind_ci_live_started)
+          updated=$(read_prefs auramind_ci_live_updated)
           # Advisory only: this step inherits the tour's timing, so a miss
           # here is timing evidence, not proof. The live-boot step below gates.
           [ "$started" = true ] && [ "$updated" = true ] && echo "Live Activity started and updated." || echo "::warning::Tour-timed Live Activity proof missed (started=$started updated=$updated, see driver lines above)"
@@ -211,13 +232,17 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
           xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
           grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
+          # Same container plist as the step above, and the same reason.
+          PLIST="$(xcrun simctl get_app_container "$DEVICE" com.auramind.app data)/Library/Preferences/com.auramind.app.plist"
+          echo "prefs plist: ${PLIST:-<container unavailable>}"
+          [ -f "$PLIST" ] && echo "prefs plist exists" || echo "::warning::prefs plist missing"
+          read_prefs() { /usr/libexec/PlistBuddy -c "Print :CapacitorStorage.$1" "$PLIST" 2>/dev/null || echo MISSING; }
           for k in session seen device available started updated; do
-            v=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_$k 2>/dev/null || echo MISSING)
-            echo "live-boot $k: $v"
+            echo "live-boot $k: $(read_prefs auramind_ci_live_$k)"
           done
-          echo "tour: $(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_tour_step 2>/dev/null || echo MISSING)"
-          started=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_started 2>/dev/null || echo MISSING)
-          updated=$(xcrun simctl spawn "$DEVICE" defaults read com.auramind.app CapacitorStorage.auramind_ci_live_updated 2>/dev/null || echo MISSING)
+          echo "tour: $(read_prefs auramind_ci_tour_step)"
+          started=$(read_prefs auramind_ci_live_started)
+          updated=$(read_prefs auramind_ci_live_updated)
           echo "live-boot started: $started | updated: $updated"
           [ "$started" = true ] || {
             echo "::error::Live Activity never started on live-boot"
