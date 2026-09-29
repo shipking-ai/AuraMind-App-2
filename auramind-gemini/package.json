@@ -2,6 +2,9 @@
   "name": "auramind",
   "private": true,
   "version": "2.0.0",
+  "engines": {
+    "node": ">=22.19"
+  },
   "description": "AuraMind — adaptive AI learning system (React app, PWA, and Capacitor Android).",
   "license": "UNLICENSED",
   "type": "module",
@@ -26,7 +29,6 @@
     "diagnostics": "node scripts/check-migration-drift.cjs && node scripts/check-remote-drift.cjs",
     "diagnostics:drift": "node scripts/check-migration-drift.cjs",
     "diagnostics:remote": "node scripts/check-remote-drift.cjs",
-    "env:check": "node -e \"const e=require('./src/lib/env.ts');console.log('env:check stub — see src/lib/env.ts validateEnv()')\"",
     "build:android": "vite build --mode mobile && npx cap sync android",
     "build:apk:debug": "vite build --mode mobile && npx cap sync android && node scripts/build-debug-apk.mjs",
     "build:aab:release": "vite build --mode mobile && npx cap sync android && node scripts/run-gradle.mjs bundleRelease",

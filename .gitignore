@@ -86,6 +86,10 @@ tsc.out
 *.jsonl
 
 # IDE / agent tooling
+# These hold per-developer settings, so they stay untracked. Note that .claude/
+# was already listed here while .claude/settings.local.json was still in the
+# index: a gitignore rule does not untrack anything. If one of these ever gets
+# committed, `git rm --cached` it rather than deleting the rule.
 .claude/
 .cline/
 .cursor/
