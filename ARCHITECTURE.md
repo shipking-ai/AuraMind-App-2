@@ -54,11 +54,13 @@ their own class's roster).
 | Manage Coupons | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
 | Manage Settings | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Delete Users | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Free Access | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ |
+| Free Access | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 
 Derived from the role hierarchy in `utils/permissions.ts` (owner 100, CEO 90,
 admin 80, employee 50, tester 30, user 10). Tester is an internal QA role:
-it skips the paywall and has no staff powers.
+it skips the paywall and has no staff powers. Free access must match
+`FREE_ACCESS_ROLES` in `api/_lib/entitlement.ts`; `permissions.test.ts`
+fails if they drift.
 
 Role is read from `app_metadata.role` only — via `resolveAuthorizationRole()` on the client and `isEntitledWithRoleAccess()` in `api/_lib/entitlement.ts` on the server — and synced into `user_profiles.role` by `sync_auth_role_to_profiles`. `user_metadata` is attacker-writable and is **not** trusted for authorization; `user_metadata.role` is only a display persona. The owner email is configured via `VITE_OWNER_EMAIL`. Roles with free access skip subscription checks on both client and server.
 

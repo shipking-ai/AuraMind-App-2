@@ -51,9 +51,11 @@ export const getPermissions = (role: UserRole = UserRole.USER): Permission => {
     canViewAllData: level >= ROLE_HIERARCHY[UserRole.CEO],
     canDeleteUsers: level >= ROLE_HIERARCHY[UserRole.OWNER],
     canAccessAdminPanel: level >= ROLE_HIERARCHY[UserRole.ADMIN],
-    // Testers are internal QA accounts: they skip the paywall to exercise the
-    // product but get NO staff or admin powers.
-    hasFreeAccess: level >= ROLE_HIERARCHY[UserRole.ADMIN] || role === UserRole.TESTER
+    // Staff (employee and up) use the product for free. Testers are internal
+    // QA accounts: they skip the paywall to exercise the product but get NO
+    // staff or admin powers. Must match FREE_ACCESS_ROLES in
+    // api/_lib/entitlement.ts, or the UI and the AI proxy disagree.
+    hasFreeAccess: level >= ROLE_HIERARCHY[UserRole.EMPLOYEE] || role === UserRole.TESTER
   };
 };
 
