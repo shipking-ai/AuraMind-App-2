@@ -122,7 +122,12 @@ const IOSWelcomeScreen = React.lazy(() => import("./components/ios/IOSWelcomeScr
 const AndroidVisualPreview = React.lazy(() => import("./components/native/AndroidVisualPreview"));
 const IOSVisualPreview = React.lazy(() => import("./components/ios/IOSVisualPreview"));
 // Sample-data iPhone screens for CI screenshots; never set in a release build.
-const IOS_PREVIEW_ENABLED = import.meta.env.DEV || readClientEnv("VITE_IOS_PREVIEW") === "true";
+// "live" is the same tour but booting straight into a driven Live Activity
+// session (no tour timing dependency) — see IOSVisualPreview.isLiveBoot.
+const IOS_PREVIEW_ENABLED =
+  import.meta.env.DEV ||
+  readClientEnv("VITE_IOS_PREVIEW") === "true" ||
+  readClientEnv("VITE_IOS_PREVIEW") === "live";
 const AuthPage = React.lazy(() => import("./components/auth/AuthPage"));
 const DeckDetailRoute = React.lazy(() => import("./pages/deck/DeckDetailRoute"));
 const DocsPage = React.lazy(() => import("./pages/legal/DocsPage"));
@@ -882,7 +887,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
               <Route
                 path="/"
                 element={
-                  readClientEnv("VITE_IOS_PREVIEW") === "true" && Capacitor.getPlatform() === "ios" ? (
+                  readClientEnv("VITE_IOS_PREVIEW") === "live" && Capacitor.getPlatform() === "ios" ? (
+                    // CI live-boot: straight into the driven session, no tour.
+                    <Navigate to="/__preview/ios/session/neuro?live=1" replace />
+                  ) : readClientEnv("VITE_IOS_PREVIEW") === "true" && Capacitor.getPlatform() === "ios" ? (
                     <Navigate to="/__preview/ios?tour=1" replace />
                   ) : Capacitor.isNativePlatform() ? (
                     user ? (

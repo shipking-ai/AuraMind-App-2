@@ -10,7 +10,7 @@ three things most contributors trip on:
 ## Local setup
 
 ```bash
-git clone https://github.com/mattycigemp-crypto/AuraMind-App-2.git
+git clone https://github.com/shipking-ai/AuraMind-App-2.git
 cd AuraMind-App-2
 
 npm install                  # orchestration scripts at the root
@@ -22,10 +22,11 @@ cd ..
 
 You will need:
 
-- **Node 18+** (project targets Vite 6 which requires ≥18).
-- The Tauri desktop stack is archived. The Android (Capacitor) app is
-  active but only needs the Android SDK/Java toolchain if you build it;
-  running the web app needs no native toolchains.
+- **Node 22.22.2 or newer** — Vite 8 and jsdom need it, and the testing
+  toolchain requires `^22.22.2 || ^24.15.0 || >=26`. CI runs 22 and 24.
+- There is no desktop build (the old Tauri stack was removed). The Android
+  and iOS (Capacitor) apps only need the Android SDK/Java or Xcode toolchain
+  if you build them; running the web app needs no native toolchains.
 
 To run only the web app without native toolchains:
 
@@ -90,12 +91,13 @@ maintainer triages by:
    Larger ones get split or requested as drafts.
 2. **Test coverage** — behavior changes without a test get sent back.
 3. **Schema risk** — migrations require CODEOWNERS review from
-   `@mattycigemp-crypto` and a recorded live-DB dry-run.
+   `@shipking-ai` and a recorded live-DB dry-run.
 
 ## Code style
 
-- Frontend / API code in TypeScript with `strict: true`. ESLint and
-  Prettier configs at the project root.
+- Frontend / API code in TypeScript with `strict: true`. ESLint is
+  configured in `auramind-gemini/eslint.config.js`; Prettier runs with its
+  defaults (`npm run format` / `npm run format:check` in `auramind-gemini/`).
 - `.editorconfig` enforces UTF-8, LF endings, 2-space indent (4 for
   Supabase migrations and Android/iOS sources).
 - Prefer imports from the existing utility folders first; new helpers

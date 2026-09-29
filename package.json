@@ -2,6 +2,9 @@
   "name": "auramind",
   "version": "2.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.22.2"
+  },
   "description": "AuraMind — adaptive AI learning system for web, PWA, and native Android.",
   "scripts": {
     "dev": "concurrently -n \"vite,api\" -c \"cyan,yellow\" \"cd auramind-gemini && npm run dev\" \"cd api && npx tsx server.js\"",
@@ -31,11 +34,11 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mattycigemp-crypto/AuraMind-App-2.git"
+    "url": "git+https://github.com/shipking-ai/AuraMind-App-2.git"
   },
   "homepage": "https://auramind.app",
   "bugs": {
-    "url": "https://github.com/mattycigemp-crypto/AuraMind-App-2/issues"
+    "url": "https://github.com/shipking-ai/AuraMind-App-2/issues"
   },
   "devDependencies": {
     "concurrently": "^10.0.0"

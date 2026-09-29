@@ -62,7 +62,7 @@ All complaints will be reviewed and investigated promptly and fairly.
 If you cannot use email, reach out by opening a **private** GitHub
 issue labeled `co-violation` (if a private issue channel has been
 configured by the repo admin) or by sending a direct message to the
-maintainer on GitHub at [@mattycigemp-crypto](https://github.com/mattycigemp-crypto).
+maintainer on GitHub at [@shipking-ai](https://github.com/shipking-ai).
 
 > **For the maintainer**: please confirm `conduct@auramind.app` is set
 > up and forwarding to the maintainer team before publishing this file.

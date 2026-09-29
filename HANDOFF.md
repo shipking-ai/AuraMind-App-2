@@ -1,6 +1,6 @@
 # Handoff — AuraMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-22 (FSRS scheduler repair, the iPhone app, one special capability per platform, unsigned device IPA). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-28 (FSRS scheduler repair, the iPhone app, one special capability per platform, a sideloadable IPA, Live Activity in CI, the admin oracle closed). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,29 +14,27 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main` @ `1690bfc0`; open PRs: #88, #89 (both Dependabot, `api/`) |
-| CI | Node **22 + 24** (20 dropped, EOL); required checks still list `build-and-test (20.x)` until changed in repo settings |
-| Migrations | all applied through `20260922000000_fsrs_scheduler_repair.sql` (verified live 2026-09-22) |
+| Branch | `main`; open PRs (2026-09-28): #95 (HANDOFF update, conflicts with `main`), #100–#104 (Dependabot, `auramind-gemini/`) |
+| CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
+| Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28) |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
-| Tests | 530 passed / 17 skipped on `main`, type-check clean (2026-09-22) |
+| Tests | 95 files / 733 declared cases (557 unit, 115 API, 61 Playwright). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
 
 ---
 
 ## Outstanding — human, not code
 
-1. **Required status checks.** GitHub → Settings → Branches → `main`: replace
-   `build-and-test (20.x)` with `build-and-test (24.x)`. Until then every PR
-   shows BLOCKED waiting for a check that no longer runs.
+1. ~~**Required status checks.**~~ Done — `main` requires
+   `build-and-test (22.x)` and `(24.x)`.
 2. **Play closed test.** Version 7 was sent for review. Target audience must
    be **13+** (the Terms say 13+; ticking under-13 pulls in the Families
    policy). Advertising ID: **No** (none in the merged manifest). Once
    approved, 12+ testers must stay opted in for **14 continuous days** before
    *Apply for production* unlocks. Voice features (#77 and the listening
    branch) reach testers only in the next build (versionCode 8+).
-3. **www.auramind.app certificate expired 2026-08-19.** DNS is correct
-   (CNAME to Vercel, no CAA, Let's Debug passes); the apex is fine. Fix in
-   Vercel → project → Settings → Domains: re-add `www.auramind.app` as a
-   redirect to the apex.
+3. ~~**www.auramind.app certificate.**~~ Fixed — `www` serves a valid
+   certificate (expires 2026-12-21, checked 2026-09-28) and 308-redirects to
+   the apex.
 4. **Stripe live smoke.** One real checkout. It starts a 7-day trial, so the
    first charge lands after the trial.
 5. **Confirm sign-in works** at auramind.app/auth in a real browser. Automated
@@ -112,23 +110,6 @@ value:
   appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
   loudness streams and silence ends with `no-speech`. **Still needs one phone
   test with a real spoken answer**, since the emulator mic can't be fed audio.
-- **Per-platform capabilities — shipped** (2026-09-22, below): Study Float
-  (desktop PiP), Chrome built-in AI, the Windows 11 widget board, Android 16
-  Live Updates, iOS Live Activity + Siri. Each is additive and invisible where
-  unsupported. What's *not* done: none of the iOS half has run on hardware.
-- **A personal FSRS tuner.** #87 replaced the broken scheduler with ts-fsrs and
-  fixed default weights. The per-user optimizer that used to exist was removed
-  with the old math; rebuilding it on the FSRS-6 optimizer against
-  `card_reviews` is the natural follow-up, and there are now 38 reviewed cards
-  of real data to fit against (too few to fit today — wait for a few hundred).
-- **Drive a Live Activity in CI.** `mobile-ios.yml` screenshots the simulator,
-  but nothing starts a session, so the Dynamic Island layout is unverified by
-  anything except the compiler. A `simctl`-driven session plus a screenshot
-  would catch layout regressions the type checker can't see.
-- **An iOS-preview web deploy.** The iOS shell already renders in a browser at
-  `/__preview/ios` behind `VITE_IOS_PREVIEW=true` (see `App.tsx:125`);
-  deploying that would let the iPhone design be reviewed in mobile Safari
-  without sideloading anything.
 - **Push sender — built, awaiting credentials.** Server sender, admin send
   endpoint, and daily due-card cron all shipped (see 2026-09-21 below);
   nothing delivers until the Firebase console steps at the end of that
@@ -136,6 +117,10 @@ value:
 - **Aurora motion — shipped** (2026-09-21, below), dashboard shell, landing
   hero, and (same day) the Android focus aura (see bottom). Nothing remains
   in this theme.
+- **Per-platform capabilities — shipped** (2026-09-22, below): Study Float
+  (desktop PiP), Chrome built-in AI, the Windows 11 widget board, Android 16
+  Live Updates, iOS Live Activity + Siri. Each is additive and invisible where
+  unsupported. What's *not* done: none of the iOS half has run on hardware.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
@@ -342,7 +327,8 @@ only after changing source.
 - **PowerShell has no `&&`.** Use `;` or separate commands.
 - **The Supabase MCP connection is read-only.** Writes go through PostgREST
   with the service-role key from the root `.env`, or through
-  `npm run migrate`.
+  `npm run migrate`. The linked CLI works for reads and rolled-back tests:
+  `npx supabase@latest db query --linked -f file.sql -o json`.
 - **WSL sandboxes reach Windows npm via `powershell.exe`.** The repo lives on
   `/mnt/c/...` and its `node_modules` hold Windows native binaries, so Linux
   tools that need them (vitest → rollup) fail with "Cannot find module
@@ -351,8 +337,7 @@ only after changing source.
   `powershell.exe -NoProfile -Command 'Set-Location "auramind-gemini"; npm test -- --run'`.
   It starts in the project root, so the Set-Location is optional there. Bash
   eats `$variables` inside double-quoted -Command strings — single-quote the
-  whole command and use double quotes inside. Allow ~2 min for the suite. The linked CLI works for reads and rolled-back tests:
-  `npx supabase@latest db query --linked -f file.sql -o json`.
+  whole command and use double quotes inside. Allow ~2 min for the suite.
 - **Claude Code's auto mode blocks** `gh pr merge` on unreviewed PRs,
   branch-protection edits and production migrations. Those are done by hand
   (or allowed in permission settings).
@@ -463,6 +448,8 @@ app plus its extension burn two per sideload.
   on-device AI, Windows widget board, Live Updates, Live Activity + Siri)
 - **Scheduling** — the FSRS implementation was arithmetically wrong and is now
   ts-fsrs; bad intervals in production were repaired by migration
+- **Authorization** — the admin oracle (`is_admin(uuid)`) is closed to clients,
+  and role and entitlement are read from `app_metadata` only
 
 ---
 
@@ -1094,3 +1081,51 @@ shell that loads the web app from a URL, which makes iteration a refresh
 instead of a 15-minute round trip.
 
 Run 35805655820 on `main`: both jobs green, `auramind-ios-unsigned-ipa`, 70 MB.
+
+---
+
+## 2026-09-24 - Live Activity in CI + iOS preview deploy
+
+- **Live Activity is driven in CI now.** The preview tour ends on a live step
+  (`/session/neuro?live=1`, `LiveActivityDriver` in `IOSVisualPreview.tsx`):
+  real `startSessionLiveUpdate`, one `updateSessionLiveUpdate` 4s later, never
+  ended. The Swift plugin prints `LIVE_ACTIVITY_STARTED/UPDATED` under
+  `#if DEBUG` only; `mobile-ios.yml` fails closed unless both `true` lines are
+  in the sim log, and uploads `live-activity*.png` (Pro device, island
+  in-frame). `start/updateLiveActivity` now resolve `boolean` instead of
+  `void` (callers ignore it; `liveActivity.test.ts` updated). Tour entries
+  with query strings need `previewTourUrl` — naive string concat produced
+  `?live=1?tour=1`.
+- **iOS preview deploy:** `npm run build:ios-preview`
+  (`scripts/build-ios-preview.mjs` — a wrapper because PowerShell has no
+  inline-env syntax) bakes `VITE_IOS_PREVIEW=true`; verified present in the
+  preview bundle and absent (`void 0`) in release. Hosting is a second Vercel
+  project (steps in DEPLOYMENT.md); release builds redirect `/__preview/ios`
+  to `/`.
+- **Incidental:** removed dead `liveUpdate` direct imports in
+  `StudyModePage.tsx` (the facade replaced them; lint was red on `main`);
+  `npm ci` was required first — `node_modules` was missing `ts-fsrs`/`ws`.
+
+Full suite 553 green at the time.
+
+---
+
+## 2026-09-25 - Admin oracle closed (applied 2026-09-25)
+
+- **Finding:** `is_admin(uuid)` / `is_super_admin(uuid)` take an arbitrary
+  uuid, so any signed-in user could probe whether an account is an admin. The
+  only in-repo consumer of either form was the `audit_events` SELECT policy
+  (always with `auth.uid()`).
+- **Fix:** `supabase/migrations/20260925_close_admin_oracle.sql` moves the
+  policy onto `current_user_is_admin()` (verified self-contained, no
+  dependency on the uuid forms) and revokes client EXECUTE on both uuid
+  functions (service_role kept). JWT is the canonical admin source, so a
+  legacy table-only admin loses audit reads. Applied to the live project on
+  2026-09-25 (`schema_migrations`).
+- **Pinned by `adminOracle.test.ts`:** replays GRANT/REVOKE per function in
+  filename order and asserts the effective grant denies client roles; fails
+  without the migration (verified both directions).
+- **Left open:** `promote_admin` / `deactivate_admin` are granted to
+  `authenticated` but their bodies live only in the live DB (not in any
+  migration file) — unauditable from here. Needs
+  `pg_get_functiondef()` output before touching.

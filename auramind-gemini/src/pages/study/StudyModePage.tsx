@@ -8,7 +8,6 @@ import { useHaptics } from '../../hooks/useNative';
 import { ImpactStyle } from '../../lib/nativeShim';
 import { Capacitor } from '../../lib/nativeShim';
 import { reportDeckUsed } from '../../lib/auraDevice';
-import { startLiveUpdate, updateLiveUpdate, endLiveUpdate } from '../../lib/liveUpdate';
 import { PersonalizationIndicator } from '../../components/study/PersonalizationIndicator';
 import { DifficultyChip } from '../../components/study/DifficultyChip';
 import { PacingOverride, type PacingMode } from '../../components/study/PacingOverride';

@@ -12,7 +12,7 @@ the repo root unless noted.
 cd auramind-gemini
 npm run type-check   # tsc --noEmit
 npm run lint         # eslint
-npm test -- --run    # vitest: 57 files / 484 tests
+npm test -- --run    # vitest: 71 files / 563 tests on 2026-09-29
 ```
 
 ## 2. Web E2E (Playwright) — ~5 min

@@ -234,7 +234,11 @@ export default function AuthPage() {
             <FrostGlass blur="xl" opacity={0.08} className="p-6">
             {/* SSO Buttons */}
             {/* SSO buttons — hidden during the 2FA challenge */}
-            {!mfaPending && (
+            {/* Native shells hide OAuth: signInWithOAuth opens the system
+                browser and never returns to capacitor://localhost (no
+                auth-callback deep link yet). Email + password is the native
+                path; Turnstile is disabled there (see TurnstileWidget). */}
+            {!mfaPending && !isNativeApp && (
             <>
             <button
               onClick={handleGoogleSSO}
@@ -271,6 +275,12 @@ export default function AuthPage() {
               </div>
             </div>
             </>
+            )}
+            {!mfaPending && isNativeApp && (
+              <p className="mb-4 text-center text-[#7A7A96] text-xs">
+                Sign in with your email and password. Google / Notion login
+                isn&apos;t supported in the app yet — use it in Safari instead.
+              </p>
             )}
 
             {/* Error */}
