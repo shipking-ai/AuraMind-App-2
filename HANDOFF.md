@@ -47,6 +47,18 @@ the traps that cost real time.
    a Groq *preview* model (~$22 per 1M characters); if it is withdrawn, swap
    `SPEECH_MODEL`/`SPEECH_VOICES` in `api/_aiHandler.ts` and `AI_VOICES` in
    `src/services/voice/aiVoice.ts`.
+7. **Put the iPhone build on a phone.** Everything iOS is CI-verified only.
+   Run `mobile-ios.yml` (workflow_dispatch), download
+   `auramind-ios-unsigned-ipa`, sign it with Sideloadly and a free Apple ID —
+   full steps under "Getting the app onto an iPhone from Windows" below. The
+   three things that have never executed on hardware: Siri (`AuraMindIntents`),
+   the Live Activity, and native dictation (`SFSpeechRecognizer`).
+8. **Apple Developer Program ($99/yr) is the only way past the 7-day wall.**
+   A free Apple ID signature expires weekly, allows 3 sideloaded apps, and
+   grants no App Groups (so Home Screen widgets can't read the due count) and
+   no APNs. Paying also unlocks TestFlight, where internal testers get builds
+   without App Review. Nothing in the code depends on this; it's purely a
+   distribution ceiling.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -105,6 +117,10 @@ value:
 - **Aurora motion — shipped** (2026-09-21, below), dashboard shell, landing
   hero, and (same day) the Android focus aura (see bottom). Nothing remains
   in this theme.
+- **Per-platform capabilities — shipped** (2026-09-22, below): Study Float
+  (desktop PiP), Chrome built-in AI, the Windows 11 widget board, Android 16
+  Live Updates, iOS Live Activity + Siri. Each is additive and invisible where
+  unsupported. What's *not* done: none of the iOS half has run on hardware.
 - **`anon` EXECUTE on RPCs** is revoked, but `authenticated` can still call 14
   SECURITY DEFINER functions. That's by design — those are the app's own RPCs
   and each guards itself with `auth.uid()` — but it's worth re-reading if the
