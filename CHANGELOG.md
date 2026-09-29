@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Windows app** - a new Tauri 2 desktop app around the bundled web build:
+  its own window that remembers its size, one instance at a time, outside
+  links (including checkout) opening in the browser, and signed auto-updates
+  from GitHub Releases with an in-app "Restart and update" prompt. Replaces
+  the retired June desktop build
 - **Classroom portal** - teachers create classes, students join with a
   6-character code or deep link, and teachers assign decks and
   multiple-choice quizzes graded on the server, with per-student progress
