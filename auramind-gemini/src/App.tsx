@@ -57,6 +57,7 @@ import BiometricGate from "./components/native/BiometricGate";
 import { initPushListeners } from "./services/notifications/pushService";
 import { App as NativeApp, Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
+import { useWindowFocusRefresh } from "./hooks/useWindowFocusRefresh";
 import { useSparkSync } from "./hooks/useSparkSync";
 import { useShareTarget } from "./hooks/useShareTarget";
 import QuizGenerationNotifier from "./components/notifications/QuizGenerationNotifier";
@@ -818,12 +819,29 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       disposed = true;
       void listener?.remove();
     };
-    // checkSubscription is recreated each render; the listener only needs the
-    // current user and whether they still lack access.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, subscriptionStatus]);
+      // checkSubscription is recreated each render; the listener only needs the
+      // current user and whether they still lack access.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, subscriptionStatus]);
 
-  const isNativeShell = Capacitor.isNativePlatform();
+  /**
+   * The same thing for the Windows app, which has no Capacitor appStateChange.
+   * See useWindowFocusRefresh for why checkout being sent out to the browser
+   * leaves the Tauri window needing its own signal.
+   */
+  useWindowFocusRefresh(() => {
+    if (!user || subscriptionStatus === "active") return;
+    // No forced retry loop, for the same reason as the native path above.
+    void checkSubscription(user.id, user.email || "");
+  });
+
+    // Deliberately not isAppShell(). Capacitor draws a native splash screen
+    // (see capacitor.config.json, launchAutoHide: false) so only the phone
+    // apps have something else to show. Tauri has no splash, so the Windows
+    // app relies on this loader being painted - switching this to
+    // isAppShell() would leave it staring at an empty window while auth
+    // resolves. "isNativeShell" means "has a native splash".
+    const isNativeShell = Capacitor.isNativePlatform();
   // /__e2e/* is a DEV-only harness that renders the Android shell in
   // isolation for the visual-contract tests. The boot screen is not part of
   // that contract, and letting it paint over the harness made every surface
