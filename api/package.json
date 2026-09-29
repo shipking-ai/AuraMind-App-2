@@ -8,9 +8,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
     "cors": "^2.8.6",
-    "dotenv": "^18.0.1",
+    "dotenv": "^18.0.4",
     "express": "^5.2.1",
-    "resend": "^6.28.1",
+    "resend": "^6.30.0",
     "stripe": "^22.6.2",
     "zod": "^4.6.5"
   },
@@ -23,7 +23,7 @@
   "devDependencies": {
     "@types/node": "^26.6.2",
     "@vercel/node": "^13.0.1",
-    "tsx": "^4.23.13",
-    "vitest": "^5.0.1"
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.2"
   }
 }
