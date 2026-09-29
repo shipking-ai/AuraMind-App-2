@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. **Node.js 22+** (22.19 or newer; CI runs 22 and 24) - [Download](https://nodejs.org/)
+1. **Node.js 22.22.2 or newer** (CI runs 22 and 24) - [Download](https://nodejs.org/)
 2. **npm** or **yarn**
 3. **Supabase account** - [Sign up](https://supabase.com)
 4. **Vercel account** - [Sign up](https://vercel.com)
