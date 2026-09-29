@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import './styles/platform-styles.css';
-import { Capacitor } from './lib/nativeShim';
+import { isAppShell } from './lib/platform';
 // Loads last so the editorial layer can override platform-styles' drifted
 // values by cascade order rather than !important.
 import './styles/editorial.css';
@@ -99,7 +99,9 @@ logEnvValidation(envResult);
  * stale assets forever.
  */
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  if (Capacitor.isNativePlatform()) {
+  // The Windows app (Tauri, https://tauri.localhost) has the same fixed-origin
+  // problem as Capacitor, and also ships every asset in its installer.
+  if (isAppShell()) {
     void navigator.serviceWorker
       .getRegistrations()
       .then(async (registrations) => {
@@ -110,7 +112,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
           const keys = await caches.keys();
           await Promise.all(keys.map((key) => caches.delete(key)));
         }
-        console.warn('[PWA] Removed service worker on native; assets ship in the APK');
+        console.warn('[PWA] Removed service worker in the app; assets ship in the package');
       })
       .catch(() => undefined);
   } else {

@@ -1,0 +1,40 @@
+[package]
+name = "auramind-desktop"
+version = "0.0.0" # the app version comes from ../package.json via tauri.conf.json
+description = "AuraMind for Windows"
+authors = ["CogniVect, Inc."]
+license = "LicenseRef-Proprietary"
+publish = false
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+# The `_lib` suffix keeps the library from clashing with the binary name on
+# Windows (cargo issue #8519).
+name = "auramind_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Not used directly, but `tauri::generate_context!` expands to code that
+# references it, so it has to be a direct dependency rather than arriving
+# transitively through `tauri`. Without this the crate fails to compile with
+# E0433 "cannot find `serde_json` in the crate root", and every test in
+# lib.rs is blocked behind the same error.
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-process = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-window-state = "2"
+url = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

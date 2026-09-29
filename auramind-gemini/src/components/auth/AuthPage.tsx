@@ -9,11 +9,14 @@ import { needsMfaChallenge, listFactors, completeMfaChallenge } from "../../serv
 import { FrostGlass } from "../ui/FrostGlass";
 import { BorderBeam } from "../ui/BorderBeam";
 import { Capacitor } from "../../lib/nativeShim";
+import { isAppShell } from "../../lib/platform";
 import { hasCompletedOnboarding } from "../../lib/onboardingGate";
 
 
 export default function AuthPage() {
+  // Phone layout (Android/iOS) vs. any installed app (phones + Windows).
   const isNativeApp = Capacitor.isNativePlatform();
+  const inAppShell = isAppShell();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<"login" | "signup">(
@@ -234,11 +237,12 @@ export default function AuthPage() {
             <FrostGlass blur="xl" opacity={0.08} className="p-6">
             {/* SSO Buttons */}
             {/* SSO buttons — hidden during the 2FA challenge */}
-            {/* Native shells hide OAuth: signInWithOAuth opens the system
-                browser and never returns to capacitor://localhost (no
-                auth-callback deep link yet). Email + password is the native
+            {/* App shells hide OAuth: signInWithOAuth opens the system
+                browser and never returns to the app's origin
+                (capacitor://localhost, https://tauri.localhost; no
+                auth-callback deep link yet). Email + password is the app
                 path; Turnstile is disabled there (see TurnstileWidget). */}
-            {!mfaPending && !isNativeApp && (
+            {!mfaPending && !inAppShell && (
             <>
             <button
               onClick={handleGoogleSSO}
@@ -276,10 +280,11 @@ export default function AuthPage() {
             </div>
             </>
             )}
-            {!mfaPending && isNativeApp && (
+            {!mfaPending && inAppShell && (
               <p className="mb-4 text-center text-[#7A7A96] text-xs">
                 Sign in with your email and password. Google / Notion login
-                isn&apos;t supported in the app yet — use it in Safari instead.
+                isn&apos;t supported in the app yet — use it on auramind.app in
+                your browser instead.
               </p>
             )}
 
