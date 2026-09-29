@@ -1,7 +1,7 @@
 # AuraMind — Agent Cheat Sheet
 
 AuraMind is an adaptive AI learning system: turn anything (PDF, video, lecture,
-topic) into a course of cards/lessons/quizzes, schedule review with FSRS v5, and
+topic) into a course of cards/lessons/quizzes, schedule review with FSRS (`ts-fsrs`, FSRS-6), and
 tutor with **Prof. Aura**, an AI that models the user's real weaknesses.
 
 Canonical docs (read these first, not this file):
@@ -11,13 +11,16 @@ Canonical docs (read these first, not this file):
 - `CONTRIBUTING.md` — local setup, Conventional Commits, migration rules, PR bar.
 - `SECURITY.md` — private vulnerability reporting.
 - `CHANGELOG.md` — release history.
+- `HANDOFF.md` — current state, outstanding work, and traps that cost real time.
+- `DEPLOYMENT.md` / `STRIPE_LAUNCH_CHECKLIST.md` — deploy and billing runbooks.
 
 ## Surfaces
 
 | Surface | Path | Notes |
 |---|---|---|
-| Web app | `auramind-gemini/` | React 19 + Vite 6 + Tailwind 4 + React Router 7, served by Vercel (PWA) |
+| Web app | `auramind-gemini/` | React 19 + Vite 8 + Tailwind 4 + React Router 7, served by Vercel (PWA) |
 | Android app | `auramind-gemini/android/` | Active Capacitor 8 build, generated from the same React source |
+| iOS app | `auramind-gemini/ios/` | Capacitor 8, built unsigned in CI (`mobile-ios.yml`); not yet on TestFlight |
 | Backend | `api/` | Vercel serverless (`index.ts` + `stripe-webhook.ts`) with an Express dev server (`server.js`, port 3001) |
 | Database | `supabase/migrations/` | Append-only, idempotent SQL migrations (source of truth for schema) |
 
