@@ -62,7 +62,8 @@ const SECURITY_HEADERS = {
 /**
  * Origins allowed to call the API from another origin. The website is
  * same-origin and needs none of this, but the apps are not: the Android app
- * runs at https://localhost and the iOS app at capacitor://localhost, and
+ * runs at https://localhost, the iOS app at capacitor://localhost and the
+ * Windows app at https://tauri.localhost, and
  * without these headers their web views block every API response (AI,
  * voices, transcription). Credentials are bearer tokens, never cookies, so
  * echoing an allowlisted origin is safe.
@@ -72,6 +73,8 @@ export const CORS_ORIGINS: ReadonlySet<string> = new Set([
   'https://www.auramind.app',
   'https://localhost',
   'capacitor://localhost',
+  // The Windows app (Tauri, useHttpsScheme: true in src-tauri/tauri.conf.json).
+  'https://tauri.localhost',
 ]);
 
 const RATE_LIMITS = {

@@ -5,6 +5,7 @@ import App from './App';
 import './index.css';
 import './styles/platform-styles.css';
 import { isAppShell } from './lib/platform';
+import { installDesktopLinkHandling } from './lib/desktopLinks';
 // Loads last so the editorial layer can override platform-styles' drifted
 // values by cascade order rather than !important.
 import './styles/editorial.css';
@@ -131,6 +132,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 // Set up global error handlers
 setupGlobalErrorHandler();
+
+// Windows app: outside links open in the user's browser (no-op elsewhere).
+installDesktopLinkHandling();
 
 // Initialize SEO meta tags
 updateMetaTags();

@@ -51,6 +51,7 @@ import HmrRefreshNotice from "./components/shared/HmrRefreshNotice";
 import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
 import CookieConsentBanner from "./components/shared/CookieConsentBanner";
+import { DesktopUpdateBanner } from "./components/desktop/DesktopUpdateBanner";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
@@ -886,6 +887,8 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       {/* Ambient chrome like the boot loader: excluded from the deterministic
           visual-contract harness (/__e2e/*) so baselines don't include it. */}
       {!isVisualHarness && <CookieConsentBanner />}
+      {/* Renders nothing outside the Windows app. */}
+      {!isVisualHarness && <DesktopUpdateBanner />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
