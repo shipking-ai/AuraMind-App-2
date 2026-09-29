@@ -31,11 +31,11 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mattycigemp-crypto/AuraMind-App-2.git"
+    "url": "git+https://github.com/shipking-ai/AuraMind-App-2.git"
   },
   "homepage": "https://auramind.app",
   "bugs": {
-    "url": "https://github.com/mattycigemp-crypto/AuraMind-App-2/issues"
+    "url": "https://github.com/shipking-ai/AuraMind-App-2/issues"
   },
   "devDependencies": {
     "concurrently": "^10.0.0"

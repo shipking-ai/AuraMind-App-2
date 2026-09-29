@@ -266,7 +266,7 @@ describe('spark log', () => {
   it('records and reads back events', () => {
     recordSpark('popup', 'c1', NOW);
     recordSpark('notification', 'c2', NOW + 1);
-    const log = getSparkLog();
+    const log = getSparkLog(NOW);
     expect(log).toHaveLength(2);
     expect(log[0]).toEqual({ cardId: 'c1', ts: NOW, surface: 'popup' });
   });
@@ -274,7 +274,7 @@ describe('spark log', () => {
   it('drops events older than retention on write', () => {
     recordSpark('popup', 'old', NOW - 8 * DAY);
     recordSpark('popup', 'new', NOW);
-    expect(getSparkLog().map((e) => e.cardId)).toEqual(['new']);
+    expect(getSparkLog(NOW).map((e) => e.cardId)).toEqual(['new']);
   });
 
   it('dropPendingSparks forgets only future events of that surface', () => {
@@ -282,12 +282,22 @@ describe('spark log', () => {
     recordSpark('notification', 'pending', NOW + HOUR);
     recordSpark('popup', 'popup-later', NOW + HOUR);
     dropPendingSparks('notification', NOW);
-    expect(getSparkLog().map((e) => e.cardId)).toEqual(['fired', 'popup-later']);
+    expect(getSparkLog(NOW).map((e) => e.cardId)).toEqual(['fired', 'popup-later']);
   });
 
   it('cardsSparkedToday returns only today’s ids', () => {
     recordSpark('popup', 'today', NOW - HOUR);
     recordSpark('interleave', 'yesterday', NOW - DAY - HOUR);
-    expect(cardsSparkedToday(NOW, getSparkLog())).toEqual(new Set(['today']));
+    expect(cardsSparkedToday(NOW, getSparkLog(NOW))).toEqual(new Set(['today']));
+  });
+
+  it('ages the log against the clock it is given, not the wall clock', () => {
+    // The regression this guards: getSparkLog() used to read Date.now() itself,
+    // so these same writes passed on 2026-09-20 and failed from 2026-09-27,
+    // seven days later, with no code change in between.
+    recordSpark('popup', 'c1', NOW);
+    expect(getSparkLog(NOW)).toHaveLength(1);
+    expect(getSparkLog(NOW + 8 * DAY)).toHaveLength(0);
+    expect(getSparkLog(NOW + DAY)).toHaveLength(1);
   });
 });
