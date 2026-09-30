@@ -4,7 +4,13 @@ fn main() {
     // Add every new #[tauri::command] here.
     tauri_build::try_build(
         tauri_build::Attributes::new()
-            .app_manifest(tauri_build::AppManifest::new().commands(&["app_ready", "show_main"])),
+            .app_manifest(tauri_build::AppManifest::new().commands(&[
+                "app_ready",
+                "show_main",
+                "quick_review_done",
+                "cards_changed",
+                "set_shortcut",
+            ])),
     )
     .expect("failed to run tauri-build");
 }

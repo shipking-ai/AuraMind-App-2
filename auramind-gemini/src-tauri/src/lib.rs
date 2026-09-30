@@ -12,6 +12,7 @@ mod guard;
 mod handoff;
 mod links;
 mod nudges;
+mod quick_review;
 mod state;
 
 use guard::{opens_externally, stays_in_app};
@@ -19,6 +20,7 @@ use links::{parse_args, LaunchIntent};
 use state::AppState;
 use std::sync::atomic::Ordering;
 use tauri::{Manager, WebviewWindowBuilder};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use tauri_plugin_opener::OpenerExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -34,11 +36,29 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(AppState::default())
-        .invoke_handler(tauri::generate_handler![commands::app_ready, commands::show_main])
+        .invoke_handler(tauri::generate_handler![
+            commands::app_ready,
+            commands::show_main,
+            commands::quick_review_done,
+            commands::cards_changed,
+            commands::set_shortcut,
+        ])
         .setup(|app| {
             let args: Vec<String> = std::env::args().collect();
             let hidden = parse_args(&args).contains(&LaunchIntent::Hidden);
             app.state::<AppState>().hidden_start.store(hidden, Ordering::SeqCst);
+
+            app.handle().plugin(
+                tauri_plugin_global_shortcut::Builder::new()
+                    .with_handler(|app, _shortcut, event| {
+                        if event.state() == ShortcutState::Pressed {
+                            quick_review::toggle(app);
+                        }
+                    })
+                    .build(),
+            )?;
+            // Taken by another app? Settings offers another; startup must not fail.
+            let _ = app.global_shortcut().register(quick_review::DEFAULT_SHORTCUT);
 
             // The main window is declared in tauri.conf.json with
             // `create: false` so it can be built here with a navigation guard.

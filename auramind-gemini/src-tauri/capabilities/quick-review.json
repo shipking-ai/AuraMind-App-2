@@ -5,6 +5,8 @@
   "windows": ["quick-review"],
   "permissions": [
     "core:event:default",
-    "allow-show-main"
+    "allow-show-main",
+    "allow-quick-review-done",
+    "allow-cards-changed"
   ]
 }

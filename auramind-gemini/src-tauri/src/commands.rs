@@ -2,9 +2,12 @@
 //! gets its own permission, granted per window in capabilities/*.json.
 
 use crate::chrome::show_main_window;
+use crate::quick_review;
 use crate::state::{emit_to_main, AppState};
+use serde::Serialize;
 use std::sync::atomic::Ordering;
 use tauri::{AppHandle, Emitter, State};
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 /// React has painted: show the window (unless started hidden) and deliver
 /// anything that arrived during startup.
@@ -25,5 +28,38 @@ pub fn show_main(app: AppHandle, path: Option<String>) {
     show_main_window(&app);
     if let Some(path) = path.filter(|p| p.starts_with('/') && !p.starts_with("//")) {
         emit_to_main(&app, "open-route", serde_json::json!({ "path": path }));
+    }
+}
+
+#[tauri::command]
+pub fn quick_review_done(app: AppHandle) {
+    quick_review::hide(&app);
+}
+
+/// Quick Review rated a card: the main window reloads its counts.
+#[tauri::command]
+pub fn cards_changed(app: AppHandle) {
+    emit_to_main(&app, "cards-changed", serde_json::json!({}));
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShortcutResult {
+    pub ok: bool,
+    pub reason: Option<&'static str>,
+}
+
+#[tauri::command]
+pub fn set_shortcut(app: AppHandle, accelerator: String) -> ShortcutResult {
+    let shortcuts = app.global_shortcut();
+    let _ = shortcuts.unregister_all();
+    match shortcuts.register(accelerator.as_str()) {
+        Ok(()) => ShortcutResult { ok: true, reason: None },
+        Err(err) => {
+            // Put the previous default back so the feature isn't left dead.
+            let _ = shortcuts.register(quick_review::DEFAULT_SHORTCUT);
+            let reason = if err.to_string().to_lowercase().contains("already") { "taken" } else { "invalid" };
+            ShortcutResult { ok: false, reason: Some(reason) }
+        }
     }
 }
