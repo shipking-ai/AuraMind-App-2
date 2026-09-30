@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import { usePrefersReducedMotion } from "../../hooks/useReducedMotion";
 
 interface VideoBackgroundProps {
   name: string;
@@ -25,36 +26,41 @@ export function VideoBackground({
   lazy = false,
 }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const reduced = usePrefersReducedMotion();
+  const [armed, setArmed] = useState(!lazy);
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
-
-    const tryPlay = () => el.play().catch(() => {});
-    if (!lazy) { tryPlay(); return; }
+    if (!lazy) {
+      if (!reduced) el.play().catch(() => {});
+      return;
+    }
 
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) tryPlay();
-        else el.pause();
+        if (entry.isIntersecting) {
+          setArmed(true);
+          if (!reduced) el.play().catch(() => {});
+        } else {
+          el.pause();
+        }
       },
       { threshold: 0.15 },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [lazy]);
+  }, [lazy, reduced]);
 
   return (
     <video
       ref={videoRef}
-      autoPlay
+      autoPlay={!reduced}
       loop
       muted
       playsInline
-      preload={lazy ? "metadata" : "auto"}
+      preload={lazy && !armed ? "none" : "auto"}
       poster={`/auramind/video/${name}-poster.jpg`}
       aria-hidden
       className={cn(
@@ -64,8 +70,12 @@ export function VideoBackground({
       )}
       style={{ opacity }}
     >
-      <source src={`/auramind/video/${name}.webm`} type="video/webm" />
-      <source src={`/auramind/video/${name}.mp4`} type="video/mp4" />
+      {armed && (
+        <>
+          <source src={`/auramind/video/${name}.webm`} type="video/webm" />
+          <source src={`/auramind/video/${name}.mp4`} type="video/mp4" />
+        </>
+      )}
     </video>
   );
 }
