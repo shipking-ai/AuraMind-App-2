@@ -24,6 +24,8 @@ export function externalUrl(href: string, pageUrl: string): URL | null {
   } catch {
     return null;
   }
+  // The one Windows settings page the app may open (Settings → notifications).
+  if (url.href === 'ms-settings:notifications') return url;
   if (!EXTERNAL_PROTOCOLS.has(url.protocol)) return null;
   if (url.protocol !== 'mailto:' && url.origin === new URL(pageUrl).origin) return null;
   return url;

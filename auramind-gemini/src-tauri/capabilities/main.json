@@ -6,7 +6,15 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-title",
-    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://*" },
+        { "url": "http://*" },
+        { "url": "mailto:*" },
+        { "url": "ms-settings:notifications" }
+      ]
+    },
     "updater:default",
     "process:allow-restart",
     "allow-app-ready",
@@ -15,6 +23,7 @@
     "allow-set-due-state",
     "allow-schedule-nudges",
     "allow-get-autostart",
-    "allow-set-autostart"
+    "allow-set-autostart",
+    "allow-notifications-enabled"
   ]
 }

@@ -42,6 +42,8 @@ export const desktop = {
     call<ShortcutResult>('set_shortcut', { accelerator }, { ok: false, reason: 'invalid' }),
   getAutostart: () => call<boolean>('get_autostart', undefined, false),
   setAutostart: (enabled: boolean) => call<boolean>('set_autostart', { enabled }, false),
+  /** null = can't tell (not the Windows app, or no installed shortcut yet). */
+  notificationsEnabled: () => call<boolean | null>('notifications_enabled', undefined, null),
   async setTitle(title: string): Promise<void> {
     if (!isDesktopApp()) return;
     try {

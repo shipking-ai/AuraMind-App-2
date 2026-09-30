@@ -28,6 +28,7 @@ import {
   type MfaFactor,
 } from '../../services/auth/mfaService';
 import type { UserProfile } from '../../types';
+import { DesktopSettingsSection } from '../../desktop/DesktopSettingsSection';
 
 type MfaStep =
   | { step: 'idle' }
@@ -676,6 +677,8 @@ export default function SettingsPage() {
             </SettingRow>
           </div>
         </div>
+
+        <DesktopSettingsSection />
 
         {/* Appearance */}
         <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">

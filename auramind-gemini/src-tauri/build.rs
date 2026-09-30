@@ -14,6 +14,7 @@ fn main() {
                 "schedule_nudges",
                 "get_autostart",
                 "set_autostart",
+                "notifications_enabled",
             ])),
     )
     .expect("failed to run tauri-build");

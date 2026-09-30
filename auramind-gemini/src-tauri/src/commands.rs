@@ -73,6 +73,25 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> bool {
     on
 }
 
+/// Whether Windows allows AuraMind's notifications. None when it can't tell
+/// (dev builds without an installed shortcut, or not Windows).
+#[tauri::command]
+pub fn notifications_enabled(app: AppHandle) -> Option<bool> {
+    #[cfg(windows)]
+    {
+        use windows::core::HSTRING;
+        use windows::UI::Notifications::{NotificationSetting, ToastNotificationManager};
+        let id = HSTRING::from(app.config().identifier.as_str());
+        let notifier = ToastNotificationManager::CreateToastNotifierWithId(&id).ok()?;
+        notifier.Setting().ok().map(|s| s == NotificationSetting::Enabled)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        None
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShortcutResult {

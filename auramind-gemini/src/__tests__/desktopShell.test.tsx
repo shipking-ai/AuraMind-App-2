@@ -42,6 +42,8 @@ describe('externalUrl', () => {
     expect(externalUrl('mailto:hello@auramind.app', page)?.protocol).toBe('mailto:');
     expect(externalUrl('javascript:alert(1)', page)).toBeNull();
     expect(externalUrl('file:///C:/Windows/', page)).toBeNull();
+    expect(externalUrl('ms-settings:notifications', page)?.href).toBe('ms-settings:notifications');
+    expect(externalUrl('ms-settings:privacy', page)).toBeNull();
   });
 });
 

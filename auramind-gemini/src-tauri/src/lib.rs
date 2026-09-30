@@ -74,6 +74,7 @@ pub fn run() {
             commands::schedule_nudges,
             commands::get_autostart,
             commands::set_autostart,
+            commands::notifications_enabled,
         ])
         .setup(|app| {
             let args: Vec<String> = std::env::args().collect();
