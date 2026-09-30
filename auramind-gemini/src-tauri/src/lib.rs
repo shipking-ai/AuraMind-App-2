@@ -7,6 +7,7 @@
 //! the website's.
 
 mod guard;
+mod handoff;
 mod links;
 
 use guard::{opens_externally, stays_in_app};
