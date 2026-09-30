@@ -53,6 +53,7 @@ import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
 import CookieConsentBanner from "./components/shared/CookieConsentBanner";
 import { DesktopUpdateBanner } from "./components/desktop/DesktopUpdateBanner";
 import { DropOverlay } from "./components/shared/DropOverlay";
+import { DesktopChrome } from "./desktop/DesktopChrome";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
@@ -902,6 +903,8 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       {!isVisualHarness && !isQuickReviewWindow && <DesktopUpdateBanner />}
       {/* Drag a file anywhere to make a course (signed in only). */}
       {!isVisualHarness && !isQuickReviewWindow && user && <DropOverlay />}
+      {/* Windows app window behaviour; renders nothing. */}
+      {!isQuickReviewWindow && <DesktopChrome />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
@@ -934,6 +937,9 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                         {Capacitor.getPlatform() === "ios" ? <IOSWelcomeScreen /> : <AndroidWelcomeScreen />}
                       </PageTransition>
                     )
+                  ) : isDesktopApp() ? (
+                    // The installed app opens to the app, not the marketing page.
+                    authChecked ? <Navigate to={user ? "/dashboard" : "/auth"} replace /> : null
                   ) : (
                     <PageTransition variant={transitionVariant}>
                       <AuraLandingPage />

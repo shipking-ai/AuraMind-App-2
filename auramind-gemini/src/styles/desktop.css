@@ -5,3 +5,14 @@ html.quick-review-window body,
 html.quick-review-window #root {
   background: transparent !important;
 }
+
+/* Slim scrollbars that match the app, instead of Windows' grey ones. */
+html.platform-desktop ::-webkit-scrollbar { width: 10px; height: 10px; }
+html.platform-desktop ::-webkit-scrollbar-track { background: transparent; }
+html.platform-desktop ::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.28);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+html.platform-desktop ::-webkit-scrollbar-thumb:hover { background-color: rgba(139, 92, 246, 0.45); }
