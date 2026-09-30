@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "The main AuraMind window. Remote pages get nothing: capabilities apply only to the app's own origin.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "opener:allow-open-url",
+    "updater:default",
+    "process:allow-restart",
+    "allow-app-ready",
+    "allow-show-main"
+  ]
+}

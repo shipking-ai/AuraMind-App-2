@@ -6,12 +6,18 @@
 //! instance at a time, and signed auto-updates. The React code is the same as
 //! the website's.
 
+mod chrome;
+mod commands;
 mod guard;
 mod handoff;
 mod links;
 mod nudges;
+mod state;
 
 use guard::{opens_externally, stays_in_app};
+use links::{parse_args, LaunchIntent};
+use state::AppState;
+use std::sync::atomic::Ordering;
 use tauri::{Manager, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 
@@ -21,16 +27,19 @@ pub fn run() {
         // Must be registered first: a second launch focuses the running
         // window instead of opening another copy.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
+            chrome::show_main_window(app);
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .manage(AppState::default())
+        .invoke_handler(tauri::generate_handler![commands::app_ready, commands::show_main])
         .setup(|app| {
+            let args: Vec<String> = std::env::args().collect();
+            let hidden = parse_args(&args).contains(&LaunchIntent::Hidden);
+            app.state::<AppState>().hidden_start.store(hidden, Ordering::SeqCst);
+
             // The main window is declared in tauri.conf.json with
             // `create: false` so it can be built here with a navigation guard.
             let config = app
@@ -42,8 +51,7 @@ pub fn run() {
                 .cloned()
                 .expect("tauri.conf.json must declare the main window");
             let handle = app.handle().clone();
-
-            WebviewWindowBuilder::from_config(app, &config)?
+            let window = WebviewWindowBuilder::from_config(app, &config)?
                 .on_navigation(move |url| {
                     if stays_in_app(url) {
                         return true;
@@ -54,6 +62,8 @@ pub fn run() {
                     false
                 })
                 .build()?;
+            chrome::brand_title_bar(&window);
+            chrome::show_fallback(app.handle());
             Ok(())
         })
         .run(tauri::generate_context!())
