@@ -2,8 +2,11 @@
 //! gets its own permission, granted per window in capabilities/*.json.
 
 use crate::chrome::show_main_window;
+use crate::nudges::Nudge;
 use crate::quick_review;
-use crate::state::{emit_to_main, AppState};
+use crate::state::{emit_to_main, AppState, DueState};
+use crate::tray;
+use tauri_plugin_autostart::ManagerExt;
 use serde::Serialize;
 use std::sync::atomic::Ordering;
 use tauri::{AppHandle, Emitter, State};
@@ -40,6 +43,34 @@ pub fn quick_review_done(app: AppHandle) {
 #[tauri::command]
 pub fn cards_changed(app: AppHandle) {
     emit_to_main(&app, "cards-changed", serde_json::json!({}));
+}
+
+#[tauri::command]
+pub fn set_due_state(app: AppHandle, state: State<AppState>, due: DueState) {
+    let changed = *state.due.lock().unwrap() != due;
+    if changed {
+        tray::update(&app, &due);
+        *state.due.lock().unwrap() = due;
+    }
+}
+
+#[tauri::command]
+pub fn schedule_nudges(state: State<AppState>, nudges: Vec<Nudge>) {
+    *state.nudges.lock().unwrap() = nudges;
+}
+
+#[tauri::command]
+pub fn get_autostart(app: AppHandle) -> bool {
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn set_autostart(app: AppHandle, enabled: bool) -> bool {
+    let launcher = app.autolaunch();
+    let _ = if enabled { launcher.enable() } else { launcher.disable() };
+    let on = launcher.is_enabled().unwrap_or(false);
+    tray::set_autostart_checked(&app, on);
+    on
 }
 
 #[derive(Serialize)]

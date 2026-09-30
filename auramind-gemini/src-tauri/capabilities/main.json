@@ -11,6 +11,10 @@
     "process:allow-restart",
     "allow-app-ready",
     "allow-show-main",
-    "allow-set-shortcut"
+    "allow-set-shortcut",
+    "allow-set-due-state",
+    "allow-schedule-nudges",
+    "allow-get-autostart",
+    "allow-set-autostart"
   ]
 }

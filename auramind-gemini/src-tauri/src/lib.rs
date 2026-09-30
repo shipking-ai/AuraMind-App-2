@@ -6,6 +6,7 @@
 //! instance at a time, and signed auto-updates. The React code is the same as
 //! the website's.
 
+mod badge;
 mod chrome;
 mod commands;
 mod guard;
@@ -14,6 +15,7 @@ mod links;
 mod nudges;
 mod quick_review;
 mod state;
+mod tray;
 
 use guard::{opens_externally, stays_in_app};
 use links::{parse_args, LaunchIntent};
@@ -35,6 +37,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--hidden"]),
+        ))
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             commands::app_ready,
@@ -42,6 +49,10 @@ pub fn run() {
             commands::quick_review_done,
             commands::cards_changed,
             commands::set_shortcut,
+            commands::set_due_state,
+            commands::schedule_nudges,
+            commands::get_autostart,
+            commands::set_autostart,
         ])
         .setup(|app| {
             let args: Vec<String> = std::env::args().collect();
@@ -84,6 +95,37 @@ pub fn run() {
                 .build()?;
             chrome::brand_title_bar(&window);
             chrome::show_fallback(app.handle());
+            tray::build(app.handle())?;
+            nudges::start(app.handle());
+
+            // ✕ keeps AuraMind in the tray so reminders keep working; Quit exits.
+            let close_handle = app.handle().clone();
+            window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    if let Some(w) = close_handle.get_webview_window("main") {
+                        let _ = w.hide();
+                    }
+                    let marker = close_handle
+                        .path()
+                        .app_data_dir()
+                        .map(|d| d.join("tray-notice-shown"));
+                    if let Ok(marker) = marker {
+                        if !marker.exists() {
+                            if let Some(dir) = marker.parent() {
+                                let _ = std::fs::create_dir_all(dir);
+                            }
+                            let _ = std::fs::write(&marker, b"1");
+                            nudges::toast(
+                                &close_handle,
+                                "AuraMind is still running",
+                                "It's in the tray, so your reminders keep working. Quit from the tray icon.",
+                                false,
+                            );
+                        }
+                    }
+                }
+            });
             Ok(())
         })
         .run(tauri::generate_context!())

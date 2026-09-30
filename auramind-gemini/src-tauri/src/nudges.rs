@@ -47,6 +47,63 @@ pub fn next_local_midnight_ms(now: chrono::DateTime<chrono::Local>) -> i64 {
         .unwrap_or(now.timestamp_millis() + 24 * 60 * 60 * 1000)
 }
 
+use tauri::{AppHandle, Manager};
+
+/// Windows needs the AppUserModelID from the installer's Start-menu shortcut
+/// to show toasts with buttons. `tauri dev` has no shortcut, so debug builds
+/// borrow PowerShell's id.
+#[cfg(windows)]
+fn app_id(app: &AppHandle) -> String {
+    if cfg!(debug_assertions) {
+        tauri_winrt_notification::Toast::POWERSHELL_APP_ID.to_string()
+    } else {
+        app.config().identifier.clone()
+    }
+}
+
+#[cfg(windows)]
+pub fn toast(app: &AppHandle, title: &str, body: &str, with_actions: bool) {
+    use tauri_winrt_notification::Toast;
+    let handle = app.clone();
+    let mut toast = Toast::new(&app_id(app)).title(title).text1(body);
+    if with_actions {
+        toast = toast.add_button("Quick review", "quick-review").add_button("Later", "later");
+    }
+    let _ = toast
+        .on_activated(move |action| {
+            match action.as_deref() {
+                Some("quick-review") => crate::quick_review::show(&handle),
+                Some("later") => {}
+                _ => crate::chrome::show_main_window(&handle),
+            }
+            Ok(())
+        })
+        .show();
+}
+
+#[cfg(not(windows))]
+pub fn toast(_app: &AppHandle, _title: &str, _body: &str, _with_actions: bool) {}
+
+/// Checks the plan every 30 seconds. Rust holds the timer because WebView2
+/// throttles timers in hidden windows.
+pub fn start(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(30));
+        let state = app.state::<crate::state::AppState>();
+        let gate = Gate {
+            paused_until_ms: *state.paused_until_ms.lock().unwrap(),
+            busy: state.due.lock().unwrap().studying
+                || state.quick_review_open.load(std::sync::atomic::Ordering::SeqCst),
+        };
+        let now = chrono::Utc::now().timestamp_millis();
+        let fire = take_due(&mut state.nudges.lock().unwrap(), now, &gate);
+        for nudge in fire {
+            toast(&app, &nudge.title, &nudge.body, true);
+        }
+    });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -10,6 +10,10 @@ fn main() {
                 "quick_review_done",
                 "cards_changed",
                 "set_shortcut",
+                "set_due_state",
+                "schedule_nudges",
+                "get_autostart",
+                "set_autostart",
             ])),
     )
     .expect("failed to run tauri-build");
