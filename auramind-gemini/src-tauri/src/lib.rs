@@ -22,17 +22,38 @@ use links::{parse_args, LaunchIntent};
 use state::AppState;
 use std::sync::atomic::Ordering;
 use tauri::{Manager, WebviewWindowBuilder};
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use tauri_plugin_opener::OpenerExt;
+
+/// Links, Explorer files and second launches all end here. Events wait in
+/// the outbox until the web layer is listening.
+fn deliver(app: &tauri::AppHandle, intents: &[LaunchIntent]) {
+    let events = links::intents_to_events(intents, |path| {
+        serde_json::to_value(handoff::read(path)).unwrap_or_default()
+    });
+    if !events.is_empty() {
+        chrome::show_main_window(app);
+    }
+    for (event, payload) in events {
+        state::emit_to_main(app, event, payload);
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         // Must be registered first: a second launch focuses the running
-        // window instead of opening another copy.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            chrome::show_main_window(app);
+        // window (and forwards its link or file) instead of opening another copy.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            let intents = parse_args(&args);
+            if intents.is_empty() {
+                chrome::show_main_window(app);
+            } else {
+                deliver(app, &intents);
+            }
         }))
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -58,6 +79,21 @@ pub fn run() {
             let args: Vec<String> = std::env::args().collect();
             let hidden = parse_args(&args).contains(&LaunchIntent::Hidden);
             app.state::<AppState>().hidden_start.store(hidden, Ordering::SeqCst);
+
+            #[cfg(debug_assertions)]
+            let _ = app.deep_link().register_all(); // `tauri dev` isn't installed, so register at runtime
+
+            let link_handle = app.handle().clone();
+            app.deep_link().on_open_url(move |event| {
+                let intents: Vec<LaunchIntent> = event
+                    .urls()
+                    .into_iter()
+                    .map(|u| u.to_string())
+                    .filter(|u| links::is_app_url(u))
+                    .map(LaunchIntent::Open)
+                    .collect();
+                deliver(&link_handle, &intents);
+            });
 
             app.handle().plugin(
                 tauri_plugin_global_shortcut::Builder::new()
@@ -97,6 +133,8 @@ pub fn run() {
             chrome::show_fallback(app.handle());
             tray::build(app.handle())?;
             nudges::start(app.handle());
+            // Cold start from Explorer or a link: queued until app_ready.
+            deliver(app.handle(), &parse_args(&args));
 
             // ✕ keeps AuraMind in the tray so reminders keep working; Quit exits.
             let close_handle = app.handle().clone();

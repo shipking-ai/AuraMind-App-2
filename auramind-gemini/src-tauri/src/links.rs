@@ -50,6 +50,22 @@ pub fn parse_args(args: &[String]) -> Vec<LaunchIntent> {
     intents
 }
 
+/// What each launch intent tells the web layer. File reading is injected so
+/// this stays pure (the app passes `handoff::read`).
+pub fn intents_to_events(
+    intents: &[LaunchIntent],
+    read: impl Fn(&std::path::Path) -> serde_json::Value,
+) -> Vec<(&'static str, serde_json::Value)> {
+    intents
+        .iter()
+        .filter_map(|intent| match intent {
+            LaunchIntent::Hidden => None,
+            LaunchIntent::Open(url) => Some(("deep-link", serde_json::json!({ "url": url }))),
+            LaunchIntent::Create(path) => Some(("create-from-file", read(path))),
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,6 +107,25 @@ mod tests {
             vec![LaunchIntent::Open("auramind://app/study".into())]
         );
         assert!(is_app_url("auramind://auth/callback?code=abc"));
+    }
+
+    #[test]
+    fn intents_become_web_events() {
+        let intents = vec![
+            LaunchIntent::Hidden,
+            LaunchIntent::Open("auramind://app/study".into()),
+            LaunchIntent::Create(PathBuf::from("C:\\a\\Notes.pdf")),
+        ];
+        let events = intents_to_events(&intents, |p| {
+            serde_json::json!({ "kind": "file", "name": p.file_name().unwrap().to_str().unwrap() })
+        });
+        assert_eq!(
+            events,
+            vec![
+                ("deep-link", serde_json::json!({ "url": "auramind://app/study" })),
+                ("create-from-file", serde_json::json!({ "kind": "file", "name": "Notes.pdf" })),
+            ]
+        );
     }
 
     #[test]

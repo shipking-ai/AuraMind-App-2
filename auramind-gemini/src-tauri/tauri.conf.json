@@ -69,11 +69,13 @@
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico",
         "headerImage": "windows/nsis-header.bmp",
-        "sidebarImage": "windows/nsis-sidebar.bmp"
+        "sidebarImage": "windows/nsis-sidebar.bmp",
+        "installerHooks": "windows/installer-hooks.nsh"
       }
     }
   },
   "plugins": {
+    "deep-link": { "desktop": { "schemes": ["auramind"] } },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY4NTkwODU3RTlGMDFDMkUKUldRdUhQRHBWd2haYUhpSHpJRWxNOTdXWkpEYklNVDFvamt1RnlmTE9lZTU5aUVEZ1Y0SE1JcHgK",
       "endpoints": [
