@@ -61,6 +61,8 @@ import { App as NativeApp, Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
 import { useWindowFocusRefresh } from "./hooks/useWindowFocusRefresh";
 import { useSparkSync } from "./hooks/useSparkSync";
+import { useDesktopIntegration } from "./desktop/useDesktopIntegration";
+import { isDesktopApp } from "./lib/platform";
 import { useShareTarget } from "./hooks/useShareTarget";
 import QuizGenerationNotifier from "./components/notifications/QuizGenerationNotifier";
 import { Toaster, toast } from "./components/ui/sonner";
@@ -760,6 +762,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   // Memory sparks (Surface 2): plan the day's notification sparks on native
   // platforms. Also 'maintain' mode — never prompts on launch. Settings asks.
   useSparkSync('maintain');
+
+  // Windows app: tray/badge due state, study nudges, links, files, Quick
+  // Review refreshes. Inert in a browser tab and the phone apps.
+  useDesktopIntegration({ cards, decks, userId: user?.id, enabled: isDesktopApp() });
 
   // Content shared into AuraMind from any other app. Gated on authChecked so
   // a share cannot land on a route guard and bounce to /auth, losing itself.

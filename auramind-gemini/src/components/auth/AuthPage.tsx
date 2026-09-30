@@ -9,14 +9,20 @@ import { needsMfaChallenge, listFactors, completeMfaChallenge } from "../../serv
 import { FrostGlass } from "../ui/FrostGlass";
 import { BorderBeam } from "../ui/BorderBeam";
 import { Capacitor } from "../../lib/nativeShim";
-import { isAppShell } from "../../lib/platform";
+import { isAppShell, isDesktopApp } from "../../lib/platform";
+import { readClientEnv } from "../../lib/env";
 import { hasCompletedOnboarding } from "../../lib/onboardingGate";
 
+/** The Windows app can finish OAuth via auramind:// once Supabase allows it. */
+function desktopOAuthEnabled(): boolean {
+  return isDesktopApp() && readClientEnv("VITE_DESKTOP_OAUTH") === "true";
+}
 
 export default function AuthPage() {
   // Phone layout (Android/iOS) vs. any installed app (phones + Windows).
   const isNativeApp = Capacitor.isNativePlatform();
-  const inAppShell = isAppShell();
+  // App shells hide OAuth, except the Windows app once desktop OAuth is on.
+  const inAppShell = isAppShell() && !desktopOAuthEnabled();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<"login" | "signup">(
@@ -137,9 +143,33 @@ export default function AuthPage() {
     }
   };
 
+  /**
+   * Windows app: PKCE OAuth in the user's browser, finished by the
+   * auramind://auth/callback deep link (desktop/deepLinkRouter.ts).
+   */
+  const startDesktopOAuth = async (provider: "google" | "notion", label: string) => {
+    if (!supabase) return;
+    setLoading(true);
+    const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: "auramind://auth/callback", skipBrowserRedirect: true },
+    });
+    setLoading(false);
+    if (oauthError || !data?.url) {
+      setError(oauthError?.message || `${label} sign-in failed`);
+      return;
+    }
+    // desktopLinks routes this to the user's browser.
+    window.open(data.url, "_blank");
+  };
+
   const handleNotionSSO = async () => {
     if (!supabase) {
       setError("Authentication is not configured. Missing Supabase credentials.");
+      return;
+    }
+    if (desktopOAuthEnabled()) {
+      await startDesktopOAuth("notion", "Notion");
       return;
     }
 
@@ -159,6 +189,10 @@ export default function AuthPage() {
   const handleGoogleSSO = async () => {
     if (!supabase) {
       setError("Authentication is not configured. Missing Supabase credentials.");
+      return;
+    }
+    if (desktopOAuthEnabled()) {
+      await startDesktopOAuth("google", "Google");
       return;
     }
 
