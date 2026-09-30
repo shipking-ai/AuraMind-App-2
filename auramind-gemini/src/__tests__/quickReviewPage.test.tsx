@@ -8,7 +8,7 @@ const fetchCards = vi.hoisted(() => vi.fn());
 vi.mock('../services/database/dbService', () => ({
   dbService: { fetchCards: (...a: unknown[]) => fetchCards(...a), fetchDecks: async () => [{ id: 'd', title: 'Spanish A1' }] },
 }));
-const rateCard = vi.hoisted(() => vi.fn(async () => ({})));
+const rateCard = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => ({})));
 vi.mock('../services/study/rateCard', () => ({ rateCard: (...a: unknown[]) => rateCard(...a) }));
 const bridge = vi.hoisted(() => ({ cardsChanged: vi.fn(), quickReviewDone: vi.fn(), showMain: vi.fn() }));
 vi.mock('../desktop/bridge', () => ({ desktop: bridge }));
