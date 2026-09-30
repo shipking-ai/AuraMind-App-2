@@ -9,6 +9,7 @@
 mod guard;
 mod handoff;
 mod links;
+mod nudges;
 
 use guard::{opens_externally, stays_in_app};
 use tauri::{Manager, WebviewWindowBuilder};
