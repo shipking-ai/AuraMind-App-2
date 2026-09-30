@@ -1080,12 +1080,14 @@ Run 35805655820 on `main`: both jobs green, `auramind-ios-unsigned-ipa`, 70 MB.
   (`/session/neuro?live=1`, `LiveActivityDriver` in `IOSVisualPreview.tsx`):
   real `startSessionLiveUpdate`, one `updateSessionLiveUpdate` 4s later, never
   ended. The Swift plugin prints `LIVE_ACTIVITY_STARTED/UPDATED` under
-  `#if DEBUG` only; `mobile-ios.yml` fails closed unless both `true` lines are
-  in the sim log, and uploads `live-activity*.png` (Pro device, island
-  in-frame). `start/updateLiveActivity` now resolve `boolean` instead of
+  `#if DEBUG` only. `start/updateLiveActivity` now resolve `boolean` instead of
   `void` (callers ignore it; `liveActivity.test.ts` updated). Tour entries
   with query strings need `previewTourUrl` — naive string concat produced
   `?live=1?tour=1`.
+  - **Superseded 2026-09-30:** this entry used to claim `mobile-ios.yml`
+    "fails closed unless both `true` lines are in the sim log, and uploads
+    `live-activity*.png` (Pro device, island in-frame)". Both were false — see
+    the 2026-09-30 entry. The artifacts were never the Dynamic Island.
 - **iOS preview deploy:** `npm run build:ios-preview`
   (`scripts/build-ios-preview.mjs` — a wrapper because PowerShell has no
   inline-env syntax) bakes `VITE_IOS_PREVIEW=true`; verified present in the
@@ -1119,3 +1121,45 @@ Full suite 553 green at the time.
   `authenticated` but their bodies live only in the live DB (not in any
   migration file) — unauditable from here. Needs
   `pg_get_functiondef()` output before touching.
+
+---
+
+## 2026-09-30 - The iOS Live Activity was never verified in CI
+
+- **Finding:** `ios-simulator` has been green for days and the "Live Activity"
+  steps read as proof. They are not. Downloaded artifact `ios-simulator` from
+  run `36656826327` and every `live-activity*.png` / `live-boot.png` is the
+  app's own flashcard screen — no Dynamic Island, no lock-screen presentation.
+  The overlay burned into the frame says it: `plugs=LiveActivity:false`,
+  `av=false st=false up=false`, and neither log contains a single
+  `ActivityKit` line.
+- **Why it went green:** `available: false` (correct — a fresh simulator has
+  Live Activities off) took a branch that emitted `::warning::` and `exit 0`.
+  But `read_prefs` returns `MISSING` for an absent key, and `MISSING != true`
+  hit the *same* branch. So a driver that never ran, or crashed before
+  probing, was indistinguishable from a clean refusal. The step proved nothing
+  in either case.
+- **Also misleading:** "Screenshot every iOS screen" emitted 24 PNGs containing
+  only **9 distinct frames** — `shot-18`–`shot-24` are byte-identical to
+  `live-activity.png` and `shot-12`–`shot-17` to each other, because the tour
+  stalls on the study screen and the loop re-captures it. A fixed shot count
+  says nothing about coverage.
+- **Fix:** steps renamed to what they do (`Attempt a Live Activity during the
+  tour (simulator normally refuses)`, `Live-boot the Live Activity driver and
+  assert its contract`, `Screenshot the iOS tour`), artifacts renamed
+  `liveactivity-attempt-tour*.png` / `liveactivity-liveboot.*` so nobody
+  reads them as island proof, and the tour step now reports the distinct-frame
+  count. The gate distinguishes `MISSING` from `false` and asserts the
+  graceful-bail contract: the driver ran, detected the refusal, and did **not**
+  claim `started`/`updated` it never achieved.
+- **Verified** the gate against 8 driver states, including the one the old code
+  waved through (`available=MISSING` → now exit 1). Only
+  `available=true` + `started=true` + `updated=true` passes, and that is the
+  only path that proves the ActivityKit integration.
+- **Still unproven, and only a real device can prove it:** the Dynamic Island
+  and lock-screen layout, and push-driven updates. There is no `simctl` API to
+  enable Live Activities on a simulator, so CI cannot close this. Tracked with
+  the TestFlight work.
+- **Trap for the next person:** `auramind_ci_live_session` is **not** a
+  boolean — `LiveActivityDriver` writes `session-mounted:<path>`. Comparing it
+  to `true` fails every run. The other five keys are `"true"`/`"false"`.
