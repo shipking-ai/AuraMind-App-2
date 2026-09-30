@@ -52,6 +52,7 @@ import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
 import CookieConsentBanner from "./components/shared/CookieConsentBanner";
 import { DesktopUpdateBanner } from "./components/desktop/DesktopUpdateBanner";
+import { DropOverlay } from "./components/shared/DropOverlay";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
@@ -889,6 +890,8 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       {!isVisualHarness && <CookieConsentBanner />}
       {/* Renders nothing outside the Windows app. */}
       {!isVisualHarness && <DesktopUpdateBanner />}
+      {/* Drag a file anywhere to make a course (signed in only). */}
+      {!isVisualHarness && user && <DropOverlay />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
