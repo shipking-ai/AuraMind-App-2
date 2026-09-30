@@ -11,6 +11,7 @@ import { installDesktopLinkHandling } from './lib/desktopLinks';
 import './styles/editorial.css';
 import './styles/android-native.css';
 import './styles/ios-native.css';
+import './styles/desktop.css';
 
 // Environment validation
 import { validateEnv, logEnvValidation } from './lib/env';

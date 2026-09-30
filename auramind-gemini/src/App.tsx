@@ -139,6 +139,7 @@ const DocsPage = React.lazy(() => import("./pages/legal/DocsPage"));
 const PrivacyPolicyPage = React.lazy(() => import("./pages/legal/PrivacyPolicyPage"));
 const TermsOfServicePage = React.lazy(() => import("./pages/legal/TermsOfServicePage"));
 const AboutPage = React.lazy(() => import("./pages/system/AboutPage"));
+const QuickReviewPage = React.lazy(() => import("./pages/quickReview/QuickReviewPage"));
 const StatusPage = React.lazy(() => import("./pages/system/StatusPage"));
 const ResetPasswordPage = React.lazy(() => import("./pages/auth/ResetPasswordPage"));
 const RestoreAccountPage = React.lazy(() => import("./pages/auth/RestoreAccountPage"));
@@ -765,7 +766,10 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
 
   // Windows app: tray/badge due state, study nudges, links, files, Quick
   // Review refreshes. Inert in a browser tab and the phone apps.
-  useDesktopIntegration({ cards, decks, userId: user?.id, enabled: isDesktopApp() });
+  // The Quick Review corner window loads this same app at /quick-review;
+  // it must not run main-window chrome (banners, loader, integration).
+  const isQuickReviewWindow = location.pathname.startsWith("/quick-review");
+  useDesktopIntegration({ cards, decks, userId: user?.id, enabled: isDesktopApp() && !isQuickReviewWindow });
 
   // Content shared into AuraMind from any other app. Gated on authChecked so
   // a share cannot land on a route guard and bounce to /auth, losing itself.
@@ -868,7 +872,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
           abrupt. Kept mounted, it completes for real and fades while the app
           is already rendered and interactive underneath, so the fade costs
           the user nothing. */}
-      {!isNativeShell && !isVisualHarness && <CinematicLoader ready={authChecked} />}
+      {!isNativeShell && !isVisualHarness && !isQuickReviewWindow && <CinematicLoader ready={authChecked} />}
 
       {/* The harness renders regardless of auth. It is a component contract
           test for the Android shell, so gating it on a session check makes a
@@ -893,11 +897,11 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       />
       {/* Ambient chrome like the boot loader: excluded from the deterministic
           visual-contract harness (/__e2e/*) so baselines don't include it. */}
-      {!isVisualHarness && <CookieConsentBanner />}
+      {!isVisualHarness && !isQuickReviewWindow && <CookieConsentBanner />}
       {/* Renders nothing outside the Windows app. */}
-      {!isVisualHarness && <DesktopUpdateBanner />}
+      {!isVisualHarness && !isQuickReviewWindow && <DesktopUpdateBanner />}
       {/* Drag a file anywhere to make a course (signed in only). */}
-      {!isVisualHarness && user && <DropOverlay />}
+      {!isVisualHarness && !isQuickReviewWindow && user && <DropOverlay />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
@@ -937,6 +941,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                   )
                 }
               />
+              <Route path="/quick-review" element={<QuickReviewPage />} />
               <Route
                 path="/auth"
                 element={

@@ -1,0 +1,7 @@
+/* The Quick Review window is transparent so the acrylic backdrop shows
+   through the rounded panel. */
+html.quick-review-window,
+html.quick-review-window body,
+html.quick-review-window #root {
+  background: transparent !important;
+}
