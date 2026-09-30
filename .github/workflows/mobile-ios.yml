@@ -138,7 +138,7 @@ jobs:
       # Same app, built with VITE_IOS_PREVIEW=true: it opens on sample-data
       # screens and walks through them by itself (IOSVisualPreview's tour),
       # so every screen can be photographed without an account or taps.
-      - name: Screenshot every iOS screen (sample data)
+      - name: Screenshot the iOS tour (sample data)
         run: |
           set -euo pipefail
           echo 'VITE_IOS_PREVIEW=true' >> .env
@@ -168,19 +168,36 @@ jobs:
           done
           kill -INT "$REC" || true
           wait "$REC" || true
+          # A fixed number of screenshots says nothing about coverage. On the
+          # last real run 24 shots contained only 9 distinct frames: the tour
+          # stalls on the study screen and the loop keeps re-capturing it, so
+          # the artifact looked far broader than it was. Report the real count
+          # so the next run cannot quietly regress the same way.
+          total=$(find ../ios-artifacts/screens -name 'shot-*.png' | wc -l | tr -d ' ')
+          unique=$(md5 -q ../ios-artifacts/screens/shot-*.png | sort -u | wc -l | tr -d ' ')
+          echo "tour screenshots: $total captured, $unique distinct frames"
+          if [ "$unique" -lt 5 ]; then
+            echo "::warning::Only $unique distinct tour frames from $total captures - the tour is likely stalling rather than advancing."
+          fi
 
-      # The tour's last step holds a live study session with a real ActivityKit
-      # session (start + update, never ended). Photograph the Dynamic Island
-      # and fail closed if the plugin never confirmed start+update — that is
-      # the layout proof the type checker can't give.
-      - name: Drive a Live Activity and photograph it
+      # The tour's last step holds a live study session and asks the plugin to
+      # start a real ActivityKit session (start + update, never ended).
+      #
+      # This step does NOT verify the Live Activity. A freshly created simulator
+      # has Live Activities switched off, ActivityKit reports
+      # areActivitiesEnabled == false, and the plugin correctly refuses - so the
+      # screenshots here are the app's own study screen, not the Dynamic Island.
+      # The artifacts are named "attempt" so nobody later mistakes them for
+      # proof. The contract assertions live in the live-boot step below, which
+      # is the one that gates.
+      - name: Attempt a Live Activity during the tour (simulator normally refuses)
         run: |
           set -euo pipefail
-          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity.png
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/liveactivity-attempt-tour.png
           sleep 5
-          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-activity-updated.png
-          xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-activity.log || true
-          grep "LIVE_ACTIVITY_" ../ios-artifacts/live-activity.log || echo "(no Live Activity lines at all — the plugin was never called)"
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/liveactivity-attempt-tour-after5s.png
+          xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/liveactivity-attempt-tour.log || true
+          grep "LIVE_ACTIVITY_" ../ios-artifacts/liveactivity-attempt-tour.log || echo "(no Live Activity lines at all — the plugin was never called)"
           # Ground truth that needs no log capture: the driver records every
           # milestone to Preferences. Both web and native prefix keys with
           # `CapacitorStorage.` — reading the bare key always misses.
@@ -200,16 +217,30 @@ jobs:
           echo "tour: $(read_prefs auramind_ci_tour_step)"
           started=$(read_prefs auramind_ci_live_started)
           updated=$(read_prefs auramind_ci_live_updated)
-          # Advisory only: this step inherits the tour's timing, so a miss
-          # here is timing evidence, not proof. The live-boot step below gates.
-          [ "$started" = true ] && [ "$updated" = true ] && echo "Live Activity started and updated." || echo "::warning::Tour-timed Live Activity proof missed (started=$started updated=$updated, see driver lines above)"
+          session=$(read_prefs auramind_ci_live_session)
+          echo "tour attempt: session=$session available=$(read_prefs auramind_ci_live_available) started=$started updated=$updated"
+          # `session` is a descriptive marker ("session-mounted:<path>"), NOT a
+          # boolean - compare by prefix. It is what separates "the tour never
+          # reached the study screen" from "the ActivityKit bridge failed".
+          case "$session" in
+            session-mounted:*) : ;;
+            *)
+              echo "::error::Live Activity driver never mounted the driven session (session=$session). The attempt screenshots prove nothing."
+              exit 1
+              ;;
+          esac
+          if [ "$started" = true ] && [ "$updated" = true ]; then
+            echo "Live Activity started and updated during the tour. This should not happen on a stock simulator - confirm the screenshots are actually the Dynamic Island."
+          else
+            echo "::warning::Tour-timed Live Activity attempt did not start (started=$started updated=$updated). Expected: simulators refuse ActivityKit. The live-boot step asserts the contract."
+          fi
 
-      # Deterministic proof without any tour timing: rebuild the web bundle
+      # Deterministic attempt without any tour timing: rebuild the web bundle
       # with VITE_IOS_PREVIEW=live so the app boots straight into a driven
-      # session (probe + start + update), then assert on the plugin's log.
+      # session (probe + start + update), then assert the plugin's contract.
       # NOTE: dotenv keeps the FIRST of duplicate keys, so the true value
       # from the step above must be replaced, not appended to.
-      - name: Live-boot a driven Live Activity session
+      - name: Live-boot the Live Activity driver and assert its contract
         run: |
           set -euo pipefail
           sed -i '' 's/^VITE_IOS_PREVIEW=.*/VITE_IOS_PREVIEW=live/' .env
@@ -229,13 +260,13 @@ jobs:
           xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
           xcrun simctl launch "$DEVICE" com.auramind.app
           sleep 25
-          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/live-boot.png
-          xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/live-boot.log || true
-          grep "LIVE_ACTIVITY_" ../ios-artifacts/live-boot.log || echo "(no Live Activity lines at all)"
+          xcrun simctl io "$DEVICE" screenshot ../ios-artifacts/screens/liveactivity-liveboot.png
+          xcrun simctl spawn "$DEVICE" log show --last 10m --predicate 'process == "App"' > ../ios-artifacts/liveactivity-liveboot.log || true
+          grep "LIVE_ACTIVITY_" ../ios-artifacts/liveactivity-liveboot.log || echo "(no Live Activity lines at all)"
           # Same container plist as the step above, and the same reason.
           PLIST="$(xcrun simctl get_app_container "$DEVICE" com.auramind.app data)/Library/Preferences/com.auramind.app.plist"
           echo "prefs plist: ${PLIST:-<container unavailable>}"
-          [ -f "$PLIST" ] && echo "prefs plist exists" || echo "::warning::prefs plist missing"
+          [ -f "$PLIST" ] && echo "prefs plist exists" || { echo "::error::prefs plist missing - cannot read driver state"; exit 1; }
           read_prefs() { /usr/libexec/PlistBuddy -c "Print :CapacitorStorage.$1" "$PLIST" 2>/dev/null || echo MISSING; }
           for k in session seen device available started updated; do
             echo "live-boot $k: $(read_prefs auramind_ci_live_$k)"
@@ -244,7 +275,8 @@ jobs:
           available=$(read_prefs auramind_ci_live_available)
           started=$(read_prefs auramind_ci_live_started)
           updated=$(read_prefs auramind_ci_live_updated)
-          echo "live-boot available: $available | started: $started | updated: $updated"
+          session=$(read_prefs auramind_ci_live_session)
+          echo "live-boot available: $available | session: $session | started: $started | updated: $updated"
 
           # Two genuinely different situations, previously reported as one.
           #
@@ -252,22 +284,52 @@ jobs:
           # AuraLiveActivityPlugin.start() bails on
           # ActivityAuthorizationInfo().areActivitiesEnabled, which reflects the
           # user's Live Activities setting - off on a freshly created simulator.
-          # The plugin is behaving correctly, so failing here reported a defect
-          # that does not exist and kept this job red on every run.
-          if [ "$available" != true ]; then
-            echo "::warning::Live Activities are disabled at the OS level on this simulator (areActivitiesEnabled=$available). The plugin correctly refused to start, so this run proves nothing either way about the Live Activity. Proving the Dynamic Island layout needs a real device - see HANDOFF 'Outstanding - human'."
-            exit 0
+          # The plugin is behaving correctly, so failing on the refusal itself
+          # reported a defect that does not exist.
+          #
+          # But "the OS refused" was never allowed to mean "nothing was
+          # checked". A MISSING plist key took the same exit-0 path as a real
+          # refusal, so a driver that never ran at all - or one that crashed
+          # before writing anything - went green. Missing is now distinguished
+          # from false, and the refusal branch asserts the contract instead of
+          # waving the run through.
+          if [ "$available" = MISSING ] || [ -z "$available" ]; then
+            echo "::error::Driver never reported ActivityKit availability (available=$available). The driver did not run; nothing was proved."
+            exit 1
           fi
+          # `session` is a descriptive marker ("session-mounted:<path>"), not a
+          # boolean. Its presence is the proof that the driven study screen
+          # actually rendered, which is what separates "nothing ran" from
+          # "ActivityKit refused".
+          case "$session" in
+            session-mounted:*) : ;;
+            *)
+              echo "::error::Live Activity driver never mounted the driven session (session=$session). Nothing was proved."
+              exit 1
+              ;;
+          esac
 
-          [ "$started" = true ] || {
-            echo "::error::Live Activity enabled but never started on live-boot - this one is a real defect"
-            exit 1
-          }
-          [ "$updated" = true ] || {
-            echo "::error::Live Activity started but never updated on live-boot - this one is a real defect"
-            exit 1
-          }
-          echo "Live Activity live-boot started and updated."
+          if [ "$available" = true ]; then
+            # The OS said yes, so anything short of start+update is our bug.
+            [ "$started" = true ] || {
+              echo "::error::Live Activity enabled but never started on live-boot - this one is a real defect"
+              exit 1
+            }
+            [ "$updated" = true ] || {
+              echo "::error::Live Activity started but never updated on live-boot - this one is a real defect"
+              exit 1
+            }
+            echo "Live Activity live-boot started and updated. This is the only path that proves the ActivityKit integration."
+          else
+            # Contract under refusal, asserted rather than assumed: the driver
+            # ran, it detected the refusal, and it did not report a success
+            # it never achieved.
+            [ "$started" != true ] && [ "$updated" != true ] || {
+              echo "::error::OS reports areActivitiesEnabled=$available yet the driver claimed started/updated - it is lying about a session that does not exist"
+              exit 1
+            }
+            echo "::warning::Contract verified under refusal: driver ran, detected areActivitiesEnabled=$available, and correctly reported started=false updated=false. The Live Activity layout itself remains UNPROVEN - only a real device (TestFlight) can show that."
+          fi
 
       - name: Upload screenshot and logs
         if: always()
