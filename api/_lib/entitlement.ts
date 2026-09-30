@@ -54,10 +54,36 @@ interface UserLike {
  * Reads app_metadata ONLY. Returns 'none' when absent, which after the
  * backfill means the user has never had a subscription.
  */
-export function readSubscriptionStatus(user: UserLike | null | undefined): SubscriptionStatus {
-  const raw = user?.app_metadata?.subscription_status;
-  return typeof raw === 'string' ? (raw as SubscriptionStatus) : 'none';
-}
+  /**
+   * How long a checkout that was started but never completed may hold access.
+   *
+   * `stripe/checkout` mirrors `trialing` into app_metadata before redirecting,
+   * so a user who is not let in by the webhook's async timing is not bounced
+   * back to the paywall. That mirror happens before any money moves, so an
+   * abandoned tab would otherwise leave it in place indefinitely — no Stripe
+   * subscription exists, so no webhook ever arrives to correct it.
+   *
+   * The marker is what separates this from a real trial. Stripe's own trials
+   * are written by the webhook and have no `trial_armed_at`, so they are
+   * untouched by this window and expire on Stripe's schedule.
+   */
+  const PREARM_WINDOW_DAYS = Number(process.env.PREARM_WINDOW_DAYS || 7);
+
+  export function readSubscriptionStatus(
+    user: UserLike | null | undefined,
+    now: number = Date.now(),
+  ): SubscriptionStatus {
+    const raw = user?.app_metadata?.subscription_status;
+    const status: SubscriptionStatus = typeof raw === 'string' ? (raw as SubscriptionStatus) : 'none';
+    if (status !== 'trialing') return status;
+    const armedAt = user?.app_metadata?.trial_armed_at;
+    if (typeof armedAt !== 'string') return status; // a real Stripe trial
+    const at = Date.parse(armedAt);
+    // Unparseable marker: fail closed rather than grant forever.
+    if (Number.isNaN(at)) return 'expired';
+    return now - at > PREARM_WINDOW_DAYS * 24 * 60 * 60 * 1000 ? 'expired' : status;
+  }
+
 
 /**
  * Whether a user may use paid features right now.
