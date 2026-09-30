@@ -245,3 +245,46 @@
   line-height: 1;
   letter-spacing: 0.05em;
 }
+
+/* ========================================
+   FOCUS INDICATOR — dual-tone
+   ========================================
+   WCAG 1.4.11 wants 3:1 against the adjacent background. No single colour
+   clears that everywhere here: the app spans #0A0A0A and #18181B surfaces, a
+   #3247E8 cobalt landing page, #7C3AED violet CTAs, and a light theme.
+   Measured - #7C3AED on the cobalt page is 1.15:1, and violet-400/50
+   (what 23 components used) is 1.54:1. Both fail.
+
+   So the indicator is two bands and the OUTER one carries the guarantee:
+     --focus-ring-outer   light in dark themes, near-black in light themes
+     --focus-ring-inner   the brand violet, a secondary cue
+
+   White is 19.8:1 on #0A0A0A and 6.56:1 on the cobalt page; near-black is
+   18.97:1 on #FAFAFA and 3.02:1 on cobalt. Whichever theme is active, one of
+   the two bands always clears 3:1, so the indicator can never vanish.
+
+   The inner violet additionally clears 3:1 on its own against dark surfaces
+   (10.7:1 on #0A0A0A, 9.6:1 on #18181B, 3.55:1 on cobalt). */
+:root {
+  --focus-ring-outer: #ffffff;
+  --focus-ring-inner: #c4b5fd;
+}
+
+/* .light, not [data-theme="light"]: the theme provider sets dataset.theme to
+   the raw preference, so "system" resolved to light would not match an
+   attribute selector. It toggles .light off the resolved value. */
+.light {
+  --focus-ring-outer: #0a0a0a;
+  --focus-ring-inner: #7c3aed;
+}
+
+/* Maximal separation when the user has asked for high contrast. */
+html[data-high-contrast="true"] {
+  --focus-ring-outer: #ffffff;
+  --focus-ring-inner: #000000;
+}
+
+html[data-high-contrast="true"].light {
+  --focus-ring-outer: #000000;
+  --focus-ring-inner: #ffffff;
+}

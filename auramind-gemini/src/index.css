@@ -163,11 +163,27 @@ body::after {
 
 /* =======================================================
    FOCUS STATES
-   ======================================================= */
+   =======================================================
+   Dual-tone so the indicator survives every background in the app; see the
+   focus token block in styles/design-tokens.css for the measured contrast.
+   The outer outline is the band that carries the 3:1 guarantee, the inner
+   box-shadow is the brand violet. The two render as a 2px violet band on the
+   element edge, a 2px gap, then a 2px outer band - 6px total.
+
+   This rule is deliberately unlayered. Tailwind 4 emits utilities into
+   @layer utilities, and unlayered declarations win the cascade, so the 23
+   components using `focus-visible:ring-violet-400/40|50` (out of 72 focus
+   ring utilities in the tree) can no longer weaken the indicator. Do not
+   move this into a layer.
+
+   Note there is deliberately no `border-radius` here any more. The old
+   rule forced `border-radius: 4px` on every focused element, which is why
+   pills and rounded-full buttons snapped to 4px corners the moment they
+   took focus. A focus style should not change geometry. */
 *:focus-visible {
-  outline: 1.5px solid #7C3AED;
+  outline: 2px solid var(--focus-ring-outer);
   outline-offset: 2px;
-  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--focus-ring-inner);
 }
 
 @layer base {
@@ -509,7 +525,10 @@ body::after {
   .focus-mirror-hover:focus-visible {
     transform: translateY(-2px);
     transition: transform 200ms ease-out;
-    box-shadow: 0 0 30px rgba(124, 58, 237, 0.25);
+    /* The inner focus band is repeated here because this selector is more
+       specific than `*:focus-visible` and would otherwise replace the whole
+       box-shadow, leaving these controls with a single-band indicator. */
+    box-shadow: 0 0 0 2px var(--focus-ring-inner), 0 0 30px rgba(124, 58, 237, 0.25);
   }
 }
 
