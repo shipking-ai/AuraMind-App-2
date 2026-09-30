@@ -1121,22 +1121,28 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
       if (!parsed.ok) return;
       const { customerId } = parsed.data;
 
-      // Ownership: the requested customer must match the Stripe customer id
-      // recorded on the caller's auth metadata (written by the webhook), or a
-      // Stripe customer whose email matches the caller.
-      const metadataCustomerId =
-        typeof caller.user_metadata?.stripe_customer_id === 'string'
-          ? (caller.user_metadata.stripe_customer_id as string)
-          : undefined;
-      if (customerId !== metadataCustomerId) {
-        try {
-          const customer = await stripe.customers.retrieve(customerId);
-          if (customer.deleted || !('email' in customer) || customer.email?.toLowerCase() !== caller.email?.toLowerCase()) {
-            return json(res, 403, { error: 'Forbidden' });
-          }
-        } catch {
+      // Ownership, verified server-side against Stripe and nothing else.
+      //
+      // This used to accept a match on caller.user_metadata.stripe_customer_id
+      // and skip the Stripe lookup when it hit. That field is client-writable:
+      // the webhook writes it to user_metadata (stripe-webhook.ts) precisely
+      // because that blob is display data, so a caller could set it to any
+      // customer id with one auth.updateUser call and be handed a live billing
+      // portal for someone else's account - their invoices, addresses and tax
+      // ids, plus the ability to replace the card or cancel the subscription.
+      // user_metadata is never an authorisation input; see SECURITY.md.
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (
+          customer.deleted ||
+          !('email' in customer) ||
+          customer.email?.toLowerCase() !== caller.email?.toLowerCase()
+        ) {
           return json(res, 403, { error: 'Forbidden' });
         }
+      } catch {
+        // Retrieve failing must not become a way through.
+        return json(res, 403, { error: 'Forbidden' });
       }
 
       try {
