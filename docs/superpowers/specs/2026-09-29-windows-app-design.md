@@ -80,7 +80,7 @@ React (quick-review window, /quick-review)    │
 | Module | Responsibility |
 |---|---|
 | `bridge.ts` | Typed wrappers for every command and event below; lazy `@tauri-apps/api` import |
-| `dueStatePublisher.ts` | From workspace cards: `{ due, streak, fading[] }` on change and each minute, deduplicated |
+| `dueStatePublisher.ts` | From workspace cards: `{ due, fadingCount, topDecks, streak, studying }` on change and each minute, deduplicated. `fadingCount` = reviewed cards whose recall is in the memory-spark band (65–90%, `cardRetrievability`) |
 | `nudgePlanner.ts` | Pure: reminder time + due state → nudge schedule (daily reminder, at most one extra afternoon nudge when ≥10 cards are fading) |
 | `deepLinkRouter.ts` | `auramind://app/...` → `lib/deepLinks.ts` allowlist → navigate; `auramind://auth/callback` → PKCE exchange |
 | `fileHandoff.ts` | Base64 payload → `File` → generator preloaded |
@@ -93,9 +93,11 @@ React (quick-review window, /quick-review)    │
 | Direction | Name | Payload |
 |---|---|---|
 | React → Rust | `app_ready` | — (first paint; shows the main window) |
-| React → Rust | `set_due_state` | `{ due: number, streak: number, fading: string[] }` |
+| React → Rust | `set_due_state` | `{ due: number, fadingCount: number, topDecks: string[], streak: number, studying: boolean }` |
 | React → Rust | `schedule_nudges` | `{ nudges: { at: ISO, title, body }[], quietStart, quietEnd }` |
 | React → Rust | `quick_review_done` | — (hide the panel) |
+| React → Rust | `cards_changed` | — (from Quick Review; Rust emits `cards-changed` to the main window) |
+| React → Rust | `show_main` | `{ path?: string }` (open/focus the main window, optionally at a route) |
 | React → Rust | `set_shortcut` | `{ accelerator: string }` → `{ ok: boolean, reason?: "taken" }` |
 | React → Rust | `get_autostart` / `set_autostart` | `boolean` |
 | Rust → React | `deep-link` | `{ url: string }` |
@@ -131,23 +133,23 @@ file picker, or change autostart.
 - **Desktop manners:**
   - window title per route ("Library · AuraMind")
   - no browser context menu except in text inputs
-  - Ctrl+N new deck, Ctrl+, settings (Ctrl+K palette already exists)
+  - Ctrl+N new course (the generator), Ctrl+, settings (Ctrl+K palette already exists)
   - slim themed scrollbars (`html.platform-desktop`)
 - **Quick Review window:**
   - frameless, transparent, with the Windows **acrylic** backdrop tinted navy
   - rounded 14 px corners, always on top, `skip_taskbar`
-- **Icon.** Regenerated from the vector mark into a multi-size ICO
-  (16/20/24/32/40/48/64/96/128/256), plus the PNGs Tauri needs. Replaces
-  the icon upscaled from the 512 px PNG.
+- **Icon.** Regenerated with `tauri icon` from the vector mark
+  (`public/favicons,logos/favicon.svg`) into a multi-size ICO (16/24/32/48/64/256)
+  plus the PNGs Tauri needs. Replaces the icon upscaled from the 512 px PNG.
 - **Installer.** NSIS with branded header (150×57) and sidebar (164×314)
   art: navy with the violet aurora and the mark. Start menu entry plus an
   optional desktop shortcut. Per-user install (unchanged).
 
 ## 4. Study nudges
 
-- **Due state.** `dueStatePublisher` sends `{ due, streak, fading }` when
-  workspace cards change and once a minute, and only when the value
-  changed.
+- **Due state.** `dueStatePublisher` sends `{ due, fadingCount, topDecks,
+  streak, studying }` when workspace cards change and once a minute, and only
+  when the value changed.
 - **Tray.**
   - Icon (plus a due-dot variant when `due > 0`).
   - Tooltip "AuraMind · 12 cards due".
@@ -167,7 +169,7 @@ file picker, or change autostart.
 - **Schedule** (`nudgePlanner`, pure):
   - The daily reminder at the time already set in Settings (shared with the
     phone apps), only if `due > 0`.
-  - At most one extra afternoon nudge when `fading.length ≥ 10`.
+  - At most one extra afternoon nudge (15:00) when `fadingCount ≥ 10`.
   - Never in quiet hours (22:00–08:00) or while a study session or Quick
     Review is open.
   - React re-plans on every due-state change. Rust holds the timer, because
@@ -236,6 +238,8 @@ file picker, or change autostart.
   allowlist as the phone apps (`lib/deepLinks.ts`), then navigated.
   Anything else is ignored.
 - **OAuth (Google, Notion).**
+  - In the Windows build only, the Supabase client is created with
+    `flowType: 'pkce'` (web and mobile keep the current flow).
   - `signInWithOAuth({ redirectTo: 'auramind://auth/callback',
     skipBrowserRedirect: true })` returns the provider URL, which opens in
     the default browser.
