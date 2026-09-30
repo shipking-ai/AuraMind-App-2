@@ -1,12 +1,20 @@
 name: Mobile iOS
 
 # Builds the iOS app for the simulator on a GitHub-hosted Mac, launches it in
-# an iPhone simulator and uploads a screenshot plus the app's log. The tour's
-# last step drives a real Live Activity (start + update) and the job fails
-# unless the driver confirms both — read back from UserDefaults, so no log
-# capture is involved. A live-boot rebuild repeats the proof deterministically
-# (no tour timing). No Apple Developer account or signing is needed for this;
-# TestFlight uploads come later as a separate, signed job.
+# an iPhone simulator, and uploads the screenshots plus the app's log.
+#
+# On the Live Activity: the driver really does run here (probe -> start ->
+# update, never ended), but a freshly created simulator reports
+# areActivitiesEnabled == false, so ActivityKit refuses and the plugin
+# correctly declines. CI therefore verifies the *refusal contract* - the driver
+# ran, detected the refusal, and did not claim a session it never had - and
+# explicitly does NOT verify the Dynamic Island or lock-screen layout. There is
+# no simctl API to enable Live Activities, so no simulator run can. Only
+# available=true + started=true + updated=true proves the integration, and
+# that path has never been taken in CI. See the live-boot step for the gate.
+#
+# No Apple Developer account or signing is needed for this job. Device/TestFlight
+# builds are the separate, manually dispatched `ios-device-ipa` job below.
 
 on:
   pull_request:
