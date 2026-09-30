@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   links (including checkout) opening in the browser, and signed auto-updates
   from GitHub Releases with an in-app "Restart and update" prompt. Replaces
   the retired June desktop build
+- **Windows app, full desktop integration** - tray with the due count,
+  taskbar badge, study reminders as Windows notifications with Quick
+  review / Later, a Quick Review corner window on Ctrl+Alt+Space, drag a
+  file onto the window (or right-click it in Explorer) to make a course,
+  `auramind://` links, a navy Windows 11 title bar and no white flash on
+  launch
 - **Classroom portal** - teachers create classes, students join with a
   6-character code or deep link, and teachers assign decks and
   multiple-choice quizzes graded on the server, with per-student progress

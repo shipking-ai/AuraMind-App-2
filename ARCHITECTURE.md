@@ -259,14 +259,23 @@ at 600dp and up.
 
   | Concern | Where |
   |---|---|
-  | Outside links → the user's browser | `stays_in_app()` in `src-tauri/src/lib.rs` (navigations, e.g. checkout); `lib/desktopLinks.ts` (`window.open`, `target=_blank`) |
-  | No service worker, Turnstile or OAuth | `isAppShell()` in `lib/platform.ts`, shared with the phone apps |
+  | Outside links → the user's browser | `stays_in_app()` in `src-tauri/src/guard.rs` (navigations, e.g. checkout); `lib/desktopLinks.ts` (`window.open`, `target=_blank`) |
+  | No service worker or Turnstile; OAuth only behind `VITE_DESKTOP_OAUTH` | `isAppShell()` in `lib/platform.ts`, shared with the phone apps; the Windows exception is in `components/auth/AuthPage.tsx` |
   | Subscription re-check after checkout | `hooks/useWindowFocusRefresh.ts` |
   | Signed auto-updates | updater plugin + `lib/desktopUpdater.ts`, `components/desktop/DesktopUpdateBanner.tsx`, About page |
   | API access | `https://tauri.localhost` in `CORS_ORIGINS` (`api/_middleware.ts`) |
+  | Tray, taskbar badge, notifications, start with Windows | `src-tauri/src/{tray,badge,nudges}.rs`; due state from `desktop/dueState.ts`, schedule from `desktop/nudgePlanner.ts` |
+  | Quick Review window | `src-tauri/src/quick_review.rs` + `pages/quickReview/QuickReviewPage.tsx` (same bundle, `/quick-review`) |
+  | Drop to create | `components/shared/DropOverlay.tsx`; Explorer/tray via `src-tauri/src/handoff.rs` and `windows/installer-hooks.nsh` |
+  | Links and sign-in | `src-tauri/src/links.rs` → `desktop/deepLinkRouter.ts`; PKCE only in the Windows build |
+  | React ↔ Rust contract | `desktop/bridge.ts` ↔ `src-tauri/src/commands.rs`; per-window permissions in `capabilities/` |
 
-  Capabilities are minimal: open a URL, check/install updates, restart. No
-  filesystem or shell access.
+  Capabilities stay narrow and per window: the main window may open https,
+  http and mailto URLs plus the one `ms-settings:notifications` page, check
+  and install updates, restart, and call the app's own commands; the Quick
+  Review window gets only its three commands. There is no filesystem or
+  shell plugin — files reach the web app only through Rust's size- and
+  type-checked handoff.
 
 ### Home-screen widget
 

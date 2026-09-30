@@ -78,6 +78,21 @@ Windows 10/11). A local `build:desktop` without the signing key below fails at
 the updater step; add `--config '{"bundle":{"createUpdaterArtifacts":false}}'`
 to build an unsigned installer for testing.
 
+### What the app does beyond the website
+
+Tray with the due count, a taskbar badge, study reminders as Windows
+notifications, Start with Windows (off by default), a Quick Review corner
+window on Ctrl+Alt+Space, drop-to-create (window, Explorer, tray),
+`auramind://` links, and in-app Google/Notion sign-in. Run
+`docs/windows-app-checklist.md` on a real PC before every release.
+
+### Google/Notion sign-in in the app (one-time)
+
+1. Supabase → Authentication → URL Configuration → Redirect URLs: add
+   `auramind://auth/callback`.
+2. In `auramind-gemini/.env.desktop`, uncomment `VITE_DESKTOP_OAUTH=true`.
+3. Release a new version. Until then the app shows email + password only.
+
 ### Updater signing key (one-time)
 
 Installed apps only accept updates signed with the private key that matches
