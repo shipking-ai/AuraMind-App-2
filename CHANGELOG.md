@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Community tab in the Library** - browse decks other learners published
+  (search, category, popular/newest) and add one to your library. Adding
+  forks the deck on the server, so the copy and its cards are yours. Shows a
+  real empty state instead of the hard-coded demo decks the old browse code
+  fell back to
 - **Windows app** - a new Tauri 2 desktop app around the bundled web build:
   its own window that remembers its size, one instance at a time, outside
   links (including checkout) opening in the browser, and signed auto-updates
@@ -70,6 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unentitled chat endpoint and the learning-paths feature
 
 ### Fixed
+- **Forking a marketplace deck always failed** - it selected a `cards.image`
+  column that doesn't exist, and would have copied zero cards anyway (RLS
+  hides other users' cards from the client). Forking is now one server-side
+  RPC, and `fork_count` can no longer be bumped without actually forking
 - **Download page offered installers that don't exist** - the macOS and
   Linux buttons 404'd and the Windows one served an unmaintained June build
   of the removed Tauri app. The page now explains installing the web app
