@@ -1,0 +1,150 @@
+name: Desktop Windows
+
+# Builds the Tauri Windows app (auramind-gemini/src-tauri).
+#
+#   pull_request / workflow_dispatch -> build the installer and attach it to
+#     the run as an artifact. Updater signing is switched off so the build
+#     needs no secret beyond the Supabase ones the web build already uses.
+#
+#   push tag desktop-vX.Y.Z -> signed release. Creates a DRAFT GitHub release
+#     with the NSIS installer, its .sig, and latest.json (the file installed
+#     apps poll through releases/latest/download/latest.json). Publish the
+#     draft by hand; only a published, non-prerelease release is "latest".
+#
+# Tag names start with desktop- so they never trigger mobile-android.yml,
+# which releases on v*.
+
+on:
+  pull_request:
+    paths:
+      - 'auramind-gemini/src-tauri/**'
+      - 'auramind-gemini/src/lib/desktop*.ts'
+      - 'auramind-gemini/src/components/desktop/**'
+      - 'auramind-gemini/package.json'
+      - 'auramind-gemini/package-lock.json'
+      - '.github/workflows/desktop-windows.yml'
+  push:
+    tags:
+      - 'desktop-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    permissions:
+      contents: write # the tag build creates a draft release
+
+    defaults:
+      run:
+        working-directory: auramind-gemini
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency-path: auramind-gemini/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'auramind-gemini/src-tauri -> target'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the tag matches the app version
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#desktop-v}"
+          version="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Tag desktop-v$tag does not match package.json version $version. Bump the version first."
+            exit 1
+          fi
+
+      # Same shape as mobile-android.yml. .env.desktop (committed) supplies the
+      # production API origins; only the Supabase/Stripe/PostHog values are
+      # secrets.
+      - name: Write build env from secrets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+        run: |
+          set -euo pipefail
+          missing=""
+          [ -n "${VITE_SUPABASE_URL:-}" ]      || missing="$missing VITE_SUPABASE_URL"
+          [ -n "${VITE_SUPABASE_ANON_KEY:-}" ] || missing="$missing VITE_SUPABASE_ANON_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required repository secret(s):$missing"
+            exit 1
+          fi
+          {
+            printf 'VITE_SUPABASE_URL=%s\n'           "$VITE_SUPABASE_URL"
+            printf 'VITE_SUPABASE_ANON_KEY=%s\n'      "$VITE_SUPABASE_ANON_KEY"
+            printf 'VITE_STRIPE_PUBLISHABLE_KEY=%s\n' "${VITE_STRIPE_PUBLISHABLE_KEY:-}"
+            printf 'VITE_POSTHOG_KEY=%s\n'            "${VITE_POSTHOG_KEY:-}"
+          } > .env
+          echo "Wrote .env with $(grep -c '=' .env) entries (values not echoed)."
+
+      - name: Rust tests (navigation guard)
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Build installer (no updater signing)
+        if: ${{ !startsWith(github.ref, 'refs/tags/desktop-v') }}
+        run: npx tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Upload installer
+        if: ${{ !startsWith(github.ref, 'refs/tags/desktop-v') }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: auramind-windows-installer
+          path: auramind-gemini/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Require the updater signing key
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          # Without the key the build still succeeds but produces no .sig and
+          # no latest.json, so every installed app 404s on its update check.
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set. See DEPLOYMENT.md -> Windows app."
+            exit 1
+          fi
+
+      - name: Build, sign and draft the release
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: auramind-gemini
+          tagName: ${{ github.ref_name }}
+          releaseName: 'AuraMind for Windows ${{ github.ref_name }}'
+          releaseBody: |
+            Download **AuraMind_*_x64-setup.exe** below and run it. It installs for your Windows account only (no administrator rights needed).
+
+            Already installed? AuraMind updates itself; this release is where that update comes from.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true

@@ -22,18 +22,19 @@
 An **adaptive AI learning system** — turn anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course of cards, lessons, and quizzes. FSRS spaced repetition (the official `ts-fsrs`, FSRS-6) schedules your reviews; Prof. Aura, the AI tutor, remembers what you actually struggle with — weak cards, concepts, retention, and past conversations — and teaches to those gaps. Freemium via Stripe, all in one repo.
 
 > **Status:** v2.0.0 · web deployed via Vercel · Android in Google Play
-> closed testing · iOS builds (unsigned) in CI.
+> closed testing · iOS builds (unsigned) in CI · Windows app (Tauri 2) built
+> in CI, not yet released.
 >
-> There is no desktop build; an earlier Tauri 2 stack was removed (recover it
-> from git history if ever needed). The Android app uses the shared learning
-> UI plus native status-bar/back navigation, haptics, local study reminders,
-> system sharing, and mobile navigation.
+> The Android app uses the shared learning UI plus native status-bar/back
+> navigation, haptics, local study reminders, system sharing, and mobile
+> navigation. The Windows app uses the desktop layout.
 
 ## ✅ What's in here
 
 - **Web app** — React 19 + Vite 8 + Tailwind 4, served by Vercel (PWA with offline support).
 - **Android app** — a first-class Capacitor 8 build (`auramind-gemini/android/`) generated from the same React source, with a native bottom nav, status-bar/back-button handling, haptics, local reminders, and system sharing.
 - **iOS app** — a Capacitor 8 project (`auramind-gemini/ios/`) that the `Mobile iOS` workflow builds unsigned and runs in a simulator. Not yet signed or on TestFlight.
+- **Windows app** — a Tauri 2 shell (`auramind-gemini/src-tauri/`) around the bundled web build, with signed auto-updates from GitHub Releases. Built by the `Desktop Windows` workflow; release steps in [DEPLOYMENT.md](./DEPLOYMENT.md#windows-app-tauri-2).
 - **Backend** — Vercel serverless functions under `/api`.
 - **Database** — Supabase (Postgres) with append-only migrations in `./supabase/migrations/`.
 
@@ -355,6 +356,7 @@ ORDER  BY applied_at DESC;
 - **Frontend**: React 19, TypeScript 6 (strict), Vite 8, Tailwind CSS 4, React Router 7
 - **UI Components**: Base UI and Radix primitives, Framer Motion, GSAP, custom SVG icon set
 - **Mobile**: Capacitor 8 (Android; iOS in CI)
+- **Desktop**: Tauri 2 (Windows)
 - **Backend**: Vercel Serverless Functions (Express dev server locally)
 - **Database**: Supabase (PostgreSQL, RLS)
 - **Payments**: Stripe

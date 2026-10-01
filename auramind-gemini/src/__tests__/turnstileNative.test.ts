@@ -11,7 +11,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const nativeState = vi.hoisted(() => ({ isNative: false }));
 
 vi.mock('../lib/nativeShim', () => ({
-  Capacitor: { isNativePlatform: () => nativeState.isNative },
+  Capacitor: {
+    isNativePlatform: () => nativeState.isNative,
+    getPlatform: () => (nativeState.isNative ? 'android' : 'web'),
+  },
 }));
 
 async function loadIsTurnstileEnabled(): Promise<() => boolean> {
@@ -22,8 +25,18 @@ async function loadIsTurnstileEnabled(): Promise<() => boolean> {
 describe('isTurnstileEnabled', () => {
   beforeEach(() => {
     nativeState.isNative = false;
+    delete (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
     vi.resetModules();
     vi.unstubAllEnvs();
+  });
+
+  it('is disabled in the Windows app even with a site key configured', async () => {
+    vi.stubEnv('VITE_TURNSTILE_SITE_KEY', '0x4AAAAAAAEsHm7dsqEhBi3Nr');
+    // Tauri injects this global into its webview; https://tauri.localhost
+    // can no more get a Turnstile token than capacitor://localhost can.
+    (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = {};
+    const isTurnstileEnabled = await loadIsTurnstileEnabled();
+    expect(isTurnstileEnabled()).toBe(false);
   });
 
   it('is disabled on native even with a site key configured', async () => {

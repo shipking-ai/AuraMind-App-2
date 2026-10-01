@@ -102,6 +102,9 @@ opencode.json
 auramind-gemini/dist-verify/
 .vercel
 .env*
+# Build-mode overrides that hold only public API origins, never secrets.
+!auramind-gemini/.env.mobile
+!auramind-gemini/.env.desktop
 
 # Root-level design reference media (screenshots/video of the landing page)
 /landing-*.png

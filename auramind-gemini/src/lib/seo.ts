@@ -40,7 +40,7 @@ export function updateMetaTags(config: SEOConfig = {}): void {
   setMetaTag('name', 'author', 'AuraMind');
   setMetaTag('name', 'robots', config.noindex ? 'noindex, nofollow' : 'index, follow');
   setMetaTag('name', 'viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
-  setMetaTag('name', 'theme-color', '#0a0a0a');
+  setMetaTag('name', 'theme-color', '#3247E8');
 
   // Canonical URL
   let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;

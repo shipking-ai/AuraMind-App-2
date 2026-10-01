@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-notifications-enabled"
+description = "Enables the notifications_enabled command without any pre-configured scope."
+commands.allow = ["notifications_enabled"]
+
+[[permission]]
+identifier = "deny-notifications-enabled"
+description = "Denies the notifications_enabled command without any pre-configured scope."
+commands.deny = ["notifications_enabled"]

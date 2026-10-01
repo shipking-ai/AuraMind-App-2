@@ -4,7 +4,7 @@ import { distributedLimiterConfigured } from './_rateLimit.js';
 import { handleAI, handleAISpeech, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
-import { isEntitled, readSubscriptionStatus } from './_lib/entitlement.js';
+import { isEntitled, readSubscriptionStatus, isEntitledWithRoleAccess } from './_lib/entitlement.js';
 import { isPushConfigured, readPushConfig, sendPushToUsers } from './_lib/push.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -1097,34 +1097,43 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
           cancel_url: `${req.headers.origin || 'https://auramind.app'}/subscribe?payment=cancelled`
         });
 
-        // Immediately mark user as trialing so they don't get stuck in a redirect loop
-        // (the webhook is async and may not have fired by the time they return from Stripe)
-        try {
-          const { createClient } = await import('@supabase/supabase-js');
-          const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-          const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-          if (supabaseUrl && supabaseServiceKey) {
-            const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
-            if (userData?.user) {
-              await supabaseAdmin.auth.admin.updateUserById(userId, {
-                // Authoritative copy — service-role only. Spread existing
-                // app_metadata first: updateUserById replaces wholesale, and
-                // a bare { subscription_status } would demote staff who buy
-                // a subscription by wiping app_metadata.role.
-                app_metadata: {
-                  ...userData.user.app_metadata,
-                  subscription_status: 'trialing',
-                },
-                user_metadata: {
-                  ...userData.user.user_metadata,
-                  subscription_status: 'trialing',
-                  plan: 'Pro',
-                },
-              });
+          // Immediately mark user as trialing so they don't get stuck in a redirect loop
+          // (the webhook is async and may not have fired by the time they return from Stripe)
+          //
+          // Only for a user who is not already entitled, and stamped with
+          // trial_armed_at so the mirror can expire. Without both guards this is
+          // an unconditional grant that happens before any money moves: POST
+          // checkout, close the tab, and no Stripe subscription exists, so no
+          // webhook ever arrives to correct it. app_metadata is
+          // service-role-writable, so the user cannot re-arm it themselves —
+          // but they did not need to, the first call already did it.
+          try {
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+            const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+            if (supabaseUrl && supabaseServiceKey) {
+              const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+              const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+              if (userData?.user && !isEntitledWithRoleAccess(userData.user)) {
+                await supabaseAdmin.auth.admin.updateUserById(userId, {
+                  // Authoritative copy — service-role only. Spread existing
+                  // app_metadata first: updateUserById replaces wholesale, and
+                  // a bare { subscription_status } would demote staff who buy
+                  // a subscription by wiping app_metadata.role.
+                  app_metadata: {
+                    ...userData.user.app_metadata,
+                    subscription_status: 'trialing',
+                    trial_armed_at: new Date().toISOString(),
+                  },
+                  user_metadata: {
+                    ...userData.user.user_metadata,
+                    subscription_status: 'trialing',
+                    plan: 'Pro',
+                  },
+                });
+              }
             }
-          }
-        } catch (metaErr: any) {
+          } catch (metaErr: any) {
           console.warn('Failed to update user metadata after checkout:', metaErr.message);
           // Non-fatal — the webhook will eventually update it
         }
@@ -1146,22 +1155,28 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
       if (!parsed.ok) return;
       const { customerId } = parsed.data;
 
-      // Ownership: the requested customer must match the Stripe customer id
-      // recorded on the caller's auth metadata (written by the webhook), or a
-      // Stripe customer whose email matches the caller.
-      const metadataCustomerId =
-        typeof caller.user_metadata?.stripe_customer_id === 'string'
-          ? (caller.user_metadata.stripe_customer_id as string)
-          : undefined;
-      if (customerId !== metadataCustomerId) {
-        try {
-          const customer = await stripe.customers.retrieve(customerId);
-          if (customer.deleted || !('email' in customer) || customer.email?.toLowerCase() !== caller.email?.toLowerCase()) {
-            return json(res, 403, { error: 'Forbidden' });
-          }
-        } catch {
+      // Ownership, verified server-side against Stripe and nothing else.
+      //
+      // This used to accept a match on caller.user_metadata.stripe_customer_id
+      // and skip the Stripe lookup when it hit. That field is client-writable:
+      // the webhook writes it to user_metadata (stripe-webhook.ts) precisely
+      // because that blob is display data, so a caller could set it to any
+      // customer id with one auth.updateUser call and be handed a live billing
+      // portal for someone else's account - their invoices, addresses and tax
+      // ids, plus the ability to replace the card or cancel the subscription.
+      // user_metadata is never an authorisation input; see SECURITY.md.
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (
+          customer.deleted ||
+          !('email' in customer) ||
+          customer.email?.toLowerCase() !== caller.email?.toLowerCase()
+        ) {
           return json(res, 403, { error: 'Forbidden' });
         }
+      } catch {
+        // Retrieve failing must not become a way through.
+        return json(res, 403, { error: 'Forbidden' });
       }
 
       try {

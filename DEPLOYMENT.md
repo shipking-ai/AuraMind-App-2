@@ -61,6 +61,69 @@ npm run build
 
 The built files will be in `auramind-gemini/dist/`.
 
+## Windows App (Tauri 2)
+
+The Windows app lives in `auramind-gemini/src-tauri/`. It bundles a desktop
+build of the web app (`vite build --mode desktop`, API origins from the
+committed `.env.desktop`) and serves it from `https://tauri.localhost`.
+
+```bash
+cd auramind-gemini
+npm run dev:desktop     # the app window against the Vite dev server
+npm run build:desktop   # installer -> src-tauri/target/release/bundle/nsis/
+```
+
+Local builds need Rust (`rustup`) and the WebView2 runtime (built into
+Windows 10/11). A local `build:desktop` without the signing key below fails at
+the updater step; add `--config '{"bundle":{"createUpdaterArtifacts":false}}'`
+to build an unsigned installer for testing.
+
+### What the app does beyond the website
+
+Tray with the due count, a taskbar badge, study reminders as Windows
+notifications, Start with Windows (off by default), a Quick Review corner
+window on Ctrl+Alt+Space, drop-to-create (window, Explorer, tray),
+`auramind://` links, and in-app Google/Notion sign-in. Run
+`docs/windows-app-checklist.md` on a real PC before every release.
+
+### Google/Notion sign-in in the app (one-time)
+
+1. Supabase → Authentication → URL Configuration → Redirect URLs: add
+   `auramind://auth/callback`.
+2. In `auramind-gemini/.env.desktop`, uncomment `VITE_DESKTOP_OAUTH=true`.
+3. Release a new version. Until then the app shows email + password only.
+
+### Updater signing key (one-time)
+
+Installed apps only accept updates signed with the private key that matches
+`plugins.updater.pubkey` in `tauri.conf.json`. The key pair was generated with
+`npx tauri signer generate` and the private half lives **outside the repo** at
+`%USERPROFILE%\.tauri\auramind-updater.key` (no password).
+
+1. Back it up (password manager). **Losing it means no installed copy can ever
+   update again**; the only way out is a new key and a manual reinstall for
+   every user.
+2. Add its contents as the repository secret `TAURI_SIGNING_PRIVATE_KEY`
+   (GitHub → Settings → Secrets and variables → Actions).
+
+### Releasing
+
+1. Bump `version` in `auramind-gemini/package.json`. It must be higher than
+   any release already installed; the first Windows release must be above
+   2.0.0 (the retired June build).
+2. Tag and push: `git tag desktop-v2.1.0 && git push origin desktop-v2.1.0`.
+3. `Desktop Windows` builds, signs, and creates a **draft** release with the
+   installer, its `.sig` and `latest.json`. Review it, then publish.
+
+Installed apps poll `releases/latest/download/latest.json`, so the newest
+**published, non-prerelease** GitHub release must always be a desktop one.
+Publish any other kind of GitHub release as a pre-release, or the update
+check breaks.
+
+Without a code-signing certificate Windows SmartScreen warns on first
+install ("Windows protected your PC" → More info → Run anyway). An EV/OV
+certificate, or the Microsoft Store, removes that.
+
 ## iOS Preview Deploy
 
 A public build of the sample-data iPhone screens (`/__preview/ios?tour=1`)
