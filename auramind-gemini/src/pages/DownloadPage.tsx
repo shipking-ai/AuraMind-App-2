@@ -41,9 +41,11 @@ const features: Feature[] = [
   },
 ];
 
-// There is no native desktop build (the Tauri stack was removed). On desktop,
-// AuraMind installs from the browser as a PWA, so this lists how to do that
-// per browser instead of linking installers that no longer ship.
+// No published desktop installer exists yet. The Tauri app is back on main
+// (#131) and CI builds a signed installer on `windows`, but the v2.0.0 release
+// it would attach to carries no assets, so linking a download here would 404.
+// Browser install works today on every desktop platform, so that is what this
+// page offers until a release actually ships the binaries.
 const desktopInstallSteps = [
   { browser: 'Chrome or Edge', how: 'Click the install icon at the right of the address bar, then Install.' },
   { browser: 'Safari on macOS', how: 'Choose File → Add to Dock.' },
