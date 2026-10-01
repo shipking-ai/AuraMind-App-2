@@ -101,6 +101,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   requires both card and deck ownership. The same migration drops leftover
   public league policies that let signed-out visitors list every user id
   and weekly XP
+- **Admin user list and export trusted `user_metadata`** - role and plan
+  were read from fields any user can set, so a free account could appear to
+  staff as an admin on Pro. Both now come from `app_metadata`. The CSV
+  export also escapes cells and neutralises leading `=`/`+`/`-`/`@`, so a
+  user-chosen name can no longer run as a spreadsheet formula
 - **Admin oracle closed** - any signed-in user could call `is_admin(uuid)` /
   `is_super_admin(uuid)` to learn whether an account was an admin. Client
   EXECUTE revoked; the `audit_events` policy uses `current_user_is_admin()`
