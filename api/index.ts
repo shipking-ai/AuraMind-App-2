@@ -4,7 +4,7 @@ import { distributedLimiterConfigured } from './_rateLimit.js';
 import { handleAI, handleAISpeech, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
-import { readSubscriptionStatus, isEntitledWithRoleAccess } from './_lib/entitlement.js';
+import { isEntitled, readSubscriptionStatus, isEntitledWithRoleAccess } from './_lib/entitlement.js';
 import { isPushConfigured, readPushConfig, sendPushToUsers } from './_lib/push.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -20,6 +20,31 @@ function isAdminUser(user: { email?: string | null; app_metadata?: Record<string
   if (ADMIN_EMAIL && user.email === ADMIN_EMAIL) return true;
   const role = user.app_metadata?.role;
   return typeof role === 'string' && ADMIN_ROLES.has(role);
+}
+
+// Role and plan as staff see them in the admin list and export. Both come from
+// app_metadata: user_metadata.role is a self-set display persona and
+// user_metadata.plan is display-only, so reading either would let any user
+// show up to staff as an admin or a paying customer.
+type AdminListedUser = { email?: string | null; app_metadata?: Record<string, unknown> | null };
+
+function adminDisplayRole(u: AdminListedUser): string {
+  const role = u.app_metadata?.role;
+  if (typeof role === 'string' && role) return role;
+  return ADMIN_EMAIL && u.email === ADMIN_EMAIL ? 'owner' : 'user';
+}
+
+function adminDisplayPlan(u: AdminListedUser): string {
+  return isEntitled(u) ? 'Pro' : 'Starter';
+}
+
+// One CSV cell: quotes doubled, and a leading formula character neutralised so
+// a user-chosen name like `=HYPERLINK(...)` opens as text in a spreadsheet
+// instead of running as a formula (CSV injection).
+function csvCell(value: unknown): string {
+  let s = value == null ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
 }
 
 // Rate-limit bucket per endpoint. Anything that spends money on an
@@ -373,11 +398,11 @@ async function handleAdmin(req: VercelRequest, res: VercelResponse, action?: str
         email: u.email,
         name: u.user_metadata?.full_name || u.email?.split('@')[0],
         isAdmin: isAdminUser(u),
-        role: u.app_metadata?.role || (ADMIN_EMAIL && u.email === ADMIN_EMAIL ? 'owner' : 'user'),
+        role: adminDisplayRole(u),
         avatar: u.user_metadata?.avatar_url,
         lastSignIn: u.last_sign_in_at,
         created: u.created_at,
-        plan: u.user_metadata?.plan || 'Starter'
+        plan: adminDisplayPlan(u)
       }));
       return json(res, 200, { users: mappedUsers });
 
@@ -1800,14 +1825,14 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
         const rows = allUsers.map((u: any) =>
           selectedColumns.map((col: string) => {
             switch (col) {
-              case 'id': return `"${u.id}"`;
-              case 'email': return `"${u.email}"`;
-              case 'name': return `"${u.user_metadata?.full_name || u.email?.split('@')[0]}"`;
-              case 'role': return `"${u.user_metadata?.role || 'user'}"`;
-              case 'plan': return `"${u.user_metadata?.plan || 'Starter'}"`;
-              case 'joined': return `"${u.created_at}"`;
-              case 'lastSignIn': return `"${u.last_sign_in_at || ''}"`;
-              default: return '""';
+              case 'id': return csvCell(u.id);
+              case 'email': return csvCell(u.email);
+              case 'name': return csvCell(u.user_metadata?.full_name || u.email?.split('@')[0]);
+              case 'role': return csvCell(adminDisplayRole(u));
+              case 'plan': return csvCell(adminDisplayPlan(u));
+              case 'joined': return csvCell(u.created_at);
+              case 'lastSignIn': return csvCell(u.last_sign_in_at);
+              default: return csvCell('');
             }
           }).join(',')
         ).join('\n');
@@ -1820,8 +1845,8 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
               case 'id': obj.id = u.id; break;
               case 'email': obj.email = u.email; break;
               case 'name': obj.name = u.user_metadata?.full_name || u.email?.split('@')[0]; break;
-              case 'role': obj.role = u.user_metadata?.role || 'user'; break;
-              case 'plan': obj.plan = u.user_metadata?.plan || 'Starter'; break;
+              case 'role': obj.role = adminDisplayRole(u); break;
+              case 'plan': obj.plan = adminDisplayPlan(u); break;
               case 'joined': obj.joined = u.created_at; break;
               case 'lastSignIn': obj.lastSignIn = u.last_sign_in_at || null; break;
               default: obj[col] = null;
