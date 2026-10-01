@@ -13,6 +13,7 @@ AuraMind is a full-stack adaptive AI learning system — it turns any input (PDF
 | Web SPA | `auramind-gemini/` | React 19 + Vite 8 + Tailwind 4 | Main application (PWA) |
 | Android app | `auramind-gemini/android/` | Capacitor 8 | Active native build (Play closed testing) |
 | iOS app | `auramind-gemini/ios/` | Capacitor 8 (Swift Package Manager) | Built unsigned in CI; not yet on TestFlight |
+| Windows app | `auramind-gemini/src-tauri/` | Tauri 2 (WebView2) | Desktop app with signed auto-updates; built in CI, not yet released |
 | Backend API | `api/` | Vercel Serverless + Express dev server | Auth, AI proxy, Stripe, admin, push, cron |
 
 **Key dependencies:** Supabase (auth + DB), Stripe (payments), Resend (email), PostHog (analytics), Upstash Redis (distributed rate limiting), Firebase Cloud Messaging (push, dormant until credentials are set). AI providers: Groq, Cerebras, Gemini, OpenRouter (server-side failover), plus Puter (user-pays) and local Ollama/LM Studio.
@@ -251,8 +252,32 @@ reading down and returns on reverse, swipe-to-refresh on the list screens
 (`lib/workspaceRefresh.ts`), modal bottom sheets that close on the system back
 gesture (`lib/backStack.ts`), long-press deck actions, and a navigation rail
 at 600dp and up.
-- **Desktop** — no desktop build. An earlier Tauri 2 stack was removed;
-  recover it from git history if it is ever revived.
+- **Windows** — Tauri 2 app at `auramind-gemini/src-tauri/`, a fresh shell
+  (the June 2026 Tauri build was retired, not revived). It bundles
+  `vite build --mode desktop` and serves it from `https://tauri.localhost`;
+  that origin holds every user's session and offline data, so it must never
+  change. The web code tells it apart with `isDesktopApp()`; it renders the
+  desktop layout, so `appPlatform()` still reports `"web"`.
+
+  | Concern | Where |
+  |---|---|
+  | Outside links → the user's browser | `stays_in_app()` in `src-tauri/src/guard.rs` (navigations, e.g. checkout); `lib/desktopLinks.ts` (`window.open`, `target=_blank`) |
+  | No service worker or Turnstile; OAuth only behind `VITE_DESKTOP_OAUTH` | `isAppShell()` in `lib/platform.ts`, shared with the phone apps; the Windows exception is in `components/auth/AuthPage.tsx` |
+  | Subscription re-check after checkout | `hooks/useWindowFocusRefresh.ts` |
+  | Signed auto-updates | updater plugin + `lib/desktopUpdater.ts`, `components/desktop/DesktopUpdateBanner.tsx`, About page |
+  | API access | `https://tauri.localhost` in `CORS_ORIGINS` (`api/_middleware.ts`) |
+  | Tray, taskbar badge, notifications, start with Windows | `src-tauri/src/{tray,badge,nudges}.rs`; due state from `desktop/dueState.ts`, schedule from `desktop/nudgePlanner.ts` |
+  | Quick Review window | `src-tauri/src/quick_review.rs` + `pages/quickReview/QuickReviewPage.tsx` (same bundle, `/quick-review`) |
+  | Drop to create | `components/shared/DropOverlay.tsx`; Explorer/tray via `src-tauri/src/handoff.rs` and `windows/installer-hooks.nsh` |
+  | Links and sign-in | `src-tauri/src/links.rs` → `desktop/deepLinkRouter.ts`; PKCE only in the Windows build |
+  | React ↔ Rust contract | `desktop/bridge.ts` ↔ `src-tauri/src/commands.rs`; per-window permissions in `capabilities/` |
+
+  Capabilities stay narrow and per window: the main window may open https,
+  http and mailto URLs plus the one `ms-settings:notifications` page, check
+  and install updates, restart, and call the app's own commands; the Quick
+  Review window gets only its three commands. There is no filesystem or
+  shell plugin — files reach the web app only through Rust's size- and
+  type-checked handoff.
 
 ### Home-screen widget
 
@@ -333,7 +358,7 @@ the layout was made for the device rather than ported to it.
 Key differentiators vs competitors (Quizlet, Anki, Knowt, RemNote, StudyFetch, Brainscape):
 - AI-powered content generation from multiple input formats
 - FSRS-6 via the official `ts-fsrs` (the same algorithm family as Anki)
-- Multi-platform: web + native Android, iOS in progress (no desktop build)
+- Multi-platform: web + native Android and Windows, iOS in progress
 - Source-grounded flashcards with citations
 - Multi-provider AI with local fallback (no API costs)
 - Classroom portal: classes, assignments, and per-student progress

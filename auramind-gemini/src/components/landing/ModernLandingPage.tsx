@@ -58,7 +58,7 @@ const ForgettingCurve = () => (
 function FeatureCard({ icon, title, desc, index }: { icon: React.ReactNode; title: string; desc: string; index: number }) {
   const { playHover } = useSoundDesign({ volume: 0.08 });
   return (
-    <BorderBeam duration={4 + index * 0.5} colorFrom="#7c3aeld" colorTo="#c4b5fd">
+    <BorderBeam duration={4 + index * 0.5} colorFrom="#7c3aed" colorTo="#c4b5fd">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -370,9 +370,12 @@ export default function ModernLandingPage() {
                     />
                   </MagneticButton>
                 </ClickSparkles>
-                <MagneticButton className="px-6 py-2.5 border border-[#2A2A3A] text-[#9090A8] text-sm rounded-lg hover:border-[#3A3A4F] hover:text-[#F0EFFE] transition-all">
+                <a
+                  href="#features"
+                  className="inline-flex items-center justify-center px-6 py-2.5 border border-[#2A2A3A] text-[#9090A8] text-sm rounded-lg hover:border-[#3A3A4F] hover:text-[#F0EFFE] transition-all"
+                >
                   See how it works
-                </MagneticButton>
+                </a>
               </div>
 
               {/*
@@ -456,7 +459,9 @@ export default function ModernLandingPage() {
       </section>
 
       {/* Manifesto */}
-      <ManifestoSection />
+      <div id="about" className="scroll-mt-20">
+        <ManifestoSection />
+      </div>
 
       {/* Forgetting Curve — 2-column */}
       <section className="py-20 px-6 border-t border-[#2A2A3A]/30">

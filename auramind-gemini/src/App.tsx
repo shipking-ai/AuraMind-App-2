@@ -51,13 +51,19 @@ import HmrRefreshNotice from "./components/shared/HmrRefreshNotice";
 import { ErrorBoundary } from "./components/shared/ErrorBoundary";
 import PuterQuotaBanner from "./components/shared/PuterQuotaBanner";
 import CookieConsentBanner from "./components/shared/CookieConsentBanner";
+import { DesktopUpdateBanner } from "./components/desktop/DesktopUpdateBanner";
+import { DropOverlay } from "./components/shared/DropOverlay";
+import { DesktopChrome } from "./desktop/DesktopChrome";
 import { KeyboardAware } from "./components/shared/KeyboardAware";
 import NativeRuntime from "./components/native/NativeRuntime";
 import BiometricGate from "./components/native/BiometricGate";
 import { initPushListeners } from "./services/notifications/pushService";
 import { App as NativeApp, Capacitor, SplashScreen } from "./lib/nativeShim";
 import { useReminderSync } from "./hooks/useReminderSync";
+import { useWindowFocusRefresh } from "./hooks/useWindowFocusRefresh";
 import { useSparkSync } from "./hooks/useSparkSync";
+import { useDesktopIntegration } from "./desktop/useDesktopIntegration";
+import { isDesktopApp } from "./lib/platform";
 import { useShareTarget } from "./hooks/useShareTarget";
 import QuizGenerationNotifier from "./components/notifications/QuizGenerationNotifier";
 import { Toaster, toast } from "./components/ui/sonner";
@@ -134,6 +140,7 @@ const DocsPage = React.lazy(() => import("./pages/legal/DocsPage"));
 const PrivacyPolicyPage = React.lazy(() => import("./pages/legal/PrivacyPolicyPage"));
 const TermsOfServicePage = React.lazy(() => import("./pages/legal/TermsOfServicePage"));
 const AboutPage = React.lazy(() => import("./pages/system/AboutPage"));
+const QuickReviewPage = React.lazy(() => import("./pages/quickReview/QuickReviewPage"));
 const StatusPage = React.lazy(() => import("./pages/system/StatusPage"));
 const ResetPasswordPage = React.lazy(() => import("./pages/auth/ResetPasswordPage"));
 const RestoreAccountPage = React.lazy(() => import("./pages/auth/RestoreAccountPage"));
@@ -758,6 +765,13 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   // platforms. Also 'maintain' mode — never prompts on launch. Settings asks.
   useSparkSync('maintain');
 
+  // Windows app: tray/badge due state, study nudges, links, files, Quick
+  // Review refreshes. Inert in a browser tab and the phone apps.
+  // The Quick Review corner window loads this same app at /quick-review;
+  // it must not run main-window chrome (banners, loader, integration).
+  const isQuickReviewWindow = location.pathname.startsWith("/quick-review");
+  useDesktopIntegration({ cards, decks, userId: user?.id, enabled: isDesktopApp() && !isQuickReviewWindow });
+
   // Content shared into AuraMind from any other app. Gated on authChecked so
   // a share cannot land on a route guard and bounce to /auth, losing itself.
   useShareTarget(authChecked);
@@ -818,12 +832,29 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       disposed = true;
       void listener?.remove();
     };
-    // checkSubscription is recreated each render; the listener only needs the
-    // current user and whether they still lack access.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, subscriptionStatus]);
+      // checkSubscription is recreated each render; the listener only needs the
+      // current user and whether they still lack access.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, subscriptionStatus]);
 
-  const isNativeShell = Capacitor.isNativePlatform();
+  /**
+   * The same thing for the Windows app, which has no Capacitor appStateChange.
+   * See useWindowFocusRefresh for why checkout being sent out to the browser
+   * leaves the Tauri window needing its own signal.
+   */
+  useWindowFocusRefresh(() => {
+    if (!user || subscriptionStatus === "active") return;
+    // No forced retry loop, for the same reason as the native path above.
+    void checkSubscription(user.id, user.email || "");
+  });
+
+    // Deliberately not isAppShell(). Capacitor draws a native splash screen
+    // (see capacitor.config.json, launchAutoHide: false) so only the phone
+    // apps have something else to show. Tauri has no splash, so the Windows
+    // app relies on this loader being painted - switching this to
+    // isAppShell() would leave it staring at an empty window while auth
+    // resolves. "isNativeShell" means "has a native splash".
+    const isNativeShell = Capacitor.isNativePlatform();
   // /__e2e/* is a DEV-only harness that renders the Android shell in
   // isolation for the visual-contract tests. The boot screen is not part of
   // that contract, and letting it paint over the harness made every surface
@@ -842,7 +873,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
           abrupt. Kept mounted, it completes for real and fades while the app
           is already rendered and interactive underneath, so the fade costs
           the user nothing. */}
-      {!isNativeShell && !isVisualHarness && <CinematicLoader ready={authChecked} />}
+      {!isNativeShell && !isVisualHarness && !isQuickReviewWindow && <CinematicLoader ready={authChecked} />}
 
       {/* The harness renders regardless of auth. It is a component contract
           test for the Android shell, so gating it on a session check makes a
@@ -867,7 +898,13 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       />
       {/* Ambient chrome like the boot loader: excluded from the deterministic
           visual-contract harness (/__e2e/*) so baselines don't include it. */}
-      {!isVisualHarness && <CookieConsentBanner />}
+      {!isVisualHarness && !isQuickReviewWindow && <CookieConsentBanner />}
+      {/* Renders nothing outside the Windows app. */}
+      {!isVisualHarness && !isQuickReviewWindow && <DesktopUpdateBanner />}
+      {/* Drag a file anywhere to make a course (signed in only). */}
+      {!isVisualHarness && !isQuickReviewWindow && user && <DropOverlay />}
+      {/* Windows app window behaviour; renders nothing. */}
+      {!isQuickReviewWindow && <DesktopChrome />}
       <KeyboardAware>
         <CommandPalette />
         <AnimatePresence mode="sync">
@@ -900,6 +937,9 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                         {Capacitor.getPlatform() === "ios" ? <IOSWelcomeScreen /> : <AndroidWelcomeScreen />}
                       </PageTransition>
                     )
+                  ) : isDesktopApp() ? (
+                    // The installed app opens to the app, not the marketing page.
+                    authChecked ? <Navigate to={user ? "/dashboard" : "/auth"} replace /> : null
                   ) : (
                     <PageTransition variant={transitionVariant}>
                       <AuraLandingPage />
@@ -907,6 +947,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                   )
                 }
               />
+              <Route path="/quick-review" element={<QuickReviewPage />} />
               <Route
                 path="/auth"
                 element={

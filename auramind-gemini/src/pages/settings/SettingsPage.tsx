@@ -28,6 +28,7 @@ import {
   type MfaFactor,
 } from '../../services/auth/mfaService';
 import type { UserProfile } from '../../types';
+import { DesktopSettingsSection } from '../../desktop/DesktopSettingsSection';
 
 type MfaStep =
   | { step: 'idle' }
@@ -206,10 +207,20 @@ function useLocalStorage<T>(key: string, defaultValue: T): [T, (v: T | ((prev: T
   return useAppPreference(key, defaultValue);
 }
 
-const Toggle = ({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) => (
+const Toggle = ({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) => (
   <button
+    // The 22 toggles on this page had no accessible name (the button held
+    // only a decorative knob, so all of them announced as bare "button") and
+    // no exposed state - on/off existed only as background colour and knob
+    // position. `type` was also unset, so every one of them defaulted to
+    // submit. The ::after pseudo-element keeps the visual size but grows the
+    // hit area to 28px tall, clearing the 24px WCAG 2.2 minimum target.
+    type="button"
+    role="switch"
+    aria-checked={on}
+    aria-label={label}
     onClick={() => onChange(!on)}
-    className={`relative w-10 h-5 rounded-full transition-all duration-200 ${
+    className={`relative w-10 h-5 rounded-full transition-all duration-200 after:absolute after:inset-x-0 after:-top-1 after:-bottom-1 after:content-[''] ${
       on ? 'bg-[#7C3AED]' : 'bg-[#2A2A3A]'
     }`}
   >
@@ -571,11 +582,11 @@ export default function SettingsPage() {
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Show next intervals">
-              <Toggle on={showIntervals} onChange={setShowIntervals} />
+              <Toggle label="Show next intervals" on={showIntervals} onChange={setShowIntervals} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Enable keyboard shortcuts">
-              <Toggle on={keyboardShortcuts} onChange={setKeyboardShortcuts} />
+              <Toggle label="Enable keyboard shortcuts" on={keyboardShortcuts} onChange={setKeyboardShortcuts} />
             </SettingRow>
           </div>
         </div>
@@ -610,7 +621,7 @@ export default function SettingsPage() {
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Include examples">
-              <Toggle on={includeExamples} onChange={setIncludeExamples} />
+              <Toggle label="Include examples" on={includeExamples} onChange={setIncludeExamples} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Default language">
@@ -637,20 +648,20 @@ export default function SettingsPage() {
                   onChange={e => setReminderTime(e.target.value)}
                   className="bg-[#1A1A24] border border-[#2A2A3A] rounded-lg px-2 py-1 text-[#F0EFFE] text-xs outline-none focus:border-[#7C3AED]/50"
                 />
-                <Toggle on={dailyReminder} onChange={setDailyReminder} />
+                <Toggle label="Daily reminder" on={dailyReminder} onChange={setDailyReminder} />
               </div>
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Due cards reminder">
-              <Toggle on={dueReminder} onChange={setDueReminder} />
+              <Toggle label="Due cards reminder" on={dueReminder} onChange={setDueReminder} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Streak reminder">
-              <Toggle on={streakReminder} onChange={setStreakReminder} />
+              <Toggle label="Streak reminder" on={streakReminder} onChange={setStreakReminder} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Weekly progress summary">
-              <Toggle on={weeklySummary} onChange={setWeeklySummary} />
+              <Toggle label="Weekly progress summary" on={weeklySummary} onChange={setWeeklySummary} />
             </SettingRow>
           </div>
         </div>
@@ -664,18 +675,20 @@ export default function SettingsPage() {
           />
           <div className="space-y-1">
             <SettingRow label="Memory sparks">
-              <Toggle on={sparksEnabled} onChange={setSparksEnabled} />
+              <Toggle label="Memory sparks" on={sparksEnabled} onChange={setSparksEnabled} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="In-app pop-up sparks">
-              <Toggle on={sparksPopup} onChange={setSparksPopup} />
+              <Toggle label="In-app pop-up sparks" on={sparksPopup} onChange={setSparksPopup} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Notification sparks">
-              <Toggle on={sparksNotifications} onChange={setSparksNotifications} />
+              <Toggle label="Notification sparks" on={sparksNotifications} onChange={setSparksNotifications} />
             </SettingRow>
           </div>
         </div>
+
+        <DesktopSettingsSection />
 
         {/* Appearance */}
         <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
@@ -693,11 +706,11 @@ export default function SettingsPage() {
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Reduce motion">
-              <Toggle on={reduceMotion} onChange={setReduceMotion} />
+              <Toggle label="Reduce motion" on={reduceMotion} onChange={setReduceMotion} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Compact mode">
-              <Toggle on={compactMode} onChange={setCompactMode} />
+              <Toggle label="Compact mode" on={compactMode} onChange={setCompactMode} />
             </SettingRow>
           </div>
         </div>
@@ -707,11 +720,11 @@ export default function SettingsPage() {
           <SectionHeader icon={Shield} title="Privacy" subtitle="What we store, what stays on your device." />
           <div className="space-y-1">
             <SettingRow label="Send anonymous usage analytics">
-              <Toggle on={usageAnalytics} onChange={setUsageAnalytics} />
+              <Toggle label="Send anonymous usage analytics" on={usageAnalytics} onChange={setUsageAnalytics} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Save AI chat history">
-              <Toggle on={saveChatHistory} onChange={setSaveChatHistory} />
+              <Toggle label="Save AI chat history" on={saveChatHistory} onChange={setSaveChatHistory} />
             </SettingRow>
           </div>
         </div>
@@ -724,7 +737,7 @@ export default function SettingsPage() {
           <SectionHeader icon={Volume2} title="Audio" subtitle="Sound effects, study music, and text-to-speech." />
           <div className="space-y-1">
             <SettingRow label="Sound effects" desc="Card flip and button sounds">
-              <Toggle on={soundEffects} onChange={setSoundEffects} />
+              <Toggle label="Sound effects" on={soundEffects} onChange={setSoundEffects} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Study music volume" desc="Ambient background during study sessions">
@@ -738,7 +751,7 @@ export default function SettingsPage() {
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Text-to-speech" desc="Read cards aloud during review">
-              <Toggle on={textToSpeech} onChange={setTextToSpeech} />
+              <Toggle label="Text-to-speech" on={textToSpeech} onChange={setTextToSpeech} />
             </SettingRow>
             {isSpeechOutputAvailable() && (
               <>
@@ -759,7 +772,7 @@ export default function SettingsPage() {
             )}
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Auto-play audio" desc="Play card audio automatically">
-              <Toggle on={autoPlayAudio} onChange={setAutoPlayAudio} />
+              <Toggle label="Auto-play audio" on={autoPlayAudio} onChange={setAutoPlayAudio} />
             </SettingRow>
           </div>
         </div>
@@ -769,11 +782,11 @@ export default function SettingsPage() {
           <SectionHeader icon={RefreshCw} title="Sync & Data" subtitle="How your data stays up to date across devices." />
           <div className="space-y-1">
             <SettingRow label="Auto-sync" desc="Sync progress automatically">
-              <Toggle on={autoSync} onChange={setAutoSync} />
+              <Toggle label="Auto-sync" on={autoSync} onChange={setAutoSync} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Offline mode" desc="Work without internet connection">
-              <Toggle on={offlineMode} onChange={setOfflineMode} />
+              <Toggle label="Offline mode" on={offlineMode} onChange={setOfflineMode} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <div className="flex items-center justify-between py-2.5">
@@ -812,11 +825,11 @@ export default function SettingsPage() {
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="High contrast">
-              <Toggle on={highContrast} onChange={setHighContrast} />
+              <Toggle label="High contrast" on={highContrast} onChange={setHighContrast} />
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Auto night mode" desc="Dim screen during late-night study">
-              <Toggle on={autoNightMode} onChange={setAutoNightMode} />
+              <Toggle label="Auto night mode" on={autoNightMode} onChange={setAutoNightMode} />
             </SettingRow>
           </div>
         </div>
@@ -836,7 +849,7 @@ export default function SettingsPage() {
             </SettingRow>
             <div className="border-t border-[#2A2A3A]/30" />
             <SettingRow label="Show hint first" desc="Reveal hint before showing answer">
-              <Toggle on={showHintFirst} onChange={setShowHintFirst} />
+              <Toggle label="Show hint first" on={showHintFirst} onChange={setShowHintFirst} />
             </SettingRow>
           </div>
         </div>

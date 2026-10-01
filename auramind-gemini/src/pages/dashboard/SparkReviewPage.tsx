@@ -15,9 +15,7 @@ import { motion } from 'framer-motion';
 import { Volume2, Eye } from '@/components/icons';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { Rating } from '../../types';
-import { calculateSRS } from '../../services/study/srs';
-import { dbService } from '../../services/database/dbService';
-import { cardReviewsService } from '../../services/database/modules/cardReviewsService';
+import { rateCard } from '../../services/study/rateCard';
 import { speak, isSpeechOutputAvailable } from '../../services/voice/speechOutput';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { analyticsService } from '../../services/analytics/analyticsService';
@@ -53,36 +51,10 @@ export default function SparkReviewPage() {
   const grade = async (rating: Rating) => {
     if (!card) return;
     recordSpark('notification', card.id);
-    try {
-      const res = calculateSRS(card, rating);
-      const update: Partial<typeof card> = {
-        interval: res.interval,
-        repetition: res.repetition,
-        easeFactor: res.easeFactor,
-        nextReview: Date.now() + res.interval * 86_400_000,
-        lastReviewed: Date.now(),
-      };
-      if (res.fsrsState) update.fsrsState = res.fsrsState;
-      await dbService.updateCard(card.id, update);
-      workspace?.updateCardOptimistically?.(card.id, update);
-      if (userId) {
-        cardReviewsService.recordReview({
-          userId,
-          cardId: card.id,
-          rating,
-          srsResult: {
-            interval: res.interval,
-            repetition: res.repetition,
-            easeFactor: res.easeFactor,
-            fsrsState: res.fsrsState,
-          },
-          reviewedAt: Date.now(),
-        }).catch(() => { /* fire-and-forget */ });
-      }
-      analyticsService.track('spark_reviewed', { cardId: card.id, surface: 'notification', rating });
-    } catch {
-      // Same contract as the pop-up: never trap the user on a failed write.
-    }
+    // rateCard never throws: a failed write must not trap the user here.
+    const update = await rateCard({ card, rating, userId, surface: 'spark-notification' });
+    workspace?.updateCardOptimistically?.(card.id, update);
+    analyticsService.track('spark_reviewed', { cardId: card.id, surface: 'notification', rating });
     navigate('/dashboard', { replace: true });
   };
 

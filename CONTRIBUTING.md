@@ -24,9 +24,9 @@ You will need:
 
 - **Node 22.22.2 or newer** — Vite 8 and jsdom need it, and the testing
   toolchain requires `^22.22.2 || ^24.15.0 || >=26`. CI runs 22 and 24.
-- There is no desktop build (the old Tauri stack was removed). The Android
-  and iOS (Capacitor) apps only need the Android SDK/Java or Xcode toolchain
-  if you build them; running the web app needs no native toolchains.
+- The Android and iOS (Capacitor) apps need the Android SDK/Java or Xcode
+  toolchain, and the Windows app (Tauri) needs Rust, only if you build them;
+  running the web app needs no native toolchains.
 
 To run only the web app without native toolchains:
 
