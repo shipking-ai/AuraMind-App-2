@@ -190,7 +190,12 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: com.auramind.app
           releaseFiles: auramind-gemini/android/app/build/outputs/bundle/release/app-release.aab
-          track: ${{ github.event.inputs.track || 'internal' }}
+          # `track` is deprecated in r0adkll/upload-google-play and prints
+          # "'track' is deprecated and will be removed in a future release.
+          # Please migrate to 'tracks'". `tracks` is the same option as a list;
+          # Play rejects a release that names more than one track, so the list
+          # always holds exactly the single value chosen in the input above.
+          tracks: ${{ inputs.track || 'internal' }}
           mappingFile: auramind-gemini/android/app/build/outputs/mapping/release/mapping.txt
           whatsNewDirectory: store/android/changelogs
           status: ${{ github.event.inputs.status || 'draft' }}
