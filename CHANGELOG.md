@@ -60,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Scheduler is now the official `ts-fsrs` (FSRS-6)** - see Fixed.
   Per-user FSRS tuning is ignored until it is rebuilt for FSRS-6
+- **Employees get free access in the app** - the server already let them use
+  AI for free while the UI showed them the paywall; both now agree, and a
+  test fails if the client and server role lists drift
 - **CI runs on Node 22 and 24**; Node 20 (end of life) was dropped
 - Reminders sync at app start as well as from Settings
 - Turnstile is disabled and OAuth buttons hidden inside the native apps
