@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Windows app** - a new Tauri 2 desktop app around the bundled web build:
+  its own window that remembers its size, one instance at a time, outside
+  links (including checkout) opening in the browser, and signed auto-updates
+  from GitHub Releases with an in-app "Restart and update" prompt. Replaces
+  the retired June desktop build
+- **Windows app, full desktop integration** - tray with the due count,
+  taskbar badge, study reminders as Windows notifications with Quick
+  review / Later, a Quick Review corner window on Ctrl+Alt+Space, drag a
+  file onto the window (or right-click it in Explorer) to make a course,
+  `auramind://` links, a navy Windows 11 title bar and no white flash on
+  launch
 - **Classroom portal** - teachers create classes, students join with a
   6-character code or deep link, and teachers assign decks and
   multiple-choice quizzes graded on the server, with per-student progress
@@ -49,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Scheduler is now the official `ts-fsrs` (FSRS-6)** - see Fixed.
   Per-user FSRS tuning is ignored until it is rebuilt for FSRS-6
+- **Employees get free access in the app** - the server already let them use
+  AI for free while the UI showed them the paywall; both now agree, and a
+  test fails if the client and server role lists drift
 - **CI runs on Node 22 and 24**; Node 20 (end of life) was dropped
 - Reminders sync at app start as well as from Settings
 - Turnstile is disabled and OAuth buttons hidden inside the native apps
@@ -85,6 +99,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `domcontentloaded` plus locator assertions instead
 
 ### Security
+- **Cross-user card injection** - `cards` had two permissive policies per
+  command that OR'd together, so a user could insert or move their own card
+  into another user's deck (where the owner would then see and study it),
+  and a deck owner could reassign a card to another user. Every command now
+  requires both card and deck ownership. The same migration drops leftover
+  public league policies that let signed-out visitors list every user id
+  and weekly XP
+- **Admin user list and export trusted `user_metadata`** - role and plan
+  were read from fields any user can set, so a free account could appear to
+  staff as an admin on Pro. Both now come from `app_metadata`. The CSV
+  export also escapes cells and neutralises leading `=`/`+`/`-`/`@`, so a
+  user-chosen name can no longer run as a spreadsheet formula
 - **Admin oracle closed** - any signed-in user could call `is_admin(uuid)` /
   `is_super_admin(uuid)` to learn whether an account was an admin. Client
   EXECUTE revoked; the `audit_events` policy uses `current_user_is_admin()`

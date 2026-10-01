@@ -193,22 +193,29 @@
 
 /* ========================================
    Platform-specific focus rings
-   ======================================== */
+   ========================================
+   Same dual-tone structure as the global rule in index.css, with the
+   platform accent as the inner band instead of the brand violet. These
+   selectors are more specific than `*:focus-visible`, so they have to
+   opt in explicitly or the platform shells would fall back to a
+   single-band ring that fails 3:1. */
 
 .platform-android *:focus-visible {
-  outline: 2px solid var(--platform-primary);
+  outline: 2px solid var(--focus-ring-outer);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--platform-primary);
 }
 
 .platform-windows *:focus-visible {
-  outline: 2px solid var(--platform-primary);
+  outline: 2px solid var(--focus-ring-outer);
   outline-offset: 1px;
+  box-shadow: 0 0 0 1px var(--platform-primary);
 }
 
 .platform-linux *:focus-visible {
-  outline: 2px solid var(--platform-primary);
+  outline: 2px dashed var(--focus-ring-outer);
   outline-offset: 2px;
-  outline-style: dashed;
+  box-shadow: 0 0 0 2px var(--platform-primary);
 }
 
 /* ========================================

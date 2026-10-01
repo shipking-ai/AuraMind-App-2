@@ -8,7 +8,9 @@ shipped in `lib/branding.ts`.
 **Android is the only wired release pipeline.** `mobile-android.yml`
 builds and signs the AAB; `deploy.yml` ships the web app to Vercel.
 `mobile-ios.yml` builds the iOS app **unsigned** and runs it in a simulator —
-there is no signed iOS release or TestFlight job yet, and no desktop build.
+there is no signed iOS release or TestFlight job yet. `desktop-windows.yml`
+builds the Windows app and drafts a GitHub release on `desktop-v*` tags (see
+`DEPLOYMENT.md`); it is not in the Microsoft Store.
 
 Run `node scripts/check-mobile-env.js` (from `auramind-gemini/`) to see
 which secrets are missing. Items marked **🟠 MUST provision** block the

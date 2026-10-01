@@ -4,8 +4,9 @@ import { makeRes } from './helpers.js';
 
 /**
  * The apps call the API cross-origin (Android: https://localhost, iOS:
- * capacitor://localhost). Production had no CORS headers at all, so web
- * views blocked every response. Only the website and the apps are allowed.
+ * capacitor://localhost, Windows: https://tauri.localhost). Production had
+ * no CORS headers at all, so web views blocked every response. Only the
+ * website and the apps are allowed.
  */
 
 function preflight(origin: string) {
@@ -28,7 +29,13 @@ function preflight(origin: string) {
 afterEach(() => vi.unstubAllEnvs());
 
 describe('CORS in production', () => {
-  it.each(['capacitor://localhost', 'https://localhost', 'https://auramind.app', 'https://www.auramind.app'])(
+  it.each([
+    'capacitor://localhost',
+    'https://localhost',
+    'https://tauri.localhost',
+    'https://auramind.app',
+    'https://www.auramind.app',
+  ])(
     'allows %s',
     async (origin) => {
       vi.stubEnv('VERCEL', '1');
@@ -40,11 +47,14 @@ describe('CORS in production', () => {
     },
   );
 
-  it('does not allow other sites', async () => {
-    vi.stubEnv('VERCEL', '1');
-    const { run, headers } = preflight('https://evil.example');
-    await run();
-    expect(headers['access-control-allow-origin']).toBeUndefined();
-    expect(headers['vary']).toBe('Origin');
-  });
+  it.each(['https://evil.example', 'http://tauri.localhost', 'https://tauri.localhost.evil.example'])(
+    'does not allow %s',
+    async (origin) => {
+      vi.stubEnv('VERCEL', '1');
+      const { run, headers } = preflight(origin);
+      await run();
+      expect(headers['access-control-allow-origin']).toBeUndefined();
+      expect(headers['vary']).toBe('Origin');
+    },
+  );
 });

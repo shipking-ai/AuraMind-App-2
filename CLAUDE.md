@@ -21,6 +21,7 @@ Canonical docs (read these first, not this file):
 | Web app | `auramind-gemini/` | React 19 + Vite 8 + Tailwind 4 + React Router 7, served by Vercel (PWA) |
 | Android app | `auramind-gemini/android/` | Active Capacitor 8 build, generated from the same React source |
 | iOS app | `auramind-gemini/ios/` | Capacitor 8, built unsigned in CI (`mobile-ios.yml`); not yet on TestFlight |
+| Windows app | `auramind-gemini/src-tauri/` | Tauri 2 around the bundled web build (`--mode desktop`), served from `https://tauri.localhost`; signed auto-updates from GitHub Releases (`desktop-windows.yml`) |
 | Backend | `api/` | Vercel serverless (`index.ts` + `stripe-webhook.ts`) with an Express dev server (`server.js`, port 3001) |
 | Database | `supabase/migrations/` | Append-only, idempotent SQL migrations (source of truth for schema) |
 
@@ -34,6 +35,8 @@ npm test               # Vitest suite
 npm run build          # production build
 npm run build:apk:debug    # Capacitor sync + debug APK
 npm run build:aab:release  # Capacitor sync + release AAB (needs signing env vars)
+npm run dev:desktop    # Windows app (Tauri) against the dev server
+npm run build:desktop  # Windows installer (needs Rust; see DEPLOYMENT.md)
 npm run migrate        # node ../run-migrations.js
 npm run diagnostics    # migration drift + remote ledger checks
 ```

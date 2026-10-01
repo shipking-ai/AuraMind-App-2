@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-schedule-nudges"
+description = "Enables the schedule_nudges command without any pre-configured scope."
+commands.allow = ["schedule_nudges"]
+
+[[permission]]
+identifier = "deny-schedule-nudges"
+description = "Denies the schedule_nudges command without any pre-configured scope."
+commands.deny = ["schedule_nudges"]

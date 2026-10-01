@@ -31,6 +31,8 @@ import { supabase } from '../../services/database/supabase';
 import { Capacitor } from '../../lib/nativeShim';
 import { useAppPreference } from '../../lib/appPreferences';
 import { usesLocalAI as useLocalAIEnabled } from '../../lib/aiProvider';
+import { courseFileKind } from '../../lib/courseFiles';
+import { onGeneratorFile, takePendingGeneratorFile } from '../../lib/pendingGeneratorFile';
 
 type GeneratorType = 'quiz' | 'flashcards' | 'presentation';
 type InputSource = 'topic' | 'url' | 'youtube' | 'file' | 'audio';
@@ -232,6 +234,18 @@ const GeneratorPage: React.FC = () => {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
+
+  // Files handed in from the drop overlay, Explorer or the tray.
+  const acceptHandedFile = useRef<(file: File) => void>(() => {});
+  acceptHandedFile.current = (file: File) => {
+    if (courseFileKind(file.name) === 'audio') void handleAudioSelect(file);
+    else void handleFileSelect(file);
+  };
+  useEffect(() => {
+    const waiting = takePendingGeneratorFile();
+    if (waiting) acceptHandedFile.current(waiting);
+    return onGeneratorFile((file) => acceptHandedFile.current(file));
+  }, []);
 
   const handleGenerate = async () => {
     if (!topic.trim()) return;
@@ -750,7 +764,7 @@ const GeneratorPage: React.FC = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.pptx,.txt,.md,.doc,.docx"
+                  accept=".pdf,.pptx,.docx,.doc,.txt,.md"
                   onChange={handleFileInputChange}
                   className="hidden"
                 />

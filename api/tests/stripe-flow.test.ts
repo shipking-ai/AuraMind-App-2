@@ -265,9 +265,11 @@ describe('Stripe flow (mocked Stripe + Supabase + Resend)', () => {
     expect(stripeMock.portalSessions.create).not.toHaveBeenCalled();
   });
 
-  it('portal: allows the customer recorded on the caller metadata and returns the URL', async () => {
-    mockAuthenticatedUser({ ...TEST_USER, user_metadata: { stripe_customer_id: 'cus_mine' } });
-    stripeMock.customers = { retrieve: vi.fn() };
+  it('portal: allows a customer whose Stripe email matches the caller', async () => {
+    mockAuthenticatedUser({ ...TEST_USER, user_metadata: {} });
+    stripeMock.customers = {
+      retrieve: vi.fn().mockResolvedValue({ id: 'cus_mine', deleted: false, email: TEST_USER.email }),
+    };
     stripeMock.portalSessions.create.mockResolvedValue({ id: 'bps_1', url: 'https://billing.stripe.com/session/bps_1' });
 
     const { status, body } = await call('stripe/portal', {
@@ -277,6 +279,39 @@ describe('Stripe flow (mocked Stripe + Supabase + Resend)', () => {
     expect(status).toBe(200);
     expect(body.url).toBe('https://billing.stripe.com/session/bps_1');
     expect(stripeMock.portalSessions.create).toHaveBeenCalledWith(expect.objectContaining({ customer: 'cus_mine' }));
+  });
+
+  it('portal: refuses a stripe_customer_id forged into user_metadata (403)', async () => {
+    // The attack this closes: user_metadata is writable by the signed-in user,
+    // so matching on it let anyone name a victim's customer and be handed a
+    // live billing portal for it. Ownership is now decided only by Stripe.
+    mockAuthenticatedUser({
+      ...TEST_USER,
+      user_metadata: { stripe_customer_id: 'cus_victim' },
+    });
+    const retrieve = vi.fn().mockResolvedValue({ id: 'cus_victim', deleted: false, email: 'victim@example.com' });
+    stripeMock.customers = { retrieve };
+
+    const { status } = await call('stripe/portal', {
+      headers: AUTH,
+      body: { customerId: 'cus_victim' },
+    });
+    expect(status).toBe(403);
+    // And it must have gone to Stripe rather than short-circuiting on metadata.
+    expect(retrieve).toHaveBeenCalledWith('cus_victim');
+    expect(stripeMock.portalSessions.create).not.toHaveBeenCalled();
+  });
+
+  it('portal: a Stripe lookup failure fails closed (403, not 500)', async () => {
+    mockAuthenticatedUser({ ...TEST_USER, user_metadata: {} });
+    stripeMock.customers = { retrieve: vi.fn().mockRejectedValue(new Error('stripe is down')) };
+
+    const { status } = await call('stripe/portal', {
+      headers: AUTH,
+      body: { customerId: 'cus_mine' },
+    });
+    expect(status).toBe(403);
+    expect(stripeMock.portalSessions.create).not.toHaveBeenCalled();
   });
 
   it('webhook: checkout.session.completed provisions the subscription and emails the buyer', async () => {

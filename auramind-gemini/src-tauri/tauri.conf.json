@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AuraMind",
+  "version": "../package.json",
+  "identifier": "com.auramind.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "npm run build:desktop:web",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "AuraMind",
+        "create": false,
+        "visible": false,
+        "width": 1280,
+        "height": 820,
+        "minWidth": 940,
+        "minHeight": 620,
+        "center": true,
+        "theme": "Dark",
+        "backgroundColor": "#060a16",
+        "useHttpsScheme": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "withGlobalTauri": false,
+    "security": {
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self' 'wasm-unsafe-eval' https://js.puter.com https://us-assets.i.posthog.com",
+        "style-src": "'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src": "'self' data: blob: https:",
+        "font-src": "'self' data: https://fonts.gstatic.com",
+        "media-src": "'self' blob: data: https://auramind.app",
+        "connect-src": "'self' ipc: http://ipc.localhost https://auramind.app https://*.supabase.co wss://*.supabase.co https://api.puter.com https://puter.com https://*.posthog.com https://us.i.posthog.com https://*.ingest.sentry.io https://*.sentry.io https://huggingface.co https://cdn-lfs.huggingface.co https://wasm.huggingface.co https://fonts.googleapis.com https://fonts.gstatic.com",
+        "worker-src": "'self' blob:",
+        "frame-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'self'",
+        "object-src": "'none'"
+      },
+      "dangerousDisableAssetCspModification": ["style-src"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
+    "publisher": "CogniVect, Inc.",
+    "copyright": "© CogniVect, Inc. All rights reserved.",
+    "category": "Education",
+    "homepage": "https://auramind.app",
+    "shortDescription": "Adaptive AI learning with FSRS spaced repetition",
+    "longDescription": "AuraMind turns anything you study into a course of cards, lessons and quizzes, schedules your reviews with FSRS, and tutors you with Prof. Aura.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" },
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "windows/nsis-header.bmp",
+        "sidebarImage": "windows/nsis-sidebar.bmp",
+        "installerHooks": "windows/installer-hooks.nsh"
+      }
+    }
+  },
+  "plugins": {
+    "deep-link": { "desktop": { "schemes": ["auramind"] } },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY4NTkwODU3RTlGMDFDMkUKUldRdUhQRHBWd2haYUhpSHpJRWxNOTdXWkpEYklNVDFvamt1RnlmTE9lZTU5aUVEZ1Y0SE1JcHgK",
+      "endpoints": [
+        "https://github.com/shipking-ai/AuraMind-App-2/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

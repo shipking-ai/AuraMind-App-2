@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
   getPermissions,
   resolveAuthorizationRole,
@@ -87,9 +89,34 @@ describe('getPermissions for the tester role', () => {
     expect(hierarchy).toBeDefined();
   });
 
-  it('staff roles keep their existing free access', () => {
+  it('staff roles get free access; regular users do not', () => {
     expect(getPermissions(UserRole.ADMIN).hasFreeAccess).toBe(true);
-    expect(getPermissions(UserRole.EMPLOYEE).hasFreeAccess).toBe(false);
+    expect(getPermissions(UserRole.EMPLOYEE).hasFreeAccess).toBe(true);
     expect(getPermissions(UserRole.USER).hasFreeAccess).toBe(false);
+  });
+});
+
+describe('free access matches the server', () => {
+  // The client once showed employees the paywall while /api/ai let them in.
+  // Pin the two lists together so they cannot drift again.
+  it('hasFreeAccess covers exactly FREE_ACCESS_ROLES in api/_lib/entitlement.ts', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../api/_lib/entitlement.ts'),
+      'utf-8',
+    );
+    const match = src.match(/FREE_ACCESS_ROLES[^=]*=\s*new Set\(\[([^\]]*)\]\)/);
+    expect(match, 'FREE_ACCESS_ROLES must be a literal Set').not.toBeNull();
+    const serverRoles = match![1]
+      .split(',')
+      .map((s) => s.trim().replace(/^['"]|['"]$/g, ''))
+      .filter(Boolean)
+      .sort();
+
+    const clientRoles = Object.values(UserRole)
+      .filter((role) => getPermissions(role).hasFreeAccess)
+      .map(String)
+      .sort();
+
+    expect(clientRoles).toEqual(serverRoles);
   });
 });
