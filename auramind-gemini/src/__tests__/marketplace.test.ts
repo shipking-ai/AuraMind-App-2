@@ -120,7 +120,7 @@ describe('forkPublicDeck', () => {
 
 describe('marketplace migration', () => {
   const sql = fs.readFileSync(
-    path.resolve(__dirname, '../../../supabase/migrations/20260929_marketplace_fork_and_listing.sql'),
+    path.resolve(__dirname, '../../../supabase/migrations/20260930000000_marketplace_fork_and_listing.sql'),
     'utf-8',
   );
 

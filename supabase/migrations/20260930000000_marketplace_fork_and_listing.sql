@@ -169,7 +169,7 @@ GRANT EXECUTE ON FUNCTION public.bump_forks_and_unpublish(uuid, boolean) TO auth
 -- Bookkeeping
 INSERT INTO schema_migrations (version, description)
 VALUES (
-  '20260929_marketplace_fork_and_listing',
+  '20260930000000_marketplace_fork_and_listing',
   'fork_public_deck() copies a public deck server-side (fixes broken forking); list_public_decks() backs the Community tab; bump_forks_and_unpublish no longer bumps'
 )
 ON CONFLICT (version) DO NOTHING;
