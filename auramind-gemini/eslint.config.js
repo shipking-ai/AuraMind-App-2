@@ -7,7 +7,12 @@ import unusedImports from "eslint-plugin-unused-imports";
 import globals from "globals";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", ".vercel", "android"] },
+  // `android` and `src-tauri` are here for the same reason: their build output
+  // is a couple of gigabytes of generated files. `tauri-build` writes
+  // tauri-codegen-assets/*.js into src-tauri/target/, which ESLint then tried
+  // to parse and reported 106 times as "Unexpected character". src-tauri's own
+  // .gitignore covers git; it has no effect here.
+  { ignores: ["dist", "node_modules", ".vercel", "android", "src-tauri"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

@@ -4,12 +4,14 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import './styles/platform-styles.css';
-import { Capacitor } from './lib/nativeShim';
+import { isAppShell } from './lib/platform';
+import { installDesktopLinkHandling } from './lib/desktopLinks';
 // Loads last so the editorial layer can override platform-styles' drifted
 // values by cascade order rather than !important.
 import './styles/editorial.css';
 import './styles/android-native.css';
 import './styles/ios-native.css';
+import './styles/desktop.css';
 
 // Environment validation
 import { validateEnv, logEnvValidation } from './lib/env';
@@ -99,7 +101,9 @@ logEnvValidation(envResult);
  * stale assets forever.
  */
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  if (Capacitor.isNativePlatform()) {
+  // The Windows app (Tauri, https://tauri.localhost) has the same fixed-origin
+  // problem as Capacitor, and also ships every asset in its installer.
+  if (isAppShell()) {
     void navigator.serviceWorker
       .getRegistrations()
       .then(async (registrations) => {
@@ -110,7 +114,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
           const keys = await caches.keys();
           await Promise.all(keys.map((key) => caches.delete(key)));
         }
-        console.warn('[PWA] Removed service worker on native; assets ship in the APK');
+        console.warn('[PWA] Removed service worker in the app; assets ship in the package');
       })
       .catch(() => undefined);
   } else {
@@ -129,6 +133,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 // Set up global error handlers
 setupGlobalErrorHandler();
+
+// Windows app: outside links open in the user's browser (no-op elsewhere).
+installDesktopLinkHandling();
 
 // Initialize SEO meta tags
 updateMetaTags();

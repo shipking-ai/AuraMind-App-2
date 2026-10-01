@@ -29,7 +29,31 @@ export function isIOSApp(): boolean {
   return appPlatform() === "ios";
 }
 
-/** "Android" or "iPhone", for copy that names the device. */
-export function deviceName(): string {
-  return isIOSApp() ? "iPhone" : "Android";
+  /** "Android", "iPhone" or "Windows", for copy that names the device. */
+  export function deviceName(): string {
+    // The Windows app reports appPlatform() === "web" because it renders the
+    // desktop layout, so without this it would be called "Android".
+    if (isDesktopApp()) return "Windows";
+    return isIOSApp() ? "iPhone" : "Android";
+  }
+
+/**
+ * The Windows app (Tauri). It renders the desktop (web) layout, so
+ * appPlatform() still says "web" — this is only for the handful of things a
+ * browser tab and an installed app do differently.
+ */
+export function isDesktopApp(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+/**
+ * Any installed app (Android, iOS or Windows) rather than a browser tab.
+ *
+ * All three serve the bundle from a fixed app origin, which is why they share
+ * rules a website doesn't need: no service worker (it would keep serving the
+ * previous release's code), no Turnstile (Cloudflare can't issue tokens to
+ * the app origin), and no OAuth (the provider can't redirect back into it).
+ */
+export function isAppShell(): boolean {
+  return isNativeApp() || isDesktopApp();
 }
