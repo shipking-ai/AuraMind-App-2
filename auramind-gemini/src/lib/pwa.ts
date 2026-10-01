@@ -72,16 +72,66 @@ export const pwaConfig = VitePWA({
       },
     ],
   } as Record<string, unknown>,
-  workbox: {
-    // Widget-board handlers live beside the generated worker rather than in
-    // it, so the generateSW setup stays untouched.
-    importScripts: ['/widget-sw.js'],
-    maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB (WebLLM bundle is ~8MB)
-    globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+    workbox: {
+      // Widget-board handlers live beside the generated worker rather than in
+      // it, so the generateSW setup stays untouched.
+      importScripts: ['/widget-sw.js'],
+      // No longer raised to swallow the on-device AI bundle: see globIgnores.
+      // 2 MB is comfortably above the largest chunk that should ever be
+      // precached, and it makes a future multi-megabyte asset fail to precache
+      // (worse offline) rather than silently inflate every install.
+      maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+      // Precaching is not lazy. Anything matching here is downloaded during
+      // install whether or not the user ever reaches the feature, which
+      // undoes code splitting for exactly the chunks that are most expensive
+      // and least used. Each of these is already split out and loaded on
+      // demand; they are cached at runtime instead (see below), so offline
+      // still works once the feature has actually been used.
+      globIgnores: [
+        // 5.9 MB raw / ~2.1 MB gzipped. localInferenceService imports
+        // @mlc-ai/web-llm dynamically and only when a user turns on on-device
+        // AI. Precaching it charged every PWA installer for an inference
+        // engine most of them never enable.
+        '**/vendor-webllm-*.js',
+        // The phone shells. Unreachable from a browser tab, so a web install
+        // was paying for Android and iOS UI it can never render.
+        '**/Android*.js',
+        '**/IOS*.js',
+        // Only loaded when a user imports a PDF.
+        '**/vendor-pdfjs-*.js',
+      ],
     
-    // Cache strategies for different resources
-    runtimeCaching: [
-      // Supabase API - network first, fallback to cache
+      // Cache strategies for different resources
+      runtimeCaching: [
+        // The chunks excluded from the precache above. Cache-first, so the
+        // second visit is instant and the feature works offline, but nothing
+        // is paid for until the user actually reaches it.
+        {
+          urlPattern: /\/vendor-webllm-[\w-]+\.js$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'on-device-ai',
+            expiration: {
+              maxEntries: 4,
+              maxAgeSeconds: 30 * 24 * 60 * 60,
+            },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+        {
+          urlPattern: /\/vendor-pdfjs-[\w-]+\.js$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'pdf-engine',
+            expiration: {
+              maxEntries: 4,
+              maxAgeSeconds: 30 * 24 * 60 * 60,
+            },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+        // Supabase API - network first, fallback to cache
       {
         urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
         handler: 'NetworkFirst',

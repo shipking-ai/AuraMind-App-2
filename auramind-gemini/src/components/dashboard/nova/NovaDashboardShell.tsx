@@ -2,7 +2,7 @@ import React, { Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import {
   LayoutDashboard, BookOpen, Brain, Settings, GraduationCap, Sparkles,
-  Search, Bell, Menu, X, Flame,
+  Bell, Menu, X, Flame,
   Shield, Users, Activity, Play, LogOut,
 } from '@/components/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -420,8 +420,6 @@ function TopBar({
 }) {
   const navigate = useNavigate();
   const workspace = useDashboardWorkspace();
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const unreadCount = useUnreadCount();
   // Mirror AndroidMobileTopBar: show the uploaded photo when present, with an
@@ -456,25 +454,6 @@ function TopBar({
         >
           <Menu className="h-5 w-5" />
         </button>
-
-        <div
-          className={`relative hidden transition-all duration-300 sm:block ${
-            searchFocused ? 'w-80' : 'w-64'
-          }`}
-        >
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" aria-hidden />
-          <input
-            type="search"
-            role="searchbox"
-            aria-label="Search decks, achievements, and tools"
-            placeholder="Search decks, tools…"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2 pl-9 pr-3 text-sm text-white placeholder-zinc-500 transition-all focus:border-violet-500/40 focus:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -640,6 +619,7 @@ function FirstRunGate() {
     // Only run on the non-admin dashboard hub; study/:deckId is immersive and
     // shouldn't fight the tour for focus.
     if (location.pathname.startsWith('/admin')) return;
+    if (isImmersivePath(location.pathname)) return;
     if (readFirstRunFlag()) {
       setChecked(true);
       return;

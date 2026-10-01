@@ -10,6 +10,13 @@ import {
   VENDOR_URL,
 } from '../../lib/branding';
 import { VectorMark } from '../../components/brand/CogniWordmark';
+import { isDesktopApp } from '../../lib/platform';
+import {
+  checkForDesktopUpdate,
+  desktopAppVersion,
+  installDesktopUpdate,
+  type DesktopUpdate,
+} from '../../lib/desktopUpdater';
 
 /**
  * AboutPage — the canonical "About AuraMind" panel.
@@ -20,7 +27,8 @@ import { VectorMark } from '../../components/brand/CogniWordmark';
  *
  * Shows: product line, VectorMark glyph, parent-company byline,
  * build version, build channel, copyright, contact mailto, vendor URL,
- * and a "Check for Updates" button that links to the download page.
+ * and a "Check for updates" button: a real update check in the Windows app,
+ * and a note that the website is always current everywhere else.
  *
  * The page is intentionally read-only. It never opens external links
  * without a confirm.
@@ -36,23 +44,47 @@ type CheckState =
   | { status: 'checking' }
   | { status: 'uptodate'; currentVersion: string; latestVersion: string; releaseNotes?: string }
   | { status: 'available'; currentVersion: string; latestVersion: string; releaseNotes?: string }
-  | { status: 'error'; message: string };
+  | { status: 'error'; message: string }
+  | { status: 'web' };
 
 const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
   const version = versionOverride ?? '2.0.0';
   const channel = 'production';
   const [checkState, setCheckState] = useState<CheckState>({ status: 'idle' });
 
-  const runCheck = useCallback(async () => {
-    setCheckState({ status: 'checking' });
+  const [update, setUpdate] = useState<DesktopUpdate | null>(null);
+  const [installing, setInstalling] = useState(false);
 
-    // Update checks are only available in native apps.
-    // On web, direct users to the download page.
-    setCheckState({
-      status: 'error',
-      message: 'Visit the Download page (https://auramind.app/download) for the latest release.',
-    });
-  }, []);
+  const runCheck = useCallback(async () => {
+    // The website is always the latest release; only the Windows app has
+    // anything to update.
+    if (!isDesktopApp()) {
+      setCheckState({ status: 'web' });
+      return;
+    }
+    setCheckState({ status: 'checking' });
+    try {
+      const [found, current] = await Promise.all([checkForDesktopUpdate(), desktopAppVersion()]);
+      const currentVersion = current ?? version;
+      setUpdate(found);
+      setCheckState(found
+        ? { status: 'available', currentVersion, latestVersion: found.version, releaseNotes: found.body }
+        : { status: 'uptodate', currentVersion, latestVersion: currentVersion });
+    } catch {
+      setCheckState({ status: 'error', message: "Couldn't reach the update server. Check your connection and try again." });
+    }
+  }, [version]);
+
+  const runInstall = useCallback(async () => {
+    if (!update) return;
+    setInstalling(true);
+    try {
+      await installDesktopUpdate(update);
+    } catch {
+      setInstalling(false);
+      setCheckState({ status: 'error', message: "The update didn't install. Try again in a moment." });
+    }
+  }, [update]);
 
   return (
     <div className="min-h-screen bg-[#09090b] text-white antialiased px-6 py-12 sm:py-20">
@@ -103,13 +135,17 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
             <div className="flex-1">
               <h2 className="text-[15px] font-semibold text-white">Updates</h2>
               <p className="text-[12px] text-[#7A7A93] mt-1">
-                Latest release ships via the {PARENT_COMPANY_NAME} updater; check now from the
-                desktop app to be notified in-place.
+                The Windows app updates itself; the website is always the latest version.
               </p>
 
               {checkState.status === 'checking' && (
                 <p className="text-[13px] text-violet-300 mt-3 animate-pulse">
-                  Reaching out to releases.cogniavect.app…
+                  Checking for updates…
+                </p>
+              )}
+              {checkState.status === 'web' && (
+                <p className="text-[13px] text-emerald-300 mt-3">
+                  You&apos;re using the web app, which is always up to date.
                 </p>
               )}
               {checkState.status === 'uptodate' && (
@@ -127,6 +163,14 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
                       {checkState.releaseNotes}
                     </pre>
                   )}
+                  <button
+                    type="button"
+                    onClick={runInstall}
+                    disabled={installing}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 text-white hover:bg-violet-400 transition disabled:opacity-60 disabled:cursor-wait text-[13px] font-medium"
+                  >
+                    {installing ? 'Updating…' : 'Restart and update'}
+                  </button>
                 </div>
               )}
               {checkState.status === 'error' && (
@@ -134,7 +178,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
               )}
               {checkState.status === 'idle' && (
                 <p className="text-[12px] text-[#7A7A96] mt-3">
-                  Tap the check button on the right.
+                  Use the button on the right to check.
                 </p>
               )}
             </div>

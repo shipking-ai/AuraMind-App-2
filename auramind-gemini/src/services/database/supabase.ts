@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { isDesktopApp } from '../../lib/platform';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -33,7 +34,14 @@ if (!isValidSupabaseUrl(supabaseUrl) || !supabaseAnonKey) {
 export const supabase: SupabaseClient | null = (() => {
     if (!isValidSupabaseUrl(supabaseUrl) || !supabaseAnonKey) return null;
     try {
-        return createClient(supabaseUrl, supabaseAnonKey);
+        // The Windows app finishes OAuth through auramind://auth/callback,
+        // which needs PKCE (the code is useless without the verifier stored
+        // in this origin). Web and mobile keep the current flow.
+        return createClient(
+            supabaseUrl,
+            supabaseAnonKey,
+            isDesktopApp() ? { auth: { flowType: 'pkce' } } : undefined,
+        );
     } catch (err) {
         console.warn('Failed to initialize Supabase client:', err);
         return null;

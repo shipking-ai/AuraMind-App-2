@@ -4,7 +4,7 @@ import { distributedLimiterConfigured } from './_rateLimit.js';
 import { handleAI, handleAISpeech, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
-import { readSubscriptionStatus } from './_lib/entitlement.js';
+import { isEntitled, readSubscriptionStatus, isEntitledWithRoleAccess } from './_lib/entitlement.js';
 import { isPushConfigured, readPushConfig, sendPushToUsers } from './_lib/push.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -20,6 +20,31 @@ function isAdminUser(user: { email?: string | null; app_metadata?: Record<string
   if (ADMIN_EMAIL && user.email === ADMIN_EMAIL) return true;
   const role = user.app_metadata?.role;
   return typeof role === 'string' && ADMIN_ROLES.has(role);
+}
+
+// Role and plan as staff see them in the admin list and export. Both come from
+// app_metadata: user_metadata.role is a self-set display persona and
+// user_metadata.plan is display-only, so reading either would let any user
+// show up to staff as an admin or a paying customer.
+type AdminListedUser = { email?: string | null; app_metadata?: Record<string, unknown> | null };
+
+function adminDisplayRole(u: AdminListedUser): string {
+  const role = u.app_metadata?.role;
+  if (typeof role === 'string' && role) return role;
+  return ADMIN_EMAIL && u.email === ADMIN_EMAIL ? 'owner' : 'user';
+}
+
+function adminDisplayPlan(u: AdminListedUser): string {
+  return isEntitled(u) ? 'Pro' : 'Starter';
+}
+
+// One CSV cell: quotes doubled, and a leading formula character neutralised so
+// a user-chosen name like `=HYPERLINK(...)` opens as text in a spreadsheet
+// instead of running as a formula (CSV injection).
+function csvCell(value: unknown): string {
+  let s = value == null ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
 }
 
 // Rate-limit bucket per endpoint. Anything that spends money on an
@@ -373,11 +398,11 @@ async function handleAdmin(req: VercelRequest, res: VercelResponse, action?: str
         email: u.email,
         name: u.user_metadata?.full_name || u.email?.split('@')[0],
         isAdmin: isAdminUser(u),
-        role: u.app_metadata?.role || (ADMIN_EMAIL && u.email === ADMIN_EMAIL ? 'owner' : 'user'),
+        role: adminDisplayRole(u),
         avatar: u.user_metadata?.avatar_url,
         lastSignIn: u.last_sign_in_at,
         created: u.created_at,
-        plan: u.user_metadata?.plan || 'Starter'
+        plan: adminDisplayPlan(u)
       }));
       return json(res, 200, { users: mappedUsers });
 
@@ -1072,34 +1097,43 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
           cancel_url: `${req.headers.origin || 'https://auramind.app'}/subscribe?payment=cancelled`
         });
 
-        // Immediately mark user as trialing so they don't get stuck in a redirect loop
-        // (the webhook is async and may not have fired by the time they return from Stripe)
-        try {
-          const { createClient } = await import('@supabase/supabase-js');
-          const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-          const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-          if (supabaseUrl && supabaseServiceKey) {
-            const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
-            if (userData?.user) {
-              await supabaseAdmin.auth.admin.updateUserById(userId, {
-                // Authoritative copy — service-role only. Spread existing
-                // app_metadata first: updateUserById replaces wholesale, and
-                // a bare { subscription_status } would demote staff who buy
-                // a subscription by wiping app_metadata.role.
-                app_metadata: {
-                  ...userData.user.app_metadata,
-                  subscription_status: 'trialing',
-                },
-                user_metadata: {
-                  ...userData.user.user_metadata,
-                  subscription_status: 'trialing',
-                  plan: 'Pro',
-                },
-              });
+          // Immediately mark user as trialing so they don't get stuck in a redirect loop
+          // (the webhook is async and may not have fired by the time they return from Stripe)
+          //
+          // Only for a user who is not already entitled, and stamped with
+          // trial_armed_at so the mirror can expire. Without both guards this is
+          // an unconditional grant that happens before any money moves: POST
+          // checkout, close the tab, and no Stripe subscription exists, so no
+          // webhook ever arrives to correct it. app_metadata is
+          // service-role-writable, so the user cannot re-arm it themselves —
+          // but they did not need to, the first call already did it.
+          try {
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+            const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+            if (supabaseUrl && supabaseServiceKey) {
+              const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+              const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+              if (userData?.user && !isEntitledWithRoleAccess(userData.user)) {
+                await supabaseAdmin.auth.admin.updateUserById(userId, {
+                  // Authoritative copy — service-role only. Spread existing
+                  // app_metadata first: updateUserById replaces wholesale, and
+                  // a bare { subscription_status } would demote staff who buy
+                  // a subscription by wiping app_metadata.role.
+                  app_metadata: {
+                    ...userData.user.app_metadata,
+                    subscription_status: 'trialing',
+                    trial_armed_at: new Date().toISOString(),
+                  },
+                  user_metadata: {
+                    ...userData.user.user_metadata,
+                    subscription_status: 'trialing',
+                    plan: 'Pro',
+                  },
+                });
+              }
             }
-          }
-        } catch (metaErr: any) {
+          } catch (metaErr: any) {
           console.warn('Failed to update user metadata after checkout:', metaErr.message);
           // Non-fatal — the webhook will eventually update it
         }
@@ -1121,22 +1155,28 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
       if (!parsed.ok) return;
       const { customerId } = parsed.data;
 
-      // Ownership: the requested customer must match the Stripe customer id
-      // recorded on the caller's auth metadata (written by the webhook), or a
-      // Stripe customer whose email matches the caller.
-      const metadataCustomerId =
-        typeof caller.user_metadata?.stripe_customer_id === 'string'
-          ? (caller.user_metadata.stripe_customer_id as string)
-          : undefined;
-      if (customerId !== metadataCustomerId) {
-        try {
-          const customer = await stripe.customers.retrieve(customerId);
-          if (customer.deleted || !('email' in customer) || customer.email?.toLowerCase() !== caller.email?.toLowerCase()) {
-            return json(res, 403, { error: 'Forbidden' });
-          }
-        } catch {
+      // Ownership, verified server-side against Stripe and nothing else.
+      //
+      // This used to accept a match on caller.user_metadata.stripe_customer_id
+      // and skip the Stripe lookup when it hit. That field is client-writable:
+      // the webhook writes it to user_metadata (stripe-webhook.ts) precisely
+      // because that blob is display data, so a caller could set it to any
+      // customer id with one auth.updateUser call and be handed a live billing
+      // portal for someone else's account - their invoices, addresses and tax
+      // ids, plus the ability to replace the card or cancel the subscription.
+      // user_metadata is never an authorisation input; see SECURITY.md.
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (
+          customer.deleted ||
+          !('email' in customer) ||
+          customer.email?.toLowerCase() !== caller.email?.toLowerCase()
+        ) {
           return json(res, 403, { error: 'Forbidden' });
         }
+      } catch {
+        // Retrieve failing must not become a way through.
+        return json(res, 403, { error: 'Forbidden' });
       }
 
       try {
@@ -1785,14 +1825,14 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
         const rows = allUsers.map((u: any) =>
           selectedColumns.map((col: string) => {
             switch (col) {
-              case 'id': return `"${u.id}"`;
-              case 'email': return `"${u.email}"`;
-              case 'name': return `"${u.user_metadata?.full_name || u.email?.split('@')[0]}"`;
-              case 'role': return `"${u.user_metadata?.role || 'user'}"`;
-              case 'plan': return `"${u.user_metadata?.plan || 'Starter'}"`;
-              case 'joined': return `"${u.created_at}"`;
-              case 'lastSignIn': return `"${u.last_sign_in_at || ''}"`;
-              default: return '""';
+              case 'id': return csvCell(u.id);
+              case 'email': return csvCell(u.email);
+              case 'name': return csvCell(u.user_metadata?.full_name || u.email?.split('@')[0]);
+              case 'role': return csvCell(adminDisplayRole(u));
+              case 'plan': return csvCell(adminDisplayPlan(u));
+              case 'joined': return csvCell(u.created_at);
+              case 'lastSignIn': return csvCell(u.last_sign_in_at);
+              default: return csvCell('');
             }
           }).join(',')
         ).join('\n');
@@ -1805,8 +1845,8 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
               case 'id': obj.id = u.id; break;
               case 'email': obj.email = u.email; break;
               case 'name': obj.name = u.user_metadata?.full_name || u.email?.split('@')[0]; break;
-              case 'role': obj.role = u.user_metadata?.role || 'user'; break;
-              case 'plan': obj.plan = u.user_metadata?.plan || 'Starter'; break;
+              case 'role': obj.role = adminDisplayRole(u); break;
+              case 'plan': obj.plan = adminDisplayPlan(u); break;
               case 'joined': obj.joined = u.created_at; break;
               case 'lastSignIn': obj.lastSignIn = u.last_sign_in_at || null; break;
               default: obj[col] = null;

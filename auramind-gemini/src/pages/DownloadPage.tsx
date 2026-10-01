@@ -41,46 +41,20 @@ const features: Feature[] = [
   },
 ];
 
-const platformButtons = [
-  {
-    label: 'Windows',
-    subtitle: '.msi / .exe installer — Windows 10+',
-    icon: <Monitor size={22} />,
-    href: 'https://github.com/mattycigemp-crypto/AuraMind-App-2/releases/latest',
-    directDownload: 'https://github.com/mattycigemp-crypto/AuraMind-App-2/releases/latest/download/AuraMind_2.0.0_x64_en-US.msi',
-    variant: 'primary',
-  },
-  {
-    label: 'macOS',
-    subtitle: '.dmg — Apple Silicon & Intel',
-    icon: (
-      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.33 18.53A10.24 10.24 0 0 0 16 2H6a6 6 0 0 0-6 6v2.5" />
-        <path d="M14 2v20" />
-        <path d="M18 6v14" />
-        <path d="M10 2v18" />
-        <path d="M22 18h-4" />
-        <path d="M2 18h20" />
-      </svg>
-    ),
-    href: 'https://github.com/mattycigemp-crypto/AuraMind-App-2/releases/latest',
-    directDownload: 'https://github.com/mattycigemp-crypto/AuraMind-App-2/releases/latest/download/AuraMind_2.0.0_aarch64.dmg',
-    variant: 'secondary',
-  },
-  {
-    label: 'Linux',
-    subtitle: '.AppImage / .deb / .rpm',
-    icon: <Monitor size={22} />,
-    href: 'https://github.com/mattycigemp-crypto/AuraMind-App-2/releases/latest',
-    directDownload: 'https://github.com/mattycigemp-crypto/AuraMind-App-2/releases/latest/download/AuraMind_2.0.0_amd64.AppImage',
-    variant: 'secondary',
-  },
+// No published desktop installer exists yet. The Tauri app is back on main
+// (#131) and CI builds a signed installer on `windows`, but the v2.0.0 release
+// it would attach to carries no assets, so linking a download here would 404.
+// Browser install works today on every desktop platform, so that is what this
+// page offers until a release actually ships the binaries.
+const desktopInstallSteps = [
+  { browser: 'Chrome or Edge', how: 'Click the install icon at the right of the address bar, then Install.' },
+  { browser: 'Safari on macOS', how: 'Choose File → Add to Dock.' },
 ];
 
 const mobilePlatforms = [
   {
     label: 'Android',
-    subtitle: 'Google Play — submit for review',
+    subtitle: 'Google Play — closed testing',
     icon: (
       <svg width={22} height="22" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.33,0-6-2.67-6-6s2.67-6,6-6c1.663,0,3.145,0.688,4.212,1.775L13.81,5.504C12.451,4.465,10.873,4,9.245,4C5.555,4,2.592,6.896,2.592,10.539c0,3.831,3.152,6.734,6.901,6.734h0.144c0.303,0,0.604-0.027,0.902-0.082v-4.257H9.245v-2.31h2.656v-1.865c0-2.178,1.37-3.293,3.114-3.293h1.912V10.239z"/>
@@ -108,7 +82,7 @@ const DownloadPage: React.FC = () => {
           >
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
               <Download size={16} />
-              Native Apps Now Available
+              Install on desktop · Android in testing
             </span>
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-none">
               Download
@@ -117,8 +91,8 @@ const DownloadPage: React.FC = () => {
               <span className="text-zinc-500">.</span>
             </h1>
             <p className="text-lg md:text-xl text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Experience the full power of AuraMind with native desktop and mobile apps.
-              Faster startup, offline study, native notifications, and platform integrations.
+              Install AuraMind on your computer straight from the browser, or join the
+              Android testing group. Offline study, notifications, and your data synced everywhere.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
@@ -135,7 +109,7 @@ const DownloadPage: React.FC = () => {
       </section>
 
       {/* Platform Download Section */}
-      <section id="windows" className="relative z-10 py-24 md:py-32 px-6 md:px-12">
+      <section id="desktop"className="relative z-10 py-24 md:py-32 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -145,68 +119,49 @@ const DownloadPage: React.FC = () => {
           >
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
-                Desktop Apps
+                On Your Computer
               </h2>
               <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                Native desktop apps for Windows, macOS, and Linux — 
-                faster startup, offline study, and platform integrations.
+                AuraMind installs from your browser on Windows, macOS, Linux, and ChromeOS —
+                its own window, offline study, and updates that arrive on their own.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {platformButtons.map((platform, index) => (
-                <motion.div
-                  key={platform.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <div className="relative h-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 md:p-10 transition-all hover:border-primary/50 hover:bg-zinc-900">
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className="shrink-0 w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-                        {platform.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground">{platform.label}</h3>
-                        <p className="text-zinc-500 mt-1">{platform.subtitle}</p>
-                      </div>
-                    </div>
-
-                    <ul className="space-y-3 mb-8">
-                      <li className="flex items-center gap-3 text-zinc-300">
-                        <CheckCircle2 size={18} className="text-primary shrink-0" />
-                        Native performance with Rust backend
-                      </li>
-                      <li className="flex items-center gap-3 text-zinc-300">
-                        <CheckCircle2 size={18} className="text-primary shrink-0" />
-                        Offline-first with background sync
-                      </li>
-                      <li className="flex items-center gap-3 text-zinc-300">
-                        <CheckCircle2 size={18} className="text-primary shrink-0" />
-                        System tray & native notifications
-                      </li>
-                      <li className="flex items-center gap-3 text-zinc-300">
-                        <CheckCircle2 size={18} className="text-primary shrink-0" />
-                        Auto-updates (MSI/NSIS on Windows)
-                      </li>
-                    </ul>
-
-                    <a
-                      href={platform.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-black font-bold rounded-xl hover:bg-primary/90 transition-colors"
-                    >
-                      <Download size={18} />
-                      Download for {platform.label}
-                    </a>
-                    <p className="text-center text-[10px] text-zinc-600 mt-3">
-                      Opens GitHub Releases — pick the latest version for your OS.
-                    </p>
+            <div className="max-w-xl mx-auto">
+              <div className="relative h-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 md:p-10 transition-all hover:border-primary/50 hover:bg-zinc-900">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="shrink-0 w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Monitor size={22} />
                   </div>
-                </motion.div>
-              ))}
+                  <div>
+                    <h3 className="text-2xl font-bold text-foreground">Install the app</h3>
+                    <p className="text-zinc-500 mt-1">No download or installer needed</p>
+                  </div>
+                </div>
+
+                <ol className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3 text-zinc-300">
+                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" />
+                    <span>Open auramind.app and sign in.</span>
+                  </li>
+                  {desktopInstallSteps.map((step) => (
+                    <li key={step.browser} className="flex items-start gap-3 text-zinc-300">
+                      <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" />
+                      <span>
+                        <span className="font-semibold text-foreground">{step.browser}:</span> {step.how}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+
+                <Link
+                  to="/auth?mode=signup"
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-black font-bold rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Open AuraMind
+                  <ArrowRight size={18} />
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -308,7 +263,7 @@ const DownloadPage: React.FC = () => {
               <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-zinc-800/50 border border-zinc-700/50">
                 <Mail size={20} className="text-primary shrink-0" />
                 <p className="text-zinc-300">
-                  The Android build is available for internal testing.{' '}
+                  The Android app is in closed testing on Google Play.{' '}
                   <a
                     href="mailto:auramind-app@googlegroups.com?subject=Notify me when AuraMind mobile launches&body=I want to be notified when the AuraMind native mobile app is available on Android."
                     className="text-primary hover:underline font-medium"
@@ -318,78 +273,6 @@ const DownloadPage: React.FC = () => {
                 </p>
               </div>
             </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Publishing Checklist */}
-      <section className="relative z-10 py-24 md:py-32 px-6 md:px-12">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
-                Publishing Checklist
-              </h2>
-              <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                What&apos;s needed before the Android app goes live on Google Play.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-8 max-w-xl mx-auto">
-              {/* Android Checklist */}
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 md:p-10">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <svg width={22} height="22" viewBox="0 0 24 24" fill="currentColor" className="text-primary">
-                      <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.33,0-6-2.67-6-6s2.67-6,6-6c1.663,0,3.145,0.688,4.212,1.775L13.81,5.504C12.451,4.465,10.873,4,9.245,4C5.555,4,2.592,6.896,2.592,10.539c0,3.831,3.152,6.734,6.901,6.734h0.144c0.303,0,0.604-0.027,0.902-0.082v-4.257H9.245v-2.31h2.656v-1.865c0-2.178,1.37-3.293,3.114-3.293h1.912V10.239z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">Android — Google Play</h3>
-                    <p className="text-zinc-500">Google Play Console ($25 one-time)</p>
-                  </div>
-                </div>
-                <ul className="space-y-4">
-                  {[
-                    'Google Play Developer account ($25 one-time fee)',
-                    'Create or link Google Pay Merchant account (paid app or IAP)',
-                    'Production keystore generation & backup (see scripts/)',
-                    'App icon (512×512 + 1024×1024 adaptive icon)',
-                    'Feature graphic (1024×500) & screenshots (phone + tablet)',
-                    'Store listing: title (30 chars), short desc (80), full desc (4000)',
-                    'Privacy policy URL (hosted on auramind.app/privacy)',
-                    'Content rating questionnaire (IARC)',
-                    'App releases → Production track: rollout % → 100%',
-                    'In-app review & in-app update APIs integration',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-zinc-300">
-                      <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-12 text-center">
-              <p className="text-zinc-500 text-sm">
-                See{' '}
-                <a
-                  href="https://github.com/mattycigemp-crypto/AuraMind-App-2/blob/main/docs/M6-store-submission-playbook.md"
-                  className="text-primary hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  docs/M6-store-submission-playbook.md
-                </a>{' '}
-                for the full step-by-step publishing guide.
-              </p>
-            </div>
           </motion.div>
         </div>
       </section>

@@ -76,9 +76,12 @@
   outline: none;
 }
 
+/* Dual-tone like the global rule; --ios-tint is the inner band only, so
+   the iOS shell gets the same 3:1 guarantee as every other surface. */
 .ios-app button:focus-visible {
-  outline: 2px solid var(--ios-tint);
+  outline: 2px solid var(--focus-ring-outer);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--ios-tint);
 }
 
 .ios-app input,
