@@ -125,10 +125,27 @@ export function isEntitledWithRoleAccess(user: UserLike | null | undefined): boo
  * the top level — so spreading the existing app_metadata preserves `role`,
  * which authorises admin access and must never be clobbered by a billing
  * update.
+ *
+ * `trial_armed_at` is deliberately DROPPED rather than preserved. That marker
+ * means "a checkout was started but no money has moved yet", and it is only
+ * ever set by `stripe/checkout` before the redirect. Once Stripe tells us the
+ * subscription exists, the marker is stale by definition, and keeping it is
+ * not harmless: `readSubscriptionStatus` treats `trialing` + marker as an
+ * expiring pre-arm, so a real customer who finished checkout would be cut off
+ * mid-trial exactly one `PREARM_WINDOW_DAYS` after arming.
+ *
+ * Dropping it is also what makes the "a real Stripe trial has no marker"
+ * comment above true. Spreading the previous record silently carried the
+ * marker forward, so the two states were indistinguishable to the reader.
+ *
+ * The key is omitted rather than set to null so the whole record can be
+ * replaced, and so a re-subscribe after a cancellation does not inherit a
+ * marker that would expire the new trial immediately.
  */
 export function entitlementPatch(
   existingAppMetadata: Record<string, unknown> | null | undefined,
   status: SubscriptionStatus,
 ): Record<string, unknown> {
-  return { ...(existingAppMetadata ?? {}), subscription_status: status };
+  const { trial_armed_at: _stalePreArm, ...preserved } = existingAppMetadata ?? {};
+  return { ...preserved, subscription_status: status };
 }
