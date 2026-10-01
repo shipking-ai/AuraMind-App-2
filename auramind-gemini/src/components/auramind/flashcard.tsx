@@ -34,6 +34,15 @@ export function Flashcard({
     else setInternalFlipped((f) => !f);
   };
 
+  // The card is a div, so Enter/Space have to be wired by hand. Space also
+  // scrolls the page by default, which would fight the flip.
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+      event.preventDefault();
+      handleFlip();
+    }
+  };
+
   const rotate = -1.5;
 
   return (
@@ -65,12 +74,14 @@ export function Flashcard({
         }`}
         style={{
           transform: `rotate(${rotate}deg)`,
+          cursor: flippable ? "pointer" : undefined,
           boxShadow:
             "0 1px 0 0 #E8E4CC, 0 2px 0 0 #F5F0D8, 0 3px 0 0 #EDE8C8, 0 4px 6px rgba(0,0,0,0.2), 0 10px 30px rgba(0,0,0,0.35), 0 0 50px rgba(124,58,237,0.08)",
         }}
         onClick={handleFlip}
+        onKeyDown={handleKeyDown}
         role={flippable ? "button" : undefined}
-        aria-label="Flashcard"
+        tabIndex={flippable ? 0 : undefined}
       >
         {/* Red margin line */}
         <div
@@ -93,6 +104,7 @@ export function Flashcard({
           {/* Content area with ruled lines */}
           <div
             className="relative mt-4"
+            aria-live="polite"
             style={{
               backgroundImage:
                 "repeating-linear-gradient(transparent, transparent 31px, #E8E3CC 31px, #E8E3CC 32px)",

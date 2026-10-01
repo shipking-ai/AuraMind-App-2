@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { entitlementPatch, type SubscriptionStatus } from './_lib/entitlement';
 
 const json = (res: VercelResponse, status: number, body: Record<string, unknown>) => {
   res.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
@@ -319,10 +320,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           await supabase.auth.admin.updateUserById(userId, {
             // Authoritative entitlement. app_metadata is service-role only;
             // user_metadata below is client-writable and is display data.
-            app_metadata: {
-              ...(existingCheckout?.user?.app_metadata || {}),
-              subscription_status: subscription.status,
-            },
+            // entitlementPatch, not a bare spread: it also drops any stale
+            // trial_armed_at left by the checkout pre-arm. A real customer who
+            // completed checkout would otherwise be expired mid-trial.
+            app_metadata: entitlementPatch(
+              existingCheckout?.user?.app_metadata,
+              subscription.status as SubscriptionStatus,
+            ),
             user_metadata: {
               ...(existingCheckout?.user?.user_metadata || {}),
               stripe_customer_id: session.customer as string,
@@ -368,10 +372,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           await supabase.auth.admin.updateUserById(userId, {
             // Authoritative entitlement. app_metadata is service-role only;
             // user_metadata below is client-writable and is display data.
-            app_metadata: {
-              ...(existingSub?.user?.app_metadata || {}),
-              subscription_status: subscription.status,
-            },
+            app_metadata: entitlementPatch(
+              existingSub?.user?.app_metadata,
+              subscription.status as SubscriptionStatus,
+            ),
             user_metadata: {
               ...(existingSub?.user?.user_metadata || {}),
               stripe_subscription_id: subscription.id,
@@ -402,10 +406,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Authoritative entitlement. app_metadata is service-role only;
             // user_metadata below is client-writable and is display data.
             // Spread current metadata — updateUserById replaces wholesale.
-            app_metadata: {
-              ...(user?.user?.app_metadata || {}),
-              subscription_status: 'canceled',
-            },
+            app_metadata: entitlementPatch(user?.user?.app_metadata, 'canceled'),
             user_metadata: {
               ...(user?.user?.user_metadata || {}),
               subscription_status: 'canceled',
@@ -464,10 +465,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             await supabase.auth.admin.updateUserById(userId, {
               // Authoritative entitlement. app_metadata is service-role only;
               // user_metadata below is client-writable and is display data.
-              app_metadata: {
-                ...(user?.user?.app_metadata || {}),
-                subscription_status: subscription.status,
-              },
+              app_metadata: entitlementPatch(
+                user?.user?.app_metadata,
+                subscription.status as SubscriptionStatus,
+              ),
               user_metadata: {
                 ...(user?.user?.user_metadata || {}),
                 subscription_status: subscription.status,
@@ -522,10 +523,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               // user_metadata below is client-writable and is display data.
               // Spread current metadata — updateUserById replaces wholesale
               // (currentUser was already fetched above for priorFailures).
-              app_metadata: {
-                ...(currentUser?.user?.app_metadata || {}),
-                subscription_status: 'past_due',
-              },
+              app_metadata: entitlementPatch(currentUser?.user?.app_metadata, 'past_due'),
               user_metadata: {
                 ...(currentUser?.user?.user_metadata || {}),
                 subscription_status: 'past_due',
