@@ -52,6 +52,26 @@ describe('QuickReviewPage', () => {
     render(<QuickReviewPage />);
     expect(await screen.findByText('front a')).toBeInTheDocument();
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    // The Space keydown has to wait for the listener to exist, and neither
+    // findByText nor wrapping the dispatch in act() achieves that.
+    //
+    // QuickReviewPage attaches its keydown listener in a passive useEffect
+    // keyed on `card`, so the listener is only attached once the queue has
+    // loaded. findByText('front a') resolves on the DOM mutation that renders
+    // card 'a', which happens before React flushes that effect. And act()
+    // flushes pending work *after* running its callback, so dispatching inside
+    // it loses the event too — act() cannot retroactively deliver a keypress.
+    //
+    // The failure was silent and load-dependent: the keypress went nowhere, so
+    // the card stayed unflipped and getByText('back a') failed. It reproduced
+    // about one full-suite run in four (the passive effect flush losing the
+    // race when 90+ files run in parallel) and never in isolation.
+    //
+    // An empty awaited act() flushes the pending effect first, so the listener
+    // is attached before the key goes out. The assertion stays synchronous on
+    // purpose: waiting for 'back a' instead would have hidden this, because the
+    // event is lost rather than slow.
+    await act(async () => {});
     fireEvent.keyDown(window, { key: ' ', code: 'Space' });
     expect(screen.getByText('back a')).toBeInTheDocument();
     await act(async () => { fireEvent.keyDown(window, { key: '3', code: 'Digit3' }); });
@@ -73,6 +93,9 @@ describe('QuickReviewPage', () => {
     render(<QuickReviewPage />);
     await screen.findByText('front a');
     vi.useFakeTimers();
+    // Same reason as the flip in the first test, and in the same order: flush the
+    // pending effect so the listener is attached, then dispatch.
+    await act(async () => {});
     fireEvent.keyDown(window, { key: ' ', code: 'Space' });
     await act(async () => { fireEvent.keyDown(window, { key: '4', code: 'Digit4' }); });
     expect(screen.getByText('All caught up')).toBeInTheDocument();
