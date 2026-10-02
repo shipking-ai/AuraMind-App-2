@@ -32,6 +32,35 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     /// The session currently on screen, if any.
     private var current: Any?
 
+    /**
+     Adopts an activity left behind by a previous process.
+
+     `current` is in-memory, so it is empty after iOS relaunches the app —
+     which it does whenever the user swipes the app away and opens it again,
+     and that is not an app crash. Without adopting, a session that was
+     interrupted that way leaves its activity on the Lock Screen showing a
+     count frozen at whatever it last received, with no way to update or end
+     it, until the user swipes it away.
+
+     ActivityKit keeps ended activities in `activities` briefly, so a session
+     that is being torn down right now can still appear here. Adopting it is
+     harmless: the next end() dismisses it.
+     */
+    override public func load() {
+        if #available(iOS 16.1, *) {
+            Task { @MainActor in
+                let existing = Activity<StudySessionAttributes>.activities
+                guard !existing.isEmpty else { return }
+                #if DEBUG
+                Self.ciLog.notice("LIVE_ACTIVITY_ADOPTED count=\(existing.count, privacy: .public)")
+                #endif
+                // Oldest first, so `current` ends up being the newest session.
+                let newest = existing.sorted { $0.id < $1.id }.last
+                self.current = newest
+            }
+        }
+    }
+
     /// CI signal: the simulator log is the only channel back from this
     /// process (WKWebView console never reaches it, and Swift `print` is not
     /// reliably captured either). `os_log` always lands in the log store, so
@@ -96,7 +125,11 @@ public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         let next = state(from: call)
-        Task {
+        // activity.update is async, so this suspends and resumes on an
+        // arbitrary thread. call.resolve reaches the web view, which expects
+        // it on the main queue — resolving from here would deliver the reply
+        // off-main.
+        Task { @MainActor in
             await activity.update(using: next)
             call.resolve(["updated": true])
             #if DEBUG
