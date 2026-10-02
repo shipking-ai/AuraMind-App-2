@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { applyMiddleware } from './_middleware.js';
+import { applyMiddleware, CORS_ORIGINS } from './_middleware.js';
+import { APP_ORIGIN } from './_lib/origin.js';
 import { distributedLimiterConfigured } from './_rateLimit.js';
 import { handleAI, handleAISpeech, handleAITranscribe } from './_aiHandler.js';
 import { z } from 'zod';
@@ -62,6 +63,24 @@ const RATE_LIMIT_BUCKETS: Record<string, 'default' | 'ai' | 'auth'> = {
 const json = (res: VercelResponse, status: number, body: Record<string, unknown>) => {
   res.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
 };
+
+/**
+ * The origin a Stripe Checkout / billing-portal session should return to.
+ *
+ * Stripe sends the customer to this URL after paying, so it is built from the
+ * request's Origin header to keep the app on whichever surface started the
+ * flow. That header is attacker-controlled, though: echoing it unvalidated
+ * turns checkout into an open redirect, sending a customer who just entered
+ * card details to a lookalike page after a "successful" payment.
+ *
+ * So: use the caller's origin only when it is one we recognise, and otherwise
+ * fall back to the canonical origin. CORS_ORIGINS already holds the exact set
+ * of legitimate origins — the website plus the three app shells.
+ */
+function returnOrigin(req: VercelRequest): string {
+  const origin = typeof req.headers?.origin === 'string' ? req.headers.origin : '';
+  return CORS_ORIGINS.has(origin) ? origin : APP_ORIGIN;
+}
 
 // --- Zod Validation Schemas ---
 
@@ -1093,8 +1112,8 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
           },
           customer_email: email,
           metadata: { supabase_user_id: userId },
-          success_url: `${req.headers.origin || 'https://auramind.app'}/dashboard?payment=success`,
-          cancel_url: `${req.headers.origin || 'https://auramind.app'}/subscribe?payment=cancelled`
+          success_url: `${returnOrigin(req)}/dashboard?payment=success`,
+          cancel_url: `${returnOrigin(req)}/subscribe?payment=cancelled`
         });
 
           // Immediately mark user as trialing so they don't get stuck in a redirect loop
@@ -1182,7 +1201,7 @@ async function handleStripe(req: VercelRequest, res: VercelResponse, action?: st
       try {
         const session = await stripe.billingPortal.sessions.create({
           customer: customerId,
-          return_url: `${req.headers.origin || 'https://auramind.app'}/settings`
+          return_url: `${returnOrigin(req)}/settings`
         });
         return json(res, 200, { url: session.url });
       } catch (err: any) {

@@ -190,6 +190,7 @@ None of these may be `VITE_`-prefixed — that would publish them to the browser
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `RESEND_API_KEY` | Resend API key for emails |
 | `RESEND_FROM_EMAIL` | Sender address on a Resend-verified domain. Defaults to `noreply@mail.auramind.app` |
+| `APP_ORIGIN` | Canonical web origin (`https://auramind.app`). Drives the CORS allowlist, Stripe return URLs, and links in transactional email. Set this when the domain changes — see below. |
 | `GROQ_API_KEY` | First AI provider in the chain |
 | `CEREBRAS_API_KEY` | Second — tried when Groq returns 429/5xx |
 | `GEMINI_API_KEY` | Third |
@@ -269,6 +270,33 @@ See `docs/M6-store-submission-playbook.md` for the full publishing flow.
    ```bash
    vercel --prod
    ```
+
+### Changing the domain
+
+The product name and the domain are separate concerns:
+
+| What | Where it lives | How to change it |
+|---|---|---|
+| Display name | `auramind-gemini/app-identity.ts` | Edit `APP_NAME`, then `npm run brand:sync` |
+| Domain | `APP_ORIGIN` env var (API), `SITE_URL` in `src/lib/seo.ts` (web) | Set the env var, update the constant |
+
+`APP_ORIGIN` is the one that matters operationally. It feeds the CORS
+allowlist, the Stripe `success_url`/`cancel_url`/billing-portal return URLs,
+and every link in a transactional email. In production the CORS allowlist only
+echoes a recognised origin and sends **no header** for an unknown one, so a
+missed update presents as a generic network failure in the browser — the app
+looks like it hangs rather than reporting a CORS error. Set `APP_ORIGIN`
+first, then deploy.
+
+Two things that do **not** change with the domain:
+
+- **`com.auramind.app`** — the package id. Play and the App Store key listings
+  to it permanently, so changing it orphans the listing and any in-progress
+  closed test. It is deliberately excluded from `app-identity.ts`.
+- **Supabase project URL** — auth and the database live on `*.supabase.co`, so
+  users are not logged out by a domain change.
+
+Add a 301 from the old domain to the new one so shared links keep working.
 
 ## 🧪 Testing
 

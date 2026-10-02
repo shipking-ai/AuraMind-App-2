@@ -6,6 +6,8 @@
  * in api/index.ts funnels requests into sendEmail() below.
  */
 import { Resend } from 'resend';
+import { CORS_ORIGINS } from '../_middleware.js';
+import { APP_ORIGIN, EMAIL_FROM } from './origin.js';
 
 export type EmailType =
   | 'welcome'
@@ -267,8 +269,18 @@ export async function sendEmail(
     return { success: false, error: 'Email service not configured' };
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app';
-  const appOrigin = origin || process.env.NEXT_PUBLIC_APP_URL || 'https://auramind.app';
+  const from = EMAIL_FROM;
+  // The caller may pass the surface the request came from so links match it,
+  // but that value originates in a request header, and these links are what a
+  // user clicks to reset a password or verify an address. An unvalidated echo
+  // would let an attacker send a legitimate-looking email from our sender with
+  // a link to their domain — so anything unrecognised falls back to the
+  // canonical origin. NEXT_PUBLIC_APP_URL is honoured for compatibility with
+  // existing deployments.
+  const appOrigin =
+    (origin && CORS_ORIGINS.has(origin) ? origin : null) ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    APP_ORIGIN;
   const { subject, html } = renderEmail(type, params, appOrigin);
 
   if (!subject) {
@@ -322,7 +334,7 @@ export async function sendCustomEmail(
     return { success: false, error: 'Email service not configured' };
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app';
+  const from = EMAIL_FROM;
   const paragraphs = textBody
     .split(/\n{2,}/)
     .map((block) => block.trim())

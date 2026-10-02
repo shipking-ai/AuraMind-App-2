@@ -7,7 +7,21 @@ import { makeRes } from './helpers.js';
  * capacitor://localhost, Windows: https://tauri.localhost). Production had
  * no CORS headers at all, so web views blocked every response. Only the
  * website and the apps are allowed.
+ *
+ * The web origins are asserted via APP_ORIGIN rather than as literals: the
+ * allowlist derives from that constant (see _lib/origin.ts), so hardcoding the
+ * domain here would make this suite fail on any environment that has
+ * APP_ORIGIN exported — a CI job with the var set, or a developer testing a
+ * domain migration locally.
+ *
+ * The stub has to be installed before ../index.js is first evaluated, because
+ * that import graph computes CORS_ORIGINS at module load. `vi.hoisted` runs
+ * ahead of the imports for that reason; a plain beforeEach would be too late
+ * once the handler had already captured the allowlist.
  */
+vi.hoisted(() => {
+  process.env.APP_ORIGIN = '';
+});
 
 function preflight(origin: string) {
   const headers: Record<string, string> = {};

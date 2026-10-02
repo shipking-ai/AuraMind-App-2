@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { entitlementPatch, type SubscriptionStatus } from './_lib/entitlement';
+import { EMAIL_FROM, appUrl } from './_lib/origin';
 
 const json = (res: VercelResponse, status: number, body: Record<string, unknown>) => {
   res.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
@@ -15,7 +16,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendPaymentSuccessEmail = async (email: string, name: string, amount: string, plan: string, nextBilling: string) => {
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app',
+      from: EMAIL_FROM,
       to: email,
       subject: 'Payment successful - Your AuraMind subscription is active',
       html: `
@@ -46,7 +47,7 @@ const sendPaymentSuccessEmail = async (email: string, name: string, amount: stri
               <li>Next billing date: ${nextBilling}</li>
             </ul>
             <p><strong>Your subscription is now active.</strong> You can start using all premium features right away.</p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://auramind.app'}/dashboard" style="color: #000; font-weight: bold;">Go to Dashboard →</a>
+            <a href="${appUrl('/dashboard')}" style="color: #000; font-weight: bold;">Go to Dashboard →</a>
             <p>Thanks for being a valued member of AuraMind!</p>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
@@ -64,7 +65,7 @@ const sendPaymentSuccessEmail = async (email: string, name: string, amount: stri
 const sendPaymentFailedEmail = async (email: string, name: string, amount: string, lastAttempt: string) => {
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app',
+      from: EMAIL_FROM,
       to: email,
       subject: 'Payment failed - Please update your payment method',
       html: `
@@ -97,7 +98,7 @@ const sendPaymentFailedEmail = async (email: string, name: string, amount: strin
             </ul>
             <p><strong>What you need to do:</strong></p>
             <p>Update your payment method to keep your subscription active. If you don't, you'll lose access to premium features.</p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://auramind.app'}/subscribe" class="button">Update Payment Method</a>
+            <a href="${appUrl('/subscribe')}" class="button">Update Payment Method</a>
             <p><strong>Need help?</strong> Reply to this email and we'll assist you.</p>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
@@ -115,7 +116,7 @@ const sendPaymentFailedEmail = async (email: string, name: string, amount: strin
 const sendSubscriptionCancelledEmail = async (email: string, name: string, plan: string, effectiveDate: string) => {
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app',
+      from: EMAIL_FROM,
       to: email,
       subject: 'Your AuraMind subscription has been cancelled',
       html: `
@@ -144,7 +145,7 @@ const sendSubscriptionCancelledEmail = async (email: string, name: string, plan:
             <p>You'll still have access to all features until ${effectiveDate}. After that date, your account will switch to the free plan.</p>
             <p><strong>Want to keep your subscription?</strong></p>
             <p>You can reactivate it anytime before or after the cancellation date.</p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://auramind.app'}/subscribe" class="button">Reactivate Subscription</a>
+            <a href="${appUrl('/subscribe')}" class="button">Reactivate Subscription</a>
             <p>Thanks for trying AuraMind. We hope to see you again!</p>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
@@ -174,7 +175,7 @@ const getInvoiceSubscriptionId = (invoice: Stripe.Invoice): string | null => {
 const sendTrialEndingEmail = async (email: string, name: string, trialEndDate: string) => {
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app',
+      from: EMAIL_FROM,
       to: email,
       subject: 'Your AuraMind trial ends soon — keep your progress',
       html: `
@@ -200,7 +201,7 @@ const sendTrialEndingEmail = async (email: string, name: string, trialEndDate: s
             <p>Hi ${name},</p>
             <p>Your 7-day AuraMind trial ends on <strong>${trialEndDate}</strong>. Your decks, quizzes, and learning progress are all saved and waiting.</p>
             <p>Upgrade to keep unlimited studying, Aura tutoring, and personalized review scheduling — and your progress carries over automatically.</p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://auramind.app'}/subscribe" class="button">Upgrade to Pro →</a>
+            <a href="${appUrl('/subscribe')}" class="button">Upgrade to Pro →</a>
             <p>Questions? Reply to this email and we'll help.</p>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
