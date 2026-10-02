@@ -33,6 +33,8 @@
     "build:apk:debug": "vite build --mode mobile && npx cap sync android && node scripts/build-debug-apk.mjs",
     "build:aab:release": "vite build --mode mobile && npx cap sync android && node scripts/run-gradle.mjs bundleRelease",
     "cap:sync": "npx cap sync android",
+    "brand:check": "node scripts/brand-sync.mjs",
+    "brand:sync": "node scripts/brand-sync.mjs --write",
     "build:ios": "vite build --mode mobile && npx cap sync ios",
     "build:ios-preview": "node scripts/build-ios-preview.mjs",
     "tauri": "tauri",

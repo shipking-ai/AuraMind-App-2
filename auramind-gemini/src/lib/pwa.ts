@@ -1,4 +1,9 @@
 import { VitePWA } from 'vite-plugin-pwa';
+import {
+  APP_MANIFEST_NAME,
+  APP_SHORT_NAME_RESOLVED,
+  APP_DESCRIPTION,
+} from '../../app-identity.ts';
 
 /**
  * PWA Configuration for AuraMind
@@ -14,9 +19,12 @@ export const pwaConfig = VitePWA({
   registerType: 'autoUpdate',
   includeAssets: ['favicons,logos/favicon.ico', 'favicons,logos/apple-touch-icon.png'],
   manifest: {
-    name: 'AuraMind - Voice-Powered Flashcards',
-    short_name: 'AuraMind',
-    description: 'Study hands-free. Aura speaks flashcards aloud, listens to your answers, and turns lectures and docs into decks with FSRS v5.',
+    // Name and short_name follow app-identity.ts so the installed PWA matches
+    // the native app after a rename. The description stays bespoke marketing
+    // copy — it leads with the voice feature, which is not the whole product.
+    name: APP_MANIFEST_NAME,
+    short_name: APP_SHORT_NAME_RESOLVED,
+    description: APP_DESCRIPTION,
     theme_color: '#0a0a0a',
     background_color: '#0a0a0a',
     display: 'standalone',

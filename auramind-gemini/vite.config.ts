@@ -4,6 +4,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { pwaConfig } from './src/lib/pwa';
+import { brandHtml } from './vite-plugins/brand-html.ts';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -40,6 +41,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      // Rewrites the product name in index.html from app-identity.ts. Must run
+      // before the PWA plugin, which injects the manifest into the same HTML.
+      brandHtml(),
       react(),
       pwaConfig,
     ],

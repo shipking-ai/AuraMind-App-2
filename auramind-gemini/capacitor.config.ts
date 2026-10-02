@@ -1,17 +1,22 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { APP_NAME } from './app-identity.ts';
 
 /**
  * Capacitor configuration for the AuraMind Android and iOS apps.
  *
  * - appId is fixed forever: `com.auramind.app`. Changing it after the first
- *   Play Store upload makes the store treat the app as a brand-new package.
+ *   Play Store upload makes the store treat the app as a brand-new package,
+ *   orphaning the listing, every tester install link, and the closed-testing
+ *   clock. It is intentionally NOT part of app-identity.ts for that reason.
+ * - appName comes from app-identity.ts, the single source of truth for the
+ *   product name. Change the name there, not here.
  * - webDir points at the Vite production build output (`npm run build`).
  * - Traffic is HTTPS-only via the `https` androidScheme; cleartext is NOT
  *   enabled so release builds reject plain HTTP.
  */
 const config: CapacitorConfig = {
   appId: 'com.auramind.app',
-  appName: 'AuraMind',
+  appName: APP_NAME,
   webDir: 'dist',
   backgroundColor: '#0a0a0a',
   server: {

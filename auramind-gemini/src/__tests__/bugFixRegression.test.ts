@@ -713,12 +713,23 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     //
     // Paths are RELATIVE TO __dirname (auramind-gemini/src/__tests__).
     // Two `..` segments lift back to auramind-gemini/.
+    // The name is no longer typed into these files by hand. It comes from
+    // app-identity.ts, and capacitor.config.ts / index.html consume it by
+    // import and by a build-time transform respectively. So the assertion is
+    // no longer "this file contains the literal 'AuraMind'" but "this file
+    // still reads the name from the single source of truth" — a file that
+    // re-introduces a hardcoded name would fail here.
     const identityFiles: ReadonlyArray<readonly [string, string, ReadonlyArray<string>]> = [
-      // [rel path readable from __dirname, human label, key=value substrings that MUST stay "AuraMind" only]
-      ['../../capacitor.config.ts',          'auramind-gemini/capacitor.config.ts',          ['appId:', "appName: 'AuraMind'"]],
+      // [rel path readable from __dirname, human label, tokens that MUST be present]
+      // capacitor.config.ts pulls appName from app-identity.ts; `appId:` stays
+      // a literal because the bundle id is deliberately not renameable.
+      ['../../capacitor.config.ts',          'auramind-gemini/capacitor.config.ts',          ['appId:', "from './app-identity.ts'", 'appName: APP_NAME']],
+      ['../../app-identity.ts',             'auramind-gemini/app-identity.ts',             ["export const APP_NAME = '"]],
       ['../../metadata.json',              'auramind-gemini/metadata.json',               ['"name": "AuraMind"']],
       ['../../package.json',               'auramind-gemini/package.json',                ['"name": "auramind"']],
-      ['../../index.html',                 'auramind-gemini/index.html',                  ['<title>AuraMind']],
+      // index.html is rewritten at build time; the data-brand marker is what
+      // the transform keys on, and its absence makes the build fail.
+      ['../../index.html',                 'auramind-gemini/index.html',                  ['data-brand="title"', 'data-brand="og:title"']],
     ];
     for (const [rel, expectedPath, identityTokens] of identityFiles) {
       const p = path.resolve(__dirname, rel);

@@ -15,7 +15,9 @@ export interface SEOConfig {
   noindex?: boolean;
 }
 
-const DEFAULT_TITLE = 'AuraMind - Your AI Learning System';
+import { APP_NAME, APP_SOCIAL_TITLE } from '../../app-identity.ts';
+
+const DEFAULT_TITLE = APP_SOCIAL_TITLE;
 const DEFAULT_DESCRIPTION = 'AI flashcards powered by FSRS spaced repetition — learn anything in half the time. Turn notes and PDFs into smart decks that adapt to your memory.';
 const DEFAULT_IMAGE = '/auramind/og-cover.png';
 const SITE_URL = 'https://auramind.app';
@@ -26,7 +28,7 @@ const SITE_URL = 'https://auramind.app';
 export function updateMetaTags(config: SEOConfig = {}): void {
   if (typeof document === 'undefined') return;
 
-  const title = config.title ? `${config.title} | AuraMind` : DEFAULT_TITLE;
+  const title = config.title ? `${config.title} | ${APP_NAME}` : DEFAULT_TITLE;
   const description = config.description || DEFAULT_DESCRIPTION;
   const url = config.canonicalUrl || SITE_URL;
   const image = config.imageUrl || DEFAULT_IMAGE;
@@ -37,7 +39,7 @@ export function updateMetaTags(config: SEOConfig = {}): void {
   // Basic meta tags
   setMetaTag('name', 'description', description);
   setMetaTag('name', 'keywords', 'flashcards, spaced repetition, AI learning, study companion, education, memorization, SM-2, FSRS');
-  setMetaTag('name', 'author', 'AuraMind');
+  setMetaTag('name', 'author', APP_NAME);
   setMetaTag('name', 'robots', config.noindex ? 'noindex, nofollow' : 'index, follow');
   setMetaTag('name', 'viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
   setMetaTag('name', 'theme-color', '#3247E8');
@@ -58,9 +60,9 @@ export function updateMetaTags(config: SEOConfig = {}): void {
   setMetaTag('property', 'og:image', image);
   setMetaTag('property', 'og:image:width', '1200');
   setMetaTag('property', 'og:image:height', '630');
-  setMetaTag('property', 'og:image:alt', 'AuraMind - AI Study Companion');
+  setMetaTag('property', 'og:image:alt', APP_SOCIAL_TITLE);
   setMetaTag('property', 'og:type', config.type || 'website');
-  setMetaTag('property', 'og:site_name', 'AuraMind');
+  setMetaTag('property', 'og:site_name', APP_NAME);
   setMetaTag('property', 'og:locale', 'en_US');
 
   if (config.publishedTime) {
@@ -75,16 +77,16 @@ export function updateMetaTags(config: SEOConfig = {}): void {
   setMetaTag('name', 'twitter:title', title);
   setMetaTag('name', 'twitter:description', description);
   setMetaTag('name', 'twitter:image', image);
-  setMetaTag('name', 'twitter:image:alt', 'AuraMind - AI Study Companion');
+  setMetaTag('name', 'twitter:image:alt', APP_SOCIAL_TITLE);
   setMetaTag('name', 'twitter:site', '@auramindapp');
   setMetaTag('name', 'twitter:creator', '@auramindapp');
 
   // PWA / Mobile
   setMetaTag('name', 'apple-mobile-web-app-capable', 'yes');
   setMetaTag('name', 'apple-mobile-web-app-status-bar-style', 'black-translucent');
-  setMetaTag('name', 'apple-mobile-web-app-title', 'AuraMind');
+  setMetaTag('name', 'apple-mobile-web-app-title', APP_NAME);
   setMetaTag('name', 'mobile-web-app-capable', 'yes');
-  setMetaTag('name', 'application-name', 'AuraMind');
+  setMetaTag('name', 'application-name', APP_NAME);
 
   // Favicon
   updateFavicon();
@@ -128,7 +130,7 @@ export function setDefaultJsonLd(): void {
   setJsonLd({
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'AuraMind',
+    name: APP_NAME,
     description: DEFAULT_DESCRIPTION,
     url: SITE_URL,
     applicationCategory: 'EducationalApplication',
