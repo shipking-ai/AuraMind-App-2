@@ -21,6 +21,16 @@
  * code. A 404/400 naming a model is the signal to update it.
  */
 
+import { APP_ORIGIN } from './_lib/origin.js';
+
+/**
+ * Product name for OpenRouter's optional attribution header. Read from the
+ * server's env rather than duplicated here — it only affects how requests are
+ * labelled on a third-party dashboard, so a stale value is harmless, but it
+ * should still track the real name.
+ */
+const APP_NAME = process.env.APP_NAME || 'AuraMind';
+
 export interface Provider {
   /** Stable identifier used in logs and the `x-ai-provider` response header. */
   name: string;
@@ -91,8 +101,8 @@ const PROVIDERS: readonly Provider[] = [
     extraHeaders: {
       // OpenRouter attributes traffic with these; both are optional but
       // keep the app identifiable on their dashboard.
-      'HTTP-Referer': 'https://auramind.app',
-      'X-Title': 'AuraMind',
+      'HTTP-Referer': APP_ORIGIN,
+      'X-Title': APP_NAME,
     },
   },
 ];

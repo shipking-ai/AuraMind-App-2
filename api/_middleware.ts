@@ -6,6 +6,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { checkRateLimit, getClientIp } from './_rateLimit.js';
+import { APP_ORIGIN } from './_lib/origin.js';
 
 // Security headers to apply to all responses
 const SECURITY_HEADERS = {
@@ -67,10 +68,18 @@ const SECURITY_HEADERS = {
  * without these headers their web views block every API response (AI,
  * voices, transcription). Credentials are bearer tokens, never cookies, so
  * echoing an allowlisted origin is safe.
+ *
+ * The two web origins derive from APP_ORIGIN (see _lib/origin.ts) rather than
+ * being hardcoded. A hardcoded list meant a domain change silently broke every
+ * API call from the website: production only echoes an allowlisted origin, so
+ * an unknown one gets NO Access-Control-Allow-Origin header at all — which the
+ * browser reports as a generic network failure, not a CORS error. Set
+ * APP_ORIGIN when the domain changes.
  */
 export const CORS_ORIGINS: ReadonlySet<string> = new Set([
-  'https://auramind.app',
-  'https://www.auramind.app',
+  APP_ORIGIN,
+  // www form, derived so it cannot drift from the apex.
+  APP_ORIGIN.replace(/^https:\/\//, 'https://www.'),
   'https://localhost',
   'capacitor://localhost',
   // The Windows app (Tauri, useHttpsScheme: true in src-tauri/tauri.conf.json).
@@ -106,7 +115,7 @@ export async function applyMiddleware(
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.setHeader('Access-Control-Max-Age', '86400');
   } else {
-    // Production: only the website and the two apps.
+    // Production: only the website and the three apps.
     const origin = typeof req.headers?.origin === 'string' ? req.headers.origin : '';
     res.setHeader('Vary', 'Origin');
     if (CORS_ORIGINS.has(origin)) {
