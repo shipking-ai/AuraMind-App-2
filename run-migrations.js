@@ -79,6 +79,99 @@ function sha256(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
+/**
+ * Read schema_migrations so the dry-run can tell "already applied" from
+ * "pending" instead of counting every file on disk.
+ *
+ * The dry-run previously printed "N migrations WOULD be applied" where N was
+ * simply the file count, with no ledger lookup at all. On a fully-migrated
+ * project that reported all 59 as pending, which would misdirect someone
+ * mid-incident into thinking nothing had been applied.
+ *
+ * Sync via curl, matching how this script already reaches the database for
+ * the service-role path — the file is CommonJS, so a top-level await would
+ * make the module format ambiguous.
+ *
+ * Returns a Map of version -> row, or null when the ledger cannot be read.
+ * Callers degrade to the old behaviour rather than failing: a dry run must
+ * never be the thing that breaks.
+ */
+function readLedger() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  if (!key || !SUPABASE_URL) return null;
+  try {
+    const out = execSync(
+      `curl -fsS "${SUPABASE_URL}/rest/v1/schema_migrations?select=version,sha256" -H "apikey: ${key}" -H "Authorization: Bearer ${key}"`,
+      { timeout: 30000, encoding: 'utf-8' }
+    );
+    const rows = JSON.parse(out);
+    if (!Array.isArray(rows)) return null;
+    return new Map(rows.map((r) => [String(r.version), r]));
+  } catch {
+    return null;
+  }
+}
+
+/** The ledger key a file maps to: the filename minus .sql. */
+function ledgerKey(name) {
+  return name.replace(/\.sql$/, '');
+}
+
+/**
+ * Match a file to a ledger row, tolerating files that were renamed after being
+ * applied.
+ *
+ * Several migrations were renamed once already applied (for example the ledger
+ * holds `20260819000000` while the file on disk is
+ * `20260819000000_ai_chat_sessions_mode_check_relax.sql`). An exact-key lookup
+ * reports those 9 files as pending, and re-running them would execute their
+ * DDL a second time against a database that already has it.
+ *
+ * So: exact key first, then the leading timestamp/prefix. A prefix match is
+ * only accepted when it is unambiguous — if two files share a prefix, neither
+ * is assumed and the mismatch is surfaced instead.
+ */
+function findLedgerRow(name, ledger) {
+  const key = ledgerKey(name);
+  const exact = ledger.get(key);
+  if (exact) return { row: exact, how: 'exact' };
+
+  const prefix = key.match(/^(\d+)/);
+  if (!prefix) return null;
+  const stamp = prefix[1];
+
+  // The bare-stamp key, e.g. ledger "20260819000000" for a file with a slug.
+  const bare = ledger.get(stamp);
+  if (bare) return { row: bare, how: 'bare-prefix' };
+
+  const byPrefix = [...ledger.entries()].filter(([v]) => v.startsWith(stamp));
+  if (byPrefix.length === 1) return { row: byPrefix[0][1], how: 'prefix' };
+
+  // Several rows share the day prefix. Try the slug on its own: the file
+  // `20260720100000_study_sessions_align.sql` pairs with the ledger key
+  // `20260720_study_sessions_align` once the time component is dropped.
+  const slug = key.replace(/^\d+_?/, '').replace(/^\d+_/, '');
+  if (slug) {
+    const bySlug = [...ledger.entries()].filter(([v]) => v.replace(/^\d+_?/, '') === slug);
+    if (bySlug.length === 1) return { row: bySlug[0][1], how: 'slug' };
+  }
+
+  return { row: null, how: byPrefix.length > 1 ? 'ambiguous' : 'missing' };
+}
+
+/**
+ * A recorded sha256 is only drift-checkable when it is a real 64-hex digest.
+ *
+ * Live data check: all 63 rows in schema_migrations carry the literal string
+ * 'pending-re-fingerprint:<version>' rather than a hash, so the fingerprint
+ * feature documented above has never had anything to compare against.
+ * Comparing a digest against that placeholder reports every file as DRIFTED,
+ * which is worse than reporting nothing.
+ */
+function isRealFingerprint(value) {
+  return /^[0-9a-f]{64}$/i.test(String(value || ''));
+}
+
 function fmtBytes(n) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
@@ -106,8 +199,22 @@ console.log('');
 let applied = 0;
 let skipped = 0;
 let dryPlan = [];
+let dryAlready = [];
+let dryDrifted = [];
+let dryNoHash = [];
+let dryAmbiguous = [];
 let failed = 0;
 const failures = [];
+
+const ledger = dryRun ? readLedger() : null;
+if (dryRun) {
+  console.log(
+    ledger
+      ? 'Ledger: read from PostgREST — classifying each file as pending / already applied.'
+      : 'Ledger: UNREADABLE — falling back to counting every file (treat the plan below as unverified).'
+  );
+  console.log('');
+}
 
 for (const entry of ALL_SQL_FILES) {
   const filePath = path.join(entry.dir, entry.name);
@@ -115,7 +222,25 @@ for (const entry of ALL_SQL_FILES) {
   const size = fs.statSync(filePath).size;
 
   if (dryRun) {
-    dryPlan.push({ file: entry.name, sha256: hash, bytes: size });
+    const match = ledger ? findLedgerRow(entry.name, ledger) : null;
+    const row = match ? match.row : undefined;
+    const record = { file: entry.name, sha256: hash, bytes: size, applied: !!row, matchedBy: match ? match.how : 'no-ledger' };
+    if (match && match.how === 'ambiguous') {
+      // Several ledger rows share this file's day prefix, so a rename match
+      // cannot be picked safely. Refuse to guess rather than risk re-running
+      // DDL against a database that already has it.
+      dryAmbiguous.push(record);
+    } else if (!row) {
+      dryPlan.push(record);
+    } else if (!isRealFingerprint(row.sha256)) {
+      // Applied, but the recorded fingerprint is a placeholder or null, so we
+      // cannot tell whether the file changed after it ran.
+      dryNoHash.push(record);
+    } else if (row.sha256 !== hash) {
+      dryDrifted.push(record);
+    } else {
+      dryAlready.push(record);
+    }
     continue;
   }
 
@@ -159,7 +284,51 @@ for (const entry of ALL_SQL_FILES) {
 
 if (dryRun) {
   console.log(`\n══════════════════════════════════════════`);
-  console.log(`  DRY-RUN plan: ${dryPlan.length} migration(s) WOULD be applied`);
+  if (!ledger) {
+    // Degraded mode: we could not read the ledger, so every file is listed as
+    // pending. Say so loudly — the previous wording asserted a number it had
+    // not actually computed against the database.
+    console.log(`  DRY-RUN: ${dryPlan.length} file(s) on disk, ledger UNREADABLE.`);
+    console.log(`  Treating every file as pending. This plan is NOT verified.`);
+    console.log(`  Set SUPABASE_SERVICE_ROLE_KEY (or VITE_SUPABASE_ANON_KEY) and re-run.`);
+  } else {
+    console.log(`  PENDING (would be applied): ${dryPlan.length}`);
+    console.log(`  Already applied:            ${dryAlready.length + dryNoHash.length}`);
+    const renamed = [...dryAlready, ...dryNoHash].filter((r) => r.matchedBy !== 'exact');
+    if (renamed.length) {
+      console.log(`    (of which ${renamed.length} matched a RENAMED ledger key — verified, not pending):`);
+      for (const r of renamed) console.log(`      ${r.file}  <- ${r.matchedBy}`);
+    }
+    if (dryAmbiguous.length) {
+      console.log(`  AMBIGUOUS (ledger key matched several rows — NOT counted either way): ${dryAmbiguous.length}`);
+      for (const r of dryAmbiguous) console.log(`    ? ${r.file}`);
+    }
+    if (dryNoHash.length) {
+      console.log(`  Applied, fingerprint is a placeholder (drift NOT checkable): ${dryNoHash.length}`);
+    }
+    if (dryDrifted.length) {
+      console.log(`  DRIFTED (applied, file changed since): ${dryDrifted.length}`);
+      for (const r of dryDrifted) console.log(`    ! ${r.file}`);
+    }
+    if (dryPlan.length) {
+      for (const r of dryPlan) {
+        console.log(`  → ${r.file}`);
+      }
+      // A file with no ledger row is NOT automatically unapplied work. Five
+      // files here date from May/July 2026 and predate the ledger entirely;
+      // their effects were verified present in the live database (audit_events,
+      // learning_paths, user_profiles.role, core tables, exec_sql). Re-running
+      // them would re-apply DDL that already exists.
+      const preLedger = dryPlan.filter((r) => /^2026052|2026053|20260709/.test(r.file));
+      if (preLedger.length) {
+        console.log('');
+        console.log(`  ⚠️  ${preLedger.length} of these predate the schema_migrations ledger.`);
+        console.log(`     Their effects were confirmed already present in the live DB, so`);
+        console.log(`     re-running them would re-apply existing DDL. If the apply run`);
+        console.log(`     is interrupted, treat these as history, not as pending work.`);
+      }
+    }
+  }
   console.log(`  No DB writes performed. Re-run without --dry-run to apply.`);
   console.log(`══════════════════════════════════════════`);
   console.log(JSON.stringify(dryPlan, null, 2));
