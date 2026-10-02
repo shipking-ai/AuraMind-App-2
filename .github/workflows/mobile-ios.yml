@@ -276,10 +276,11 @@ jobs:
           echo "prefs plist: ${PLIST:-<container unavailable>}"
           [ -f "$PLIST" ] && echo "prefs plist exists" || { echo "::error::prefs plist missing - cannot read driver state"; exit 1; }
           read_prefs() { /usr/libexec/PlistBuddy -c "Print :CapacitorStorage.$1" "$PLIST" 2>/dev/null || echo MISSING; }
-          for k in session seen device available started updated; do
+          for k in session seen device plugins available started updated; do
             echo "live-boot $k: $(read_prefs auramind_ci_live_$k)"
           done
           echo "tour: $(read_prefs auramind_ci_tour_step)"
+          plugins=$(read_prefs auramind_ci_live_plugins)
           available=$(read_prefs auramind_ci_live_available)
           started=$(read_prefs auramind_ci_live_started)
           updated=$(read_prefs auramind_ci_live_updated)
@@ -305,6 +306,32 @@ jobs:
             echo "::error::Driver never reported ActivityKit availability (available=$available). The driver did not run; nothing was proved."
             exit 1
           fi
+
+          # The plugin must be REGISTERED, independently of whether the OS will
+          # show an activity.
+          #
+          # This is the assertion that was missing. `available: false` means two
+          # very different things — the user's Live Activities setting is off,
+          # or the plugin was never registered because the app built without it
+          # — and the driver could not tell them apart, because every call
+          # rejected into the same catch. So a build where SceneDelegate
+          # discarded MainViewController (where the plugins are registered) and
+          # every activity silently did nothing passed this job.
+          #
+          # Capacitor.isPluginAvailable is synchronous registry truth, so this
+          # is answerable on a simulator even though ActivityKit refuses there.
+          if [ "$plugins" = MISSING ] || [ -z "$plugins" ]; then
+            echo "::error::Driver never recorded plugin registration (plugins=$plugins). Nothing was proved."
+            exit 1
+          fi
+          case "$plugins" in
+            *LiveActivity:true*) : ;;
+            *)
+              echo "::error::AuraLiveActivity is not registered in this build (plugins=$plugins)."
+              echo "::error::The app-local plugins are registered in MainViewController.capacitorDidLoad; anything that replaces the storyboard root view controller discards them, and voice study and the Live Activity then fail silently."
+              exit 1
+              ;;
+          esac
           # `session` is a descriptive marker ("session-mounted:<path>"), not a
           # boolean. Its presence is the proof that the driven study screen
           # actually rendered, which is what separates "nothing ran" from

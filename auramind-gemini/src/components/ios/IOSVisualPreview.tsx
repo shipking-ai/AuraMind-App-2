@@ -74,6 +74,17 @@ export const CI_LIVE_KEYS = {
   seen: "auramind_ci_live_seen",
   session: "auramind_ci_live_session",
   device: "auramind_ci_live_device",
+  /**
+   * Whether the bridge reports the app-local plugins as registered.
+   *
+   * Its own key, not folded into `device`, because `device` is overwritten with
+   * the hardware string a few lines later. It used to be written there, which
+   * meant the one signal that distinguishes "the plugin was never registered"
+   * from "ActivityKit refused" was destroyed before CI could read it — and a
+   * build with no plugins passed, because a missing plugin and the OS declining
+   * both surface as available=false.
+   */
+  plugins: "auramind_ci_live_plugins",
   available: "auramind_ci_live_available",
   started: "auramind_ci_live_started",
   updated: "auramind_ci_live_updated",
@@ -260,7 +271,7 @@ function LiveActivityDriver() {
       // this discriminates "bridge dead" from "plugin not registered".
       // isPluginAvailable is synchronous registry truth (no native call).
       const known = `plugs=LiveActivity:${Capacitor.isPluginAvailable("AuraLiveActivity")},Preferences:${Capacitor.isPluginAvailable("Preferences")}`;
-      await recordLiveMilestone(CI_LIVE_KEYS.device, known);
+      await recordLiveMilestone(CI_LIVE_KEYS.plugins, known);
       mark(known);
       try {
         const info = await Device.getInfo();

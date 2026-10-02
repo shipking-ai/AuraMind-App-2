@@ -47,6 +47,28 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!-- The `auramind://app/<path>` deep link. Registered here because three
+	     surfaces hand it to the system rather than calling into the app
+	     directly: the Live Activity's widgetURL (see
+	     AuraMindWidgets/StudySessionLiveActivity.swift), Siri and Shortcuts, and
+	     notification taps. All of those route through LaunchServices, which
+	     silently does nothing when no handler claims the scheme — the tap looks
+	     like a dead Live Activity rather than a missing configuration.
+	     Must stay in step with android/app/src/main/AndroidManifest.xml, which
+	     declares scheme "auramind" host "app". -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.auramind.app</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>auramind</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>AuraMind listens to your spoken answers during voice study.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

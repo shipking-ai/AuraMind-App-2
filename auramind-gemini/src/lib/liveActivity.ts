@@ -20,6 +20,11 @@ export interface LiveActivitySession {
 }
 
 interface AuraLiveActivityPlugin {
+  /**
+   * Resolves ONLY when the native plugin is actually registered and answers.
+   * A rejection means the plugin is missing from the binary — a build defect,
+   * not a user setting.
+   */
   isSupported(): Promise<{ supported: boolean; enabled: boolean }>;
   start(options: LiveActivitySession): Promise<{ started: boolean; id?: string }>;
   update(options: LiveActivitySession): Promise<{ updated: boolean }>;
@@ -27,6 +32,30 @@ interface AuraLiveActivityPlugin {
 }
 
 const AuraLiveActivity = registerPlugin<AuraLiveActivityPlugin>('AuraLiveActivity');
+
+/**
+ * Whether the native plugin is present and answering.
+ *
+ * Distinct from isLiveActivityAvailable() on purpose. Both return false when
+ * the OS refuses — the user's Live Activities setting is off, or the platform
+ * is too old — but only this one distinguishes that from the plugin never
+ * having been registered, which is a bug in the build.
+ *
+ * The distinction used to be invisible: SceneDelegate replaced the storyboard's
+ * MainViewController (where the plugins are registered) with a bare
+ * CAPBridgeViewController, and every call rejected into the same catch that
+ * handled "permission denied". Voice and Live Activity silently did nothing,
+ * and CI read the result as the OS declining.
+ */
+export async function isLiveActivityPluginRegistered(): Promise<boolean> {
+  if (!isIOSApp()) return false;
+  try {
+    await AuraLiveActivity.isSupported();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function isIOSApp(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
