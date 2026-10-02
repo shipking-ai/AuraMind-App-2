@@ -55,6 +55,11 @@ jobs:
           cd api
           npm test
 
+      - name: Check native shells match app-identity.ts
+        run: |
+          cd auramind-gemini
+          node scripts/brand-sync.mjs
+
       - name: Build project
         run: |
           cd auramind-gemini
