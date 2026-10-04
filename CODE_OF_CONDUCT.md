@@ -56,7 +56,7 @@ representing the community in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior
-may be reported to the maintainers at **conduct@auramind.app**.
+may be reported to the maintainers at **conduct@bonamind.app**.
 All complaints will be reviewed and investigated promptly and fairly.
 
 If you cannot use email, reach out by opening a **private** GitHub
@@ -64,7 +64,7 @@ issue labeled `co-violation` (if a private issue channel has been
 configured by the repo admin) or by sending a direct message to the
 maintainer on GitHub at [@shipking-ai](https://github.com/shipking-ai).
 
-> **For the maintainer**: please confirm `conduct@auramind.app` is set
+> **For the maintainer**: please confirm `conduct@bonamind.app` is set
 > up and forwarding to the maintainer team before publishing this file.
 > Until then, the GitHub DM path above is the only one that will
 > reliably reach someone.

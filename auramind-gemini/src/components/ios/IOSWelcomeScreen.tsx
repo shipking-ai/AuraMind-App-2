@@ -19,7 +19,7 @@ const FEATURES = [
     icon: Brain,
     color: "var(--ios-green)",
     title: "Reviews at the right moment",
-    body: "AuraMind brings each card back just before you would forget it.",
+    body: "BonaMind brings each card back just before you would forget it.",
   },
   {
     icon: MessageCircle,
@@ -65,7 +65,7 @@ export default function IOSWelcomeScreen() {
           transition={{ delay: 0.1 }}
           style={{ textAlign: "center", marginTop: 24 }}
         >
-          Welcome to AuraMind
+          Welcome to BonaMind
         </motion.h1>
 
         <div style={{ display: "grid", gap: 26, marginTop: 44 }}>

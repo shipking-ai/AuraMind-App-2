@@ -6,7 +6,7 @@
  * path-drawing animation (used everywhere from onboarding illustrations
  * to XP-bar traces).
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Animated checkmark on quiz correct-answer.
  *   - Streak-flame icon that draws itself on unlock.
  *   - Skill-tree edge connectors when a new path is unlocked.

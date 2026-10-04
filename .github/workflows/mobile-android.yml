@@ -119,9 +119,9 @@ jobs:
             # therefore absent on the runner. They are public URLs, not
             # secrets, so they are written literally here rather than
             # carried as repository secrets.
-            printf 'VITE_API_BASE_URL=%s\n'         'https://auramind.app'
-            printf 'VITE_SSE_BASE=%s\n'             'https://auramind.app'
-            printf 'VITE_APP_URL=%s\n'              'https://auramind.app'
+            printf 'VITE_API_BASE_URL=%s\n'         'https://bonamind.app'
+            printf 'VITE_SSE_BASE=%s\n'             'https://bonamind.app'
+            printf 'VITE_APP_URL=%s\n'              'https://bonamind.app'
             printf 'VITE_USE_PUTER=%s\n'            'true'
             printf 'VITE_TURNSTILE_SITE_KEY=%s\n'  '0x4AAAAAAAEsHm7dsqEhBi3Nr'
           } > .env

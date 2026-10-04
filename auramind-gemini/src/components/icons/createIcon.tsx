@@ -1,4 +1,4 @@
-// AuraMind icon factory — our own, dependency-free icon system.
+// BonaMind icon factory — our own, dependency-free icon system.
 //
 // This replaces the runtime dependency on `lucide-react`. Icon *shapes* were
 // vendored from the ISC-licensed lucide set into `icons.generated.ts`; this

@@ -24,7 +24,7 @@ afterEach(() => {
   supabase.auth.admin.listUsers.mockReset();
 });
 
-const ADMIN = { id: 'a', email: 'admin@auramind.app', app_metadata: { role: 'admin' }, user_metadata: {} };
+const ADMIN = { id: 'a', email: 'admin@bonamind.app', app_metadata: { role: 'admin' }, user_metadata: {} };
 const AUTH = { authorization: 'Bearer t' };
 
 /** Every leading character a spreadsheet treats as the start of a formula. */

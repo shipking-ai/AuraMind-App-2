@@ -1,7 +1,7 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 
 /**
- * AuraMind's app-wide QueryClient.
+ * BonaMind's app-wide QueryClient.
  *
  * Configured for Supabase semantics:
  *   - JWT-aware: every query runs against the active Supabase client, so
@@ -25,7 +25,7 @@ import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // 60s in-flight data is "fresh" — matches AuraMind's expected
+      // 60s in-flight data is "fresh" — matches BonaMind's expected
       // per-tab dwell time on dashboards.
       staleTime: 60_000,
       // 25min keeps rarely-viewed data alive without thrashing LRU.

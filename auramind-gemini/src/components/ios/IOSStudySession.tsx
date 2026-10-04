@@ -6,7 +6,7 @@
  * - Once it shows the answer, swipe right for Good, left for Again, up for
  *   Easy — or tap one of the four grade buttons, each labelled with when the
  *   card will come back.
- * - Two card looks, chosen in Settings › Card style: AuraMind's paper index
+ * - Two card looks, chosen in Settings › Card style: BonaMind's paper index
  *   card (default) or a dark glass card lit in the deck's colour.
  *
  * Presentation only: StudyModePage owns the queue, grading, scheduling and

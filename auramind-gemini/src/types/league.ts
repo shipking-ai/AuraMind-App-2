@@ -1,7 +1,7 @@
 /**
  * League System Types & Constants
  *
- * Duolingo-inspired weekly competitions adapted for AuraMind.
+ * Duolingo-inspired weekly competitions adapted for BonaMind.
  * 10 tiers × 15-person groups × 7-day cycles. Top 7 promote, middle 3 stay,
  * bottom 5 demote. Driven by weekly XP with accuracy as tiebreaker.
  */

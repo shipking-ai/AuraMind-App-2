@@ -140,11 +140,11 @@ jobs:
         with:
           projectPath: auramind-gemini
           tagName: ${{ github.ref_name }}
-          releaseName: 'AuraMind for Windows ${{ github.ref_name }}'
+          releaseName: 'BonaMind for Windows ${{ github.ref_name }}'
           releaseBody: |
-            Download **AuraMind_*_x64-setup.exe** below and run it. It installs for your Windows account only (no administrator rights needed).
+            Download **BonaMind_*_x64-setup.exe** below and run it. It installs for your Windows account only (no administrator rights needed).
 
-            Already installed? AuraMind updates itself; this release is where that update comes from.
+            Already installed? BonaMind updates itself; this release is where that update comes from.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true

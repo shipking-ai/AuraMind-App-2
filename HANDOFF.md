@@ -1,4 +1,4 @@
-# Handoff — AuraMind 2.0.0
+# Handoff — BonaMind 2.0.0
 
 Written 2026-09-09; updated 2026-09-28 (FSRS scheduler repair, the iPhone app, one special capability per platform, a sideloadable IPA, Live Activity in CI, the admin oracle closed). Context for continuing this work in another tool.
 
@@ -32,12 +32,12 @@ the traps that cost real time.
    approved, 12+ testers must stay opted in for **14 continuous days** before
    *Apply for production* unlocks. Voice features (#77 and the listening
    branch) reach testers only in the next build (versionCode 8+).
-3. ~~**www.auramind.app certificate.**~~ Fixed — `www` serves a valid
+3. ~~**www.bonamind.app certificate.**~~ Fixed — `www` serves a valid
    certificate (expires 2026-12-21, checked 2026-09-28) and 308-redirects to
    the apex.
 4. **Stripe live smoke.** One real checkout. It starts a 7-day trial, so the
    first charge lands after the trial.
-5. **Confirm sign-in works** at auramind.app/auth in a real browser. Automated
+5. **Confirm sign-in works** at bonamind.app/auth in a real browser. Automated
    browsers can't reach `challenges.cloudflare.com`, so they always show
    "Couldn't load the verification check".
 6. **Accept the Orpheus model terms** in the Groq console (org admin):
@@ -49,7 +49,7 @@ the traps that cost real time.
    `src/services/voice/aiVoice.ts`.
 7. **Put the iPhone build on a phone.** Everything iOS is CI-verified only.
    Run `mobile-ios.yml` (workflow_dispatch), download
-   `auramind-ios-unsigned-ipa`, sign it with Sideloadly and a free Apple ID —
+   `BonaMind-ios-unsigned-ipa`, sign it with Sideloadly and a free Apple ID —
    full steps under "Getting the app onto an iPhone from Windows" below. The
    three things that have never executed on hardware: Siri (`AuraMindIntents`),
    the Live Activity, and native dictation (`SFSpeechRecognizer`).
@@ -140,7 +140,7 @@ Each of these cost real time. None are obvious from the code.
 It only checks that the caller presents *a* valid JWT, and the public anon key
 shipped in the web bundle is one. On 2026-09-14 eleven legacy edge functions
 were deleted after an audit found open relays among them: `send-email` sent
-arbitrary HTML from `hello@auramind.app` to anyone, `auth_send_email_hook`
+arbitrary HTML from `hello@bonamind.app` to anyone, `auth_send_email_hook`
 accepted the hard-coded secret `testsecret123`, and `chat-stream` proxied the
 Groq key with no auth at all. None were called by the app. Sources are backed
 up outside the repo in `edge-function-backups-2026-09-14/`.
@@ -363,10 +363,10 @@ measured.
 cd auramind-gemini
 npm run build:apk:debug
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.auramind.app.debug/com.auramind.app.MainActivity
+adb shell am start -n com.bonamind.app.debug/com.bonamind.app.MainActivity
 
 # attach a real debugger to the WebView
-adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof com.auramind.app.debug)
+adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof com.bonamind.app.debug)
 ```
 
 Then drive it with Playwright over `connectOverCDP('http://127.0.0.1:9222')`,
@@ -391,7 +391,7 @@ Everything iOS happens on GitHub's macOS runners via `.github/workflows/mobile-i
   the `/__preview/ios` tour. This is the fast loop: push, read the artifact.
 - **`ios-device-ipa`** (workflow_dispatch) — builds `-sdk iphoneos` with
   `CODE_SIGNING_ALLOWED=NO`, asserts `App.app/PlugIns/AuraMindWidgets.appex`
-  exists, and zips `Payload/` by hand into `AuraMind-unsigned.ipa`. It uses
+  exists, and zips `Payload/` by hand into `BonaMind-unsigned.ipa`. It uses
   `build`, not `archive`: with signing off, archiving doesn't reliably place
   `App.app` in the `.xcarchive`.
   Optional `server_url` input rewrites `capacitor.config.json` to load the web
@@ -405,7 +405,7 @@ types line up and nothing else.
 ### Getting the app onto an iPhone from Windows
 
 1. Run `mobile-ios.yml` (Actions → Run workflow), then
-   `gh run download <id> -n auramind-ios-unsigned-ipa -D <dir>`. `gh` unzips
+   `gh run download <id> -n BonaMind-ios-unsigned-ipa -D <dir>`. `gh` unzips
    the artifact, so what lands is the real `.ipa`, ~70 MB.
 2. Install **Sideloadly**. It needs Apple's own iTunes *and* iCloud from
    apple.com — the Microsoft Store versions don't expose the device.
@@ -634,7 +634,7 @@ Traps found here:
   no sense, diff the shell env against CI before suspecting the code.
 - **`redirect_to` cannot override the Supabase Site URL** unless the target
   is on the project's redirect allowlist — localhost is not, so the seeded
-  session landed on the auramind.app origin and the app bounced to `/auth`.
+  session landed on the bonamind.app origin and the app bounced to `/auth`.
   Fix: run the verify hop in Node (`redirect: 'manual'`), take the
   `#access_token=…` fragment off the Location header, and navigate the *local*
   `/auth/callback` with it so `detectSessionInURL` stores the session on the
@@ -733,7 +733,7 @@ Service, server push sparks) is explicitly out of scope.
   firing (jittered ~90 s poll × 15% coin, ramped at quiet-hours edges), daily
   cap 12, per-card cap 2/day, 20 min between sparks, 3 h re-review floor,
   weighted pick toward lowest retrievability with jitter. Spark log in
-  `localStorage['auramind:sparkLog']` (7-day retention) gives cross-surface
+  `localStorage['BonaMind:sparkLog']` (7-day retention) gives cross-surface
   suppression — no DB migration.
 - **Surface 1: in-app pop-up** — `components/memory/MemorySpark.tsx`, mounted
   once in `NovaDashboardShell`; fires only on dashboard-ish routes while the
@@ -812,8 +812,8 @@ the moment credentials arrive. Nothing else in the code changes when they do.
 
 ### Activation checklist (human, no code)
 
-1. Firebase console → project + Android app `com.auramind.app` (debug build
-   uses `com.auramind.app.debug` — register it too if pushes are wanted in
+1. Firebase console → project + Android app `com.bonamind.app` (debug build
+   uses `com.bonamind.app.debug` — register it too if pushes are wanted in
    debug).
 2. `google-services.json` → `auramind-gemini/android/app/` and rebuild. The
    gradle plugin applies itself when the file exists (already wired in
@@ -1070,7 +1070,7 @@ changes (no Mac)" above. The `server_url` input turns it into a live-reload
 shell that loads the web app from a URL, which makes iteration a refresh
 instead of a 15-minute round trip.
 
-Run 35805655820 on `main`: both jobs green, `auramind-ios-unsigned-ipa`, 70 MB.
+Run 35805655820 on `main`: both jobs green, `BonaMind-ios-unsigned-ipa`, 70 MB.
 
 ---
 

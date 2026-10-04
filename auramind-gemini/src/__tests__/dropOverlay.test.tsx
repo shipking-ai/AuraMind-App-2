@@ -51,7 +51,7 @@ describe('DropOverlay', () => {
     setup();
     act(() => { fireEvent.dragEnter(window, { dataTransfer: files() }); });
     fireEvent.drop(screen.getByTestId('drop-overlay'), { dataTransfer: files(new File(['x'], 'setup.exe')) });
-    expect(toastError).toHaveBeenCalledWith("AuraMind can't make a course from .exe files.");
+    expect(toastError).toHaveBeenCalledWith("BonaMind can't make a course from .exe files.");
     expect(offer).not.toHaveBeenCalled();
     expect(screen.getByTestId('where')).toHaveTextContent('/dashboard');
   });

@@ -211,7 +211,7 @@ const sections = [
     content: (
       <>
         <p>
-          AuraMind is designed for users aged 13 and above. We do not knowingly collect personal information from children under 13 without verifiable parental consent in accordance with COPPA.
+          BonaMind is designed for users aged 13 and above. We do not knowingly collect personal information from children under 13 without verifiable parental consent in accordance with COPPA.
         </p>
         <p>
           If you believe a child under 13 has provided us with personal data, please contact us immediately at <strong className="text-[#F0EFFE]">{BRAND.contactEmail}</strong>. We will take steps to delete such information promptly.

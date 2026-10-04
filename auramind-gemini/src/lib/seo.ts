@@ -16,11 +16,12 @@ export interface SEOConfig {
 }
 
 import { APP_NAME, APP_SOCIAL_TITLE } from '../../app-identity.ts';
+import { PRODUCT_SITE_URL } from './branding.ts';
 
 const DEFAULT_TITLE = APP_SOCIAL_TITLE;
 const DEFAULT_DESCRIPTION = 'AI flashcards powered by FSRS spaced repetition — learn anything in half the time. Turn notes and PDFs into smart decks that adapt to your memory.';
 const DEFAULT_IMAGE = '/auramind/og-cover.png';
-const SITE_URL = 'https://auramind.app';
+const SITE_URL = PRODUCT_SITE_URL;
 
 /**
  * Update document meta tags for SEO
@@ -124,7 +125,7 @@ export function setJsonLd(data: Record<string, any>): void {
 }
 
 /**
- * Default JSON-LD for AuraMind
+ * Default JSON-LD for BonaMind
  */
 export function setDefaultJsonLd(): void {
   setJsonLd({

@@ -41,7 +41,7 @@ export const analyticsService = {
           capture_pageleave: true,
           advanced_disable_feature_flags: true,
           // Session recording fires from inside `posthog-js`'s dynamically-
-          // imported chunk — visible in DevTools as `mf.js`. AuraMind does
+          // imported chunk — visible in DevTools as `mf.js`. BonaMind does
           // not use session replay (a different internal hook powers study
           // replay), so the recorder throws `Error: Params are not set`
           // during eager init because no recorder params are wired up.

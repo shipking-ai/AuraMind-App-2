@@ -1,6 +1,6 @@
 # Security Policy
 
-Thanks for helping keep AuraMind users safe. We take vulnerability
+Thanks for helping keep BonaMind users safe. We take vulnerability
 reports seriously and respond within the SLAs below.
 
 ## Supported versions
@@ -17,7 +17,7 @@ reports seriously and respond within the SLAs below.
 
 Open a **GitHub Security Advisory** privately:
 
-[https://github.com/shipking-ai/AuraMind-App-2/security/advisories/new](https://github.com/shipking-ai/AuraMind-App-2/security/advisories/new)
+[https://github.com/shipking-ai/BonaMind-App-2/security/advisories/new](https://github.com/shipking-ai/BonaMind-App-2/security/advisories/new)
 
 Include:
 - a clear description of the vulnerability and the impact you observed
@@ -26,7 +26,7 @@ Include:
 - whether you are OK with being credited in the fix announcement
 
 If you cannot use GitHub Security Advisories (e.g. you are reporting
-from an account GitHub does not recognize), email **security@auramind.app**
+from an account GitHub does not recognize), email **security@bonamind.app**
 with the same payload. The on-call maintainer reads this inbox daily.
 
 ## Our response SLA

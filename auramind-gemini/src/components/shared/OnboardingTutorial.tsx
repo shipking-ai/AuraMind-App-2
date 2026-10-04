@@ -324,7 +324,7 @@ const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ isOpen, onClose
                 onClick={next}
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#d8d2ff] px-5 text-xs font-black text-[#17132d] transition-colors hover:bg-white"
               >
-                {isLastStep ? "Open AuraMind" : "Continue"}
+                {isLastStep ? "Open BonaMind" : "Continue"}
                 <ArrowRight size={15} />
               </button>
             </footer>

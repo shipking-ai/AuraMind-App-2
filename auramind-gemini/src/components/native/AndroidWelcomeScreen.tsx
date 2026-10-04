@@ -80,7 +80,7 @@ export default function AndroidWelcomeScreen() {
               className="mt-1 text-[42px] font-bold leading-none tracking-tight text-white"
               style={{ fontFamily: "'Google Sans', Inter, sans-serif" }}
             >
-              AuraMind
+              BonaMind
             </motion.h1>
 
             <motion.p
@@ -119,7 +119,7 @@ export default function AndroidWelcomeScreen() {
         className="pointer-events-none absolute inset-0 bg-[#0a0a0a]"
       />
 
-      <div className="relative pb-[max(14px,env(safe-area-inset-bottom))] pt-2 text-center text-[11px] tracking-wide text-white/20">AuraMind for {deviceName()}</div>
+      <div className="relative pb-[max(14px,env(safe-area-inset-bottom))] pt-2 text-center text-[11px] tracking-wide text-white/20">BonaMind for {deviceName()}</div>
     </main>
   );
 }

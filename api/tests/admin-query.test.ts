@@ -20,7 +20,7 @@ afterEach(() => {
 
 const adminUser = {
   id: 'admin-1',
-  email: 'owner@auramind.app',
+  email: 'owner@bonamind.app',
   user_metadata: { is_admin: true }, // display only — authz reads app_metadata
   app_metadata: { role: 'admin' },
 };

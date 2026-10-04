@@ -1,5 +1,5 @@
 /**
- * StudyToolsPage — the hub for AuraMind's "upload anything, get study
+ * StudyToolsPage — the hub for BonaMind's "upload anything, get study
  * material" superpowers:
  *   - audio → flashcard deck (record or upload a lecture)
  *   - document → notes / slides / flashcards

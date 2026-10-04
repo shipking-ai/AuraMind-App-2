@@ -1,5 +1,5 @@
 /**
- * AdminUsersPage — manage every AuraMind account:
+ * AdminUsersPage — manage every BonaMind account:
  *   - search users by email
  *   - change role / plan / subscription status
  *   - delete a user (with confirm)
@@ -144,7 +144,7 @@ export default function AdminUsersPage() {
             <Users className="w-4 h-4 text-[#8B5CF6]" />
             <div>
               <h1 className="text-lg font-semibold text-white tracking-tight">Users</h1>
-              <p className="text-[11px] text-zinc-500">Manage the AuraMind fleet — roles, plans, subscriptions, access.</p>
+              <p className="text-[11px] text-zinc-500">Manage the BonaMind fleet — roles, plans, subscriptions, access.</p>
             </div>
           </div>
           <button onClick={load} disabled={loading}

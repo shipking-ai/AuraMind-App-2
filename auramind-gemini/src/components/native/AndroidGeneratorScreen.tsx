@@ -318,7 +318,7 @@ export default function AndroidGeneratorScreen() {
   const save = async () => {
     if (!workspace) return;
     const title =
-      quiz?.title || presentation?.title || sourceTitle || topic.trim() || "AuraMind deck";
+      quiz?.title || presentation?.title || sourceTitle || topic.trim() || "BonaMind deck";
     const cards = quiz
       ? quiz.questions.map((question) => ({
           question: question.question,
@@ -336,7 +336,7 @@ export default function AndroidGeneratorScreen() {
     try {
       const deck = await workspace.createDeck(
         title,
-        `Created with AuraMind on Android from ${sourceTitle || topic}.`,
+        `Created with BonaMind on Android from ${sourceTitle || topic}.`,
       );
       if (!deck) throw new Error("Could not create the deck.");
       const saved = await workspace.addCardsToDeck(deck.id, cards);

@@ -94,7 +94,7 @@ export async function getName(): Promise<string> {
     const info = await App.getInfo();
     return info.name;
   } catch {
-    return 'AuraMind';
+    return 'BonaMind';
   }
 }
 

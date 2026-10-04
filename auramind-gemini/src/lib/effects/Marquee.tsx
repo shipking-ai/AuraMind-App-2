@@ -3,7 +3,7 @@
  * scroll. Faithful re-implementation of Magic UI's marquee primitive.
  *
  * The existing `components/ui/Marquee.tsx` is a similar hand-rolled
- * version; this one is the API AuraMind should converge on (gradient
+ * version; this one is the API BonaMind should converge on (gradient
  * edges, pause-on-hover, reverse, vertical). Backward-compat:
  * `MarqueeContent` is the inner block that should animate.
  */

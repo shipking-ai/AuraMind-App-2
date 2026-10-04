@@ -39,7 +39,7 @@ describe('externalUrl', () => {
     expect(externalUrl('/deck/1', page)).toBeNull();
     expect(externalUrl('https://tauri.localhost/about', page)).toBeNull();
     expect(externalUrl('https://billing.stripe.com/p/session', page)?.href).toBe('https://billing.stripe.com/p/session');
-    expect(externalUrl('mailto:hello@auramind.app', page)?.protocol).toBe('mailto:');
+    expect(externalUrl('mailto:hello@bonamind.app', page)?.protocol).toBe('mailto:');
     expect(externalUrl('javascript:alert(1)', page)).toBeNull();
     expect(externalUrl('file:///C:/Windows/', page)).toBeNull();
     expect(externalUrl('ms-settings:notifications', page)?.href).toBe('ms-settings:notifications');
@@ -77,14 +77,14 @@ describe('installDesktopLinkHandling', () => {
 
       // A target=_blank link on the About page.
       const link = document.createElement('a');
-      link.href = 'https://auramind.app/privacy';
+      link.href = 'https://bonamind.app/privacy';
       link.target = '_blank';
       link.textContent = 'privacy';
       document.body.appendChild(link);
       const click = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
       link.dispatchEvent(click);
       expect(click.defaultPrevented).toBe(true);
-      await vi.waitFor(() => expect(openUrl).toHaveBeenCalledWith('https://auramind.app/privacy'));
+      await vi.waitFor(() => expect(openUrl).toHaveBeenCalledWith('https://bonamind.app/privacy'));
       link.remove();
     } finally {
       window.open = original;
@@ -118,7 +118,7 @@ describe('DesktopUpdateBanner', () => {
     expect(checkForDesktopUpdate).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(delay + 1); });
 
-    expect(screen.getByText('AuraMind 2.1.0 is ready')).toBeInTheDocument();
+    expect(screen.getByText('BonaMind 2.1.0 is ready')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Restart and update' }));
     expect(installDesktopUpdate).toHaveBeenCalledWith(update, expect.any(Function));
     expect(screen.getByRole('button', { name: 'Updating…' })).toBeDisabled();
@@ -146,7 +146,7 @@ describe('DesktopUpdateBanner', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(delay + 1); });
     fireEvent.click(screen.getByRole('button', { name: 'Later' }));
 
-    expect(screen.queryByText('AuraMind 2.1.0 is ready')).toBeNull();
+    expect(screen.queryByText('BonaMind 2.1.0 is ready')).toBeNull();
   });
 
   it('lets the user retry after a failed install', async () => {

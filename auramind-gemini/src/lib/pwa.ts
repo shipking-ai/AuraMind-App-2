@@ -6,7 +6,7 @@ import {
 } from '../../app-identity.ts';
 
 /**
- * PWA Configuration for AuraMind
+ * PWA Configuration for BonaMind
  * 
  * Enables offline studying, installability, and push notifications.
  * Key features:

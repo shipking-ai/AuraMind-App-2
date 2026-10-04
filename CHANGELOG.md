@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to AuraMind will be documented in this file.
+All notable changes to BonaMind will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -218,7 +218,7 @@ the same React source via Capacitor 8.
 ## [1.0.0] - 2026-01-15
 
 ### Added
-- Initial release of AuraMind
+- Initial release of BonaMind
 - AI-powered flashcard generation (Groq, OpenRouter, Local AI)
 - Spaced repetition with SM-2 algorithm
 - Study modes: Flashcard review, Quiz, Study Buddy chat

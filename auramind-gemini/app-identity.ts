@@ -48,7 +48,7 @@
  * The display name. Must be a single word with no tagline: Google Play
  * rejects a store listing whose app name looks like a marketing slogan.
  */
-export const APP_NAME = 'AuraMind';
+export const APP_NAME = 'BonaMind';
 
 /**
  * Home-screen / launcher label. Short enough not to truncate on a phone

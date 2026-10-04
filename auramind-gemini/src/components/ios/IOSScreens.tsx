@@ -170,7 +170,7 @@ export function IOSToday() {
         title="Today"
         eyebrow={dateLabel}
         trailing={
-          <Avatar name={user?.name || "AuraMind"} onClick={() => navigate("/dashboard/settings")} />
+          <Avatar name={user?.name || "BonaMind"} onClick={() => navigate("/dashboard/settings")} />
         }
       />
 
@@ -183,7 +183,7 @@ export function IOSToday() {
           />
           <div className="ios-empty-title">Start with anything</div>
           <p className="ios-empty-body">
-            Turn a topic, PDF, video or lecture into a deck, and AuraMind schedules the reviews for
+            Turn a topic, PDF, video or lecture into a deck, and BonaMind schedules the reviews for
             you.
           </p>
           <button

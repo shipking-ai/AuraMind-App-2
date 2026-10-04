@@ -63,7 +63,7 @@ export function buildReminderNotifications({
   if (dailyReminder) {
     notifications.push({
       id: REMINDER_IDS.daily,
-      title: "AuraMind study reminder",
+      title: "BonaMind study reminder",
       body: "Your review queue is ready. Keep your memory curve sharp.",
       schedule: { on: timeWithOffset(hour, minute, 0), repeats: true },
     });
@@ -71,7 +71,7 @@ export function buildReminderNotifications({
   if (dueReminder) {
     notifications.push({
       id: REMINDER_IDS.due,
-      title: "AuraMind due cards",
+      title: "BonaMind due cards",
       body: "You have cards waiting for a quick review.",
       schedule: { on: timeWithOffset(hour, minute, 15), repeats: true },
     });
@@ -79,7 +79,7 @@ export function buildReminderNotifications({
   if (streakReminder) {
     notifications.push({
       id: REMINDER_IDS.streak,
-      title: "Protect your AuraMind streak",
+      title: "Protect your BonaMind streak",
       body: "A short session tonight keeps your rhythm intact.",
       schedule: { on: timeWithOffset(hour, minute, 30), repeats: true },
     });
@@ -87,7 +87,7 @@ export function buildReminderNotifications({
   if (weeklySummary) {
     notifications.push({
       id: REMINDER_IDS.weekly,
-      title: "Your AuraMind week",
+      title: "Your BonaMind week",
       body: "Take a minute to see what you strengthened this week.",
       schedule: { on: { weekday: 2, ...timeWithOffset(hour, minute, 45) }, repeats: true },
     });
@@ -99,11 +99,11 @@ export type SpokenReminderMode = 'off' | 'random' | 'chosen';
 
 /** The lines a spoken reminder picks from ("random") or the user picks one of ("chosen"). */
 export const SPOKEN_REMINDER_MESSAGES = [
-  'Time for a quick AuraMind review. Your cards are waiting.',
+  'Time for a quick BonaMind review. Your cards are waiting.',
   "Hey, it's study time. Five minutes now saves an hour later.",
   'Your memory curve is dipping. A short review will lift it right back up.',
   'Prof. Aura here. Ready for a few cards?',
-  'Keep your streak alive. Open AuraMind for a quick session.',
+  'Keep your streak alive. Open BonaMind for a quick session.',
   "Small reviews, big results. Let's clear your due cards.",
   "Knock knock. It's your flashcards. They miss you.",
   'Quick brain workout? Your review queue is ready.',

@@ -92,7 +92,7 @@ const StatusPage: React.FC = () => {
   }, [refresh]);
 
   const components: ComponentRow[] = [
-    { key: 'web', name: 'Web App', description: 'auramind.app dashboard and study experience', state: 'operational' },
+    { key: 'web', name: 'Web App', description: 'bonamind.app dashboard and study experience', state: 'operational' },
     { key: 'api', name: 'API', description: 'Authentication, billing, AI proxy, and sync endpoints', state: apiState },
     { key: 'db', name: 'Database', description: 'Supabase Postgres — accounts, decks, review history', state: dbState },
   ];
@@ -114,7 +114,7 @@ const StatusPage: React.FC = () => {
       <div className="flex-1 w-full max-w-2xl mx-auto px-6 pb-20">
         <h1 className="text-2xl font-light tracking-tight mb-1">System status</h1>
         <p className="text-[#7A7A96] text-xs mb-8">
-          Live health of AuraMind's services{checkedAt ? ` · checked ${checkedAt.toLocaleTimeString()}` : ''}
+          Live health of BonaMind's services{checkedAt ? ` · checked ${checkedAt.toLocaleTimeString()}` : ''}
         </p>
 
         {/* Overall banner */}
@@ -165,7 +165,7 @@ const StatusPage: React.FC = () => {
           </div>
           <p className="text-[#7A7A96] text-[11px] mt-4 leading-relaxed">
             Experiencing an issue not shown here? Contact{' '}
-            <a href="mailto:hello@auramind.app" className="text-[#8B5CF6] hover:text-[#7C3AED]">hello@auramind.app</a>.
+            <a href="mailto:hello@bonamind.app" className="text-[#8B5CF6] hover:text-[#7C3AED]">hello@bonamind.app</a>.
           </p>
         </div>
       </div>

@@ -43,8 +43,8 @@ describe('return origin for Stripe checkout', () => {
   });
 
   it('uses the canonical origin for the website', async () => {
-    expect(await returnOriginFor('https://auramind.app')).toBe('https://auramind.app');
-    expect(await returnOriginFor('https://www.auramind.app')).toBe('https://www.auramind.app');
+    expect(await returnOriginFor('https://bonamind.app')).toBe('https://bonamind.app');
+    expect(await returnOriginFor('https://www.bonamind.app')).toBe('https://www.bonamind.app');
   });
 
   it('uses each native app shell origin', async () => {
@@ -54,26 +54,26 @@ describe('return origin for Stripe checkout', () => {
 
   it('REJECTS an attacker-controlled origin', async () => {
     // The vulnerability: this string would have been placed in success_url.
-    expect(await returnOriginFor('https://evil.example')).toBe('https://auramind.app');
-    expect(await returnOriginFor('https://auramind.app.evil.example')).toBe('https://auramind.app');
+    expect(await returnOriginFor('https://evil.example')).toBe('https://bonamind.app');
+    expect(await returnOriginFor('https://bonamind.app.evil.example')).toBe('https://bonamind.app');
   });
 
   it('REJECTS a lookalike on the wrong scheme', async () => {
     // http on an allowlisted host would downgrade the post-payment redirect.
-    expect(await returnOriginFor('http://auramind.app')).toBe('https://auramind.app');
+    expect(await returnOriginFor('http://bonamind.app')).toBe('https://bonamind.app');
   });
 
   it('REJECTS the tauri host spoofed as a subdomain', async () => {
     // Matches the existing cors.test.ts regression case — the trailing-dot and
     // suffix tricks must fail here too.
-    expect(await returnOriginFor('https://tauri.localhost.evil.example')).toBe('https://auramind.app');
-    expect(await returnOriginFor('http://tauri.localhost')).toBe('https://auramind.app');
+    expect(await returnOriginFor('https://tauri.localhost.evil.example')).toBe('https://bonamind.app');
+    expect(await returnOriginFor('http://tauri.localhost')).toBe('https://bonamind.app');
   });
 
   it('falls back to the canonical origin when no Origin header is sent', async () => {
     // Same-origin requests and non-browser clients omit Origin entirely.
-    expect(await returnOriginFor(undefined)).toBe('https://auramind.app');
-    expect(await returnOriginFor('')).toBe('https://auramind.app');
+    expect(await returnOriginFor(undefined)).toBe('https://bonamind.app');
+    expect(await returnOriginFor('')).toBe('https://bonamind.app');
   });
 
   it('follows APP_ORIGIN once the domain changes', async () => {
@@ -85,7 +85,7 @@ describe('return origin for Stripe checkout', () => {
 
     expect(resolve('https://newname.app')).toBe('https://newname.app');
     // An origin from the old domain must no longer be honoured.
-    expect(resolve('https://auramind.app')).toBe('https://newname.app');
+    expect(resolve('https://bonamind.app')).toBe('https://newname.app');
     expect(resolve('https://evil.example')).toBe('https://newname.app');
   });
 });
@@ -110,15 +110,15 @@ describe('transactional email links', () => {
     const resolve = (o?: string) =>
       (o && CORS_ORIGINS.has(o) ? o : null) || process.env.NEXT_PUBLIC_APP_URL || APP_ORIGIN;
 
-    expect(resolve('https://evil.example')).toBe('https://auramind.app');
-    expect(resolve('https://auramind.app')).toBe('https://auramind.app');
+    expect(resolve('https://evil.example')).toBe('https://bonamind.app');
+    expect(resolve('https://bonamind.app')).toBe('https://bonamind.app');
   });
 
   it('appUrl() produces a well-formed absolute link', async () => {
     vi.resetModules();
     const { appUrl } = await import('../_lib/origin.js');
     expect(appUrl('/reset-password?token=abc')).toBe(
-      'https://auramind.app/reset-password?token=abc',
+      'https://bonamind.app/reset-password?token=abc',
     );
     expect(appUrl('/dashboard')).not.toContain('//dashboard');
   });

@@ -31,7 +31,7 @@ export function AndroidBottomNav() {
   return (
     <nav
       className="android-bottom-nav android-mobile-bottom-nav"
-      aria-label="AuraMind Android navigation"
+      aria-label="BonaMind Android navigation"
     >
       <div className="android-mobile-bottom-nav-inner">
         {TABS.map(({ label, path, icon: Icon, featured }) => {

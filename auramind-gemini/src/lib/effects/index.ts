@@ -1,5 +1,5 @@
 /**
- * AuraMind effects library — hand-rolled, first-party replacements for the
+ * BonaMind effects library — hand-rolled, first-party replacements for the
  * most-used components from Magic UI / bklit UI / React Bits / Kokonut,
  * plus direct integrations of `animejs` v4 (the only animation lib we
  * have a runtime dep on for this layer).
@@ -27,7 +27,7 @@
  * Why hand-rolled (instead of pulling from `npx shadcn add @bklit/...`):
  *   - The shadcn CLI copies components into YOUR `components/` folder. Same
  *     outcome, but writing the primitives here keeps the API surface
- *     aligned with AuraMind's design tokens + theming + reduced-motion
+ *     aligned with BonaMind's design tokens + theming + reduced-motion
  *     policy in one place. No copy drift over time.
  *   - No new runtime dependencies beyond `framer-motion` + `recharts` +
  *     `animejs` (all already in the project). Cuts bundle weight and

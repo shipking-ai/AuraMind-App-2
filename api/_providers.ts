@@ -29,7 +29,7 @@ import { APP_ORIGIN } from './_lib/origin.js';
  * labelled on a third-party dashboard, so a stale value is harmless, but it
  * should still track the real name.
  */
-const APP_NAME = process.env.APP_NAME || 'AuraMind';
+const APP_NAME = process.env.APP_NAME || 'BonaMind';
 
 export interface Provider {
   /** Stable identifier used in logs and the `x-ai-provider` response header. */

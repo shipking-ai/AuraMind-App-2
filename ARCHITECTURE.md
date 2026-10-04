@@ -1,4 +1,4 @@
-# AuraMind Architecture & Reference
+# BonaMind Architecture & Reference
 
 > Consolidated from the planning documents on 2026-07-08; re-verified against the code and the live database on 2026-09-28. Refer to `README.md` for setup, `CHANGELOG.md` for version history, `DEPLOYMENT.md` for deployment, and `HANDOFF.md` for current state and traps.
 
@@ -6,7 +6,7 @@
 
 ## System Overview
 
-AuraMind is a full-stack adaptive AI learning system — it turns any input (PDF, video, lecture, topic) into a personalized course, schedules review with FSRS (the official `ts-fsrs`, FSRS-6), and tutors with a knowledge model of the user's actual weaknesses. Deployable units:
+BonaMind is a full-stack adaptive AI learning system — it turns any input (PDF, video, lecture, topic) into a personalized course, schedules review with FSRS (the official `ts-fsrs`, FSRS-6), and tutors with a knowledge model of the user's actual weaknesses. Deployable units:
 
 | Unit | Path | Tech | Purpose |
 |---|---|---|---|
@@ -204,7 +204,7 @@ src/
 
 ### State management
 - React Contexts: `LayoutContext`, `DashboardWorkspaceContext`
-- Zustand store in `src/lib/auramind/store.ts` (only `cmdOpen` powers the command palette)
+- Zustand store in `src/lib/BonaMind/store.ts` (only `cmdOpen` powers the command palette)
 - Main app state in `App.tsx` via `useState` + Supabase auth listener
 
 ---
@@ -368,7 +368,7 @@ Key differentiators vs competitors (Quizlet, Anki, Knowt, RemNote, StudyFetch, B
 
 ## Animation Reference
 
-AuraMind uses Framer Motion + GSAP + anime.js. Key patterns:
+BonaMind uses Framer Motion + GSAP + anime.js. Key patterns:
 - Staggered containers with `staggerChildren: 0.06`
 - `whileInView` with `viewport: { once: true }` for scroll reveals
 - Spring physics for natural motion: `stiffness: 300, damping: 30`

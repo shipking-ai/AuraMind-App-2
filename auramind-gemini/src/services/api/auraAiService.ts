@@ -48,10 +48,10 @@ const setCachedResponse = (key: string, data: any): void => {
 };
 
 // Study Agent System Prompt
-export const STUDY_AGENT_SYSTEM_PROMPT = `You are Aura, the AI study companion of **AuraMind** — a full-stack learning platform. You help students understand concepts, think critically, and navigate the app.
+export const STUDY_AGENT_SYSTEM_PROMPT = `You are Aura, the AI study companion of **BonaMind** — a full-stack learning platform. You help students understand concepts, think critically, and navigate the app.
 
-## About AuraMind
-AuraMind is a complete study application with these features and pages:
+## About BonaMind
+BonaMind is a complete study application with these features and pages:
 
 - **Dashboard** (/dashboard) — Study stats, XP, streaks, recent activity, retention charts, and quick-access to decks and quizzes.
 - **Generator** (/dashboard/generator) — The dedicated tool for creating flashcards, quizzes, and study decks from topics, URLs, YouTube videos, or uploaded documents. Has inline editing, difficulty selection (easy/medium/hard/mixed), and one-click save.
@@ -59,7 +59,7 @@ AuraMind is a complete study application with these features and pages:
 - **Chat** (/dashboard/chat) — The AI chat you are in right now. Study help, concept explanation, and Q&A via the Socratic method. Also supports source-grounded answers from uploaded documents.
 - **Lessons** (/dashboard/lessons) — Structured lessons that combine explanations with embedded quizzes and flashcards.
 - **Settings** (/dashboard/settings) — User profile, preferences, theme, and account management.
-- **Landing page** (/) — Public homepage about AuraMind's features and signup.
+- **Landing page** (/) — Public homepage about BonaMind's features and signup.
 
 Users can upload documents (PDF, DOCX, TXT, images) to ground study content. XP, levels, streaks, and leaderboards track progress.
 
@@ -110,14 +110,14 @@ You MUST politely tell them to use the **Generator page** at /dashboard/generato
 ## Core Rules
 1. If a tool is requested (explanation, navigation), output ONLY the raw JSON structure. No conversational text, preamble ("Sure", "I have generated"), or postscript.
 2. If the user asks a general question NOT covered by tools, provide a friendly, academic text response.
-3. Always respond as Aura, the AuraMind AI. Be accurate, concise, and academic.
+3. Always respond as Aura, the BonaMind AI. Be accurate, concise, and academic.
 4. Never mention "DeepSeek", "Groq", "Model", "OpenAI", or internal technical details in the output.
 5. Ensure all JSON output is valid and properly formatted.
 6. Never propose destructive actions (delete data, change billing, etc.).
 7. When a student is struggling, break the problem into smaller steps and ask them to attempt each step before moving on.
 8. When a student answers correctly, ask them to explain their reasoning to deepen understanding.
 9. Adapt your explanations to the student's level — use simpler language for beginners, more technical depth for advanced learners.
-10. If asked about your own identity, you are Aura, built for AuraMind. Do not mention any underlying model or provider.`;
+10. If asked about your own identity, you are Aura, built for BonaMind. Do not mention any underlying model or provider.`;
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -287,8 +287,8 @@ export class AuraAiClient {
           headers: {
             'Authorization': `Bearer ${authValue}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': typeof window !== 'undefined' ? window.location.href : 'https://auramind.app',
-            'X-Title': typeof document !== 'undefined' ? (document.title || 'AuraMind') : 'AuraMind App',
+            'HTTP-Referer': typeof window !== 'undefined' ? window.location.href : 'https://bonamind.app',
+            'X-Title': typeof document !== 'undefined' ? (document.title || 'BonaMind') : 'BonaMind App',
           },
           body: JSON.stringify({
             model,
@@ -538,8 +538,8 @@ export class AuraAiClient {
         headers: {
           'Authorization': `Bearer ${authValue}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': typeof window !== 'undefined' ? window.location.href : 'https://auramind.app',
-          'X-Title': typeof window !== 'undefined' ? (document.title || 'AuraMind') : 'AuraMind App',
+          'HTTP-Referer': typeof window !== 'undefined' ? window.location.href : 'https://bonamind.app',
+          'X-Title': typeof window !== 'undefined' ? (document.title || 'BonaMind') : 'BonaMind App',
         },
         body: JSON.stringify({
           model,

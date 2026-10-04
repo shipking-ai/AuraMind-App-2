@@ -94,7 +94,7 @@ function TypewriterDemo({
         <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-green-500/80" />
         <span className="mx-auto text-xs text-[#7A7A96]">
-          AuraMind — AI Deck Generator
+          BonaMind — AI Deck Generator
         </span>
       </div>
 

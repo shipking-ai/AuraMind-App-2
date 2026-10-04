@@ -11,7 +11,7 @@
  *     the path as an <svg><path/></svg> inside the wrapper, grab the
  *     element via ref, and pass THAT to createMotionPath.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - An XP particle riding a reward curve from card to progress bar.
  *   - A "level up" arrow tracing up through skill tree.
  *   - Mascot walk-cycle in onboarding.

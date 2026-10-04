@@ -4,26 +4,26 @@ export const logger = {
   debug: (...args: unknown[]): void => {
     if (isDev) {
       // eslint-disable-next-line no-console -- logging utility
-      console.debug('[AuraMind]', ...args);
+      console.debug('[BonaMind]', ...args);
     }
   },
   log: (...args: unknown[]): void => {
     if (isDev) {
       // eslint-disable-next-line no-console -- logging utility
-      console.log('[AuraMind]', ...args);
+      console.log('[BonaMind]', ...args);
     }
   },
   info: (...args: unknown[]): void => {
     if (isDev) {
       // eslint-disable-next-line no-console -- logging utility
-      console.info('[AuraMind]', ...args);
+      console.info('[BonaMind]', ...args);
     }
   },
   warn: (...args: unknown[]): void => {
-    console.warn('[AuraMind]', ...args);
+    console.warn('[BonaMind]', ...args);
   },
   error: (...args: unknown[]): void => {
-    console.error('[AuraMind]', ...args);
+    console.error('[BonaMind]', ...args);
   }
 };
 

@@ -190,17 +190,17 @@ export function validateEnv(): EnvValidationResult {
  */
 export function logEnvValidation(result: EnvValidationResult): void {
   if (result.valid && result.warnings.length === 0) {
-    console.warn('[AuraMind] Environment validation passed');
+    console.warn('[BonaMind] Environment validation passed');
     return;
   }
 
   if (result.errors.length > 0) {
-    console.error('[AuraMind] Environment validation FAILED:');
+    console.error('[BonaMind] Environment validation FAILED:');
     result.errors.forEach((err) => console.error(`  - ${err}`));
   }
 
   if (result.warnings.length > 0) {
-    console.warn('[AuraMind] Environment warnings:');
+    console.warn('[BonaMind] Environment warnings:');
     result.warnings.forEach((warn) => console.warn(`  - ${warn}`));
   }
 }

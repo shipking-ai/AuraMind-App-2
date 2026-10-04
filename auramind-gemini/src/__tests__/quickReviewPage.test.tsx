@@ -115,7 +115,7 @@ describe('QuickReviewPage', () => {
   it('signed out: offers sign-in in the main window', async () => {
     userId.value = null;
     render(<QuickReviewPage />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Sign in to AuraMind' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in to BonaMind' }));
     expect(bridge.showMain).toHaveBeenCalledWith('/auth');
     expect(bridge.quickReviewDone).toHaveBeenCalled();
   });

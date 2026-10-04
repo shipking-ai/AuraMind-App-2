@@ -1,5 +1,5 @@
 /**
- * AuraMind SVG system.
+ * BonaMind SVG system.
  *
  * Shared rules for anything added here:
  *   - Draw on a stated grid (96 for icons, 160×120 for illustrations) and

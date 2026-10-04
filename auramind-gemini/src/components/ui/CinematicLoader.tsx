@@ -84,7 +84,7 @@ export function CinematicLoader({ ready = false }: { ready?: boolean }) {
       </p>
 
       <span className="sr-only">
-        {ready ? "Ready" : `Loading AuraMind — ${Math.round(progress)}%`}
+        {ready ? "Ready" : `Loading BonaMind — ${Math.round(progress)}%`}
       </span>
     </div>
   );

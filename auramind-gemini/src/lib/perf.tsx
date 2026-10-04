@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Performance measurement utilities for AuraMind.
+ * Performance measurement utilities for BonaMind.
  *
  * Usage:
  *   import { mark, measure, PerfBoundary } from '@/lib/perf';

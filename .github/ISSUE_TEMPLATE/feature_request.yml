@@ -17,7 +17,7 @@ body:
       label: What's the user problem?
       description: Frame it as a job-to-be-done, not a feature spec. Who is hurting, and how often?
       placeholder: |
-        As a med-school student using AuraMind between lectures, I
+        As a med-school student using BonaMind between lectures, I
         often have 90 seconds to flip through a quick card stack
         while walking to the next class — but the dashboard load
         takes ~3s and I miss the review window.

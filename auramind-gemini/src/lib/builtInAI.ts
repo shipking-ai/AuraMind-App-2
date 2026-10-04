@@ -2,7 +2,7 @@
  * Chrome's built-in AI — Gemini Nano running inside the browser.
  *
  * Chrome and Edge ship Summarizer, Translator and LanguageDetector as web
- * APIs backed by an on-device model. For AuraMind that is worth having for
+ * APIs backed by an on-device model. For BonaMind that is worth having for
  * reasons the server model can't match: it costs nothing, it works offline,
  * the card text never leaves the machine, and there is no quota to burn on
  * "say that shorter".

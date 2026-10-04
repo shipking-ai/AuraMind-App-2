@@ -3,7 +3,7 @@ import "../../styles/graphics.css";
 import type { VoiceOrbState } from "./VoiceOrb";
 
 /**
- * VoiceAura — AuraMind's fluid voice presence.
+ * VoiceAura — BonaMind's fluid voice presence.
  *
  * The visual language is intentionally simple at a glance: one large,
  * pearlescent orb on a dark surface. Inside it, soft colour fields drift

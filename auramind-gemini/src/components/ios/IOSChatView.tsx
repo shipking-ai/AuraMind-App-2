@@ -5,7 +5,7 @@
  *  - Talk: Aura's orb fills the top of the screen and reacts — breathing at
  *    rest, swirling while it thinks, pulsing while it speaks. Hold the big
  *    button to ask out loud; the answer is spoken and shown as captions.
- *  - Notebook: the conversation is a page of AuraMind's paper notebook. Your
+ *  - Notebook: the conversation is a page of BonaMind's paper notebook. Your
  *    questions are handwritten in the margin, Aura's answers are typeset,
  *    and key terms are highlighted like a marker — tap one to make a card.
  *  - Cards: every answer arrives as a stack of swipeable cards (the idea,

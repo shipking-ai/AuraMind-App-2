@@ -8,7 +8,7 @@ import { readClientEnv } from '../../lib/env';
  * put a key in `.env`). `templateDeckGenerator.ts` covers the last-resort
  * offline path (deterministic, no API needed). This module fills the middle:
  * Puter.js, which lets *the user* sign in with their own Puter account so
- * they pay for AI consumption directly. For most AuraMind end users this
+ * they pay for AI consumption directly. For most BonaMind end users this
  * removes the developer-key requirement entirely.
  *
  * Why Puter:

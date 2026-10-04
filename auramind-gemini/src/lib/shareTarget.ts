@@ -2,7 +2,7 @@ import { registerPlugin } from '@capacitor/core';
 import { Capacitor } from './nativeShim';
 
 /**
- * Content shared into AuraMind from another app.
+ * Content shared into BonaMind from another app.
  *
  * The native half is
  * `android/app/src/main/java/com/auramind/app/ShareTargetPlugin.java`.

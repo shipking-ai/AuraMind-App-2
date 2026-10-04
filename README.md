@@ -1,13 +1,13 @@
 <div align="center">
-  <img src="docs/assets/banner.png" alt="AuraMind — turn anything into a course that sticks" width="100%" />
+  <img src="docs/assets/banner.png" alt="BonaMind — turn anything into a course that sticks" width="100%" />
 </div>
 
-# AuraMind
+# BonaMind
 
 <div align="center">
 
-[![CI](https://img.shields.io/github/actions/workflow/status/shipking-ai/AuraMind-App-2/ci.yml?branch=main&style=flat-square)](https://github.com/shipking-ai/AuraMind-App-2/actions/workflows/ci.yml)
-[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8b?style=flat-square)](https://github.com/shipking-ai/AuraMind-App-2/network/dependencies)
+[![CI](https://img.shields.io/github/actions/workflow/status/shipking-ai/BonaMind-App-2/ci.yml?branch=main&style=flat-square)](https://github.com/shipking-ai/BonaMind-App-2/actions/workflows/ci.yml)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8b?style=flat-square)](https://github.com/shipking-ai/BonaMind-App-2/network/dependencies)
 [![Code style: Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4?style=flat-square)](https://github.com/prettier/prettier)
 [![TypeScript: strict](https://img.shields.io/badge/typescript-strict-blue?style=flat-square)](https://www.typescriptlang.org)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-orange?style=flat-square)](#license)
@@ -50,8 +50,8 @@ An **adaptive AI learning system** — turn anything you're studying (a PDF, a v
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/shipking-ai/AuraMind-App-2.git
-   cd AuraMind-App-2
+   git clone https://github.com/shipking-ai/BonaMind-App-2.git
+   cd BonaMind-App-2
    ```
 
 2. **Install dependencies**
@@ -114,7 +114,7 @@ An **adaptive AI learning system** — turn anything you're studying (a PDF, a v
 ## 📁 Project Structure
 
 ```
-AuraMind-App-2/
+BonaMind-App-2/
 ├── api/                      # Backend API (Vercel serverless + Express dev server)
 │   ├── index.ts              # Route handler for every /api endpoint
 │   ├── stripe-webhook.ts     # Stripe webhook handler
@@ -189,8 +189,8 @@ None of these may be `VITE_`-prefixed — that would publish them to the browser
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `RESEND_API_KEY` | Resend API key for emails |
-| `RESEND_FROM_EMAIL` | Sender address on a Resend-verified domain. Defaults to `noreply@mail.auramind.app` |
-| `APP_ORIGIN` | Canonical web origin (`https://auramind.app`). Drives the CORS allowlist, Stripe return URLs, and links in transactional email. Set this when the domain changes — see below. |
+| `RESEND_FROM_EMAIL` | Sender address on a Resend-verified domain. Defaults to `noreply@mail.bonamind.app` |
+| `APP_ORIGIN` | Canonical web origin (`https://bonamind.app`). Drives the CORS allowlist, Stripe return URLs, and links in transactional email. Set this when the domain changes — see below. |
 | `GROQ_API_KEY` | First AI provider in the chain |
 | `CEREBRAS_API_KEY` | Second — tried when Groq returns 429/5xx |
 | `GEMINI_API_KEY` | Third |
@@ -290,7 +290,7 @@ first, then deploy.
 
 Two things that do **not** change with the domain:
 
-- **`com.auramind.app`** — the package id. Play and the App Store key listings
+- **`com.bonamind.app`** — the package id. Play and the App Store key listings
   to it permanently, so changing it orphans the listing and any in-progress
   closed test. It is deliberately excluded from `app-identity.ts`.
 - **Supabase project URL** — auth and the database live on `*.supabase.co`, so
@@ -361,7 +361,7 @@ ORDER  BY applied_at DESC;
 ### Resend Setup (Email)
 
 1. Create account at [resend.com](https://resend.com)
-2. Verify your domain (e.g., `auramind.app`)
+2. Verify your domain (e.g., `bonamind.app`)
 3. Create API key
 4. Set `RESEND_FROM_EMAIL` to a verified address on your domain
 
@@ -419,7 +419,7 @@ npm install
 ## 📝 License
 
 Proprietary — All rights reserved. © 2026 CogniVect, Inc.
-AuraMind and the AuraMind mark are trademarks of CogniVect, Inc.
+BonaMind and the BonaMind mark are trademarks of CogniVect, Inc.
 No part of this codebase is licensed for redistribution.
 
 ## 📚 Governance

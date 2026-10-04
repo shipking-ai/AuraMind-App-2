@@ -21,7 +21,7 @@ function CommunityDeckCard({ deck, forking, onFork }: {
   forking: boolean;
   onFork: (deck: MarketplaceDeck) => void;
 }) {
-  const byline = deck.isMine ? 'by you' : deck.creatorFirstName ? `by ${deck.creatorFirstName}` : 'by an AuraMind learner';
+  const byline = deck.isMine ? 'by you' : deck.creatorFirstName ? `by ${deck.creatorFirstName}` : 'by an BonaMind learner';
 
   return (
     <HoverLift className="h-full rounded-xl nova-card transition-shadow duration-300 hover:shadow-lg hover:border-violet-500/40">

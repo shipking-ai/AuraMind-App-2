@@ -1,4 +1,4 @@
-# AuraMind Deployment Guide
+# BonaMind Deployment Guide
 
 ## Prerequisites
 
@@ -98,7 +98,7 @@ window on Ctrl+Alt+Space, drop-to-create (window, Explorer, tray),
 Installed apps only accept updates signed with the private key that matches
 `plugins.updater.pubkey` in `tauri.conf.json`. The key pair was generated with
 `npx tauri signer generate` and the private half lives **outside the repo** at
-`%USERPROFILE%\.tauri\auramind-updater.key` (no password).
+`%USERPROFILE%\.tauri\BonaMind-updater.key` (no password).
 
 1. Back it up (password manager). **Losing it means no installed copy can ever
    update again**; the only way out is a new key and a manual reinstall for

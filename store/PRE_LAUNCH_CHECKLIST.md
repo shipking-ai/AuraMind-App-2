@@ -1,4 +1,4 @@
-# AuraMind Pre-Launch Checklist
+# BonaMind Pre-Launch Checklist
 
 > **Single source of truth for "are we ready to ship?"** Every box below must
 > be ticked before a Play submission. Items map directly to the boxes
@@ -11,10 +11,10 @@
 
 ## 1. Branding & legal
 
-- [ ] **Privacy policy URL returns 200** — `https://auramind.app/privacy`
-- [ ] **Terms of service URL returns 200** — `https://auramind.app/terms`
-- [ ] **Support URL returns 200** — `https://auramind.app/support` (or
-      `mailto:hello@auramind.app` works)
+- [ ] **Privacy policy URL returns 200** — `https://bonamind.app/privacy`
+- [ ] **Terms of service URL returns 200** — `https://bonamind.app/terms`
+- [ ] **Support URL returns 200** — `https://bonamind.app/support` (or
+      `mailto:hello@bonamind.app` works)
 - [ ] **Privacy policy lists**: CogniVect, Inc as operator; data collected
       (account email, optional profile photo, study progress, crash logs,
       Stripe-billing metadata); all third-party SDKs (Sentry, PostHog,
@@ -24,7 +24,7 @@
       procedure, refund policy, prohibited content rules, limitation of
       liability (limited to CogniVect and its affiliates), jurisdiction.
 - [ ] **Both pages render CogniVect footer** (the parent-company byline
-      "AuraMind — a CogniVect product") at the bottom, with the year-frozen
+      "BonaMind — a CogniVect product") at the bottom, with the year-frozen
       copyright line on the right.
 
 ## 2. Build artifacts
@@ -58,7 +58,7 @@
 
 ### Google Play Console
 
-- [ ] App name "AuraMind" entered.
+- [ ] App name "BonaMind" entered.
 - [ ] Short + long description from `store/android/listing.md` pasted.
 - [x] Phone screenshots generated (7) — `store/graphics/android/screenshots/`.
 - [ ] Wear OS companion app build tested on a Wear OS emulator/device (review

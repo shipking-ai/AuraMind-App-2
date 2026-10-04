@@ -607,14 +607,14 @@ describe('Bug #5: Studied-today counter & league_memberships schema', () => {
 // ---------------------------------------------------------------------------
 // Bug #6: CogniVect parent-brand placement.
 //
-// User-context: AuraMind is the FIRST product in the CogniVect family. The
+// User-context: BonaMind is the FIRST product in the CogniVect family. The
 // user explicitly asked to place the parent brand visibly inside the
-// application — beside or beneath the AuraMind mark, never inside it. The
+// application — beside or beneath the BonaMind mark, never inside it. The
 // parent line lives in:
-//   - DashboardSidebar (Sidebar.tsx)            — beneath AuraMind wordmark
-//   - AppShell Wordmark (AppShell.tsx)           — beneath AuraMind wordmark
+//   - DashboardSidebar (Sidebar.tsx)            — beneath BonaMind wordmark
+//   - AppShell Wordmark (AppShell.tsx)           — beneath BonaMind wordmark
 //   - Onboarding splash (OnboardingPage.tsx)    — bottom of the screen
-//   - Docs legal footer (DocsPage.tsx)           — beneath "Back to AuraMind"
+//   - Docs legal footer (DocsPage.tsx)           — beneath "Back to BonaMind"
 //
 // Invariants enforced below:
 //   - Single source of truth: `lib/branding.ts` is the only place that
@@ -624,23 +624,28 @@ describe('Bug #5: Studied-today counter & league_memberships schema', () => {
 //     are not allowed.
 //   - Store-listing metadata files (capacitor.config.ts,
 //     Cargo.toml, metadata.json, package.json metadata, index.html) MUST
-//     stay "AuraMind" only — Apple/Google reject promotional copy in the
+//     stay "BonaMind" only — Apple/Google reject promotional copy in the
 //     visual app name. CogniVect belongs only in the "Developer/Vendor
 //     Name" field, never in appName/identifier/og:title.
 // ---------------------------------------------------------------------------
 describe('Bug #6: CogniVect parent-brand placement', () => {
   it('BRAND aggregate keys align with the v3 contract (parentName / parentLegal / parentTagline / product)', async () => {
     const { BRAND, PARENT_COMPANY_NAME, PRODUCT_NAME, CONTACT_EMAIL, LEGAL_COPYRIGHT_LINE } = await import('../lib/branding');
+    // The product name is asserted against app-identity.ts rather than a
+    // literal, so a rename does not turn this guard into a rename chore — and
+    // so it still catches the real regression: PRODUCT_NAME drifting away from
+    // the name the shell surfaces actually use.
+    const { APP_NAME } = await import('../../app-identity');
     // The v3 contract pinned by __tests__/branding.test.ts — these spot-checks
     // are the most user-visible assertions. The full parity test lives in
     // branding.test.ts; this block covers what Bug #6 cares about.
     expect(PARENT_COMPANY_NAME).toBe('CogniVect');
-    expect(PRODUCT_NAME).toBe('AuraMind');
-    expect(CONTACT_EMAIL).toBe('hello@auramind.app');
+    expect(PRODUCT_NAME).toBe(APP_NAME);
+    expect(CONTACT_EMAIL).toBe('hello@bonamind.app');
     expect(BRAND.parentName).toBe('CogniVect');
     expect(BRAND.parentLegal).toBe('CogniVect, Inc');
     expect(BRAND.parentTagline).toBe('cognitive · vector');
-    expect(BRAND.product).toBe('AuraMind');
+    expect(BRAND.product).toBe(APP_NAME);
     // The canonical copyright line stays stable across builds and is what
     // consumers should reach for (NOT a hand-rolled `new Date().getFullYear()`).
     expect(LEGAL_COPYRIGHT_LINE).toMatch(/^© \d{4} CogniVect, Inc\..*$/);
@@ -664,11 +669,11 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     expect(src.match(/<path /g)?.length ?? 0).toBeGreaterThanOrEqual(3);
   });
 
-  it('BUG #6: every UI surface that carries the AuraMind mark imports the parent-line component', () => {
+  it('BUG #6: every UI surface that carries the BonaMind mark imports the parent-line component', () => {
     const fs = require('node:fs') as typeof import('fs');
     const path = require('node:path') as typeof import('path');
 
-    // Each of these files renders the AuraMind mark. They MUST reference
+    // Each of these files renders the BonaMind mark. They MUST reference
     // the CogniWordmark component (or carry the parent-brand literal in a
     // comment block). Catches "we forgot to add it to the new sidebar".
     //
@@ -696,7 +701,7 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     }
   });
 
-  it('BUG #6: app-store visual-identity files stay "AuraMind" only (no CogniVect in appName / productName / identifier / window title)', () => {
+  it('BUG #6: app-store visual-identity files stay "BonaMind" only (no CogniVect in appName / productName / identifier / window title)', () => {
     const fs = require('node:fs') as typeof import('fs');
     const path = require('node:path') as typeof import('path');
     // Reason: Apple App Store + Google Play + the macOS dock + Windows
@@ -716,7 +721,7 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     // The name is no longer typed into these files by hand. It comes from
     // app-identity.ts, and capacitor.config.ts / index.html consume it by
     // import and by a build-time transform respectively. So the assertion is
-    // no longer "this file contains the literal 'AuraMind'" but "this file
+    // no longer "this file contains the literal 'BonaMind'" but "this file
     // still reads the name from the single source of truth" — a file that
     // re-introduces a hardcoded name would fail here.
     const identityFiles: ReadonlyArray<readonly [string, string, ReadonlyArray<string>]> = [
@@ -725,7 +730,7 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
       // a literal because the bundle id is deliberately not renameable.
       ['../../capacitor.config.ts',          'auramind-gemini/capacitor.config.ts',          ['appId:', "from './app-identity.ts'", 'appName: APP_NAME']],
       ['../../app-identity.ts',             'auramind-gemini/app-identity.ts',             ["export const APP_NAME = '"]],
-      ['../../metadata.json',              'auramind-gemini/metadata.json',               ['"name": "AuraMind"']],
+      ['../../metadata.json',              'auramind-gemini/metadata.json',               ['"name": "BonaMind"']],
       ['../../package.json',               'auramind-gemini/package.json',                ['"name": "auramind"']],
       // index.html is rewritten at build time; the data-brand marker is what
       // the transform keys on, and its absence makes the build fail.

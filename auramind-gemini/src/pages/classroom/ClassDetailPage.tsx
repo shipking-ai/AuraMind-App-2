@@ -162,7 +162,7 @@ export function ClassDetailPage() {
 
   const copyInvite = async () => {
     if (!classroom) return;
-    const text = `Join my AuraMind class "${classroom.title}" with code ${classroom.inviteCode}\n${window.location.origin}/dashboard/classes?join=${classroom.inviteCode}`;
+    const text = `Join my BonaMind class "${classroom.title}" with code ${classroom.inviteCode}\n${window.location.origin}/dashboard/classes?join=${classroom.inviteCode}`;
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Class invite copied");

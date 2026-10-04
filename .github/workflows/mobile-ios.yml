@@ -73,9 +73,9 @@ jobs:
             printf 'VITE_SUPABASE_URL=%s\n'           "${VITE_SUPABASE_URL:-https://placeholder.supabase.co}"
             printf 'VITE_SUPABASE_ANON_KEY=%s\n'      "${VITE_SUPABASE_ANON_KEY:-placeholder}"
             printf 'VITE_STRIPE_PUBLISHABLE_KEY=%s\n' "${VITE_STRIPE_PUBLISHABLE_KEY:-}"
-            printf 'VITE_API_BASE_URL=%s\n'           'https://auramind.app'
-            printf 'VITE_SSE_BASE=%s\n'               'https://auramind.app'
-            printf 'VITE_APP_URL=%s\n'                'https://auramind.app'
+            printf 'VITE_API_BASE_URL=%s\n'           'https://bonamind.app'
+            printf 'VITE_SSE_BASE=%s\n'               'https://bonamind.app'
+            printf 'VITE_APP_URL=%s\n'                'https://bonamind.app'
             printf 'VITE_USE_PUTER=%s\n'              'true'
             printf 'VITE_TURNSTILE_SITE_KEY=%s\n'     '0x4AAAAAAAEsHm7dsqEhBi3Nr'
           } > .env
@@ -424,9 +424,9 @@ jobs:
             echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-https://placeholder.supabase.co}"
             echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-placeholder}"
             echo "VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY:-}"
-            echo "VITE_API_BASE_URL=https://auramind.app"
-            echo "VITE_SSE_BASE=https://auramind.app"
-            echo "VITE_APP_URL=https://auramind.app"
+            echo "VITE_API_BASE_URL=https://bonamind.app"
+            echo "VITE_SSE_BASE=https://bonamind.app"
+            echo "VITE_APP_URL=https://bonamind.app"
             echo "VITE_USE_PUTER=true"
             echo "VITE_TURNSTILE_SITE_KEY=0x4AAAAAAAEsHm7dsqEhBi3Nr"
           } > .env
@@ -463,7 +463,7 @@ jobs:
             http://*)
               plutil -insert NSAppTransportSecurity -json '{"NSAllowsLocalNetworking": true}' ios/App/App/Info.plist
               plutil -insert NSLocalNetworkUsageDescription \
-                -string 'AuraMind loads its development server from your local network.' \
+                -string 'BonaMind loads its development server from your local network.' \
                 ios/App/App/Info.plist
               echo "Added a local-network exception for a plain-HTTP dev server."
               ;;
@@ -498,12 +498,12 @@ jobs:
           rm -rf build/Payload
           mkdir -p build/Payload
           cp -R "$APP" build/Payload/
-          cd build && zip -qry AuraMind-unsigned.ipa Payload
-          ls -lh AuraMind-unsigned.ipa
+          cd build && zip -qry BonaMind-unsigned.ipa Payload
+          ls -lh BonaMind-unsigned.ipa
 
       - name: Upload the IPA
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.server_url != '' && 'auramind-ios-live-reload-ipa' || 'auramind-ios-unsigned-ipa' }}
-          path: auramind-gemini/build/AuraMind-unsigned.ipa
+          path: auramind-gemini/build/BonaMind-unsigned.ipa
           if-no-files-found: error

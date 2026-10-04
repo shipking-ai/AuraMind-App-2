@@ -3,7 +3,7 @@
  *
  * This state's job is not to say "empty", it is to say "the next thing is
  * cheap". So the drawing shows a card being *made*: an outline slot with
- * a plus, and the two source shapes AuraMind can build from (an audio
+ * a plus, and the two source shapes BonaMind can build from (an audio
  * waveform and a document) feeding into it.
  *
  * 160×120 grid, shared with the other illustrations.

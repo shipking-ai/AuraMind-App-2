@@ -87,11 +87,11 @@ const DownloadPage: React.FC = () => {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-none">
               Download
               <br />
-              <span className="text-primary">AuraMind</span>
+              <span className="text-primary">BonaMind</span>
               <span className="text-zinc-500">.</span>
             </h1>
             <p className="text-lg md:text-xl text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Install AuraMind on your computer straight from the browser, or join the
+              Install BonaMind on your computer straight from the browser, or join the
               Android testing group. Offline study, notifications, and your data synced everywhere.
             </p>
 
@@ -122,7 +122,7 @@ const DownloadPage: React.FC = () => {
                 On Your Computer
               </h2>
               <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                AuraMind installs from your browser on Windows, macOS, Linux, and ChromeOS —
+                BonaMind installs from your browser on Windows, macOS, Linux, and ChromeOS —
                 its own window, offline study, and updates that arrive on their own.
               </p>
             </div>
@@ -142,7 +142,7 @@ const DownloadPage: React.FC = () => {
                 <ol className="space-y-4 mb-8">
                   <li className="flex items-start gap-3 text-zinc-300">
                     <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" />
-                    <span>Open auramind.app and sign in.</span>
+                    <span>Open bonamind.app and sign in.</span>
                   </li>
                   {desktopInstallSteps.map((step) => (
                     <li key={step.browser} className="flex items-start gap-3 text-zinc-300">
@@ -158,7 +158,7 @@ const DownloadPage: React.FC = () => {
                   to="/auth?mode=signup"
                   className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-black font-bold rounded-xl hover:bg-primary/90 transition-colors"
                 >
-                  Open AuraMind
+                  Open BonaMind
                   <ArrowRight size={18} />
                 </Link>
               </div>
@@ -181,7 +181,7 @@ const DownloadPage: React.FC = () => {
                 Mobile Apps
               </h2>
               <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                The Android app adds native controls and study workflows while sharing AuraMind&apos;s learning engine.
+                The Android app adds native controls and study workflows while sharing BonaMind&apos;s learning engine.
               </p>
             </div>
 
@@ -230,7 +230,7 @@ const DownloadPage: React.FC = () => {
 
                      {platform.disabled ? (
                       <a
-                        href="mailto:auramind-app@googlegroups.com?subject=Notify me when AuraMind mobile launches&body=I want to be notified when the AuraMind native mobile app is available on Android."
+                        href="mailto:auramind-app@googlegroups.com?subject=Notify me when BonaMind mobile launches&body=I want to be notified when the BonaMind native mobile app is available on Android."
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-xl hover:bg-primary hover:text-black transition-colors"
                       >
                         <Mail size={18} />
@@ -265,7 +265,7 @@ const DownloadPage: React.FC = () => {
                 <p className="text-zinc-300">
                   The Android app is in closed testing on Google Play.{' '}
                   <a
-                    href="mailto:auramind-app@googlegroups.com?subject=Notify me when AuraMind mobile launches&body=I want to be notified when the AuraMind native mobile app is available on Android."
+                    href="mailto:auramind-app@googlegroups.com?subject=Notify me when BonaMind mobile launches&body=I want to be notified when the BonaMind native mobile app is available on Android."
                     className="text-primary hover:underline font-medium"
                   >
                     Join the waitlist to get notified.
@@ -291,7 +291,7 @@ const DownloadPage: React.FC = () => {
                 Why Go Native?
               </h2>
               <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-                The web app is great, but native apps unlock the full AuraMind experience.
+                The web app is great, but native apps unlock the full BonaMind experience.
               </p>
             </div>
 
@@ -356,10 +356,10 @@ const DownloadPage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
               <div className="text-xl font-black tracking-tight text-foreground mb-2">
-                AURAMIND
+                BONAMIND
               </div>
               <p className="text-sm text-zinc-500">
-                © 2026 AuraMind. All rights reserved.
+                © 2026 BonaMind. All rights reserved.
               </p>
             </div>
 

@@ -17,7 +17,7 @@
  *   // Later:
  *   scopeRef.current?.animate('[data-anime]');
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Reveal every card in a deck grid when it enters view.
  *   - Animate all leaderboard rows at once on tab switch.
  *   - Stagger-in learning-path modules.

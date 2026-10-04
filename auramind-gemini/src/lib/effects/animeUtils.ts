@@ -103,7 +103,7 @@ export const radToDeg = (rad: number): number => (rad * 180) / Math.PI;
 
 // ─── Distance / Easing helpers ─────────────────────────────────────────────
 
-/** Convert an AuraMind easing name to a string-compatible easing token
+/** Convert an BonaMind easing name to a string-compatible easing token
  * usable by `animate()`/`createTimeline()`.
  */
 export type AuraEasingName =

@@ -189,7 +189,7 @@ export function initPushListeners(userId: string | null): () => void {
         notifications: [
           {
             id: Math.floor(Math.random() * 2_000_000_000),
-            title: notification.title ?? 'AuraMind',
+            title: notification.title ?? 'BonaMind',
             body: notification.body ?? '',
             sound: 'default',
           },

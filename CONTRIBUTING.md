@@ -1,4 +1,4 @@
-# Contributing to AuraMind
+# Contributing to BonaMind
 
 Thanks for considering a contribution. This document covers the
 three things most contributors trip on:

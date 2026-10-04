@@ -499,7 +499,7 @@ export function useBiometricAuth() {
     try {
       await NativeBiometric.verifyIdentity({
         reason: reason || "Authentication required",
-        title: "Unlock AuraMind",
+        title: "Unlock BonaMind",
         subtitle: "Confirm it's you to continue",
       });
       return true;

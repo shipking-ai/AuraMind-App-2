@@ -77,7 +77,7 @@ export interface CardReviewRecord {
     fsrsState?: unknown;
     [k: string]: unknown;
   };
-  /** Defaults to `'fsrs'` — AuraMind's current scheduler. */
+  /** Defaults to `'fsrs'` — BonaMind's current scheduler. */
   srsAlgorithm?: 'fsrs' | 'sm2';
   /** ms-since-epoch; the RPC prefers a TIMESTAMPTZ ISO string. Defaults to now. */
   reviewedAt?: number;
@@ -105,7 +105,7 @@ export const cardReviewsService = {
     // Coerce rating up-front and validate defensively. The supporting
     // schema (card_reviews CHECK constraint from migration 20260717,
     // relaxed to 0..5 by 20260724000001_card_reviews_rating_range_fix)
-    // and the RPC both accept INTEGER 0..5 — AuraMind's FSRS v5 surface
+    // and the RPC both accept INTEGER 0..5 — BonaMind's FSRS v5 surface
     // maps Again/Hard/Good/Easy to 0/3/4/5. A TS caller can still pass undefined (or any junk) via `as any`;
     // `Number(undefined)` is NaN, NaN fails the RPC's pg_typeof check as
     // `22000`, the UIs catch + log, and the replay entry silently

@@ -21,9 +21,9 @@ const TITLES: Array<[string, string]> = [
 ];
 
 export function windowTitleFor(pathname: string): string {
-  if (pathname === '/dashboard' || pathname === '/dashboard/') return 'Home · AuraMind';
+  if (pathname === '/dashboard' || pathname === '/dashboard/') return 'Home · BonaMind';
   const hit = TITLES.find(([prefix]) => pathname.startsWith(prefix));
-  return hit ? `${hit[1]} · AuraMind` : 'AuraMind';
+  return hit ? `${hit[1]} · BonaMind` : 'BonaMind';
 }
 
 export function isTextTarget(el: EventTarget | null): boolean {

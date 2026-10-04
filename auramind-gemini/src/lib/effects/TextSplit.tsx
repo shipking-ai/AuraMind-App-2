@@ -5,7 +5,7 @@
  * so each unit can be animated independently. The most common pattern is
  * a staggered entrance where each character fades/slides in sequence.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Hero headline reveal on landing page.
  *   - Toast headings that animate in.
  *   - Quiz question reveal with a typewriter feel.

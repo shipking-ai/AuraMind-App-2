@@ -1,7 +1,7 @@
 /**
  * speechEngine — shared, framework-free wrapper around the Web Speech API.
  *
- * Exists because voice is AuraMind's differentiator and the two hooks that
+ * Exists because voice is BonaMind's differentiator and the two hooks that
  * implemented it (useTTS, useVoiceStudy) had diverged, each with different
  * bugs. Everything browser-quirk-shaped lives here so the hooks stay thin.
  *
@@ -209,9 +209,9 @@ export function describeSpeechError(raw: string): SpeechError {
       return {
         code: raw as SpeechErrorCode,
         message: isIOSApp()
-          ? 'Microphone or speech recognition is off for AuraMind. Turn both on in Settings › AuraMind, then try again.'
+          ? 'Microphone or speech recognition is off for BonaMind. Turn both on in Settings › BonaMind, then try again.'
           : hasNativeSpeech()
-          ? 'Microphone access is off for AuraMind. Turn it on in Settings › Apps › AuraMind › Permissions, then try again.'
+          ? 'Microphone access is off for BonaMind. Turn it on in Settings › Apps › BonaMind › Permissions, then try again.'
           : 'Microphone access is blocked. Allow the mic for this site in your browser’s address-bar icon, then try again.',
         recoverable: false,
         needsPermission: true,
