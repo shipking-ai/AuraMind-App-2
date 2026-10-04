@@ -459,7 +459,7 @@ export default function SettingsPage() {
   }, []);
 
   const handleExportAnki = useCallback(async () => {
-    const blob = new Blob(['# AuraMind Anki Export\n# Format: Front\tBack\n'], { type: 'text/tab-separated-values' });
+    const blob = new Blob(['# BonaMind Anki Export\n# Format: Front\tBack\n'], { type: 'text/tab-separated-values' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `auramind-anki-${Date.now()}.tsv`; a.click();
@@ -692,7 +692,7 @@ export default function SettingsPage() {
 
         {/* Appearance */}
         <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
-          <SectionHeader icon={Palette} title="Appearance" subtitle="How AuraMind looks and feels on this device." />
+          <SectionHeader icon={Palette} title="Appearance" subtitle="How BonaMind looks and feels on this device." />
           <div className="space-y-1">
             <SettingRow label="Theme">
               {/* Light is intentionally not offered yet: the product is
@@ -813,7 +813,7 @@ export default function SettingsPage() {
 
         {/* Accessibility */}
         <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
-          <SectionHeader icon={Accessibility} title="Accessibility" subtitle="Make AuraMind comfortable for your needs." />
+          <SectionHeader icon={Accessibility} title="Accessibility" subtitle="Make BonaMind comfortable for your needs." />
           <div className="space-y-1">
             <SettingRow label="Font size">
               <Select value={fontSize} onChange={setFontSize} options={[

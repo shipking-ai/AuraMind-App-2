@@ -63,7 +63,7 @@ export function DesktopUpdateBanner() {
       aria-live="polite"
       className="fixed bottom-4 right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-violet-400/30 bg-[#161B2E] p-4 shadow-2xl"
     >
-      <p className="text-sm font-semibold text-white">AuraMind {update.version} is ready</p>
+      <p className="text-sm font-semibold text-white">BonaMind {update.version} is ready</p>
       <p className="mt-1 text-xs text-zinc-400">
         {installing
           ? progress === null
@@ -71,7 +71,7 @@ export function DesktopUpdateBanner() {
             : `Downloading… ${Math.round(progress * 100)}%`
           : failed
             ? "The update didn't install. Check your connection and try again."
-            : 'Restart AuraMind to finish updating. It takes a few seconds.'}
+            : 'Restart BonaMind to finish updating. It takes a few seconds.'}
       </p>
       <div className="mt-3 flex gap-2">
         <button

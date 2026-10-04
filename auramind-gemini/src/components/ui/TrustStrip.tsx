@@ -6,7 +6,7 @@ import { useCountUp, useInView } from "@/lib/auramind/hooks";
  * TrustStrip — three claims about the product, all substantiable.
  *
  * This previously animated three hardcoded user metrics: 1,248 active
- * learners, 84,000 cards reviewed, 91% average retention. AuraMind has not
+ * learners, 84,000 cards reviewed, 91% average retention. BonaMind has not
  * launched, so all three were fabricated, and the first sat directly below
  * a "Join 1,248 learners" line — the same invented number twice.
  *

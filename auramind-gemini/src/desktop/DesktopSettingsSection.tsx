@@ -99,7 +99,7 @@ export function DesktopSettingsSection() {
       {notifications === false && (
         <>
           <div className="border-t border-[#2A2A3A]/30" />
-          <Row label="Notifications are turned off in Windows" hint="Study reminders can't appear until you turn them on for AuraMind.">
+          <Row label="Notifications are turned off in Windows" hint="Study reminders can't appear until you turn them on for BonaMind.">
             <button type="button" className={button} onClick={() => window.open('ms-settings:notifications', '_blank')}>
               Open Windows settings
             </button>

@@ -19,10 +19,10 @@ import {
 } from '../../lib/desktopUpdater';
 
 /**
- * AboutPage — the canonical "About AuraMind" panel.
+ * AboutPage — the canonical "About BonaMind" panel.
  *
  * Lives at /about. Visible from:
- *   - the sidebar Settings row's "About AuraMind" entry;
+ *   - the sidebar Settings row's "About BonaMind" entry;
  *   - mobile Settings → scroll-to-bottom → "About" link.
  *
  * Shows: product line, VectorMark glyph, parent-company byline,

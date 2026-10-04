@@ -2,7 +2,7 @@
  * Confetti — canvas-based burst used on achievement unlocks + streak milestones.
  *
  * Faithful re-implementation of the most-used primitives of Magic UI's
- * `<Confetti/>` shipped with the AuraMind hand-rolled effects layer (see
+ * `<Confetti/>` shipped with the BonaMind hand-rolled effects layer (see
  * `lib/effects/index.ts`) so we keep first-party ownership of every
  * animation. The contract is deliberately tiny:
  *

@@ -8,13 +8,13 @@ guidance, not form content.
 
 | Field | Value |
 |---|---|
-| App name | AuraMind |
+| App name | BonaMind |
 | Short description (≤80) | from `listings/en-US/short_description.txt` (71 chars — fixed 2026-09-11, was 84) |
 | Full description (≤4000) | from `listings/en-US/full_description.txt` (2156 chars) |
 | App icon 512×512 | `../graphics/android/icon-512.png` |
 | Feature graphic 1024×500 | `../graphics/android/feature-1024x500.png` |
 | Phone screenshots | `../graphics/android/screenshots/01…07` (1080×1920 — all specs-valid) |
-| Privacy policy | https://auramind.app/privacy (verified 200 on 2026-09-11) |
+| Privacy policy | https://bonamind.app/privacy (verified 200 on 2026-09-11) |
 
 ## App content → Data safety
 
@@ -81,14 +81,14 @@ Drafted answers — flag anything the questionnaire phrases differently:
 
 ## App content → Data access / Account deletion
 
-- Account deletion URL: use **https://auramind.app** → dashboard settings
+- Account deletion URL: use **https://bonamind.app** → dashboard settings
   in-app deletion (checklist requires in-app deletion — implemented via
   `DeleteAccountModal`). Provide the privacy contact email used on
-  auramind.app/privacy.
+  bonamind.app/privacy.
 
 ## Pricing & distribution
 
-- Free with in-app products: **AuraMind Premium** subscription (Stripe —
+- Free with in-app products: **BonaMind Premium** subscription (Stripe —
   note: Play Billing vs Stripe: selling digital study features inside an
   Android app technically requires Play Billing; the current build uses
   Stripe Checkout in the webview. **Known review risk — either add a Play
@@ -100,7 +100,7 @@ Drafted answers — flag anything the questionnaire phrases differently:
 
 | Item | Value |
 |---|---|
-| Phone AAB | `android/app/build/outputs/bundle/release/app-release.aab` (75.8 MB, rebuilt 2026-09-11 18:47, signed `CN=AuraMind, O=CogniVect Inc`) |
+| Phone AAB | `android/app/build/outputs/bundle/release/app-release.aab` (75.8 MB, rebuilt 2026-09-11 18:47, signed `CN=BonaMind, O=CogniVect Inc`) |
 | Wear AAB | `android/wear/build/outputs/bundle/release/wear-release.aab` (3.7 MB, same cert SHA256 `C2:58…CB:3E`) |
 | First upload status | **draft** — Play rejects `completed` on a draft app; publish the first release by hand, then flip the workflow input |
 | Track order | internal → closed (alpha, 12 testers × 14 days for post-2023 personal accounts) → production staged 10/50/100% |

@@ -251,7 +251,7 @@ export function IOSSettingsScreen() {
         />
       </IOSSection>
 
-      <IOSSection footer="AuraMind 2.0.0">
+      <IOSSection footer="BonaMind 2.0.0">
         <IOSRow title="Sign Out" destructive onClick={() => workspace?.onLogout()} />
       </IOSSection>
 
@@ -274,7 +274,7 @@ export function IOSSettingsScreen() {
       <IOSSheet open={sheet === "card"} title="Card Style" onClose={() => setSheet(null)}>
         <IOSChoiceList
           options={[
-            { value: "paper" as IOSCardStyle, label: "Paper — AuraMind’s index card" },
+            { value: "paper" as IOSCardStyle, label: "Paper — BonaMind’s index card" },
             { value: "glass" as IOSCardStyle, label: "Glass — dark, lit in the deck’s colour" },
           ]}
           value={cardStyle}

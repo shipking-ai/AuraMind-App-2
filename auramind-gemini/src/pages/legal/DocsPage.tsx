@@ -12,7 +12,7 @@ const sections = [
     content: (
       <>
         <p>
-          AuraMind is an adaptive AI learning system. Drop in a PDF, a video, a lecture, or a topic and it
+          BonaMind is an adaptive AI learning system. Drop in a PDF, a video, a lecture, or a topic and it
           builds your course — flashcards, quizzes, and lessons — then schedules your reviews with FSRS v5
           spaced repetition and tutors you with a model of what you actually know. This guide covers
           everything you need to get the most out of the app.
@@ -59,7 +59,7 @@ const sections = [
     icon: Brain,
     content: (
       <>
-        <p>AuraMind offers multiple study modes to suit your learning style:</p>
+        <p>BonaMind offers multiple study modes to suit your learning style:</p>
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">Flashcard Mode</h4>
         <ul className="list-disc pl-5 space-y-1.5 text-[#9090A8]">
           <li>Classic front/back card review with self-rated recall.</li>
@@ -88,7 +88,7 @@ const sections = [
     content: (
       <>
         <p>
-          AuraMind uses the <strong className="text-[#F0EFFE]">FSRS (Free Spaced Repetition Scheduler)</strong> algorithm,
+          BonaMind uses the <strong className="text-[#F0EFFE]">FSRS (Free Spaced Repetition Scheduler)</strong> algorithm,
           a modern, adaptive spaced repetition system that optimizes review schedules based on your individual memory patterns.
         </p>
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">How It Works</h4>
@@ -114,7 +114,7 @@ const sections = [
     icon: Puzzle,
     content: (
       <>
-        <p>AuraMind integrates with external platforms to streamline your study workflow.</p>
+        <p>BonaMind integrates with external platforms to streamline your study workflow.</p>
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">Schoology (LMS)</h4>
         <ul className="list-disc pl-5 space-y-1.5 text-[#9090A8]">
           <li>Connect your Schoology account to import assignments and course materials.</li>
@@ -196,14 +196,14 @@ const sections = [
           PDF, DOCX, PPTX, TXT, Markdown, CSV, and JSON. Upload files to auto-generate flashcards from any of these formats.
         </p>
 
-        <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">Can I use AuraMind offline?</h4>
+        <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">Can I use BonaMind offline?</h4>
         <p className="text-[#9090A8] mb-4">
           Flashcard reviews work offline. Reviews are queued and synced when you reconnect. AI chat requires an internet connection.
         </p>
 
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">Is there a mobile app?</h4>
         <p className="text-[#9090A8] mb-4">
-          AuraMind is available as a responsive web app and an Android app built with Capacitor. The Android build adds native back navigation, haptics, local study reminders, system sharing, and an Android-specific bottom navigation bar.
+          BonaMind is available as a responsive web app and an Android app built with Capacitor. The Android build adds native back navigation, haptics, local study reminders, system sharing, and an Android-specific bottom navigation bar.
         </p>
 
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">How do I delete my account?</h4>
@@ -234,7 +234,7 @@ export default function DocsPage(): React.ReactElement {
           </Link>
           <div>
             <h1 className="text-base font-medium text-[#F0EFFE]">Documentation</h1>
-            <p className="text-[10px] text-[#7A7A96]">Learn how to use AuraMind effectively</p>
+            <p className="text-[10px] text-[#7A7A96]">Learn how to use BonaMind effectively</p>
           </div>
         </div>
       </div>
@@ -267,7 +267,7 @@ export default function DocsPage(): React.ReactElement {
             className="inline-flex items-center gap-2 text-xs text-[#8B5CF6] hover:text-[#7C3AED] transition-colors"
           >
             <ArrowLeft size={14} />
-            Back to AuraMind
+            Back to BonaMind
           </Link>
           {/* CogniVect parent line + canonical copyright line in the legal
               footer. Variant 'footnote' keeps the long-form doc page from

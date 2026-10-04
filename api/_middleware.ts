@@ -6,7 +6,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { checkRateLimit, getClientIp } from './_rateLimit.js';
-import { APP_ORIGIN } from './_lib/origin.js';
+import { APP_ORIGIN, LEGACY_APP_ORIGIN } from './_lib/origin.js';
 
 // Security headers to apply to all responses
 const SECURITY_HEADERS = {
@@ -80,6 +80,9 @@ export const CORS_ORIGINS: ReadonlySet<string> = new Set([
   APP_ORIGIN,
   // www form, derived so it cannot drift from the apex.
   APP_ORIGIN.replace(/^https:\/\//, 'https://www.'),
+  // The domain this app was served from before the migration, while links to
+  // it are still in circulation (see LEGACY_APP_ORIGIN).
+  ...(LEGACY_APP_ORIGIN ? [LEGACY_APP_ORIGIN] : []),
   'https://localhost',
   'capacitor://localhost',
   // The Windows app (Tauri, useHttpsScheme: true in src-tauri/tauri.conf.json).

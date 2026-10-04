@@ -115,7 +115,7 @@ export default function QuickReviewPage() {
           onClick={() => { void desktop.showMain('/auth'); void desktop.quickReviewDone(); }}
           className="rounded-lg bg-violet-500 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-400"
         >
-          Sign in to AuraMind
+          Sign in to BonaMind
         </button>
       </div>
     );

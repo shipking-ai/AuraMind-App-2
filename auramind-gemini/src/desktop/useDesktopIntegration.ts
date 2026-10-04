@@ -24,7 +24,7 @@ const MINUTE = 60_000;
 
 function handoffError(h: Extract<FileHandoff, { kind: 'error' }>): string {
   if (h.reason === 'too-large') return `${h.name} is over the 50 MB limit.`;
-  if (h.reason === 'unreadable') return `AuraMind couldn't open ${h.name}.`;
+  if (h.reason === 'unreadable') return `BonaMind couldn't open ${h.name}.`;
   return unsupportedMessage(h.name);
 }
 

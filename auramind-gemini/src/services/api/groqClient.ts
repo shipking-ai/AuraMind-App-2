@@ -1,5 +1,5 @@
 /**
- * groqClient — single source of truth for Groq chat completions in AuraMind.
+ * groqClient — single source of truth for Groq chat completions in BonaMind.
  *
  * Replaces two previously-duplicated implementations:
  *   - nexusService.ts → private `callGroqAI(prompt)`
@@ -213,7 +213,7 @@ function resolveModel(override?: string): string {
     if (!deprecatedModelBannerLogged) {
       deprecatedModelBannerLogged = true;
       console.warn(
-        `[AuraMind/groqClient] Configured model '${resolved}' is decommissioned by Groq. ` +
+        `[BonaMind/groqClient] Configured model '${resolved}' is decommissioned by Groq. ` +
         `Falling back to '${fallback}' for this session. Update auramind-gemini/.env (VITE_GROQ_MODEL) and restart.`,
       );
     }
@@ -333,7 +333,7 @@ export async function groqChat(opts: GroqChatOptions): Promise<GroqChatResult> {
         // Use console.warn, not console.error — this is a CONFIG issue, not a
         // runtime exception. Spamming red error noise obscures real bugs.
         console.warn(
-          `[AuraMind/groqClient] Groq rejected the API key (HTTP ${res.status} ${upstreamMessage}). ` +
+          `[BonaMind/groqClient] Groq rejected the API key (HTTP ${res.status} ${upstreamMessage}). ` +
           `AI features will use the Puter free fallback or offline template for this session. ` +
           `Fix the key in auramind-gemini/.env (VITE_GROQ_API_KEY) and restart \`npm run dev\`.`,
         );
@@ -368,7 +368,7 @@ export async function groqChat(opts: GroqChatOptions): Promise<GroqChatResult> {
         // Puter is a bonus path, never a hard dependency: if it is not
         // signed in, blocked, or failing, fall through to the error below
         // so the caller still reaches its offline template fallback.
-        console.warn('[AuraMind/groqClient] Puter rescue unavailable:', puterErr);
+        console.warn('[BonaMind/groqClient] Puter rescue unavailable:', puterErr);
       }
       // Not signed in (or Puter failed) — surface the banner so the user can
       // choose to connect Puter. The popup needs a real click, so this can

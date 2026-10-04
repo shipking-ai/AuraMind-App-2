@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=22.22.2"
   },
-  "description": "AuraMind — adaptive AI learning system for web, PWA, and native Android.",
+  "description": "BonaMind — adaptive AI learning system for web, PWA, and native Android.",
   "scripts": {
     "dev": "concurrently -n \"vite,api\" -c \"cyan,yellow\" \"cd auramind-gemini && npm run dev\" \"cd api && npx tsx server.js\"",
     "dev:frontend": "cd auramind-gemini && npm run dev",
@@ -36,7 +36,7 @@
     "type": "git",
     "url": "git+https://github.com/shipking-ai/AuraMind-App-2.git"
   },
-  "homepage": "https://auramind.app",
+  "homepage": "https://bonamind.app",
   "bugs": {
     "url": "https://github.com/shipking-ai/AuraMind-App-2/issues"
   },

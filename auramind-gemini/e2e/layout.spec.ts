@@ -75,7 +75,7 @@ test.describe('Layout regression tests', () => {
       const nav = page.locator('nav').first();
       await expect(nav).toBeVisible();
 
-      await expect(nav.locator('text=AuraMind').first()).toBeVisible();
+      await expect(nav.locator('text=BonaMind').first()).toBeVisible();
       await expect(nav.locator('text=Features').first()).toBeVisible();
       await expect(nav.locator('text=Pricing').first()).toBeVisible();
       await expect(nav.locator('text=About').first()).toBeVisible();
@@ -101,7 +101,7 @@ test.describe('Layout regression tests', () => {
   });
 
   test.describe('Pricing layout', () => {
-    // AuraMind sells one plan. These tests previously asserted a two-card
+    // BonaMind sells one plan. These tests previously asserted a two-card
     // grid, which encoded a "$0 forever" tier the app could never grant —
     // App.tsx gates on active/trialing only. The tier was removed; what
     // these still protect is the real contract: the plan renders, stays

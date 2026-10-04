@@ -34,7 +34,7 @@ describe("BiometricGate", () => {
   it("covers the app when the lock preference is on and auth fails", async () => {
     setAppPreference(APP_LOCK_PREF_KEY, true);
     render(<BiometricGate />);
-    expect(await screen.findByRole("alertdialog", { name: "Unlock AuraMind" })).not.toBeNull();
+    expect(await screen.findByRole("alertdialog", { name: "Unlock BonaMind" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Unlock" })).not.toBeNull();
   });
 });

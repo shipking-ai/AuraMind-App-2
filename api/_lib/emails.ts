@@ -64,13 +64,13 @@ function shell(title: string, content: string): string {
     <body>
       <div class="container">
         <div class="header">
-          <h1>AuraMind</h1>
+          <h1>BonaMind</h1>
         </div>
         <div class="content">
           ${content}
         </div>
         <div class="footer">
-          <p>&copy; ${CURRENT_YEAR} AuraMind. All rights reserved.</p>
+          <p>&copy; ${CURRENT_YEAR} BonaMind. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -98,8 +98,8 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
   switch (type) {
     case 'welcome':
       return {
-        subject: 'Welcome to AuraMind! Your account is ready',
-        html: shell('Welcome to AuraMind', `
+        subject: 'Welcome to BonaMind! Your account is ready',
+        html: shell('Welcome to BonaMind', `
           ${para(`Hi ${name},`)}
           ${para('Thanks for signing up! Your account is ready to go.')}
           <p><strong>Here's how to get started:</strong></p>
@@ -108,7 +108,7 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
             <li>Create your first deck of flashcards</li>
             <li>Start studying with our smart review system</li>
           </ol>
-          <p><strong>What makes AuraMind different:</strong></p>
+          <p><strong>What makes BonaMind different:</strong></p>
           <ul>
             <li><strong>AI-powered:</strong> Turn any text into flashcards instantly</li>
             <li><strong>Smart review:</strong> We show you cards at the right time</li>
@@ -121,11 +121,11 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
 
     case 'signInAlert':
       return {
-        subject: 'New sign-in to your AuraMind account',
-        html: shell('New Sign In to AuraMind', `
+        subject: 'New sign-in to your BonaMind account',
+        html: shell('New Sign In to BonaMind', `
           ${alertBlock('#ffc107', 'New sign-in detected')}
           ${para(`Hi ${name},`)}
-          ${para('Someone just signed into your AuraMind account. Here are the details:')}
+          ${para('Someone just signed into your BonaMind account. Here are the details:')}
           <ul>
             <li><strong>When:</strong> ${p.timestamp || 'unknown'}</li>
             ${p.location ? `<li><strong>Where:</strong> ${p.location}</li>` : ''}
@@ -141,7 +141,7 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
     case 'trialEnding':
       return {
         subject: `Your free trial ends in ${p.daysRemaining ?? ''} days`,
-        html: shell('Your AuraMind Trial is Ending', `
+        html: shell('Your BonaMind Trial is Ending', `
           ${alertBlock('#ffc107', 'Your free trial is ending soon')}
           ${para(`Hi ${name},`)}
           ${para(`Your free trial ends in <strong>${p.daysRemaining ?? 'a few'} days</strong> on ${p.trialEnds || 'the end date'}.`)}
@@ -156,8 +156,8 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
 
     case 'paymentSuccess':
       return {
-        subject: 'Payment successful - Your AuraMind subscription is active',
-        html: shell('Payment Successful - AuraMind', `
+        subject: 'Payment successful - Your BonaMind subscription is active',
+        html: shell('Payment Successful - BonaMind', `
           ${alertBlock('#28a745', 'Payment successful')}
           ${para(`Hi ${name},`)}
           ${para('Great news! Your payment went through successfully.')}
@@ -169,14 +169,14 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
           </ul>
           <p><strong>Your subscription is now active.</strong> You can start using all premium features right away.</p>
           <a href="${appUrl}/dashboard" style="color: #000; font-weight: bold;">Go to Dashboard →</a>
-          ${para('Thanks for being a valued member of AuraMind!')}
+          ${para('Thanks for being a valued member of BonaMind!')}
         `),
       };
 
     case 'paymentFailed':
       return {
         subject: 'Payment failed - Please update your payment method',
-        html: shell('Payment Failed - AuraMind', `
+        html: shell('Payment Failed - BonaMind', `
           ${alertBlock('#dc3545', 'Payment failed')}
           ${para(`Hi ${name},`)}
           ${para(`We couldn't process your payment of ${p.amount || '—'} on ${p.lastAttempt || 'our latest attempt'}.`)}
@@ -195,8 +195,8 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
 
     case 'subscriptionCancelled':
       return {
-        subject: 'Your AuraMind subscription has been cancelled',
-        html: shell('Subscription Cancelled - AuraMind', `
+        subject: 'Your BonaMind subscription has been cancelled',
+        html: shell('Subscription Cancelled - BonaMind', `
           ${alertBlock('#6c757d', 'Subscription cancelled')}
           ${para(`Hi ${name},`)}
           ${para(`Your ${p.plan || 'current'} subscription has been cancelled.`)}
@@ -205,17 +205,17 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
           <p><strong>Want to keep your subscription?</strong></p>
           <p>You can reactivate it anytime before or after the cancellation date.</p>
           ${button(`${appUrl}/subscribe`, 'Reactivate Subscription')}
-          ${para('Thanks for trying AuraMind. We hope to see you again!')}
+          ${para('Thanks for trying BonaMind. We hope to see you again!')}
         `),
       };
 
     case 'passwordReset':
       return {
-        subject: 'Reset your AuraMind password',
-        html: shell('Reset Your Password - AuraMind', `
+        subject: 'Reset your BonaMind password',
+        html: shell('Reset Your Password - BonaMind', `
           ${alertBlock('#ffc107', 'Reset your password')}
           ${para(`Hi ${name},`)}
-          ${para('We received a request to reset your password for your AuraMind account.')}
+          ${para('We received a request to reset your password for your BonaMind account.')}
           <p><strong>To reset your password:</strong></p>
           <p>Click the button below. This will take you to a page where you can create a new password.</p>
           ${button(p.resetLink || `${appUrl}/auth/forgot-password`, 'Reset Password')}
@@ -228,10 +228,10 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
     case 'emailVerification':
       return {
         subject: 'Verify your email address',
-        html: shell('Verify Your Email - AuraMind', `
+        html: shell('Verify Your Email - BonaMind', `
           ${alertBlock('#17a2b8', 'Verify your email address')}
           ${para(`Hi ${name},`)}
-          ${para('Please verify your email to complete your AuraMind account setup.')}
+          ${para('Please verify your email to complete your BonaMind account setup.')}
           <p><strong>Why verify your email?</strong></p>
           <p>Verifying your email helps us:</p>
           <ul>
@@ -243,7 +243,7 @@ function renderEmail(type: EmailType, p: EmailParams, origin: string): RenderedE
           <p>Click the button below. It only takes a second.</p>
           ${button(p.verificationLink || `${appUrl}/auth/callback`, 'Verify Email')}
           <p><strong>Didn't create an account?</strong></p>
-          <p>If you didn't sign up for AuraMind, you can safely ignore this email.</p>
+          <p>If you didn't sign up for BonaMind, you can safely ignore this email.</p>
         `),
       };
 

@@ -26,7 +26,7 @@ function BrainCopy({ className = "" }: BrainCopyProps) {
         <span className="font-serif italic text-[#8B5CF6]">mapped</span>
       </h2>
       <p className="text-[#7A7A96] text-xs leading-relaxed mb-5 max-w-md">
-        Every review feeds the map. AuraMind models the strength of each
+        Every review feeds the map. BonaMind models the strength of each
         memory in your brain — thousands of cards, each with its own decay
         curve — and shows up at the exact moment a connection is about to
         fade.

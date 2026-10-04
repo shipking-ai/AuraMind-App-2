@@ -75,7 +75,7 @@ describe('app-identity — derived strings follow APP_NAME', () => {
 
   it('APP_DESCRIPTION does not contain the literal old name after a rename', () => {
     // Only meaningful once APP_NAME changes; it is written so that when
-    // APP_NAME stops being 'AuraMind' this still passes, and it fails if
+    // APP_NAME stops being 'BonaMind' this still passes, and it fails if
     // someone hardcodes the previous name into the description.
     expect(APP_DESCRIPTION.includes(APP_NAME)).toBe(true);
   });

@@ -8,7 +8,7 @@
  * avoids the manual listener-cleanup footgun that vanilla pointer-event
  * handlers would require.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Reorderable decks in the dashboard.
  *   - Reorderable cards inside a deck editor.
  *   - Draggable challenge cards.

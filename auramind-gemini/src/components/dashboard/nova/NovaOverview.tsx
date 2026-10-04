@@ -170,7 +170,7 @@ function CommandHero({
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-violet-100/90">
                 <PulsingDot size={5} color="#A78BFA" />
-                AuraMind
+                BonaMind
               </span>
               <span className="text-[11px] tabular-nums text-zinc-400">
                 {dayName} · {dateStr}
@@ -725,7 +725,7 @@ function EmptyState({
         {/* Shows audio and documents becoming cards — the value proposition,
             rather than a generic sparkle. */}
         <NoDecksArt size={176} className="mx-auto mb-5 text-violet-300/70" />
-        <p className="nova-label text-violet-200/80">AuraMind</p>
+        <p className="nova-label text-violet-200/80">BonaMind</p>
         <h2 className="nova-display mt-2 text-3xl text-white sm:text-4xl">
           Start with eight cards
         </h2>

@@ -61,7 +61,7 @@ body:
     attributes:
       label: Where did the bug surface?
       options:
-        - Web (auramind.app)
+        - Web (bonamind.app)
         - Android (Play Store build)
         - Supabase API / RPC layer
         - Not sure

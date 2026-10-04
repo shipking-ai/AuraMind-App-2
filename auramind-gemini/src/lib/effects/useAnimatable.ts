@@ -7,7 +7,7 @@
  * knob that you can scrub manually OR animate programmatically with
  * the same state hook).
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Volume slider that smoothly tweens to a new value on user action.
  *   - Study-timer progress ring (0-1) driven by both real-time updates
  *     and animated "fill" transitions.

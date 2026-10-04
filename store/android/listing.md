@@ -1,13 +1,13 @@
-# AuraMind — Google Play Store Listing
+# BonaMind — Google Play Store Listing
 
-> **v1 copy approved for upload directly into the Play Console.** Brand: AuraMind
+> **v1 copy approved for upload directly into the Play Console.** Brand: BonaMind
 > (CogniVect, Inc). The "About" section is unchanged — CogniVect is internal-only
 > for v1. See `store/PRE_LAUNCH_CHECKLIST.md` for the full pre-flight.
 
 ---
 
 ## App name (≤ 30 chars)
-**AuraMind**
+**BonaMind**
 
 ## Short description (≤ 80 chars)
 **AI flashcards with FSRS spaced repetition — study smarter, remember longer.**
@@ -17,12 +17,12 @@
 ```
 Stop cramming. Start retaining.
 
-AuraMind uses FSRS — the modern spaced-repetition algorithm shown to retain 30% more per study session than legacy Anki-style schedulers — to schedule the right card at the right moment, every time.
+BonaMind uses FSRS — the modern spaced-repetition algorithm shown to retain 30% more per study session than legacy Anki-style schedulers — to schedule the right card at the right moment, every time.
 
 WHAT YOU GET
 
-• AI-generated flashcards — drop a PDF, a video link, or a topic; AuraMind turns it into a deck in under a minute.
-• Personalized spaced repetition — the algorithm learns YOUR memory and reshapes its schedule around it. The longer you use AuraMind, the faster you remember.
+• AI-generated flashcards — drop a PDF, a video link, or a topic; BonaMind turns it into a deck in under a minute.
+• Personalized spaced repetition — the algorithm learns YOUR memory and reshapes its schedule around it. The longer you use BonaMind, the faster you remember.
 • Active recall + retrieval practice — proven to outperform re-reading by 2-3x.
 • Offline-first — all your decks live on your device; sync when you're back online.
 • Streaks, leagues, and friends — gentle pressure to keep your study habit alive, but never burn-out inducing.
@@ -31,11 +31,11 @@ WHAT YOU GET
 
 PRIVACY-FIRST
 
-Your decks and notes stay on your device. We don't sell your study data. We use post-hoc analytics (PostHog) only for product improvement, and Sentry only for crash reports. The full privacy policy is at https://auramind.app/privacy.
+Your decks and notes stay on your device. We don't sell your study data. We use post-hoc analytics (PostHog) only for product improvement, and Sentry only for crash reports. The full privacy policy is at https://bonamind.app/privacy.
 
 BUILT FOR STUDENTS WHO ACTUALLY STUDY
 
-Whether you're prepping for med school (USMLE), law school (BAR), grad school cumulative exams, or learning a new language — AuraMind adapts to whatever you're mastering.
+Whether you're prepping for med school (USMLE), law school (BAR), grad school cumulative exams, or learning a new language — BonaMind adapts to whatever you're mastering.
 ```
 
 ## Promotional short description (≤ 80 chars)
@@ -45,7 +45,7 @@ Whether you're prepping for med school (USMLE), law school (BAR), grad school cu
 
 ```
 • Smarter study scheduling — your deck adapts to how *you* remember.
-• Faster deck creation — drop a PDF and watch AuraMind build flashcards.
+• Faster deck creation — drop a PDF and watch BonaMind build flashcards.
 • Memory Palaces for hard topics — map knowledge to a vivid mental walkthrough.
 • Friend streaks and gentle leagues — compete without losing focus.
 ```
@@ -91,12 +91,12 @@ Expected rating: **PEGI 3 / ESRB E / IARC General** (everyone, no objectionable 
 ## Pricing & distribution
 
 - **Pricing:** Free
-- **In-app purchases:** Yes (AuraMind Premium subscription — Stripe backs this; Play subs are auto-mapped from Stripe via RevenueCat webhook — see `stripe-webhook.ts`).
+- **In-app purchases:** Yes (BonaMind Premium subscription — Stripe backs this; Play subs are auto-mapped from Stripe via RevenueCat webhook — see `stripe-webhook.ts`).
 - **Ads:** Planned for the free tier only — Google AdMob native/rewarded placements; Premium removes ads. Gravity is an optional future integration for clearly labeled sponsored suggestions in Prof. Aura.
 - **Target age:** 13+ (US COPPA safe-harbor)
-- **Privacy policy URL:** `https://auramind.app/privacy`
-- **Terms of service URL:** `https://auramind.app/terms`
-- **Support email:** `hello@auramind.app`
+- **Privacy policy URL:** `https://bonamind.app/privacy`
+- **Terms of service URL:** `https://bonamind.app/terms`
+- **Support email:** `hello@bonamind.app`
 
 ## Pre-launch checklist (Android-specific)
 

@@ -1,4 +1,4 @@
-// Schoology Integration Service for AuraMind
+// Schoology Integration Service for BonaMind
 // Handles OAuth 1.0 authentication and content extraction from Schoology LMS
 
 interface SchoologyCredentials {

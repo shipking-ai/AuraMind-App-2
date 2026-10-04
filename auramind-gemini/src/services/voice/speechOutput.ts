@@ -1,5 +1,5 @@
 /**
- * speechOutput — the one way AuraMind speaks.
+ * speechOutput — the one way BonaMind speaks.
  *
  * Inside the Android app `window.speechSynthesis` does not exist (Android
  * System WebView never shipped it), so read-aloud, voice study and slide

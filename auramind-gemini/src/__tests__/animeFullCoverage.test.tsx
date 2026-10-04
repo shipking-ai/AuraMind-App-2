@@ -28,7 +28,7 @@ import {
  *      at module-load and these tests scream loud.
  *
  * Together: 11 components/hooks + 11 utils/presets = the full anime.js v4
- * surface AuraMind consumes.
+ * surface BonaMind consumes.
  */
 
 describe('Scope (createScope) — scoped batch animations', () => {

@@ -3,7 +3,7 @@
  *
  * Thin wrapper around canvas-confetti that:
  *   1. Respects prefers-reduced-motion (returns a no-op when reduced)
- *   2. Uses AuraMind's violet/purple brand palette by default
+ *   2. Uses BonaMind's violet/purple brand palette by default
  *   3. Returns a stable callback so callers don't need to memoize
  *
  * The underlying canvas-confetti package is the source of truth — the
@@ -14,7 +14,7 @@ import { useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { usePrefersReducedMotion } from './useReducedMotion';
 
-// AuraMind brand palette — taken from design tokens.
+// BonaMind brand palette — taken from design tokens.
 const AURAMIND_COLORS = [
   '#8B5CF6', // violet-400 (primary)
   '#7C3AED', // violet-600 (button)

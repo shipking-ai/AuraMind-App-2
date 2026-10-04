@@ -1,6 +1,6 @@
 /**
  * Branding — single source of truth for the CogniVect (parent) and
- * AuraMind (first product) brand surface.
+ * BonaMind (first product) brand surface.
  *
  * Load-bearing contract (pinned by `__tests__/branding.test.ts` v3 + every
  * legal/footer page consumer). Any future rename touches exactly this
@@ -8,11 +8,11 @@
  * literal string "CogniVect" inline.
  *
  * Placement policy (M6.5.b round 14):
- *   - AuraMind is the PRIMARY mark everywhere it's seen.
- *   - CogniVect parent line appears BENEATH or BESIDE the AuraMind mark,
+ *   - BonaMind is the PRIMARY mark everywhere it's seen.
+ *   - CogniVect parent line appears BENEATH or BESIDE the BonaMind mark,
  *     never inside it, never replacing it. See `CogniWordmark.tsx`.
  *   - Store-listing metadata (capacitor.config appName, package.json
- *     metadata, index.html <title>) MUST stay "AuraMind" only — Google
+ *     metadata, index.html <title>) MUST stay "BonaMind" only — Google
  *     rejects anything that looks like a tagline in the visual app name,
  *     and only the "Developer/Vendor Name" field accepts the parent
  *     brand. CogniVect leaves that field at the storefront console.
@@ -29,15 +29,25 @@
  *     line and compare it byte-for-byte to `LEGAL_YEAR`.
  */
 
+import { APP_NAME } from '../../app-identity.ts';
+
 /* ── Named exports (canonical, pinned by branding.test.ts) ───────────── */
 
 export const PARENT_COMPANY_NAME    = 'CogniVect';
 export const PARENT_COMPANY_LEGAL   = 'CogniVect, Inc';          /* no trailing period */
 export const PARENT_BRAND_SLUG     = 'covect';
 export const PARENT_BRAND_TAGLINE  = 'cognitive · vector';     /* middle dot, not '+' */
-export const PRODUCT_NAME          = 'AuraMind';
+/**
+ * The product name, sourced from app-identity.ts rather than retyped.
+ *
+ * These two used to be independent literals, which is precisely how a rename
+ * ends up showing the new name in the tab title and the old one in the footer.
+ * PRODUCT_BYLINE, TRADEMARK_STATEMENT and the BRAND aggregate all derive from
+ * this, so the parent-brand surfaces follow automatically.
+ */
+export const PRODUCT_NAME          = APP_NAME;
 export const PRODUCT_BYLINE        = `${PRODUCT_NAME} — a ${PARENT_COMPANY_NAME} product`;
-export const CONTACT_EMAIL         = 'hello@auramind.app';
+export const CONTACT_EMAIL         = 'hello@bonamind.app';
 /* Until CogniVect provisions its own mailbox, parent brand contact-mail
  * aliases to the deliverability-warmed production mailbox. */
 export const PARENT_CONTACT_EMAIL  = CONTACT_EMAIL;
@@ -54,7 +64,20 @@ export const LEGAL_COPYRIGHT_LINE: string             = `© ${LEGAL_YEAR} CogniV
  * deploys (DNS-stable, won't churn even when the year flips). */
 export const VENDOR_URL                                = 'https://cogniavect.app';
 
-/* Inline-text helper: "AuraMind by CogniVect" / "by CogniVect" wording
+/**
+ * The product's own web origin, for surfaces that need an absolute URL.
+ *
+ * It lives here rather than in seo.ts because it is a brand/legal surface: the
+ * privacy policy and terms have to name the site the service actually runs on.
+ * seo.ts needs the same value, and two literals would drift.
+ *
+ * The API keeps its own copy in api/_lib/origin.ts — a separate runtime that
+ * cannot import from the web app, and overridable by env so the deploy target
+ * can change without a code change. Keep the two in step.
+ */
+export const PRODUCT_SITE_URL                          = 'https://bonamind.app';
+
+/* Inline-text helper: "BonaMind by CogniVect" / "by CogniVect" wording
  * for compact UI surfaces (sidebar logo strip, splash bottom). Folded
  * into PRODUCT_BYLINE for marketing-style copy. */
 export const PARENT_BYLINE_SHORT                       = `by ${PARENT_COMPANY_NAME}`;

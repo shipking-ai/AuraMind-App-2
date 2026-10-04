@@ -174,8 +174,8 @@ export default function DeckDetailRoute() {
     if (!deck) return;
     try {
       await share({
-        title: `${deck.title} · AuraMind`,
-        text: `${deck.title}\n${deck.description || 'Study this deck in AuraMind.'}\n\nCards: ${cards.length}`,
+        title: `${deck.title} · BonaMind`,
+        text: `${deck.title}\n${deck.description || 'Study this deck in BonaMind.'}\n\nCards: ${cards.length}`,
       });
     } catch {
       // Android share sheets can be dismissed; that is not an app error.

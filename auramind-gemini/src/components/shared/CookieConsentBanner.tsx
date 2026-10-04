@@ -49,7 +49,7 @@ export function CookieConsentBanner() {
     >
       <p className="text-[13px] leading-relaxed">
         We use necessary cookies to keep you signed in. With your permission we
-        also use anonymous usage analytics to help improve AuraMind. You can
+        also use anonymous usage analytics to help improve BonaMind. You can
         change this anytime in Settings.
       </p>
       <div className="mt-3 flex gap-2">

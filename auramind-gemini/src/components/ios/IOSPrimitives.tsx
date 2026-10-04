@@ -1,5 +1,5 @@
 /**
- * iOS building blocks for the AuraMind iPhone app. Each mirrors a UIKit /
+ * iOS building blocks for the BonaMind iPhone app. Each mirrors a UIKit /
  * SwiftUI control closely enough that the app reads as native: navigation
  * bar with a collapsing large title, inset grouped lists, switches, steppers,
  * segmented controls, action sheets, sheets with a grabber, and activity

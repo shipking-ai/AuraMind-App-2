@@ -22,7 +22,7 @@
  *     directly via the selectors it tracks).
  *
  * Color palette:
- *   - `palette?: string[]` defaults to AuraMind's primary gradient stops
+ *   - `palette?: string[]` defaults to BonaMind's primary gradient stops
  *     (violet → pink → cyan). Same default as `Confetti` and `AreaChart` so
  *     the celebration reads as part of the design language, not a third-
  *     party library demo. The first two stops drive the halo gradient;
@@ -60,7 +60,7 @@ import { useReducedMotion } from './useReducedMotion';
 
 export interface AnimeCelebrationProps {
   /**
-   * Halo + label color stops. Defaults to AuraMind's primary gradient
+   * Halo + label color stops. Defaults to BonaMind's primary gradient
    * (violet → pink → cyan) — same defaults as `Confetti` + `AreaChart` so
    * the celebration reads as part of the design language.
    * The first two stops drive the halo gradient; opacity is appended via
@@ -74,7 +74,7 @@ export interface AnimeCelebrationProps {
    *
    * At least 2 stops are required; the optional third is reserved for
    * future use (label glow accent). Anything shorter falls back to the
-   * AuraMind defaults.
+   * BonaMind defaults.
    */
   palette?: string[];
 }
@@ -94,7 +94,7 @@ export interface AnimeCelebrationHandle {
   }) => void;
 }
 
-// AuraMind primary palette — violet → pink → cyan. Same default as the
+// BonaMind primary palette — violet → pink → cyan. Same default as the
 // `Confetti` and `AreaChart` components so the celebration visual reads as
 // part of the design language, not a generic anime.js demo.
 const AURAMIND_PALETTE = ['#7C3AED', '#EC4899', '#06B6D4'] as const;
@@ -111,7 +111,7 @@ export const AnimeCelebration = forwardRef<
 >(function AnimeCelebration(props, ref) {
   // Resolve palette defensively: a literal const still flows through the
   // readonly type, and an empty array from a caller would degrade silently
-  // to a "no color stops" gradient. Fall back to the AuraMind default in
+  // to a "no color stops" gradient. Fall back to the BonaMind default in
   // both cases.
   const palette: readonly string[] =
     props.palette && props.palette.length >= 2 ? props.palette : AURAMIND_PALETTE;

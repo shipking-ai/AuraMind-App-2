@@ -32,7 +32,7 @@ afterEach(() => {
 
 const ADMIN = {
   id: 'admin-1',
-  email: 'admin@auramind.app',
+  email: 'admin@bonamind.app',
   app_metadata: { role: 'admin' },
   user_metadata: {},
 };

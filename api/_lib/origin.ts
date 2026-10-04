@@ -31,13 +31,33 @@
  * APP_ORIGIN overrides the default. Set it when the domain changes — it is
  * also what the CORS allowlist derives its web origins from, so setting it in
  * one env var updates auth, API access, and email links together.
+ *
+ * LEGACY_APP_ORIGIN additionally allowlists the previous domain during a
+ * migration; see its own comment.
  */
 
 /**
  * The canonical https origin, no trailing slash. Used for CORS, absolute URLs
  * in transactional email, and OAuth redirect construction.
  */
-export const APP_ORIGIN: string = (process.env.APP_ORIGIN || 'https://auramind.app').replace(/\/+$/, '');
+export const APP_ORIGIN: string = (process.env.APP_ORIGIN || 'https://bonamind.app').replace(/\/+$/, '');
+
+/**
+ * The previous domain, kept allowlisted while the migration settles.
+ *
+ * bonamind.app is now canonical, but links to auramind.app still exist in the
+ * wild: old Stripe emails, bookmarks, shared links, and the Play tester
+ * listing. If those origins stopped being recognised the moment the default
+ * changed, a customer following a link from a receipt they kept would get a
+ * silent network failure rather than a page.
+ *
+ * Empty when APP_ORIGIN is already auramind.app, so a deployment that has not
+ * migrated does not end up allowlisting its own origin twice. Remove this once
+ * the old domain 301s to the new one and receipt emails have aged out.
+ */
+export const LEGACY_APP_ORIGIN: string | undefined =
+  process.env.LEGACY_APP_ORIGIN ??
+  (APP_ORIGIN === 'https://auramind.app' ? undefined : 'https://auramind.app');
 
 /**
  * Transnational email sender. Kept as its own variable because the sender
@@ -50,7 +70,7 @@ export const APP_ORIGIN: string = (process.env.APP_ORIGIN || 'https://auramind.a
  * attempt to anyone who checks the headers.
  */
 export const EMAIL_FROM: string =
-  process.env.RESEND_FROM_EMAIL || 'noreply@mail.auramind.app';
+  process.env.RESEND_FROM_EMAIL || 'noreply@mail.bonamind.app';
 
 /**
  * Builds an absolute URL on the canonical origin.

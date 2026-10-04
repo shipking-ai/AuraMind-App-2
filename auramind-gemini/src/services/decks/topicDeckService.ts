@@ -37,7 +37,7 @@ export async function createTopicDeck(
       const generated = await generateDeckFromTopic(clean);
       if (generated?.cards?.length) {
         title = generated.title || clean;
-        description = generated.description || `AuraMind starter deck on "${clean}".`;
+        description = generated.description || `BonaMind starter deck on "${clean}".`;
         seeds = generated.cards.map((c) => ({
           front: c.question,
           back: c.answer,

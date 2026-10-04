@@ -7,7 +7,7 @@ import { offerGeneratorFile } from '../../lib/pendingGeneratorFile';
 const hasFiles = (e: DragEvent | React.DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
 
 /**
- * Drag a document or recording anywhere over AuraMind to make a course.
+ * Drag a document or recording anywhere over BonaMind to make a course.
  * Plain HTML5 drag-and-drop, so the website gets it as well as the Windows
  * app (which keeps dragDropEnabled: false so WebView2 delivers File objects).
  */

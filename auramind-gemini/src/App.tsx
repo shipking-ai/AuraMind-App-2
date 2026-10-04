@@ -662,7 +662,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
       const s = newCards.map((c) =>
         getInitialCardState(deckId, c.front || c.question, c.back || c.answer),
       );
-      const templates = createMetadataTemplates(newCards, "AuraMind AI", "ai");
+      const templates = createMetadataTemplates(newCards, "BonaMind AI", "ai");
       const saved = mergeCardMetadata(await dbService.saveCards(user.id, s), templates);
       persistCardMetadata(saved);
       setCards((prev) => [...prev, ...saved]);
@@ -772,7 +772,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
   const isQuickReviewWindow = location.pathname.startsWith("/quick-review");
   useDesktopIntegration({ cards, decks, userId: user?.id, enabled: isDesktopApp() && !isQuickReviewWindow });
 
-  // Content shared into AuraMind from any other app. Gated on authChecked so
+  // Content shared into BonaMind from any other app. Gated on authChecked so
   // a share cannot land on a route guard and bounce to /auth, losing itself.
   useShareTarget(authChecked);
 

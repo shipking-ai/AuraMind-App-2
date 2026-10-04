@@ -1,5 +1,5 @@
 /**
- * Files AuraMind can turn into a course: the generator's document and audio
+ * Files BonaMind can turn into a course: the generator's document and audio
  * inputs. The same lists live in src-tauri/src/handoff.rs (Explorer/tray)
  * and src-tauri/windows/installer-hooks.nsh (Explorer verbs);
  * courseFiles.test.ts fails if any of them drift.
@@ -27,5 +27,5 @@ export function fileFromHandoff(h: { name: string; mime: string; base64: string 
 
 export function unsupportedMessage(name: string): string {
   const ext = extensionOf(name);
-  return ext ? `AuraMind can't make a course from .${ext} files.` : "AuraMind can't make a course from that file.";
+  return ext ? `BonaMind can't make a course from .${ext} files.` : "BonaMind can't make a course from that file.";
 }

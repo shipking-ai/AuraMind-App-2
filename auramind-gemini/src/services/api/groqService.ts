@@ -288,7 +288,7 @@ Respond with ONLY a valid JSON object. No conversational text, no markdown code 
                 } else {
                     // Unknown error from Puter path — re-raise so we don't
                     // accidentally swallow real bugs.
-                    console.error('[AuraMind/groqService] unexpected puterChat error:', putErr);
+                    console.error('[BonaMind/groqService] unexpected puterChat error:', putErr);
                     throw putErr;
                 }
             }
@@ -436,7 +436,7 @@ export const generateStudyBuddyResponse = async (
     
     const contextStr = userContext ? `\nStudent Context:\n${userContext}\nIf you know their mastery level, tailor your tone and explanations to their skill.` : "";
 
-    const fullPrompt = `You are AuraMind Companion, an elite study tutor that uses the Socratic method.
+    const fullPrompt = `You are BonaMind Companion, an elite study tutor that uses the Socratic method.
 
 TEACHING APPROACH:
 - Guide the student to answers through questions rather than giving direct answers

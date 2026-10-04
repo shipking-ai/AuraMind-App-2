@@ -5,16 +5,18 @@
  * every legal page and footer. These tests pin the constants so that a
  * future "let me just rename this in both places" refactor visibly breaks
  * a test, rather than silently dropping the CogniVect parent-company
- * attribution into the wrong surface (or losing AuraMind altogether).
+ * attribution into the wrong surface (or losing BonaMind altogether).
  *
  * Round-3 contracts (matches `src/lib/branding.ts`):
  *   - PARENT_COMPANY_LEGAL = 'CogniVect, Inc' (no trailing period —
  *     consumers add their own punctuation to avoid "Inc.." double-dot bugs).
- *   - TRADEMARK_STATEMENT = 'AuraMind is a trademark of CogniVect, Inc'
+ *   - TRADEMARK_STATEMENT = 'BonaMind is a trademark of CogniVect, Inc'
  *     (also no trailing period for the same reason).
  *   - LEGAL_ADDRESS = 'CogniVect, Inc, 548 Market St, San Francisco, CA 94104'
  *     (no trailing period in the address either).
- *   - BRAND aggregate key parity is asserted via Object.keys so future
+ *   - PRODUCT_NAME now derives from app-identity.ts APP_NAME so the two cannot drift.
+   - TRADEMARK_STATEMENT = 'BonaMind is a trademark of CogniVect, Inc'
+   - BRAND aggregate key parity is asserted via Object.keys so future
  *     named exports must mirror into BRAND, or the parity test fails.
  */
 
@@ -34,6 +36,7 @@ import {
   LEGAL_YEAR,
   BRAND,
 } from '../lib/branding';
+import { APP_NAME } from '../../app-identity';
 
 describe('Branding — parent company (CogniVect)', () => {
   it('parent company name is "CogniVect" (cog* + vect capitalisation)', () => {
@@ -55,13 +58,13 @@ describe('Branding — parent company (CogniVect)', () => {
   });
 });
 
-describe('Branding — product (AuraMind)', () => {
-  it('product name is "AuraMind" (unchanged for v1 to keep App Store + bundle ids stable)', () => {
-    expect(PRODUCT_NAME).toBe('AuraMind');
+describe('Branding — product (BonaMind)', () => {
+  it('product name follows APP_NAME (App Store + bundle ids are unaffected by a display rename)', () => {
+    expect(PRODUCT_NAME).toBe(APP_NAME);
   });
 
-  it('product byline reads as "AuraMind — a CogniVect product" and follows the parent by interpolation', () => {
-    expect(PRODUCT_BYLINE).toBe('AuraMind — a CogniVect product');
+  it('product byline reads as "BonaMind — a CogniVect product" and follows the parent by interpolation', () => {
+    expect(PRODUCT_BYLINE).toBe('BonaMind — a CogniVect product');
     expect(PRODUCT_BYLINE).toContain(PRODUCT_NAME);
     expect(PRODUCT_BYLINE).toContain(PARENT_COMPANY_NAME);
     // Regression guard: if a future rename PR hardcodes "CogniVect" instead
@@ -72,8 +75,8 @@ describe('Branding — product (AuraMind)', () => {
 });
 
 describe('Branding — contact + legal lines', () => {
-  it('contact email keeps the live auramind.app mailbox (deliverability already warmed)', () => {
-    expect(CONTACT_EMAIL).toBe('hello@auramind.app');
+  it('contact email keeps the live bonamind.app mailbox (deliverability already warmed)', () => {
+    expect(CONTACT_EMAIL).toBe('hello@bonamind.app');
   });
 
   it('parent contact email reuses the production mailbox until the parent brand has its own', () => {
@@ -82,8 +85,8 @@ describe('Branding — contact + legal lines', () => {
     expect(PARENT_CONTACT_EMAIL).toBe(CONTACT_EMAIL);
   });
 
-  it('trademark statement attributes AuraMind to CogniVect, Inc. (no trailing period — users add)', () => {
-    expect(TRADEMARK_STATEMENT).toBe('AuraMind is a trademark of CogniVect, Inc');
+  it('trademark statement attributes BonaMind to CogniVect, Inc. (no trailing period — users add)', () => {
+    expect(TRADEMARK_STATEMENT).toBe('BonaMind is a trademark of CogniVect, Inc');
     expect(TRADEMARK_STATEMENT).toContain(PRODUCT_NAME);
     expect(TRADEMARK_STATEMENT).toContain(PARENT_COMPANY_LEGAL);
     // Regression guard: confirm there is no double-period bug at the end of

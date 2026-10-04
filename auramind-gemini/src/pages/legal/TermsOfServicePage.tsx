@@ -11,7 +11,7 @@ const sections = [
     content: (
       <>
         <p>
-          By accessing or using AuraMind ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service.
+          By accessing or using BonaMind ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service.
         </p>
         <p>
           These Terms apply to all users, including free trial users, paid subscribers, and educational institutions. We may update these Terms from time to time; material changes will be notified via email or through the Service.
@@ -87,13 +87,13 @@ const sections = [
     content: (
       <>
         <p>
-          AuraMind provides AI-powered features including an AI study assistant ("Aura"), flashcard generation, quiz generation, research packs, fact-checking, and homework assistance. These features use large language models from third-party providers.
+          BonaMind provides AI-powered features including an AI study assistant ("Aura"), flashcard generation, quiz generation, research packs, fact-checking, and homework assistance. These features use large language models from third-party providers.
         </p>
 
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">AI Output Disclaimer</h4>
         <ul className="list-disc pl-5 space-y-1.5 text-[#9090A8]">
           <li>AI-generated content may contain errors, inaccuracies, or omissions.</li>
-          <li>AI outputs reflect the training data of underlying models and do not represent the views of AuraMind.</li>
+          <li>AI outputs reflect the training data of underlying models and do not represent the views of BonaMind.</li>
           <li>You are solely responsible for reviewing, verifying, and editing AI-generated content before relying on it.</li>
           <li>AI responses should not be used as a substitute for professional advice (medical, legal, financial, or otherwise).</li>
           <li>The fact-checking feature provides confidence scores based on AI analysis and does not guarantee factual accuracy.</li>
@@ -123,7 +123,7 @@ const sections = [
 
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">License to Us</h4>
         <p>
-          By using the Service, you grant AuraMind a limited, non-exclusive, worldwide license to store, process, and display your User Content solely for the purpose of providing the Service to you. This license does not grant us the right to use your content for any other purpose, including AI model training.
+          By using the Service, you grant BonaMind a limited, non-exclusive, worldwide license to store, process, and display your User Content solely for the purpose of providing the Service to you. This license does not grant us the right to use your content for any other purpose, including AI model training.
         </p>
 
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">AI-Generated Content</h4>
@@ -246,7 +246,7 @@ const sections = [
         <p>We may suspend or terminate your access to the Service immediately if:</p>
         <ul className="list-disc pl-5 space-y-1.5 text-[#9090A8]">
           <li>You violate these Terms or our Acceptable Use Policy.</li>
-          <li>Your conduct could harm other users, third parties, or AuraMind.</li>
+          <li>Your conduct could harm other users, third parties, or BonaMind.</li>
           <li>You fail to pay subscription fees when due.</li>
           <li>We are required to do so by law.</li>
         </ul>

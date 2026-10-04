@@ -315,7 +315,7 @@ export default function AndroidSettingsScreen() {
               : availability.biometryType === "multiple"
                 ? "Biometrics"
                 : "Fingerprint";
-        setBiometricDetail(`${kind} required to open AuraMind`);
+        setBiometricDetail(`${kind} required to open BonaMind`);
       } else if (availability.reason === "not_enrolled") {
         setBiometricDetail("Add a fingerprint or face in system Settings first");
       } else {
@@ -503,7 +503,7 @@ export default function AndroidSettingsScreen() {
         <div>
           <p className="android-eyebrow">YOUR DEVICE</p>
           <h1>Settings</h1>
-          <p>Make AuraMind fit the way you learn on {deviceName()}.</p>
+          <p>Make BonaMind fit the way you learn on {deviceName()}.</p>
         </div>
       </div>
 
@@ -860,7 +860,7 @@ export default function AndroidSettingsScreen() {
         title="Device & privacy"
         detail="Choose what stays on this phone."
       >
-        <AndroidSettingRow label="Anonymous usage analytics" detail="Help improve AuraMind">
+        <AndroidSettingRow label="Anonymous usage analytics" detail="Help improve BonaMind">
           <AndroidToggle
             value={usageAnalytics}
             onChange={setUsageAnalytics}

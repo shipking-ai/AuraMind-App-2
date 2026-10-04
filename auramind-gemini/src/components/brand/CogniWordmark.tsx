@@ -69,7 +69,7 @@ interface CogniWordmarkProps {
 
 /**
  * CogniWordmark — the parent-brand line that travels BENEATH or BESIDE
- * every AuraMind wordmark in the app shell.
+ * every BonaMind wordmark in the app shell.
  *
  * Always pulls its canonical name from `lib/branding.ts` — never inline.
  * The component itself is presentational: no state, no side effects.

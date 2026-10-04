@@ -12,21 +12,21 @@ export interface ModelInfo {
 }
 
 export const AVAILABLE_MODELS: ModelInfo[] = [
-  { id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC', vram: 879, name: 'AuraMind Lite' },
-  { id: 'TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC', vram: 697, name: 'AuraMind Mini' },
-  { id: 'SmolLM2-360M-Instruct-q4f16_1-MLC', vram: 376, name: 'AuraMind Nano' },
-  { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', vram: 945, name: 'AuraMind Micro' },
-  { id: 'gemma3-1b-it-q4f16_1-MLC', vram: 711, name: 'AuraMind Core' },
-  { id: 'gemma-2-2b-it-q4f16_1-MLC', vram: 1200, name: 'AuraMind Plus' },
-  { id: 'Llama-3.1-8B-Instruct-q4f16_1-MLC-1k', vram: 5400, name: 'AuraMind Pro' },
-  { id: 'Qwen2.5-Coder-14B-Instruct-q4f16_1-MLC', vram: 8700, name: 'AuraMind Pro Max' },
+  { id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC', vram: 879, name: 'BonaMind Lite' },
+  { id: 'TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC', vram: 697, name: 'BonaMind Mini' },
+  { id: 'SmolLM2-360M-Instruct-q4f16_1-MLC', vram: 376, name: 'BonaMind Nano' },
+  { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', vram: 945, name: 'BonaMind Micro' },
+  { id: 'gemma3-1b-it-q4f16_1-MLC', vram: 711, name: 'BonaMind Core' },
+  { id: 'gemma-2-2b-it-q4f16_1-MLC', vram: 1200, name: 'BonaMind Plus' },
+  { id: 'Llama-3.1-8B-Instruct-q4f16_1-MLC-1k', vram: 5400, name: 'BonaMind Pro' },
+  { id: 'Qwen2.5-Coder-14B-Instruct-q4f16_1-MLC', vram: 8700, name: 'BonaMind Pro Max' },
 ];
 
 export function getModelDisplayName(modelId: string): string {
   const found = AVAILABLE_MODELS.find(m => m.id === modelId);
   if (found) return found.name;
   const clean = modelId.replace(/-(Instruct|it)-q4f16_1-MLC.*$/, '').replace(/-/g, ' ');
-  return `AuraMind ${clean}`;
+  return `BonaMind ${clean}`;
 }
 
 // All model IDs that WebLLM recognizes — union of AVAILABLE_MODELS and TIER_MODELS
@@ -91,7 +91,7 @@ class LocalInferenceService {
       const isAppleSilicon = arch.includes('apple') || vendor.includes('apple');
       const isIntegrated = arch.includes('gen') || arch.includes('uhd') || vendor.includes('intel');
 
-      console.warn('[AuraMind WebLLM] GPU:', { vendor: info.vendor, arch, maxBuf, isAppleSilicon, isIntegrated });
+      console.warn('[BonaMind WebLLM] GPU:', { vendor: info.vendor, arch, maxBuf, isAppleSilicon, isIntegrated });
 
       if (isAppleSilicon) return 4;
       if (maxBuf >= MAX_BUF_MED && !isIntegrated) return 3;
@@ -162,7 +162,7 @@ class LocalInferenceService {
         this.gpuTier = await LocalInferenceService.detectGPUTier();
       }
 
-      console.warn('[AuraMind WebLLM] Selected:', { tier: this.gpuTier, model: this.modelId });
+      console.warn('[BonaMind WebLLM] Selected:', { tier: this.gpuTier, model: this.modelId });
 
       if (!(navigator as any).gpu) {
         throw new Error('WebGPU not supported. Please use Chrome or Edge.');

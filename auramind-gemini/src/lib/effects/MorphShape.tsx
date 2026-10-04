@@ -11,7 +11,7 @@
  *   geometry. We render an invisible `<svg>` carrying the target path
  *   with a stable id, then `morphTo('#morph-target-{id} path')`.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Mood/emotion emoji that morphs based on mastery level.
  *   - Star → trophy morph on achievement unlock.
  *   - Loading spinner state changes.
@@ -47,7 +47,7 @@ export interface MorphShapeProps {
   className?: string;
   /** stroke width applied to the rendered path. Default 2. */
   strokeWidth?: number;
-  /** stroke color. Default AuraMind primary violet. */
+  /** stroke color. Default BonaMind primary violet. */
   stroke?: string;
 }
 

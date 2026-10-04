@@ -45,7 +45,7 @@ const MANIFESTO_LINES: WordSpec[][] = [
     { text: "return.", accent: true },
   ],
   [
-    { text: "AuraMind" }, { text: "shows" }, { text: "up" }, { text: "at" },
+    { text: "BonaMind" }, { text: "shows" }, { text: "up" }, { text: "at" },
     { text: "that" }, { text: "exact" }, { text: "moment.", accent: true },
   ],
 ];

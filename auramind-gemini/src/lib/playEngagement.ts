@@ -95,7 +95,7 @@ export function initPlayEngagement(): void {
     try {
       native.addListener("onUpdateDownloaded", () => {
         toast("Update downloaded", {
-          description: "Restart AuraMind to apply it.",
+          description: "Restart BonaMind to apply it.",
           action: {
             label: "Restart",
             onClick: () => {

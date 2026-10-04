@@ -48,7 +48,7 @@ const forgedUser = {
 
 const legitAdmin = {
   id: 'admin-1',
-  email: 'admin@auramind.app',
+  email: 'admin@bonamind.app',
   user_metadata: { is_admin: true, role: 'admin', full_name: 'Admin' },
   app_metadata: { role: 'admin' },
 };

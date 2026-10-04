@@ -50,7 +50,7 @@ const ForgettingCurve = () => (
       fill="none" stroke="#7C3AED" strokeWidth="2" />
     <path d="M0 140 L0 20 Q60 18 100 22 Q160 25 220 28 Q300 32 400 35 L400 140 Z"
       fill="url(#curveGrad)" opacity="0.15" />
-    <text x="320" y="24" fill="#7A7A96" fontSize="9" fontFamily="sans-serif">With AuraMind</text>
+    <text x="320" y="24" fill="#7A7A96" fontSize="9" fontFamily="sans-serif">With BonaMind</text>
     <text x="320" y="98" fill="#3A3A4F" fontSize="9" fontFamily="sans-serif">Without review</text>
   </svg>
 );
@@ -156,9 +156,9 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <span className="flex items-center gap-2 text-[#F0EFFE] text-sm font-medium tracking-tight font-script">
           <div className="w-5 h-5 rounded flex items-center justify-center">
-            <img src="/favicons,logos/favicon-32.png" alt="AuraMind" className="h-full w-full object-contain" />
+            <img src="/favicons,logos/favicon-32.png" alt="BonaMind" className="h-full w-full object-contain" />
           </div>
-          AuraMind
+          BonaMind
         </span>
         <div className="hidden md:flex items-center gap-8">
           {NAV_ITEMS.map((item) => (
@@ -483,7 +483,7 @@ export default function ModernLandingPage() {
               Your brain forgets on a <TextGlitch text="schedule" as="span" className="font-serif italic text-[#8B5CF6]" glitchOnHover autoGlitch autoGlitchInterval={8000} />
             </h2>
             <p className="text-[#7A7A96] text-xs leading-relaxed mb-4">
-              AuraMind schedules each card right before you would forget it. You retain more in less time.
+              BonaMind schedules each card right before you would forget it. You retain more in less time.
             </p>
             <a
               href="https://github.com/open-spaced-repetition/free-spaced-repetition-scheduler"
@@ -564,7 +564,7 @@ export default function ModernLandingPage() {
         </div>
       </section>
 
-      {/* Comparison: AuraMind vs Anki vs Quizlet vs RemNote */}
+      {/* Comparison: BonaMind vs Anki vs Quizlet vs RemNote */}
       <ComparisonSection />
 
       {/* Pricing */}
@@ -632,9 +632,9 @@ export default function ModernLandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-md flex items-center justify-center">
-              <img src="/favicons,logos/favicon-32.png" alt="AuraMind" className="h-full w-full object-contain" />
+              <img src="/favicons,logos/favicon-32.png" alt="BonaMind" className="h-full w-full object-contain" />
             </div>
-            <span className="text-[#F0EFFE] text-xs font-medium font-script">AuraMind</span>
+            <span className="text-[#F0EFFE] text-xs font-medium font-script">BonaMind</span>
           </div>
           <p className="text-[#3A3A4F] text-xs">Built by one person. Powered by real science.</p>
           <div className="flex items-center gap-6">

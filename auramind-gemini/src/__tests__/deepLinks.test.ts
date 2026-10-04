@@ -23,7 +23,7 @@ describe('parseDeepLink', () => {
   });
 
   it('rejects foreign schemes, unknown paths and the dev harness', () => {
-    expect(parseDeepLink('https://auramind.app/dashboard')).toBeNull();
+    expect(parseDeepLink('https://bonamind.app/dashboard')).toBeNull();
     expect(parseDeepLink('auramind://app/__e2e/android')).toBeNull();
     expect(parseDeepLink('auramind://app/admin/backdoor')).toBeNull();
     expect(parseDeepLink('not a url')).toBeNull();

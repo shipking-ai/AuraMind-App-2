@@ -46,7 +46,7 @@ describe('course files', () => {
   });
 
   it('names the rejected extension', () => {
-    expect(unsupportedMessage('setup.exe')).toBe("AuraMind can't make a course from .exe files.");
-    expect(unsupportedMessage('README')).toBe("AuraMind can't make a course from that file.");
+    expect(unsupportedMessage('setup.exe')).toBe("BonaMind can't make a course from .exe files.");
+    expect(unsupportedMessage('README')).toBe("BonaMind can't make a course from that file.");
   });
 });

@@ -17,10 +17,10 @@ afterEach(() => { delete (window as W).__TAURI_INTERNALS__; document.documentEle
 
 describe('windowTitleFor', () => {
   it('names the page, then the app', () => {
-    expect(windowTitleFor('/dashboard')).toBe('Home · AuraMind');
-    expect(windowTitleFor('/dashboard/decks')).toBe('Library · AuraMind');
-    expect(windowTitleFor('/dashboard/study/abc')).toBe('Study · AuraMind');
-    expect(windowTitleFor('/somewhere-else')).toBe('AuraMind');
+    expect(windowTitleFor('/dashboard')).toBe('Home · BonaMind');
+    expect(windowTitleFor('/dashboard/decks')).toBe('Library · BonaMind');
+    expect(windowTitleFor('/dashboard/study/abc')).toBe('Study · BonaMind');
+    expect(windowTitleFor('/somewhere-else')).toBe('BonaMind');
   });
 });
 
@@ -29,7 +29,7 @@ describe('DesktopChrome', () => {
     mount();
     await act(async () => { await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
     expect(bridge.appReady).toHaveBeenCalledTimes(1);
-    expect(bridge.setTitle).toHaveBeenCalledWith('Library · AuraMind');
+    expect(bridge.setTitle).toHaveBeenCalledWith('Library · BonaMind');
     expect(document.documentElement.classList.contains('platform-desktop')).toBe(true);
   });
 

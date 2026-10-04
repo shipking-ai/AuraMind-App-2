@@ -44,7 +44,7 @@ export function BiometricGate() {
         setLocked(false);
         return;
       }
-      const ok = await authenticate("Unlock AuraMind");
+      const ok = await authenticate("Unlock BonaMind");
       if (ok) {
         hapticSuccess();
         setLocked(false);
@@ -81,13 +81,13 @@ export function BiometricGate() {
       className="fixed inset-0 z-[100000] flex flex-col items-center justify-center gap-6 bg-[#0A0A0F] p-8 text-center"
       role="alertdialog"
       aria-modal="true"
-      aria-label="Unlock AuraMind"
+      aria-label="Unlock BonaMind"
     >
       <span className="grid h-20 w-20 place-items-center rounded-[24px] bg-[#6750A4]/20">
         <Fingerprint className="h-9 w-9 text-[#C4B5FD]" aria-hidden />
       </span>
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-white">AuraMind is locked</h2>
+        <h2 className="text-xl font-semibold text-white">BonaMind is locked</h2>
         <p className="text-sm text-white/60">
           {busy ? "Waiting for your fingerprint…" : "Confirm it's you to continue studying."}
         </p>

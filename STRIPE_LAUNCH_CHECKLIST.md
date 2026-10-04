@@ -1,6 +1,6 @@
 # Stripe Launch Checklist
 
-Everything needed to take AuraMind's Stripe integration from "plumbing verified"
+Everything needed to take BonaMind's Stripe integration from "plumbing verified"
 to "money moving in production" — with the current status of each item.
 
 **Status snapshot (2026-08-10):** signature handling, HTTP wiring, and full flow
@@ -106,7 +106,7 @@ verifies every response, and **always restores `api/.env`** — even on failure.
 1. **Products & prices:** ✅ done — live prices `price_1Tqj…`/`price_1SNl…`
    verified retrievable with the live key (2026-08-11).
 2. **Webhook endpoint:** ✅ done 2026-08-11 — endpoint recreated via API at
-   **`https://auramind.app/api/stripe-webhook`** (apex, NOT www — www
+   **`https://bonamind.app/api/stripe-webhook`** (apex, NOT www — www
    307-redirects and Stripe doesn't follow redirects), enabled, subscribed to
    the seven events, fresh signing secret saved to `api/.env` and Vercel.
    The old disabled endpoint (and 3 stale Supabase-function endpoints) were

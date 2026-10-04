@@ -12,7 +12,7 @@ function pageTitle(pathname: string): string {
   if (pathname.startsWith("/dashboard/chat")) return "Prof. Aura";
   if (pathname.startsWith("/dashboard/generator")) return "Create";
   if (pathname.startsWith("/dashboard/settings")) return "Settings";
-  return "AuraMind";
+  return "BonaMind";
 }
 
 function initials(user: UserProfile | null | undefined): string {
@@ -44,7 +44,7 @@ export function AndroidMobileTopBar({ user }: { user: UserProfile | null | undef
           <img src="/favicons,logos/favicon.svg" alt="" aria-hidden="true" />
         </span>
         <span className="min-w-0">
-          <span className="android-mobile-brand-name">AuraMind</span>
+          <span className="android-mobile-brand-name">BonaMind</span>
           <span className="android-mobile-page-title">{pageTitle(location.pathname)}</span>
         </span>
       </div>

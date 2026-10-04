@@ -65,7 +65,7 @@ function copyStyles(target: Document) {
     }
   }
   target.documentElement.className = document.documentElement.className;
-  target.title = 'AuraMind · Float';
+  target.title = 'BonaMind · Float';
 }
 
 const GRADES: { rating: Rating; label: string; key: string; tone: string }[] = [

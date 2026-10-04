@@ -5,7 +5,7 @@
  * `data-stagger-item` to each child so anime.js can target them, and runs
  * a single `animate(items, { delay: stagger(...), ... })` on mount.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Decks grid on the dashboard.
  *   - Achievement badges list (they currently pop in all at once).
  *   - Learning-path modules (currently a static fade).

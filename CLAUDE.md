@@ -1,6 +1,6 @@
-# AuraMind — Agent Cheat Sheet
+# BonaMind — Agent Cheat Sheet
 
-AuraMind is an adaptive AI learning system: turn anything (PDF, video, lecture,
+BonaMind is an adaptive AI learning system: turn anything (PDF, video, lecture,
 topic) into a course of cards/lessons/quizzes, schedule review with FSRS (`ts-fsrs`, FSRS-6), and
 tutor with **Prof. Aura**, an AI that models the user's real weaknesses.
 

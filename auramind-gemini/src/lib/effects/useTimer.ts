@@ -7,7 +7,7 @@
  * which matches React's lifecycle and avoids the listener-cleanup footgun
  * of vanilla setInterval/setTimeout.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Pomodoro countdown ring on the study timer.
  *   - Streak pulse animation (1-second onComplete, repeat).
  *   - "Level up" delay before the celebration fires.

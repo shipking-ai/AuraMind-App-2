@@ -196,8 +196,8 @@ function DeckActionsSheet({
               run(() => {
                 void NativeShare.share({
                   title: deck.title,
-                  text: `I'm studying "${deck.title}" on AuraMind (${count} cards).`,
-                  url: "https://auramind.app",
+                  text: `I'm studying "${deck.title}" on BonaMind (${count} cards).`,
+                  url: "https://bonamind.app",
                   dialogTitle: "Share deck",
                 }).catch(() => undefined);
               })
@@ -769,7 +769,7 @@ export function AndroidLibrary() {
           <p>
             {query
               ? "Try another search."
-              : "Create a deck or let AuraMind build one from your study material."}
+              : "Create a deck or let BonaMind build one from your study material."}
           </p>
           <button
             type="button"
@@ -798,7 +798,7 @@ export function AndroidGeneratorFrame({ children }: { children: React.ReactNode 
           <p className="android-eyebrow">CREATE WITH AURA</p>
           <h1>Turn anything into a study session.</h1>
           <p>
-            Start with a topic, document, video, or voice memo. AuraMind does the heavy lifting.
+            Start with a topic, document, video, or voice memo. BonaMind does the heavy lifting.
           </p>
         </div>
       </section>

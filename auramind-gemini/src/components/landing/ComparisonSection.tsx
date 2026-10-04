@@ -15,7 +15,7 @@ interface ProductDef {
 }
 
 const PRODUCTS: ProductDef[] = [
-  { id: "auramind", label: "AuraMind", highlight: true },
+  { id: "auramind", label: "BonaMind", highlight: true },
   { id: "anki", label: "Anki", highlight: false },
   { id: "quizlet", label: "Quizlet", highlight: false },
   { id: "remnote", label: "RemNote", highlight: false },
@@ -134,7 +134,7 @@ export function ComparisonSection() {
           style={{ willChange: "opacity, transform" }}
         >
           <span className="text-[#7A7A96] text-[10px] font-medium tracking-[0.2em] uppercase mb-3 block">
-            How AuraMind stacks up
+            How BonaMind stacks up
           </span>
           <h2 className="text-[#F0EFFE] text-2xl md:text-3xl font-light tracking-tight mb-3">
             Built for people who{" "}
@@ -143,7 +143,7 @@ export function ComparisonSection() {
           </h2>
           <p className="text-[#7A7A96] text-xs max-w-2xl mx-auto leading-relaxed">
             Other tools either drown you in manual card creation or hand-wave the
-            science. AuraMind lives at the intersection — modern algorithms, modern
+            science. BonaMind lives at the intersection — modern algorithms, modern
             UX, built for people who actually want to remember what they study.
           </p>
         </div>
@@ -233,7 +233,7 @@ export function ComparisonSection() {
         </div>
 
         <p className="text-[10px] text-[#3A3A4F] text-center mt-6">
-          Comparison as of AuraMind v2.0.0 · Aug 2026 · Feature availability may
+          Comparison as of BonaMind v2.0.0 · Aug 2026 · Feature availability may
           vary by competitor plan tier.
         </p>
       </div>

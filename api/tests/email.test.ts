@@ -61,7 +61,7 @@ describe('POST /api/email', () => {
       body: {
         type: 'welcome',
         to: 'STUDENT@example.com', // case-insensitive match
-        origin: 'https://auramind.app',
+        origin: 'https://bonamind.app',
       },
     });
 

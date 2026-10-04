@@ -25,7 +25,7 @@ describe('APP_ORIGIN', () => {
   it('defaults to the canonical production origin', async () => {
     vi.resetModules();
     const { APP_ORIGIN } = await import('../_lib/origin.js');
-    expect(APP_ORIGIN).toBe('https://auramind.app');
+    expect(APP_ORIGIN).toBe('https://bonamind.app');
   });
 
   it('follows APP_ORIGIN so a domain change is one env var', async () => {
@@ -67,6 +67,14 @@ describe('APP_ORIGIN', () => {
 });
 
 describe('CORS allowlist follows APP_ORIGIN', () => {
+  beforeEach(() => {
+    // Pin APP_ORIGIN to the default regardless of the ambient environment.
+    // LEGACY_APP_ORIGIN is deliberately NOT stubbed here: it is read with `??`,
+    // so an empty string means "explicitly disabled" rather than "unset". Each
+    // test below sets it only when it cares.
+    vi.stubEnv('APP_ORIGIN', '');
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.resetModules();
@@ -74,14 +82,37 @@ describe('CORS allowlist follows APP_ORIGIN', () => {
 
   it('includes both the apex and www forms of the configured origin', async () => {
     vi.stubEnv('APP_ORIGIN', 'https://newname.app');
-    vi.stubEnv('VERCEL', '1');
+    vi.stubEnv('LEGACY_APP_ORIGIN', '');
     vi.resetModules();
     const { CORS_ORIGINS } = await import('../_middleware.js');
     expect(CORS_ORIGINS.has('https://newname.app')).toBe(true);
     expect(CORS_ORIGINS.has('https://www.newname.app')).toBe(true);
-    // The old domain must NOT remain allowlisted, or it silently keeps working
-    // and hides the fact that the new one was never configured.
+    // Legacy explicitly disabled above, so it must not appear.
     expect(CORS_ORIGINS.has('https://auramind.app')).toBe(false);
+  });
+
+  it('keeps the previous domain allowlisted during a migration', async () => {
+    // Old receipts, bookmarks and shared links still point at auramind.app.
+    // Dropping it the moment the default changed would turn a customer
+    // following a link from a saved email into a silent network failure.
+    vi.stubEnv('APP_ORIGIN', 'https://bonamind.app');
+    vi.resetModules();
+    const { CORS_ORIGINS } = await import('../_middleware.js');
+    expect(CORS_ORIGINS.has('https://auramind.app')).toBe(true);
+  });
+
+  it('does not allowlist the legacy domain twice once APP_ORIGIN is itself legacy', async () => {
+    // Otherwise a deployment that has not migrated ends up listing its own
+    // origin as its own predecessor.
+    vi.stubEnv('APP_ORIGIN', 'https://auramind.app');
+    vi.resetModules();
+    const { APP_ORIGIN, LEGACY_APP_ORIGIN } = await import('../_lib/origin.js');
+    const { CORS_ORIGINS } = await import('../_middleware.js');
+    expect(LEGACY_APP_ORIGIN).toBeUndefined();
+    expect(CORS_ORIGINS.has(APP_ORIGIN)).toBe(true);
+    // apex + www + the three native app shells. Anything more means the legacy
+    // domain was added on top of an origin that is already itself.
+    expect(CORS_ORIGINS.size).toBe(5);
   });
 
   it('keeps the three native app shells regardless of domain', async () => {

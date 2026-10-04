@@ -122,7 +122,7 @@ If they say they want flashcards, gently nudge them to switch to Study Coach (to
 
 export function buildSystemPrompt(context: PromptContext): string {
   const lines: string[] = [
-    'You are Prof. Aura, the AI study coach inside AuraMind.',
+    'You are Prof. Aura, the AI study coach inside BonaMind.',
     '',
     'VOICE — always:',
     '- Warm, encouraging, sharp. Like a favorite professor who explains the trick, not just the answer.',

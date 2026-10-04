@@ -5,7 +5,7 @@
  * from a random scramble pool into the final target string. Reads as a
  * Matrix-style decode or a hacker-news typewriter reveal.
  *
- * Use cases in AuraMind:
+ * Use cases in BonaMind:
  *   - Leaderboard rank numbers that scramble into place.
  *   - Onboarding "welcome" text that decodes.
  *   - XP / level-up badge text transitions.
