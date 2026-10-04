@@ -93,9 +93,18 @@ interface UserLike {
  * failure timestamp, which is display-side metadata. Callers that must honour
  * the grace window should use that helper; callers gating an expensive
  * operation should use this one and fail closed.
+ *
+ * `now` exists so the trial/pre-arm grace window can be tested against a fixed
+ * clock. readSubscriptionStatus takes one; this had no way to forward it, so a
+ * test pinned its fixtures to a fixed NOW and then called this without it — and
+ * got the real wall clock instead. That combination fails only once the
+ * calendar moves past the fixture's window, which is how
+ * checkoutPream.test.ts "keeps access while the pre-arm window is open" came to
+ * fail on an otherwise untouched main. Omitting it in production code is fine
+ * and normal; passing it is what makes a boundary testable.
  */
-export function isEntitled(user: UserLike | null | undefined): boolean {
-  return ENTITLED.has(readSubscriptionStatus(user));
+export function isEntitled(user: UserLike | null | undefined, now?: number): boolean {
+  return ENTITLED.has(readSubscriptionStatus(user, now));
 }
 
 /**
@@ -112,8 +121,8 @@ const FREE_ACCESS_ROLES: ReadonlySet<string> = new Set(['owner', 'ceo', 'admin',
  * Same trust boundary as `isEntitled`: the role is read from app_metadata,
  * which only the service-role key can write.
  */
-export function isEntitledWithRoleAccess(user: UserLike | null | undefined): boolean {
-  if (isEntitled(user)) return true;
+export function isEntitledWithRoleAccess(user: UserLike | null | undefined, now?: number): boolean {
+  if (isEntitled(user, now)) return true;
   const role = user?.app_metadata?.role;
   return typeof role === 'string' && FREE_ACCESS_ROLES.has(role);
 }

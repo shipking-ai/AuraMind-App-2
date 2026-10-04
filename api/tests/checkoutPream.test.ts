@@ -36,13 +36,13 @@ describe('abandoned checkout pre-arm', () => {
   it('keeps access while the pre-arm window is open', () => {
     const u = user({ subscription_status: 'trialing', trial_armed_at: '2026-09-27T12:00:00.000Z' });
     expect(readSubscriptionStatus(u, NOW)).toBe('trialing');
-    expect(isEntitled(u)).toBe(true);
+    expect(isEntitled(u, NOW)).toBe(true);
   });
 
   it('expires a pre-arm that was never completed', () => {
     const u = user({ subscription_status: 'trialing', trial_armed_at: '2026-09-01T12:00:00.000Z' });
     expect(readSubscriptionStatus(u, NOW)).toBe('expired');
-    expect(isEntitled(u)).toBe(false);
+    expect(isEntitled(u, NOW)).toBe(false);
   });
 
   it('expires at exactly the window boundary', () => {
@@ -55,7 +55,7 @@ describe('abandoned checkout pre-arm', () => {
   it('leaves a real Stripe trial alone — it has no marker', () => {
     const u = user({ subscription_status: 'trialing' });
     expect(readSubscriptionStatus(u, NOW)).toBe('trialing');
-    expect(isEntitled(u)).toBe(true);
+    expect(isEntitled(u, NOW)).toBe(true);
   });
 
   it('fails closed on an unparseable marker', () => {
@@ -66,7 +66,7 @@ describe('abandoned checkout pre-arm', () => {
   it('never affects an active subscription', () => {
     const u = user({ subscription_status: 'active', trial_armed_at: '2020-01-01T00:00:00.000Z' });
     expect(readSubscriptionStatus(u, NOW)).toBe('active');
-    expect(isEntitled(u)).toBe(true);
+    expect(isEntitled(u, NOW)).toBe(true);
   });
 
   it('does not re-open the paywall for staff, even on a stale pre-arm', () => {
