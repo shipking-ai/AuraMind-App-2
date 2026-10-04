@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Smoke tests', () => {
   test('landing page loads and has correct title', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/AuraMind/);
+    await expect(page).toHaveTitle(/BonaMind/);
     await expect(page.locator('h1').first()).toBeVisible();
   });
 
@@ -24,17 +24,17 @@ test.describe('Smoke tests', () => {
 
   test('dashboard shows auth gate when not logged in', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page.locator('text=AuraMind').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=BonaMind').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('marketplace shows auth gate when not logged in', async ({ page }) => {
     await page.goto('/marketplace');
-    await expect(page.locator('text=AuraMind').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=BonaMind').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('admin/users shows auth gate when not logged in', async ({ page }) => {
     await page.goto('/admin/users');
-    await expect(page.locator('text=AuraMind').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=BonaMind').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('no console errors on landing page', async ({ page }) => {
