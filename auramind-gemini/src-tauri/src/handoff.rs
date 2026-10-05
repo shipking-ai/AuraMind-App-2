@@ -1,4 +1,4 @@
-//! Files handed to AuraMind from outside the app (Explorer verb, tray file
+//! Files handed to BonaMind from outside the app (Explorer verb, tray file
 //! picker). The only place Rust reads a user file: it checks the extension
 //! and size, then passes the bytes to the web layer, which feeds the same
 //! generator as a drag-and-drop. The lists mirror the generator's own

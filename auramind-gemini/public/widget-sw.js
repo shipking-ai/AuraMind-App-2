@@ -52,7 +52,7 @@ function toCardData(state) {
         ? `Starting with ${deck}`
         : 'Ready when you are.',
     streakLine: streak > 1 ? `${streak}-day streak` : '',
-    actionTitle: due === 0 ? 'Open AuraMind' : 'Study now',
+    actionTitle: due === 0 ? 'Open BonaMind' : 'Study now',
     actionUrl: due === 0 ? '/dashboard' : '/dashboard/study',
   };
 }

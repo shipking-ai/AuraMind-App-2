@@ -1,7 +1,7 @@
 //! What a launch (or a second launch forwarded by single-instance) asks for.
 //!
-//! The Explorer verb runs `AuraMind.exe --create "<path>"`, autostart runs
-//! `AuraMind.exe --hidden`, and Windows runs `AuraMind.exe "auramind://..."`
+//! The Explorer verb runs `BonaMind.exe --create "<path>"`, autostart runs
+//! `BonaMind.exe --hidden`, and Windows runs `BonaMind.exe "auramind://..."`
 //! for a deep link. Parsing is pure so every shape is unit-tested; the
 //! allowlist of in-app routes stays in TypeScript (`lib/deepLinks.ts`).
 
@@ -71,7 +71,7 @@ mod tests {
     use super::*;
 
     fn args(list: &[&str]) -> Vec<String> {
-        std::iter::once("C:\\AuraMind\\AuraMind.exe")
+        std::iter::once("C:\\BonaMind\\BonaMind.exe")
             .chain(list.iter().copied())
             .map(String::from)
             .collect()

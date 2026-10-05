@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AuraMind — Remote Migration Reconcile
+ * BonaMind — Remote Migration Reconcile
  *
  * Compares the local `supabase/migrations/` history against the remote
  * `supabase_migrations.schema_migrations` ledger (the Supabase CLI's
@@ -126,7 +126,7 @@ function report(findings, meta) {
     return;
   }
 
-  console.log('[AuraMind/remote-drift] remote reconcile\n');
+  console.log('[BonaMind/remote-drift] remote reconcile\n');
 
   if (meta.skipped) {
     console.log(`  ⏭ skipped — ${meta.skipped}`);
@@ -149,7 +149,7 @@ function report(findings, meta) {
   );
   if (counts.error > 0) {
     console.error('');
-    console.error('[AuraMind/remote-drift] REMOTE DRIFT DETECTED (see ✗ above).');
+    console.error('[BonaMind/remote-drift] REMOTE DRIFT DETECTED (see ✗ above).');
     console.error('  A version applied remotely is missing locally — this will break');
     console.error('  `supabase db push`. Reconcile supabase/migrations/ before merging.');
   }
@@ -218,6 +218,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error('[AuraMind/remote-drift] unexpected error:', e.message);
+  console.error('[BonaMind/remote-drift] unexpected error:', e.message);
   process.exitCode = 2;
 });
