@@ -162,21 +162,29 @@ describe('deriveDueInfo', () => {
   });
 
   it('flags overdue and counts days', () => {
-    const assignment = { ...base, dueAt: Date.now() - 2 * DAY };
-    const info = deriveDueInfo(assignment, Date.now());
+    // One clock, read once. The two Date.now() calls below used to be
+    // independent, and deriveDueInfo rounds up with Math.ceil — so a 1ms
+    // tick between them made the span "2 days plus epsilon" and the label
+    // came out 'Overdue · 3d'. Fast machines passed; loaded CI failed.
+    const now = Date.now();
+    const assignment = { ...base, dueAt: now - 2 * DAY };
+    const info = deriveDueInfo(assignment, now);
     expect(info.overdue).toBe(true);
     expect(info.label).toBe('Overdue · 2d');
   });
 
   it('flags due today within 24h', () => {
-    const assignment = { ...base, dueAt: Date.now() + 2 * HOUR };
-    expect(deriveDueInfo(assignment, Date.now()).dueToday).toBe(true);
+    const now = Date.now();
+    const assignment = { ...base, dueAt: now + 2 * HOUR };
+    expect(deriveDueInfo(assignment, now).dueToday).toBe(true);
   });
 
   it('labels upcoming with a short date', () => {
-    const assignment = { ...base, dueAt: Date.now() + 5 * DAY };
-    expect(deriveDueInfo(assignment, Date.now()).upcoming).toBe(true);
-    expect(deriveDueInfo(assignment, Date.now()).label).toMatch(/^Due \w{3} \d+$/);
+    const now = Date.now();
+    const assignment = { ...base, dueAt: now + 5 * DAY };
+    const info = deriveDueInfo(assignment, now);
+    expect(info.upcoming).toBe(true);
+    expect(info.label).toMatch(/^Due \w{3} \d+$/);
   });
 });
 
