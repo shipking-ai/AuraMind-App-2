@@ -1,15 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import {
   PRODUCT_NAME,
-  PARENT_COMPANY_NAME,
-  PARENT_COMPANY_LEGAL,
-  PARENT_BRAND_TAGLINE,
-  PARENT_BRAND_SLUG,
   LEGAL_COPYRIGHT_LINE,
   CONTACT_EMAIL,
   VENDOR_URL,
 } from '../../lib/branding';
-import { VectorMark } from '../../components/brand/CogniWordmark';
 import { isDesktopApp } from '../../lib/platform';
 import {
   checkForDesktopUpdate,
@@ -25,7 +20,7 @@ import {
  *   - the sidebar Settings row's "About BonaMind" entry;
  *   - mobile Settings → scroll-to-bottom → "About" link.
  *
- * Shows: product line, VectorMark glyph, parent-company byline,
+ * Shows: product line, version/channel, update check, copyright + contact.
  * build version, build channel, copyright, contact mailto, vendor URL,
  * and a "Check for updates" button: a real update check in the Windows app,
  * and a note that the website is always current everywhere else.
@@ -89,46 +84,25 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
   return (
     <div className="min-h-screen bg-[#09090b] text-white antialiased px-6 py-12 sm:py-20">
       <div className="max-w-3xl mx-auto">
-        {/* Top-brand mark row */}
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/30 via-violet-400/15 to-transparent border border-violet-400/30 flex items-center justify-center text-violet-200 shadow-[0_0_40px_rgba(167,139,250,0.15)]">
-            <VectorMark size={28} />
+          {/* Top-brand mark row */}
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{PRODUCT_NAME}</h1>
+              <p className="text-[12px] uppercase tracking-[0.18em] text-violet-300/80 mt-1">
+                v{version} · {channel}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{PRODUCT_NAME}</h1>
-            <p className="text-[12px] uppercase tracking-[0.18em] text-violet-300/80 mt-1">
-              v{version} · {channel}
-            </p>
-          </div>
-        </div>
 
-        <hr className="border-[#2A2A3A] my-8" />
+          <hr className="border-[#2A2A3A] my-8" />
 
-        {/* Parent-line */}
-        <div className="space-y-3">
-          <p className="text-[15px] text-[#C5C5D8] leading-relaxed">
-            <span className="text-white font-medium">{PRODUCT_NAME}</span> is a flagship study
-            platform from <span className="text-white font-semibold">{PARENT_COMPANY_LEGAL}</span>{' '}
-            — <span className="text-violet-300/90">{PARENT_BRAND_TAGLINE}</span>.
-          </p>
-          <p className="text-[13px] text-[#7A7A93] leading-relaxed">
-            {PRODUCT_NAME} is the first product in the broader {PARENT_COMPANY_NAME} family.
-            Future releases will share the same reliability commitments, the same privacy
-            defaults, and the same attention to your time. Visit{' '}
-            <a
-              href={VENDOR_URL}
-              className="text-violet-300 hover:text-violet-200 underline-offset-2 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {VENDOR_URL}
-            </a>{' '}
-            to follow the family roadmap.
-          </p>
-        </div>
-
-        <hr className="border-[#2A2A3A] my-8" />
-
+          {/*
+            The parent-company block that used to sit here — the CogniVect
+            legal name, its "cognitive · vector" tagline, the "first product in
+            the family" roadmap line and the cogniavect.app link — is gone.
+            CogniVect, Inc. is being dissolved, so "a flagship platform from
+            CogniVect, Inc" is not a true statement. Product facts only.
+          */}
         {/* Update check */}
         <section className="bg-[#101018] border border-[#2A2A3A] rounded-2xl p-5">
           <div className="flex items-start gap-4">
@@ -189,7 +163,6 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
               disabled={checkState.status === 'checking'}
               className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-violet-400/50 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 hover:border-violet-300/80 transition disabled:opacity-50 disabled:cursor-wait text-[13px] font-medium"
             >
-              <VectorMark size={14} className="text-violet-200" />
               {checkState.status === 'checking' ? 'Checking…' : 'Check for updates'}
             </button>
           </div>
@@ -200,8 +173,6 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
         {/* Footer copy */}
         <section className="text-[12px] text-[#7A7A93] space-y-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] text-[#7A7A96]">/{PARENT_BRAND_SLUG}</span>
-            <span className="text-[#3A3A4F]">·</span>
             <span>{LEGAL_COPYRIGHT_LINE}</span>
           </div>
           <div className="flex items-center gap-3">
@@ -221,9 +192,13 @@ const AboutPage: React.FC<AboutPageProps> = ({ versionOverride }) => {
               {VENDOR_URL}
             </a>
           </div>
-          <p className="text-[#3A3A4F]">
-            {PRODUCT_NAME} is a trademark of {PARENT_COMPANY_LEGAL}.
-          </p>
+          {/*
+            TRADEMARK_STATEMENT was removed here rather than reworded. It read
+            "BonaMind is a trademark of CogniVect, Inc" — asserting a
+            registered mark against a company being dissolved. Whether BonaMind
+            has a mark, and who owns it, is a legal fact; see the FROZEN block
+            in lib/branding.ts.
+          */}
         </section>
       </div>
     </div>

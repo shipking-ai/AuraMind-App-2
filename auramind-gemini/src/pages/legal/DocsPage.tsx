@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Zap, Brain, Repeat, Puzzle, MessageSquare, Rocket } from '@/components/icons';
-import { CogniWordmark } from '../../components/brand/CogniWordmark';
 import { LEGAL_COPYRIGHT_LINE } from '../../lib/branding';
 
 const sections = [
@@ -275,7 +274,6 @@ export default function DocsPage(): React.ReactElement {
               canonical LEGAL_COPYRIGHT_LINE in lib/branding.ts so any
               future rename touches exactly one file. */}
           <div className="flex flex-col items-center gap-2 opacity-70">
-            <CogniWordmark variant="footnote" />
             <p className="text-[10px] text-[#3A3A4F] uppercase tracking-[0.2em]">
               {LEGAL_COPYRIGHT_LINE}
             </p>

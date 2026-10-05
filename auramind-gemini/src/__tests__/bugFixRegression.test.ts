@@ -651,53 +651,65 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     expect(LEGAL_COPYRIGHT_LINE).toMatch(/^© \d{4} CogniVect, Inc\..*$/);
   });
 
-  it('VectorMark + CogniWordmark export as functions (component surface)', async () => {
-    const mod = await import('../components/brand/CogniWordmark');
-    expect(typeof mod.VectorMark).toBe('function');
-    expect(typeof mod.CogniWordmark).toBe('function');
-    // VectorMark is the canonical glyph; the doc-comment-three-chevron
-    // path is the brand's visual signature. We assert the source has the
-    // three path elements so a future "minor" rewrite doesn't silently
-    // change the mark.
+  it('the parent-brand component surface is gone (the operating entity is being dissolved)', () => {
     const fs = require('node:fs') as typeof import('fs');
-    const path = require('node:path') as typeof import('path');
-    const src = fs.readFileSync(
+    const path = require('node:path');
+
+    // CogniWordmark.tsx exported two things, both parent-brand: the CogniWordmark
+    // line, and VectorMark, the double-chevron glyph. Neither is the product's
+    // prism mark, so neither has a reason to exist now.
+    //
+    // The test this replaces asserted they exported as functions and that the
+    // SVG had three <path> elements, to stop a "minor" rewrite changing the
+    // mark. That guard is deleted along with the mark rather than inverted --
+    // keeping it would enforce a brand that is being wound down.
+    for (const gone of [
       path.resolve(__dirname, '..', 'components', 'brand', 'CogniWordmark.tsx'),
-      'utf8',
-    );
-    expect(src).toMatch(/<svg[^>]*viewBox="0 0 24 24"/);
-    expect(src.match(/<path /g)?.length ?? 0).toBeGreaterThanOrEqual(3);
+      path.resolve(__dirname, '..', 'components', 'shared', 'CogniVectFooter.tsx'),
+    ]) {
+      expect(fs.existsSync(gone), gone + ' should have been removed').toBe(false);
+    }
+    expect(
+      fs.existsSync(path.resolve(__dirname, '..', 'components', 'shared', 'LegalFooter.tsx')),
+    ).toBe(true);
   });
 
-  it('BUG #6: every UI surface that carries the BonaMind mark imports the parent-line component', () => {
+  it('BUG #6: no MARKETING surface reintroduces the parent brand', () => {
     const fs = require('node:fs') as typeof import('fs');
-    const path = require('node:path') as typeof import('path');
+    const path = require('node:path');
 
-    // Each of these files renders the BonaMind mark. They MUST reference
-    // the CogniWordmark component (or carry the parent-brand literal in a
-    // comment block). Catches "we forgot to add it to the new sidebar".
+    // The inverse of the guard this replaces. That one asserted every
+    // mark-carrying page *must* reference the parent line; now that the entity
+    // behind it is being dissolved, a page that names it is the defect, because
+    // it asserts a company that will not exist is behind a product that does.
     //
-    // Note: the standalone components/dashboard/Sidebar.tsx was deleted in
-    // round-22 — its job is now owned by auramind/AppShell.tsx (which renders
-    // the wordmark + CogniWordmark beneath). AppShell itself was later removed
-    // in the Option A web-only rebuild, so the surviving mark-carrying surfaces
-    // (legal pages, AboutPage, footer) pin the parent-line contract instead.
-    // Paths resolve from auramind-gemini/src/__tests__ — go up one level
-    // to reach auramind-gemini/src.
+    // Privacy Policy and Terms of Service are deliberately NOT in this list.
+    // They name the operating entity in their body text, and that text is
+    // frozen pending a legal decision -- see the FROZEN block in
+    // lib/branding.ts. Asserting they are free of the entity name would fail
+    // on the legal pages precisely because their legal content has not been
+    // resolved yet, which would make this guard cry wolf.
+    //
+    // Comments are exempt for the same reason: the removal notes deliberately
+    // record what was stripped and why.
     const targets = [
       '../pages/legal/DocsPage.tsx',
-      '../pages/legal/PrivacyPolicyPage.tsx',
-      '../pages/legal/TermsOfServicePage.tsx',
       '../pages/system/AboutPage.tsx',
+      '../components/shared/LegalFooter.tsx',
     ];
     for (const rel of targets) {
       const p = path.resolve(__dirname, rel);
-      expect(fs.existsSync(p)).toBe(true);
-      const src = fs.readFileSync(p, 'utf8');
+      expect(fs.existsSync(p), 'expected file at ' + p).toBe(true);
+      const code = fs
+        .readFileSync(p, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .split('\n')
+        .map((l) => l.replace(/^\s*\/\/.*$/, ''))
+        .join('\n');
       expect(
-        src,
-        `${rel} should reference CogniWordmark or the parent-brand literal`,
-      ).toMatch(/CogniWordmark|by CogniVect|CogniVect/);
+        code,
+        rel + ' must not reference CogniVect -- the operating entity is being dissolved',
+      ).not.toMatch(/CogniVect|VectorMark|PARENT_BRAND|PARENT_COMPANY/);
     }
   });
 
@@ -773,8 +785,7 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     // 'CogniVect' / "CogniVect" / `CogniVect` — NOT identifier references
     // like PARENT_COMPANY_NAME, NOT JSDoc text.
     const consumers = [
-      '../components/brand/CogniWordmark.tsx',
-      '../components/shared/CogniVectFooter.tsx',
+      '../components/shared/LegalFooter.tsx',
       '../pages/legal/PrivacyPolicyPage.tsx',
       '../pages/legal/TermsOfServicePage.tsx',
     ];
@@ -789,32 +800,20 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     }
   });
 
-  it('BUG #6: CogniWordmark variant tier is canonical (inline / splash / footnote)', () => {
-    // Positive-only assertion — checking FOR the canonical variants rather
-    // than AGAINST a legacy name (which JSDoc-history mentions could
-    // falsely match the source code's own comment text). Pinned via
-    // `toContain` semantics so the assertions don't get tripped up by
-    // surrounding whitespace, comments, or quote-style variants.
+  it('BUG #6: the parent-brand variant tier went with the component', () => {
+    // Was: "CogniWordmark variant tier is canonical (inline / splash /
+    // footnote)" — a positive-only assertion reading CogniWordmark.tsx. The
+    // component is gone, so there is no tier left to pin, and no replacement
+    // should grow one: the product has a single mark.
     const fs = require('node:fs') as typeof import('fs');
-    const path = require('node:path') as typeof import('path');
-    const wordmarkSrc = fs.readFileSync(
-      path.resolve(__dirname, '..', 'components', 'brand', 'CogniWordmark.tsx'),
-      'utf8',
-    );
-    expect(wordmarkSrc).toContain("'inline'");
-    expect(wordmarkSrc).toContain("'splash'");
-    expect(wordmarkSrc).toContain("'footnote'");
-    // The variant tier itself is declared on the type alias — verify the shape.
-    expect(wordmarkSrc).toMatch(/type\s+CogniWordmarkVariant\s*=/);
-    expect(wordmarkSrc).toMatch(/'inline'\s*\|\s*'splash'\s*\|\s*'footnote'/);
-
-    // OnboardingPage was removed in the web-only rebuild (Option A: NovaHub
-    // cut to 5 core pages); keep the splash variant pinned only if the page
-    // still exists.
-    const onboardingPath = path.resolve(__dirname, '..', 'pages', 'OnboardingPage.tsx');
-    if (fs.existsSync(onboardingPath)) {
-      const onboardingSrc = fs.readFileSync(onboardingPath, 'utf8');
-      expect(onboardingSrc).toContain('variant="splash"');
-    }
+    const path = require('node:path');
+    const gone = path.resolve(__dirname, '..', 'components', 'brand', 'CogniWordmark.tsx');
+    expect(fs.existsSync(gone)).toBe(false);
+    // Deliberately NOT asserting that components/brand/ still exists.
+    // CogniWordmark.tsx was its only file, so removing it leaves an empty
+    // directory — and git does not track empty directories, so a fresh clone
+    // never has one. Asserting it would fail CI forever while passing locally,
+    // which is exactly what it did.
+    expect(fs.existsSync(path.resolve(__dirname, '..', 'components', 'shared', 'LegalFooter.tsx'))).toBe(true);
   });
 });

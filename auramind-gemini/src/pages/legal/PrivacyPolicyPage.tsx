@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from '@/components/icons';
 import { BRAND, PRODUCT_NAME, PARENT_COMPANY_LEGAL } from '../../lib/branding';
-import { CogniVectFooter } from '../../components/shared/CogniVectFooter';
+import { LegalFooter } from '../../components/shared/LegalFooter';
 
 const sections = [
   {
@@ -342,7 +342,7 @@ export default function PrivacyPolicyPage(): React.ReactElement {
         </div>
 
         {/* Corporate parent attribution */}
-        <CogniVectFooter />
+        <LegalFooter />
       </div>
     </div>
   );

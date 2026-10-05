@@ -27,7 +27,6 @@ import {
   PARENT_BRAND_SLUG,
   PARENT_BRAND_TAGLINE,
   PRODUCT_NAME,
-  PRODUCT_BYLINE,
   CONTACT_EMAIL,
   PARENT_CONTACT_EMAIL,
   LEGAL_ADDRESS,
@@ -63,15 +62,6 @@ describe('Branding — product (BonaMind)', () => {
     expect(PRODUCT_NAME).toBe(APP_NAME);
   });
 
-  it('product byline reads as "BonaMind — a CogniVect product" and follows the parent by interpolation', () => {
-    expect(PRODUCT_BYLINE).toBe('BonaMind — a CogniVect product');
-    expect(PRODUCT_BYLINE).toContain(PRODUCT_NAME);
-    expect(PRODUCT_BYLINE).toContain(PARENT_COMPANY_NAME);
-    // Regression guard: if a future rename PR hardcodes "CogniVect" instead
-    // of `${PARENT_COMPANY_NAME}` the value still matches but the second
-    // ensure above doesn't catch it — guard explicitly via interpolation.
-    expect(PRODUCT_BYLINE).toMatch(/CogniVect/);
-  });
 });
 
 describe('Branding — contact + legal lines', () => {
@@ -125,7 +115,6 @@ describe('Branding — BRAND aggregate object has key parity with named exports'
     'parentSlug',
     'parentTagline',
     'product',
-    'productByline',
     'contactEmail',
     'parentContactEmail',
     'legalAddress',
@@ -142,7 +131,6 @@ describe('Branding — BRAND aggregate object has key parity with named exports'
     expect(BRAND.parentSlug).toBe(PARENT_BRAND_SLUG);
     expect(BRAND.parentTagline).toBe(PARENT_BRAND_TAGLINE);
     expect(BRAND.product).toBe(PRODUCT_NAME);
-    expect(BRAND.productByline).toBe(PRODUCT_BYLINE);
     expect(BRAND.contactEmail).toBe(CONTACT_EMAIL);
     expect(BRAND.parentContactEmail).toBe(PARENT_CONTACT_EMAIL);
     expect(BRAND.legalAddress).toBe(LEGAL_ADDRESS);
