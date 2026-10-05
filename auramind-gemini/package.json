@@ -35,6 +35,7 @@
     "cap:sync": "npx cap sync android",
     "brand:check": "node scripts/brand-sync.mjs",
     "brand:sync": "node scripts/brand-sync.mjs --write",
+    "og:build": "node scripts/build-og-image.mjs",
     "build:ios": "vite build --mode mobile && npx cap sync ios",
     "build:ios-preview": "node scripts/build-ios-preview.mjs",
     "tauri": "tauri",

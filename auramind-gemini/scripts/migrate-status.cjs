@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AuraMind — Migration Status Inspector
+ * BonaMind — Migration Status Inspector
  *
  * Prints:
  *   1. Every .sql file in supabase/migrations/ (alphabetical = chronological).
@@ -39,7 +39,7 @@ const DB_URL =
     : null);
 
 if (!DB_URL) {
-  console.error('[AuraMind/migrate-status] Missing DB credentials.');
+  console.error('[BonaMind/migrate-status] Missing DB credentials.');
   console.error('  Set SUPABASE_DB_URL=postgres://... OR both SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.');
   process.exit(2);
 }
@@ -55,7 +55,7 @@ async function queryLedger() {
   try {
     pg = require('pg');
   } catch {
-    console.error('[AuraMind/migrate-status] Missing optional dep: pg');
+    console.error('[BonaMind/migrate-status] Missing optional dep: pg');
     console.error('  Install with: npm install --save-dev pg');
     process.exit(2);
   }
@@ -93,12 +93,12 @@ async function main() {
 
   if (allFiles.length === 0) {
     console.error(
-      `[AuraMind/migrate-status] No migrations found in: ${MIGRATION_DIRS.join(', ')}`,
+      `[BonaMind/migrate-status] No migrations found in: ${MIGRATION_DIRS.join(', ')}`,
     );
     process.exit(1);
   }
 
-  console.log(`[AuraMind/migrate-status] ${allFiles.length} migration file(s) on disk:`);
+  console.log(`[BonaMind/migrate-status] ${allFiles.length} migration file(s) on disk:`);
   for (const entry of allFiles) {
     const fp = path.join(entry.dir, entry.name);
     const size = fs.statSync(fp).size;
@@ -110,7 +110,7 @@ async function main() {
   try {
     ledger = await queryLedger();
   } catch (e) {
-    console.error('[AuraMind/migrate-status] DB query failed:', e.message);
+    console.error('[BonaMind/migrate-status] DB query failed:', e.message);
     process.exit(2);
   }
 
@@ -147,7 +147,7 @@ async function main() {
     return;
   }
 
-  console.log('[AuraMind/migrate-status] Ledger state:');
+  console.log('[BonaMind/migrate-status] Ledger state:');
   const counts = { APPLIED: 0, PENDING: 0, DRIFTED: 0 };
   for (const r of rows) {
     counts[r.status]++;
@@ -165,7 +165,7 @@ async function main() {
 
   if (counts.DRIFTED > 0) {
     console.error('');
-    console.error('[AuraMind/migrate-status] DRIFT DETECTED:');
+    console.error('[BonaMind/migrate-status] DRIFT DETECTED:');
     console.error('  The above files were modified AFTER being applied.');
     console.error('  Re-running them WILL corrupt data — investigate before');
     console.error('  running npm run migrate. Use psql to reconcile manually.');
@@ -174,6 +174,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error('[AuraMind/migrate-status] unexpected error:', e);
+  console.error('[BonaMind/migrate-status] unexpected error:', e);
   process.exit(1);
 });

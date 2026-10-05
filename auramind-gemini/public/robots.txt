@@ -1,4 +1,4 @@
-# AuraMind robots.txt
+# BonaMind robots.txt
 # https://auramind.app/robots.txt
 
 User-agent: *

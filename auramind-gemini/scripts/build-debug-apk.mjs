@@ -13,7 +13,7 @@ const result = spawnSync(wrapper, ['assembleDebug'], {
 });
 
 if (result.error) {
-  console.error(`[AuraMind] Could not start ${wrapper}:`, result.error.message);
+  console.error(`[BonaMind] Could not start ${wrapper}:`, result.error.message);
   process.exit(1);
 }
 

@@ -158,13 +158,43 @@ for (const r of results) {
 }
 
 console.log('');
+
+/**
+ * The Open Graph card is the product name on every shared link, and it is
+ * generated from an SVG into a committed PNG — the one brand surface with no
+ * import path from app-identity.ts, which is exactly why it survived the
+ * rename: the SVG said AuraMind and the PNG still rendered it.
+ *
+ * This checks the SVG source only. Verifying the rasterised PNG would need
+ * sharp in CI, and the SVG is what the PNG is built from (`npm run og:build`),
+ * so checking the source catches the drift at the point it is introduced.
+ */
+const ogSvg = path.join(ROOT, 'public/favicons,logos/og-image.svg');
+try {
+  const wordmark = (readFileSync(ogSvg, 'utf8').match(/<text[^>]*>([^<]+)<\/text>/) || [])[1];
+  if (!wordmark) {
+    console.log(`  DRIFT  og-image.svg has no <text> wordmark — cannot verify the share card`);
+    drifted++;
+  } else if (!wordmark.includes(identity.name)) {
+    console.log(`  DRIFT  og-image.svg wordmark "${wordmark}" does not contain "${identity.name}"`);
+    console.log('        Fix the <text> in public/favicons,logos/og-image.svg, then run: npm run og:build');
+    drifted++;
+  } else {
+    console.log(`  ok     og-image.svg wordmark            ${wordmark}`);
+  }
+} catch {
+  console.log('  DRIFT  og-image.svg is missing — every shared link would show no card');
+  drifted++;
+}
+
+console.log('');
 if (drifted && !WRITE) {
-  console.log(`${drifted} native file(s) disagree with app-identity.ts.`);
+  console.log(`${drifted} surface(s) disagree with app-identity.ts.`);
   console.log('Run: node scripts/brand-sync.mjs --write');
   process.exit(1);
 }
 if (drifted && WRITE) {
-  console.log(`Rewrote ${drifted} native file(s). Re-run to verify.`);
+  console.log(`Rewrote ${drifted} surface(s). Re-run to verify.`);
   process.exit(1);
 }
-console.log('Native shells match app-identity.ts.');
+console.log('All brand surfaces match app-identity.ts.');

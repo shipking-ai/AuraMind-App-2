@@ -1,7 +1,7 @@
 /**
  * scripts/generate-ios-assets.mjs
  *
- * Renders the AuraMind brand mark (public/favicons,logos/favicon.svg) into the
+ * Renders the BonaMind brand mark (public/favicons,logos/favicon.svg) into the
  * iOS app icon and launch splash, matching generate-android-assets.mjs.
  *
  *   node scripts/generate-ios-assets.mjs

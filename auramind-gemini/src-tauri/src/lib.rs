@@ -1,4 +1,4 @@
-//! AuraMind for Windows: a Tauri 2 shell around the bundled web app.
+//! BonaMind for Windows: a Tauri 2 shell around the bundled web app.
 //!
 //! The web app ships inside the installer (built with `vite --mode desktop`)
 //! and is served from the fixed origin `https://tauri.localhost`. The shell
@@ -137,7 +137,7 @@ pub fn run() {
             // Cold start from Explorer or a link: queued until app_ready.
             deliver(app.handle(), &parse_args(&args));
 
-            // ✕ keeps AuraMind in the tray so reminders keep working; Quit exits.
+            // ✕ keeps BonaMind in the tray so reminders keep working; Quit exits.
             let close_handle = app.handle().clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -157,7 +157,7 @@ pub fn run() {
                             let _ = std::fs::write(&marker, b"1");
                             nudges::toast(
                                 &close_handle,
-                                "AuraMind is still running",
+                                "BonaMind is still running",
                                 "It's in the tray, so your reminders keep working. Quit from the tray icon.",
                                 false,
                             );
@@ -168,5 +168,5 @@ pub fn run() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running AuraMind");
+        .expect("error while running BonaMind");
 }

@@ -1,10 +1,10 @@
 /*
- * AuraMind for iPhone — its own design language, not the Android one.
+ * BonaMind for iPhone — its own design language, not the Android one.
  *
  * Built on Apple's platform conventions (Human Interface Guidelines, iOS 26
  * Liquid Glass): true-black OLED canvas, the system font, large titles that
  * collapse into a glass navigation bar, inset grouped lists, a floating glass
- * tab bar, activity rings, green switches and bottom sheets. AuraMind's
+ * tab bar, activity rings, green switches and bottom sheets. BonaMind's
  * violet is the tint colour; everything else follows iOS system colours so
  * the app feels at home next to Apple's own.
  *
@@ -90,7 +90,7 @@
   user-select: text;
 }
 
-/* A faint brand aura behind the large title — the one place AuraMind's
+/* A faint brand aura behind the large title — the one place BonaMind's
    identity shows through the system chrome. */
 .ios-app::before {
   content: "";
@@ -1261,7 +1261,7 @@ a.ios-row:active {
   transform: rotateY(180deg);
 }
 
-/* Paper — AuraMind's index card, on a calm background. */
+/* Paper — BonaMind's index card, on a calm background. */
 .ios-card-paper {
   border-radius: 14px;
   padding: 28px 24px 28px 52px;

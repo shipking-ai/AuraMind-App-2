@@ -1,4 +1,4 @@
-//! The main window's look: Windows 11 title bar in AuraMind colours, and
+//! The main window's look: Windows 11 title bar in BonaMind colours, and
 //! shown only once React has painted (no white flash).
 
 use tauri::{AppHandle, Manager, WebviewWindow};

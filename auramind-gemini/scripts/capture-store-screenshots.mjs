@@ -1,7 +1,7 @@
 /**
  * scripts/capture-store-screenshots.mjs
  *
- * Renders the real AuraMind app (public pages) and the purpose-built mobile
+ * Renders the real BonaMind app (public pages) and the purpose-built mobile
  * mockups (dashboard/study screens) into Play Store phone screenshots.
  */
 import { chromium } from 'playwright';

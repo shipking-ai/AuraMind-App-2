@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AuraMind — Structural Migration-Drift Checker
+ * BonaMind — Structural Migration-Drift Checker
  *
  * The Supabase migration tooling has bitten this repo twice:
  *
@@ -116,7 +116,7 @@ function report(findings, totalFiles) {
     return;
   }
 
-  console.log('[AuraMind/migration-drift] structural drift report\n');
+  console.log('[BonaMind/migration-drift] structural drift report\n');
 
   const counts = { duplicate: 0, desyncCli: 0, desyncExtra: 0, unparseable: 0 };
   for (const r of findings) {
@@ -139,7 +139,7 @@ function report(findings, totalFiles) {
   );
   if (errors > 0) {
     console.error('');
-    console.error('[AuraMind/migration-drift] DRIFT DETECTED (see ✗ above).');
+    console.error('[BonaMind/migration-drift] DRIFT DETECTED (see ✗ above).');
     console.error('  Fix the offending filenames before merging — see the header');
     console.error('  comment in scripts/check-migration-drift.cjs for the two known');
     console.error('  failure modes (PR #33 duplicate prefixes, PR #34 sort desync).');

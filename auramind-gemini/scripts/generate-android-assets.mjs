@@ -1,7 +1,7 @@
 /**
  * scripts/generate-android-assets.mjs
  *
- * Renders the AuraMind brand mark (public/favicons,logos/favicon.svg) into
+ * Renders the BonaMind brand mark (public/favicons,logos/favicon.svg) into
  * every Android launcher/splash size and the Google Play store icon.
  *
  *   node scripts/generate-android-assets.mjs
@@ -215,7 +215,7 @@ async function generate() {
   <rect x="0" y="0" width="1024" height="500" fill="url(#fg-bg)"/>
   <circle cx="360" cy="250" r="420" fill="url(#fg-glow)"/>
   <rect x="0" y="0" width="1024" height="6" fill="#7C3AED"/>
-  <text x="420" y="248" font-family="Segoe UI, Arial, sans-serif" font-size="78" font-weight="600" fill="#F0EFFE">AuraMind</text>
+  <text x="420" y="248" font-family="Segoe UI, Arial, sans-serif" font-size="78" font-weight="600" fill="#F0EFFE">BonaMind</text>
   <text x="422" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="30" fill="#9090A8">AI flashcards with FSRS spaced repetition</text>
   <text x="422" y="342" font-family="Segoe UI, Arial, sans-serif" font-size="30" fill="#9090A8">Study smarter, remember longer.</text>
   ${brand}

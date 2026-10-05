@@ -21,7 +21,7 @@ const androidDir = resolve(scriptDir, '..', 'android');
 
 const task = process.argv[2];
 if (!task) {
-  console.error('[AuraMind] usage: node scripts/run-gradle.mjs <task>');
+  console.error('[BonaMind] usage: node scripts/run-gradle.mjs <task>');
   process.exit(2);
 }
 
@@ -34,7 +34,7 @@ const result = spawnSync(wrapper, [task], {
 });
 
 if (result.error) {
-  console.error(`[AuraMind] Could not start ${wrapper}:`, result.error.message);
+  console.error(`[BonaMind] Could not start ${wrapper}:`, result.error.message);
   process.exit(1);
 }
 

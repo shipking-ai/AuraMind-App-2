@@ -73,7 +73,7 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> bool {
     on
 }
 
-/// Whether Windows allows AuraMind's notifications. None when it can't tell
+/// Whether Windows allows BonaMind's notifications. None when it can't tell
 /// (dev builds without an installed shortcut, or not Windows).
 #[tauri::command]
 pub fn notifications_enabled(app: AppHandle) -> Option<bool> {

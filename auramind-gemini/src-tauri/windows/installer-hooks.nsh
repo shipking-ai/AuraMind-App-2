@@ -1,10 +1,10 @@
-; "Make a course with AuraMind" in Explorer's right-click menu, per user.
+; "Make a course with BonaMind" in Explorer's right-click menu, per user.
 ; Keep this list in sync with DOC_EXTS/AUDIO_EXTS in src/handoff.rs
 ; (courseFiles.test.ts checks both). On Windows 11 it appears under
 ; "Show more options"; a top-level entry needs a signed MSIX.
 
 !macro AuraMindVerb EXT
-  WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind" "" "Make a course with AuraMind"
+  WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind" "" "Make a course with BonaMind"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind" "Icon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" --create "%1"'
 !macroend

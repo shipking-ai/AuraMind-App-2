@@ -1,8 +1,8 @@
-/* AuraMind Design Tokens - Based on Stitch Design System */
+/* BonaMind Design Tokens - Based on Stitch Design System */
 /* Platform-specific design tokens — each platform gets its own identity */
 
 /* ========================================
-   Default (Web) — AuraMind Cosmic Purple
+   Default (Web) — BonaMind Cosmic Purple
    ======================================== */
 :root {
   --platform-accent-hue: 270;

@@ -21,7 +21,7 @@ fn cards(n: u32) -> String {
 }
 
 pub fn tooltip(due: u32) -> String {
-    if due == 0 { "AuraMind · all caught up".into() } else { format!("AuraMind · {} due", cards(due)) }
+    if due == 0 { "BonaMind · all caught up".into() } else { format!("BonaMind · {} due", cards(due)) }
 }
 
 pub fn header(due: u32, streak: u32) -> String {
@@ -39,7 +39,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
             &header_item,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "quick-review", "Quick review", true, Some("CommandOrControl+Alt+Space"))?,
-            &MenuItem::with_id(app, "open", "Open AuraMind", true, None::<&str>)?,
+            &MenuItem::with_id(app, "open", "Open BonaMind", true, None::<&str>)?,
             &MenuItem::with_id(app, "new-course", "New course from file…", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &autostart,
@@ -127,9 +127,9 @@ mod tests {
 
     #[test]
     fn tooltip_counts_and_clears() {
-        assert_eq!(tooltip(12), "AuraMind · 12 cards due");
-        assert_eq!(tooltip(1), "AuraMind · 1 card due");
-        assert_eq!(tooltip(0), "AuraMind · all caught up");
+        assert_eq!(tooltip(12), "BonaMind · 12 cards due");
+        assert_eq!(tooltip(1), "BonaMind · 1 card due");
+        assert_eq!(tooltip(0), "BonaMind · all caught up");
     }
 
     #[test]
