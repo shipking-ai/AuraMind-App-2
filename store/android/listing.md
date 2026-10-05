@@ -1,8 +1,13 @@
 # BonaMind — Google Play Store Listing
 
-> **v1 copy approved for upload directly into the Play Console.** Brand: BonaMind
-> (CogniVect, Inc). The "About" section is unchanged — CogniVect is internal-only
-> for v1. See `store/PRE_LAUNCH_CHECKLIST.md` for the full pre-flight.
+> **v1 copy approved for upload directly into the Play Console.** Brand: BonaMind.
+> No parent-company name appears in the listing — CogniVect, Inc. is being
+> dissolved (see the FROZEN block in `src/lib/branding.ts`), so there is nothing
+> to attribute the listing to and nothing to declare as developer.
+>
+> The store's **"Developer/Vendor Name" and contact fields still need updating**
+> in the Play Console — those are console settings, not files, and they must match
+> whatever entity is confirmed as the operator. See `store/PRE_LAUNCH_CHECKLIST.md`.
 
 ---
 

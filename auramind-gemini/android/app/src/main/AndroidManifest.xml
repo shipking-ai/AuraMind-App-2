@@ -2,13 +2,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:enableOnBackInvokedCallback="true">
+
+        <!-- allowBackup is false, deliberately. BiometricAuthPlugin parks the
+             Supabase session in EncryptedSharedPreferences, whose AES keys live
+             in the Android Keystore — device-bound and never included in a
+             backup. A restored copy therefore carries ciphertext that cannot be
+             decrypted on the new device: getCredentials rejects with
+             "vault_error" and the user signs in normally, so this is not a
+             lockout, but it IS dead weight in every backup.
+
+             Nothing irreplaceable is lost by disabling it. Decks, cards and
+             sessions are server-side in Supabase; every localStorage key is
+             re-derivable preference state (theme, consent, reminder times,
+             last-review-prompt timestamp). This also keeps the Play
+             data-safety declaration honest: with backup on, the form has to
+             declare encrypted data in cloud backup that then cannot be read. -->
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
