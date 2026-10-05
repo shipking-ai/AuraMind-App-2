@@ -33,7 +33,39 @@ import { APP_NAME } from '../../app-identity.ts';
 
 /* ── Named exports (canonical, pinned by branding.test.ts) ───────────── */
 
+/**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │ FROZEN — PENDING A LEGAL DECISION. DO NOT SHIP WITHOUT RESOLVING.     │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * CogniVect, Inc. is being dissolved. Every constant from here to
+ * LEGAL_COPYRIGHT_LINE names the entity that operates the service, and a
+ * privacy policy has to name a real data controller. These values are
+ * therefore still the old ones, and they are still WRONG.
+ *
+ * What has already been removed is the *marketing* half — the parent byline,
+ * the CogniVect wordmark and the vector glyph — because that is presentation,
+ * not a legal claim. What remains here is the part that cannot be decided by
+ * engineering.
+ *
+ * Blocking before public launch:
+ *   1. The privacy policy and terms still name CogniVect, Inc.
+ *   2. Stripe's merchant entity of record — payouts fail if it is dissolved.
+ *   3. Google Play Console's verified developer entity name and address.
+ *   4. Google/Notion OAuth consent screens, which show the verified entity.
+ *   5. The W-9 (or W-8) filed with Play and Stripe.
+ *
+ * Note items 2–5 are not in this repository. They are console settings and
+ * will keep working until they are changed, which is what makes them easy to
+ * miss and expensive to discover late.
+ *
+ * When the replacement entity is confirmed, these are the only lines to
+ * change; everything else derives from them.
+ */
+
+/** The entity that operates the service. See the FROZEN block above. */
 export const PARENT_COMPANY_NAME    = 'CogniVect';
+/** Legal suffix matters: the old entity was an Inc, any replacement may not be. */
 export const PARENT_COMPANY_LEGAL   = 'CogniVect, Inc';          /* no trailing period */
 export const PARENT_BRAND_SLUG     = 'covect';
 export const PARENT_BRAND_TAGLINE  = 'cognitive · vector';     /* middle dot, not '+' */
@@ -42,14 +74,12 @@ export const PARENT_BRAND_TAGLINE  = 'cognitive · vector';     /* middle dot, n
  *
  * These two used to be independent literals, which is precisely how a rename
  * ends up showing the new name in the tab title and the old one in the footer.
- * PRODUCT_BYLINE, TRADEMARK_STATEMENT and the BRAND aggregate all derive from
- * this, so the parent-brand surfaces follow automatically.
+ * TRADEMARK_STATEMENT and the BRAND aggregate both derive from this.
  */
 export const PRODUCT_NAME          = APP_NAME;
-export const PRODUCT_BYLINE        = `${PRODUCT_NAME} — a ${PARENT_COMPANY_NAME} product`;
 export const CONTACT_EMAIL         = 'hello@bonamind.app';
-/* Until CogniVect provisions its own mailbox, parent brand contact-mail
- * aliases to the deliverability-warmed production mailbox. */
+/* Until the operating entity provisions its own mailbox, contact-mail aliases
+ * to the deliverability-warmed production mailbox. */
 export const PARENT_CONTACT_EMAIL  = CONTACT_EMAIL;
 export const LEGAL_ADDRESS         = `${PARENT_COMPANY_LEGAL}, 548 Market St, San Francisco, CA 94104`;
 export const TRADEMARK_STATEMENT   = `${PRODUCT_NAME} is a trademark of ${PARENT_COMPANY_LEGAL}`;
@@ -58,11 +88,6 @@ export const TRADEMARK_STATEMENT   = `${PRODUCT_NAME} is a trademark of ${PARENT
  * inside LEGAL_COPYRIGHT_LINE matches LEGAL_YEAR byte-for-byte. */
 export const LEGAL_YEAR: number                       = new Date().getFullYear();
 export const LEGAL_COPYRIGHT_LINE: string             = `© ${LEGAL_YEAR} CogniVect, Inc. All rights reserved.`;
-
-/* Issuer URL — used in store Developer/Vendor URL field. Forward-looking
- * for M6 store submission. Not on the LEGAL_YEAR axis; const for stable
- * deploys (DNS-stable, won't churn even when the year flips). */
-export const VENDOR_URL                                = 'https://cogniavect.app';
 
 /**
  * The product's own web origin, for surfaces that need an absolute URL.
@@ -77,10 +102,14 @@ export const VENDOR_URL                                = 'https://cogniavect.app
  */
 export const PRODUCT_SITE_URL                          = 'https://bonamind.app';
 
-/* Inline-text helper: "BonaMind by CogniVect" / "by CogniVect" wording
- * for compact UI surfaces (sidebar logo strip, splash bottom). Folded
- * into PRODUCT_BYLINE for marketing-style copy. */
-export const PARENT_BYLINE_SHORT                       = `by ${PARENT_COMPANY_NAME}`;
+/**
+ * Store "Developer/Vendor URL" and the About page's external link.
+ *
+ * Repointed from cogniavect.app, which belonged to the dissolved parent, to the
+ * product's own origin. Both stores require this field, so it cannot simply be
+ * left blank.
+ */
+export const VENDOR_URL                                = PRODUCT_SITE_URL;
 
 /* ── BRAND aggregate — every key mirrors its named export ─────────────── */
 /* The branding.test.ts parity test asserts Object.keys(BRAND).sort()
@@ -92,7 +121,6 @@ export const BRAND = {
   parentSlug:           PARENT_BRAND_SLUG,
   parentTagline:        PARENT_BRAND_TAGLINE,
   product:              PRODUCT_NAME,
-  productByline:        PRODUCT_BYLINE,
   contactEmail:         CONTACT_EMAIL,
   parentContactEmail:   PARENT_CONTACT_EMAIL,
   legalAddress:         LEGAL_ADDRESS,
