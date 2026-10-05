@@ -809,6 +809,11 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
     const path = require('node:path');
     const gone = path.resolve(__dirname, '..', 'components', 'brand', 'CogniWordmark.tsx');
     expect(fs.existsSync(gone)).toBe(false);
-    expect(fs.existsSync(path.resolve(__dirname, '..', 'components', 'brand'))).toBe(true);
+    // Deliberately NOT asserting that components/brand/ still exists.
+    // CogniWordmark.tsx was its only file, so removing it leaves an empty
+    // directory — and git does not track empty directories, so a fresh clone
+    // never has one. Asserting it would fail CI forever while passing locally,
+    // which is exactly what it did.
+    expect(fs.existsSync(path.resolve(__dirname, '..', 'components', 'shared', 'LegalFooter.tsx'))).toBe(true);
   });
 });
