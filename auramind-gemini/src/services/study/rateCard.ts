@@ -5,7 +5,7 @@
  * user on a card.
  */
 import type { Card, Rating } from '../../types';
-import { calculateSRS } from './srs';
+import { planReview } from '@bonamind/core';
 import { dbService } from '../database/dbService';
 import { cardReviewsService } from '../database/modules/cardReviewsService';
 import { isOnline, queueCardReview } from '../offline/offlineStudyService';
@@ -18,16 +18,11 @@ export async function rateCard(input: {
   surface: string;
 }): Promise<Partial<Card>> {
   const { card, rating, userId, surface } = input;
-  const res = calculateSRS(card, rating);
   const now = Date.now();
-  const update: Partial<Card> = {
-    interval: res.interval,
-    repetition: res.repetition,
-    easeFactor: res.easeFactor,
-    nextReview: now + res.interval * 86_400_000,
-    lastReviewed: now,
-  };
-  if (res.fsrsState) update.fsrsState = res.fsrsState;
+  // Shared with the native app: one definition of "rating -> schedule".
+  const { update: planned, record } = planReview(card, rating, now);
+  const res = record.srsResult;
+  const update: Partial<Card> = { ...planned };
 
   // Same reason as the study screen: updateCard() swallows a failed write,
   // so offline the only durable record is the queue.
