@@ -3,13 +3,16 @@ import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
-  Easing, interpolateColor, useAnimatedReaction, useDerivedValue, useSharedValue,
+  Easing, interpolateColor, makeMutable, useAnimatedReaction, useDerivedValue, useSharedValue,
   withRepeat, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import { useMotion } from '../motion';
 import { colors } from '../tokens';
 
 type Point = { x: number; y: number } | null;
+
+/** App-wide warmth (0..1): a study session raises it as ratings go well. */
+export const auroraWarmth = makeMutable(0);
 
 const DRIFT_MS = [9_000, 11_000, 13_000] as const;
 const FOLLOW_MS = 1_200;
@@ -79,7 +82,7 @@ export function AuroraScreen({
   return (
     <GestureDetector gesture={capture}>
       <View style={styles.screen}>
-        <AuroraBackground intensity={intensity} warmth={warmth} touch={touch} />
+        <AuroraBackground intensity={intensity} warmth={warmth ?? auroraWarmth} touch={touch} />
         {children}
       </View>
     </GestureDetector>
