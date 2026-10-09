@@ -6,3 +6,4 @@ export * from './scheduling/srs';
 export * from './review/planReview';
 export * from './data/rows';
 export * from './data/queries';
+export * from './stats';
