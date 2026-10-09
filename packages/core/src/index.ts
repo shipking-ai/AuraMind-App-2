@@ -8,3 +8,5 @@ export * from './data/rows';
 export * from './data/queries';
 export * from './stats';
 export * from './sync/outbox';
+export * from './linnea/stream';
+export * from './linnea/copy';
