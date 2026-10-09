@@ -1,0 +1,27 @@
+{
+  "name": "@bonamind/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BonaMind shared, platform-free logic: types, FSRS scheduling, data access, offline sync, and the Prof. Linnea client.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "engines": { "node": ">=22.22.2" },
+  "scripts": {
+    "test": "vitest run",
+    "type-check": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "ts-fsrs": "^5.4.2"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "@types/node": "^26.6.2",
+    "ts-fsrs": "^5.4.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.1"
+  },
+  "author": "CogniVect, Inc.",
+  "license": "UNLICENSED"
+}
