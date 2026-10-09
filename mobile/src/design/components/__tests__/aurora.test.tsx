@@ -6,7 +6,7 @@ import { Confetti } from '../Confetti';
 
 jest.mock('@shopify/react-native-skia', () => {
   const { View } = require('react-native');
-  const node = (id: string) => () => <View testID={id} />;
+  const node = (id: string) => function SkiaNode() { return <View testID={id} />; };
   return {
     Canvas: ({ children }: any) => <View testID="skia-canvas">{children}</View>,
     Group: ({ children }: any) => <View>{children}</View>,
