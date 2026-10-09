@@ -19,14 +19,41 @@ export class PermanentSyncError extends Error {
   }
 }
 
-const PERMANENT_CODES = new Set(['P0002', '42501', '22000']);
+/**
+ * A write that cannot go out right now for a reason retrying won't fix this
+ * minute: no connection, or no valid session. The queue pauses without
+ * spending attempts.
+ */
+export class PausedSyncError extends Error {
+  constructor(public reason: 'offline' | 'auth', message: string) {
+    super(message);
+    this.name = 'PausedSyncError';
+  }
+}
+
+// P0002 card gone · 22000 invalid rating · 23503 deck/card deleted (FK)
+// 23502 missing column value · 22P02 malformed value.
+const PERMANENT_CODES = new Set(['P0002', '22000', '23503', '23502', '22P02']);
+const AUTH_CODES = new Set(['PGRST301', 'PGRST302', 'PGRST303', '401']);
+// 42501 is permanent only when record_card_review itself refuses the write;
+// a bare "permission denied" means the call went out as anon (no session).
+const RPC_REFUSAL = /does not belong|not the rated user/i;
 
 function raise(error: { code?: string; message?: string }): never {
   const code = error.code ?? '';
   const message = error.message ?? 'Supabase request failed';
+  if (!code) throw new PausedSyncError('offline', message);
+  if (AUTH_CODES.has(code)) throw new PausedSyncError('auth', message);
+  if (code === '42501') {
+    if (RPC_REFUSAL.test(message)) throw new PermanentSyncError(code, message);
+    throw new PausedSyncError('auth', message);
+  }
   if (PERMANENT_CODES.has(code)) throw new PermanentSyncError(code, message);
   throw Object.assign(new Error(message), { code });
 }
+
+/** The tuning gate the website applies before trusting fitted weights. */
+export const FSRS_TUNING_GATE = 50;
 
 export type NewStudySession = Omit<StudySession, 'userId'> & { id: string; deckId: string };
 
@@ -35,6 +62,7 @@ export interface BonaMindData {
   listCards(userId: string): Promise<Card[]>;
   listStudySessions(userId: string): Promise<StudySession[]>;
   getDisplayName(userId: string): Promise<string | null>;
+  getFsrsProfile(userId: string): Promise<{ weights?: number[]; profileLabel: string | null }>;
   pushReview(userId: string, record: ReviewRecord, update: CardScheduleUpdate): Promise<void>;
   pushStudySession(userId: string, s: NewStudySession): Promise<void>;
 }
@@ -70,6 +98,18 @@ export function createBonaMindData(client: SupabaseClient): BonaMindData {
       const { data, error } = await client.from('user_profiles').select('full_name').eq('user_id', userId).maybeSingle();
       if (error) raise(error);
       return (data as { full_name?: string | null } | null)?.full_name ?? null;
+    },
+
+    async getFsrsProfile(userId) {
+      const { data, error } = await client
+        .from('user_fsrs_params')
+        .select('weights, profile_label, review_count')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) raise(error);
+      const row = data as { weights?: number[]; profile_label?: string | null; review_count?: number } | null;
+      if (!row?.weights || (row.review_count ?? 0) < FSRS_TUNING_GATE) return { weights: undefined, profileLabel: null };
+      return { weights: row.weights, profileLabel: row.profile_label ?? null };
     },
 
     async pushReview(userId, record, update) {

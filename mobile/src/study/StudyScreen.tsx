@@ -1,4 +1,4 @@
-import { computeStreak, dueCards, Rating, type Card, type StudySession as SessionRow } from '@bonamind/core';
+import { computeStreak, DEFAULT_TARGET_RETENTION, dueCards, Rating, type Card, type ScheduleOptions, type StudySession as SessionRow } from '@bonamind/core';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -8,8 +8,8 @@ import { withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getOutbox } from '../data/app';
 import { useAuth } from '../data/auth';
-import { useCards, useDecks, useSessions } from '../data/hooks';
-import { getSyncEngine } from '../data/sync';
+import { useCards, useDecks, useFsrsProfile, useSessions } from '../data/hooks';
+import { getSyncEngine, useSync } from '../data/sync';
 import { auroraWarmth } from '../design/components/AuroraBackground';
 import { Confetti } from '../design/components/Confetti';
 import { GlassButton } from '../design/components/GlassButton';
@@ -19,22 +19,35 @@ import { ProgressBar } from '../design/components/ProgressBar';
 import { colors, fonts, space } from '../design/tokens';
 import { CardStack } from './CardStack';
 import { Celebration } from './Celebration';
-import { createStudySession, type StudySession } from './session';
+import { createStudySession } from './session';
+import { useCloseOnLeave } from './useCloseOnLeave';
 
 const queued = async (p: Promise<void>) => { await p; getSyncEngine().notifyEnqueued(); };
 
 export function StudyScreen() {
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
   const { userId } = useAuth();
-  const cards = useCards(userId).data;
+  const cardsQuery = useCards(userId);
+  const fsrs = useFsrsProfile(userId);
   const sessions = useSessions(userId).data;
   const deck = (useDecks(userId).data ?? []).find((d) => d.id === deckId);
-  if (!cards || !sessions || !userId) return <View style={styles.fill} />;
-  return <StudyRun deckId={deckId} deckTitle={deck?.title} userId={userId} cards={cards} sessions={sessions} />;
+  const { online } = useSync(userId);
+  // Online, the queue is built from a fresh fetch, not the launch snapshot,
+  // so cards studied on the website meanwhile aren't reviewed again.
+  const fresh = !online || cardsQuery.isFetchedAfterMount || cardsQuery.isError;
+  const fsrsReady = !online || fsrs.isFetchedAfterMount || fsrs.isError;
+  const cards = cardsQuery.data;
+  if (!cards || !sessions || !userId || !fresh || !fsrsReady) return <View style={styles.fill} />;
+  return (
+    <StudyRun
+      deckId={deckId} deckTitle={deck?.title} userId={userId} cards={cards} sessions={sessions}
+      schedule={{ weightsOverride: fsrs.data?.weights, profileLabel: fsrs.data?.profileLabel ?? null, retention: DEFAULT_TARGET_RETENTION }}
+    />
+  );
 }
 
-function StudyRun({ deckId, deckTitle, userId, cards, sessions }: {
-  deckId: string; deckTitle?: string; userId: string; cards: Card[]; sessions: SessionRow[];
+function StudyRun({ deckId, deckTitle, userId, cards, sessions, schedule }: {
+  deckId: string; deckTitle?: string; userId: string; cards: Card[]; sessions: SessionRow[]; schedule: ScheduleOptions;
 }) {
   const queryClient = useQueryClient();
   const { width } = useWindowDimensions();
@@ -46,7 +59,7 @@ function StudyRun({ deckId, deckTitle, userId, cards, sessions }: {
       total: due.length,
       streakBefore: computeStreak(sessions, new Date(now)),
       session: createStudySession({
-        userId, deckId, cards: due, startedAt: now,
+        userId, deckId, cards: due, startedAt: now, schedule,
         deps: {
           enqueueReview: (u, r, p) => queued(getOutbox().enqueueReview(u, r, p)),
           enqueueSession: (u, s) => queued(getOutbox().enqueueSession(u, s)),
@@ -59,6 +72,7 @@ function StudyRun({ deckId, deckTitle, userId, cards, sessions }: {
   const [burst, setBurst] = useState(0);
   const [finishedAt, setFinishedAt] = useState<number | null>(null);
   const [, rerender] = useReducer((n: number) => n + 1, 0);
+  useCloseOnLeave(session);
 
   // Killed or backgrounded mid-deck: the studied part is saved as its own session.
   useEffect(() => {
@@ -123,7 +137,7 @@ function StudyRun({ deckId, deckTitle, userId, cards, sessions }: {
         </View>
       </View>
       <View style={styles.stack}>
-        <CardStack card={session.current()} depth={left} onRate={(r) => void rate(r)} />
+        <CardStack card={session.current()} turn={session.rated()} depth={left} onRate={(r) => void rate(r)} />
       </View>
       <Confetti trigger={burst} origin={{ x: width / 2, y: 320 }} mode="burst" />
     </SafeAreaView>

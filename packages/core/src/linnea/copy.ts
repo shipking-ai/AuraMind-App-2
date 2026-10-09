@@ -23,6 +23,7 @@ const ERROR_LINES: Record<LinneaErrorKind, string> = {
   rate_limited: "We've been talking a lot. Give me a minute to catch my breath.",
   auth: "Your session expired. Sign in again and I'll be right here.",
   network: "I can't reach the internet right now. Your cards still work offline.",
+  subscription: 'Chatting with me is part of BonaMind Pro. Your cards and reviews stay free.',
 };
 
 export function linneaErrorLine(kind: LinneaErrorKind): string {

@@ -62,6 +62,12 @@ export function WelcomeScreen() {
     if (mode === 'code') setCodeSent(true);
   }
 
+  async function viaProvider(signIn: () => Promise<{ cancelled: true } | { error: string } | { ok: true }>) {
+    setError(null);
+    const result = await signIn();
+    if ('error' in result) setError(/network/i.test(result.error) ? 'network' : 'unknown');
+  }
+
   const enter = (i: number) => (reduce ? undefined : FadeInDown.delay(150 + i * 90).springify().damping(14).stiffness(160));
 
   return (
@@ -76,10 +82,11 @@ export function WelcomeScreen() {
           {!emailOpen ? (
             <View style={styles.actions}>
               <Animated.View entering={enter(0)}><PrimaryButton label="Continue with email" onPress={() => setEmailOpen(true)} /></Animated.View>
-              <Animated.View entering={enter(1)}><SecondaryButton label="Continue with Google" onPress={() => void signInWithGoogle()} /></Animated.View>
+              <Animated.View entering={enter(1)}><SecondaryButton label="Continue with Google" onPress={() => void viaProvider(signInWithGoogle)} /></Animated.View>
               {env.appleSignIn && (
-                <Animated.View entering={enter(2)}><SecondaryButton label="Continue with Apple" onPress={() => void signInWithApple()} /></Animated.View>
+                <Animated.View entering={enter(2)}><SecondaryButton label="Continue with Apple" onPress={() => void viaProvider(signInWithApple)} /></Animated.View>
               )}
+              {error && <Text style={styles.error} accessibilityLiveRegion="polite">{SIGN_IN_COPY[error]}</Text>}
             </View>
           ) : (
             <Animated.View entering={enter(0)} style={styles.form}>

@@ -28,13 +28,14 @@ const A11Y_ACTIONS = [
 const ACTION_RATING: Record<string, Rating> = { again: Rating.AGAIN, hard: Rating.HARD, good: Rating.GOOD, easy: Rating.EASY };
 
 /** The deck: up to two papers peeking out behind the current card. */
-export function CardStack({ card, depth, onRate }: { card: Card | null; depth: number; onRate(rating: Rating): void }) {
+export function CardStack({ card, turn, depth, onRate }: { card: Card | null; turn: number; depth: number; onRate(rating: Rating): void }) {
   const behind = Math.min(2, Math.max(0, depth - 1));
   return (
     <View style={styles.stage}>
       {behind >= 2 && <View style={[styles.paper, styles.behind2]} />}
       {behind >= 1 && <View style={[styles.paper, styles.behind1]} />}
-      {card && <SwipeCard key={card.id} card={card} onRate={onRate} />}
+      {/* Keyed by turn too: an Again card that comes straight back starts fresh. */}
+      {card && <SwipeCard key={`${card.id}:${turn}`} card={card} onRate={onRate} />}
     </View>
   );
 }
@@ -64,7 +65,10 @@ function SwipeCard({ card, onRate }: { card: Card; onRate(rating: Rating): void 
     turn.set(reduce ? withTiming(next ? 1 : 0, { duration: 180 }) : withSpring(next ? 1 : 0, spring('flip')));
     haptic('light');
   };
+  const committed = useSharedValue(false);
   const commit = (rating: Rating) => {
+    if (committed.get()) return; // one rating per card, however fast input repeats
+    committed.set(true);
     haptic(rating === Rating.AGAIN ? 'warning' : 'success');
     onRate(rating);
   };

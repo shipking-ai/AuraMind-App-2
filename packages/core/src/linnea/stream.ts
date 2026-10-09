@@ -6,7 +6,7 @@
  * decoded here because React Native's TextDecoder support varies.
  */
 export type LinneaMessage = { role: 'system' | 'user' | 'assistant'; content: string };
-export type LinneaErrorKind = 'busy' | 'rate_limited' | 'unavailable' | 'auth' | 'network';
+export type LinneaErrorKind = 'busy' | 'rate_limited' | 'unavailable' | 'auth' | 'network' | 'subscription';
 
 export class LinneaError extends Error {
   constructor(public kind: LinneaErrorKind, message?: string) {
@@ -29,6 +29,7 @@ export type FetchLike = (
 ) => Promise<ResponseLike>;
 
 function errorKind(status: number): LinneaErrorKind {
+  if (status === 402) return 'subscription';
   if (status === 429) return 'rate_limited';
   if (status === 503) return 'unavailable';
   if (status === 401 || status === 403) return 'auth';

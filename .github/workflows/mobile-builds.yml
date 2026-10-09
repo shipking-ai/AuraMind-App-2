@@ -8,7 +8,9 @@ name: Mobile builds
 #
 # Liquid Glass needs the iOS 26 SDK, so iOS jobs select Xcode 26.
 # Secrets: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (public, shared with the
-# website), and for e2e SUPABASE_SERVICE_ROLE_KEY + E2E_EMAIL.
+# website), and for e2e SUPABASE_SERVICE_ROLE_KEY plus one test account per
+# platform (E2E_EMAIL_IOS, E2E_EMAIL_ANDROID) so the runs never share cards.
+# The jobs also run one after the other and reseed before each run.
 
 on:
   workflow_dispatch:
@@ -76,7 +78,7 @@ jobs:
     env:
       EXPO_PUBLIC_E2E: 'true'
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL_IOS }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -101,10 +103,10 @@ jobs:
           DEVICE=$(xcrun simctl list devices available -j | node -e "const d=JSON.parse(require('fs').readFileSync(0)).devices;console.log(Object.values(d).flat().find(x=>/^iPhone \d+ Pro$/.test(x.name)).udid)")
           xcrun simctl boot "$DEVICE" && xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" build/Build/Products/Release-iphonesimulator/BonaMind.app
-      - name: Mint a session for the test account
+      - name: Reseed and mint a session for the test account
         id: session
         working-directory: mobile
-        run: node e2e/mint-session.mjs
+        run: node e2e/reseed.mjs && node e2e/mint-session.mjs
       - name: Run the core loop
         working-directory: mobile
         run: maestro test -e APP_ID=com.bonamind.app -e RT=${{ steps.session.outputs.rt }} --test-output-dir ../e2e-ios e2e/core-loop.yaml
@@ -116,13 +118,14 @@ jobs:
         with: { name: e2e-ios, path: e2e-ios, if-no-files-found: ignore }
 
   e2e-android:
-    if: inputs.job == 'e2e' || inputs.job == 'all'
+    needs: e2e-ios
+    if: always() && (inputs.job == 'e2e' || inputs.job == 'all')
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
       EXPO_PUBLIC_E2E: 'true'
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL_ANDROID }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -138,10 +141,10 @@ jobs:
       - name: Build the APK
         working-directory: mobile
         run: npx expo prebuild --platform android --clean --no-install && (cd android && ./gradlew assembleRelease --no-daemon)
-      - name: Mint a session for the test account
+      - name: Reseed and mint a session for the test account
         id: session
         working-directory: mobile
-        run: node e2e/mint-session.mjs
+        run: node e2e/reseed.mjs && node e2e/mint-session.mjs
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

@@ -17,7 +17,7 @@ const pan = (dx: number, dy = 0) => [
 
 async function setup(c: Card = card) {
   const onRate = jest.fn();
-  await render(<CardStack card={c} depth={3} onRate={onRate} />);
+  await render(<CardStack card={c} turn={0} depth={3} onRate={onRate} />);
   // Gesture callbacks hop to JS via scheduleOnRN, which lands a tick later.
   const flip = async () => {
     fireGestureHandler(getByGestureTestId('card-tap'));
@@ -79,4 +79,21 @@ it('exposes the ratings to screen readers', async () => {
 it('scrolls a very long card instead of shrinking it', async () => {
   await setup({ ...card, front: 'x'.repeat(2000) });
   expect(screen.getByTestId('card-front-scroll')).toBeTruthy();
+});
+
+it('shows the question again when an Again card comes straight back', async () => {
+  const onRate = jest.fn();
+  const view = await render(<CardStack card={card} turn={0} depth={1} onRate={onRate} />);
+  fireGestureHandler(getByGestureTestId('card-tap'));
+  await screen.findByLabelText(/^Answer:/);
+  await view.rerender(<CardStack card={card} turn={1} depth={1} onRate={onRate} />);
+  expect(screen.getByLabelText(/^Question:/)).toBeTruthy();
+});
+
+it('rates a card only once, however fast the input repeats', async () => {
+  const { onRate } = await setup();
+  const target = screen.getByLabelText(/^Question:/);
+  await fireEvent(target, 'accessibilityAction', { nativeEvent: { actionName: 'good' } });
+  await fireEvent(target, 'accessibilityAction', { nativeEvent: { actionName: 'good' } });
+  expect(onRate).toHaveBeenCalledTimes(1);
 });

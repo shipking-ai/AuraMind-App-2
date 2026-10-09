@@ -26,10 +26,13 @@ export function createSyncEngine(deps: { outbox: OutboxPort; netinfo: NetPort; a
     listeners.forEach((l) => l());
   };
 
+  let afterFlush: (() => void) | null = null;
+
   async function flushNow(): Promise<void> {
     if (!userId || !state.online) return;
     const uid = userId;
-    await deps.outbox.flush(uid);
+    const result = await deps.outbox.flush(uid);
+    if (result.sent > 0) afterFlush?.();
     if (uid === userId) emit({ pending: await deps.outbox.pending(uid) });
   }
 
@@ -57,6 +60,8 @@ export function createSyncEngine(deps: { outbox: OutboxPort; netinfo: NetPort; a
       await flushNow();
     },
     flushNow,
+    /** Refresh server data once queued writes have landed. */
+    onFlushed(fn: () => void) { afterFlush = fn; },
     /** Call after each enqueue; coalesces a burst of ratings into one flush. */
     notifyEnqueued() {
       if (timer) clearTimeout(timer);

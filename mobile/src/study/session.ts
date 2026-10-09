@@ -1,4 +1,4 @@
-import { planReview, Rating, type Card, type CardScheduleUpdate, type NewStudySession, type ReviewRecord } from '@bonamind/core';
+import { planReview, Rating, type Card, type CardScheduleUpdate, type NewStudySession, type ReviewRecord, type ScheduleOptions } from '@bonamind/core';
 
 /**
  * One study session over a deck's due cards, independent of the UI.
@@ -21,6 +21,8 @@ export function createStudySession(opts: {
   cards: Card[];
   startedAt: number;
   deps: StudyDeps;
+  /** The user's fitted weights, retention target and profile: as the website schedules. */
+  schedule?: ScheduleOptions;
 }) {
   const { userId, deckId, deps } = opts;
   const byId = new Map(opts.cards.map((c) => [c.id, c]));
@@ -57,7 +59,7 @@ export function createStudySession(opts: {
     async rate(rating: Rating, at: number): Promise<{ update: CardScheduleUpdate } | null> {
       const card = queue.length ? byId.get(queue[0]) : undefined;
       if (!card) return null;
-      const { update, record } = planReview(card, rating, at);
+      const { update, record } = planReview(card, rating, at, opts.schedule);
       byId.set(card.id, { ...card, ...update });
       const correct = rating !== Rating.AGAIN;
       segment.rated += 1;

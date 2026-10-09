@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  MAX_ATTEMPTS, PermanentSyncError, Rating, createMemoryOutboxStore, createOutbox, planReview,
+  MAX_ATTEMPTS, PausedSyncError, PermanentSyncError, Rating, createMemoryOutboxStore, createOutbox, planReview,
   type Card, type OutboxStore,
 } from '../src';
 
@@ -26,6 +26,7 @@ describe('outbox', () => {
     const early = plan('early', T - 2_000);
     await outbox.enqueueReview('u1', late.record, late.update);
     await outbox.enqueueReview('u1', early.record, early.update);
+    expect((await outbox.queued('u1')).map((i) => i.kind === 'review' && i.record.cardId)).toEqual(['early', 'late']);
     expect(await outbox.flush('u1')).toEqual({ sent: 2, dead: 0, stoppedEarly: false });
     expect(push.mock.calls.map((c: any[]) => c[1].cardId)).toEqual(['early', 'late']);
     expect(await outbox.pending('u1')).toBe(0);
@@ -111,5 +112,25 @@ describe('outbox', () => {
     await outbox.enqueueSession('u1', { id: 's1', deckId: 'd1', startTime: T - 60_000, endTime: T, cardsStudied: 1 });
     expect(await outbox.flush('u1')).toEqual({ sent: 1, dead: 0, stoppedEarly: false });
     expect(pushStudySession).toHaveBeenCalledWith('u1', expect.objectContaining({ id: 's1' }));
+  });
+});
+
+describe('outbox pauses', () => {
+  it('stops without spending an attempt when offline', async () => {
+    const push = vi.fn(async () => { throw new PausedSyncError('offline', 'Network request failed'); });
+    const { outbox, store } = setup(push);
+    const p = plan('c1', T - 1_000);
+    await outbox.enqueueReview('u1', p.record, p.update);
+    for (let i = 0; i < MAX_ATTEMPTS + 2; i++) expect((await outbox.flush('u1')).stoppedEarly).toBe(true);
+    expect((await store.list('u1'))[0].attempts).toBe(0);
+  });
+
+  it('does not send for a user who is no longer signed in', async () => {
+    const push = vi.fn(async () => {});
+    const outbox = createOutbox({ store: createMemoryOutboxStore(), now: () => T, canSend: async () => false, data: { pushReview: push, pushStudySession: vi.fn() } });
+    const p = plan('c1', T - 1_000);
+    await outbox.enqueueReview('u1', p.record, p.update);
+    expect(await outbox.flush('u1')).toEqual({ sent: 0, dead: 0, stoppedEarly: true });
+    expect(push).not.toHaveBeenCalled();
   });
 });

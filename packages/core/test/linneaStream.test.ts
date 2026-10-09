@@ -72,3 +72,9 @@ describe('streamLinnea', () => {
     expect((await collect(streamLinnea({ ...base, fetchImpl }))).join('')).toBe('naïve ✓');
   });
 });
+
+it('tells a free user Linnea needs a subscription', async () => {
+  const { fetchImpl } = sse([], 402);
+  const err = await collect(streamLinnea({ ...base, fetchImpl })).catch((e) => e);
+  expect(err.kind).toBe('subscription');
+});

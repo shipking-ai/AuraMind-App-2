@@ -8,7 +8,7 @@
  * a permanent one (card deleted, not the owner) is set aside at once.
  */
 import type { BonaMindData, NewStudySession } from '../data/queries';
-import { PermanentSyncError } from '../data/queries';
+import { PausedSyncError, PermanentSyncError } from '../data/queries';
 import type { CardScheduleUpdate, ReviewRecord } from '../review/planReview';
 
 export const MAX_ATTEMPTS = 5;
@@ -72,6 +72,8 @@ export function createOutbox(deps: {
   now?: () => number;
   newId?: () => string;
   onDeadLetter?: (item: OutboxItem, reason: string) => void;
+  /** Only send while this user is the one signed in (the RPC runs as the caller). */
+  canSend?: (userId: string) => Promise<boolean>;
 }) {
   const { store, data } = deps;
   const now = deps.now ?? (() => Date.now());
@@ -86,6 +88,7 @@ export function createOutbox(deps: {
   async function flushOnce(userId: string): Promise<FlushResult> {
     let sent = 0;
     let dead = 0;
+    if (deps.canSend && !(await deps.canSend(userId))) return { sent, dead, stoppedEarly: true };
     for (const item of await store.list(userId)) {
       try {
         if (item.kind === 'review') await data.pushReview(item.userId, item.record, item.update);
@@ -93,6 +96,7 @@ export function createOutbox(deps: {
         await store.remove(item.id);
         sent++;
       } catch (e) {
+        if (e instanceof PausedSyncError) return { sent, dead, stoppedEarly: true };
         if (e instanceof PermanentSyncError) {
           await deadLetter(item, `permanent:${e.code}`);
           dead++;
@@ -132,6 +136,11 @@ export function createOutbox(deps: {
     flush(userId: string): Promise<FlushResult> {
       if (!running) running = flushOnce(userId).finally(() => { running = null; });
       return running;
+    },
+
+    /** What is still waiting to upload, oldest first. */
+    queued(userId: string): Promise<OutboxItem[]> {
+      return store.list(userId);
     },
 
     async pending(userId: string): Promise<number> {

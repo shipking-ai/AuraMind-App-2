@@ -65,3 +65,11 @@ it('explains a failed human check', async () => {
   await fireEvent.press(screen.getByText('captcha fail'));
   expect(screen.getByText("We couldn't verify you're human. Try again.")).toBeTruthy();
 });
+
+it('says so when Google sign-in fails instead of doing nothing', async () => {
+  const { signInWithGoogle } = jest.requireMock('../oauth');
+  signInWithGoogle.mockResolvedValueOnce({ error: 'no_code' });
+  await render(<WelcomeScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+  expect(await screen.findByText('Something went wrong. Try again in a moment.')).toBeTruthy();
+});

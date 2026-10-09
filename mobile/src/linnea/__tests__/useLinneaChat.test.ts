@@ -15,7 +15,7 @@ function scripted(...turns: ((signal?: { aborted: boolean }) => AsyncGenerator<s
 }
 async function* say(...parts: string[]) { for (const p of parts) yield p; }
 
-const base = { userId: 'u1', token: 'tok', firstName: 'Sam', weak: [{ front: 'Mitosis', lapses: 3 }] };
+const base = { userId: 'u1', firstName: 'Sam', weak: [{ front: 'Mitosis', lapses: 3 }] };
 
 beforeEach(() => { mem.clear(); jest.clearAllMocks(); });
 
@@ -76,4 +76,16 @@ it('restores the conversation on reopen', async () => {
   expect(kvSet).toHaveBeenCalled();
   const again = await renderHook(() => useLinneaChat({ ...base, stream: scripted() }));
   expect(again.result.current.messages.map((m) => m.text)).toContain('Metaphase');
+});
+
+it('reads a fresh access token for every request', async () => {
+  const { tokenStream } = require('../useLinneaChat');
+  const getSession = jest.fn()
+    .mockResolvedValueOnce({ data: { session: { access_token: 'old' } } })
+    .mockResolvedValueOnce({ data: { session: { access_token: 'new' } } });
+  const seen: string[] = [];
+  const stream = tokenStream(getSession, (token: string) => (async function* () { seen.push(token); yield 'ok'; })());
+  for await (const _ of stream({ messages: [] })) { /* drain */ }
+  for await (const _ of stream({ messages: [] })) { /* drain */ }
+  expect(seen).toEqual(['old', 'new']);
 });

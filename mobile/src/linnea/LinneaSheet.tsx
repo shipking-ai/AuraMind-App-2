@@ -67,13 +67,12 @@ function Message({ m, onRetry }: { m: ChatItem; onRetry(): void }) {
 }
 
 export function LinneaSheet() {
-  const { userId, session } = useAuth();
+  const { userId } = useAuth();
   const cards = useCards(userId).data ?? [];
   const name = useDisplayName(userId).data;
   const weak = useMemo(() => [...cards].sort((a, b) => (b.lapses ?? 0) - (a.lapses ?? 0)).slice(0, 3).filter((c) => (c.lapses ?? 0) > 0), [cards]);
   const { messages, send, retry, streaming } = useLinneaChat({
     userId: userId ?? 'anon',
-    token: session?.access_token ?? '',
     firstName: name?.split(' ')[0] ?? null,
     weak,
   });

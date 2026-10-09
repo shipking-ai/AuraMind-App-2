@@ -34,3 +34,7 @@ it('has a line for every failure', () => {
   expect(linneaErrorLine('auth')).toBe("Your session expired. Sign in again and I'll be right here.");
   expect(linneaErrorLine('network')).toBe("I can't reach the internet right now. Your cards still work offline.");
 });
+
+it('is honest about the subscription', () => {
+  expect(linneaErrorLine('subscription')).toBe("Chatting with me is part of BonaMind Pro. Your cards and reviews stay free.");
+});

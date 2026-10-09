@@ -1,16 +1,17 @@
 import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif/400Regular';
 import { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif/400Regular_Italic';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { DarkTheme, SplashScreen, Stack, ThemeProvider } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { AppState, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { initAppData } from '../data/app';
 import { useAuth } from '../data/auth';
-import { useSync } from '../data/sync';
+import { getSyncEngine, useSync } from '../data/sync';
 import { AuroraScreen } from '../design/components/AuroraBackground';
 import { OfflinePill } from '../design/components/OfflinePill';
 import { colors } from '../design/tokens';
@@ -31,6 +32,15 @@ if (env.sentryDsn) {
 void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } });
+
+// React Native has no window focus/online events: tell TanStack Query when
+// the app returns to the foreground or the connection comes back, so cached
+// screens revalidate (e.g. after studying on the website).
+focusManager.setEventListener((setFocused) => {
+  const sub = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
+  return () => sub.remove();
+});
+onlineManager.setEventListener((setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)));
 
 // Navigators paint nothing, so the aurora shows through every screen.
 const theme = {
@@ -61,7 +71,16 @@ export default function RootLayout() {
   const ready = fontsLoaded && dataReady && auth.status !== 'loading';
 
   useEffect(() => {
-    initAppData().then(() => setDataReady(true), (e) => { Sentry.captureException(e); setDataReady(true); });
+    initAppData().then(
+      () => {
+        getSyncEngine().onFlushed(() => {
+          void queryClient.invalidateQueries({ queryKey: ['cards'] });
+          void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+        });
+        setDataReady(true);
+      },
+      (e) => { Sentry.captureException(e); setDataReady(true); },
+    );
   }, []);
   useEffect(() => { if (ready) void SplashScreen.hideAsync(); }, [ready]);
 

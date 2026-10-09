@@ -21,13 +21,28 @@ const threadKey = (userId: string) => `linnea.thread.${userId}`;
 let seq = 0;
 const nextId = () => `m${Date.now().toString(36)}${(seq++).toString(36)}`;
 
+type GetSession = () => Promise<{ data: { session: { access_token: string } | null } }>;
+
+/**
+ * Reads the access token at request time, so a token refreshed while the
+ * sheet is open (or just after returning to the app) is the one sent.
+ */
+export function tokenStream(getSession: GetSession, open: (token: string, opts: Parameters<StreamFn>[0]) => AsyncGenerator<string>): StreamFn {
+  return async function* (opts) {
+    const { data } = await getSession();
+    yield* open(data.session?.access_token ?? '', opts);
+  };
+}
+
 /** Streaming via expo/fetch, which exposes the response body as a stream on device. */
-function defaultStream(token: string): StreamFn {
-  return ({ messages, signal }) => {
+function defaultStream(): StreamFn {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getSupabase } = require('../data/supabase') as typeof import('../data/supabase');
+  return tokenStream(() => getSupabase().auth.getSession(), (token, { messages, signal }) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { fetch } = require('expo/fetch') as { fetch: FetchLike };
     return streamLinnea({ apiBaseUrl: env.apiBaseUrl, token, messages, signal, fetchImpl: fetch });
-  };
+  });
 }
 
 function toApi(items: ChatItem[]): LinneaMessage[] {
@@ -46,19 +61,18 @@ function toApi(items: ChatItem[]): LinneaMessage[] {
  */
 export function useLinneaChat(opts: {
   userId: string;
-  token: string;
   firstName?: string | null;
   weak: Pick<Card, 'front' | 'lapses'>[];
   stream?: StreamFn;
 }) {
-  const { userId, token, firstName, weak } = opts;
+  const { userId, firstName, weak } = opts;
   const [messages, setMessages] = useState<ChatItem[]>(
     () => kvGet<ChatItem[]>(threadKey(userId)) ?? [{ id: nextId(), role: 'linnea', text: linneaOpening(weak, firstName), state: 'done' }],
   );
   const [streaming, setStreaming] = useState(false);
   const live = useRef<AbortController | null>(null);
   const latest = useRef(messages);
-  const streamRef = useRef<StreamFn>(opts.stream ?? defaultStream(token));
+  const streamRef = useRef<StreamFn>(opts.stream ?? defaultStream());
 
   const commit = useCallback((next: ChatItem[]) => {
     latest.current = next;

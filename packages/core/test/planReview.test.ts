@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { Rating, calculateSRS, msToIso, planReview, toCardScheduleRow, type Card } from '../src';
+import { DEFAULT_TARGET_RETENTION, FSRS_PARAMETERS, Rating, applyPersonalizedDifficultyInit, calculateSRS, msToIso, planReview, toCardScheduleRow, type Card } from '../src';
 
 const T = Date.UTC(2026, 9, 8, 12, 0, 0);
 const newCard: Card = { id: 'c1', deckId: 'd1', front: 'Metaphase?', back: 'Chromosomes align' };
@@ -35,4 +35,17 @@ it('maps the update to snake_case columns with ISO timestamps', () => {
 it('omits fsrs_state when the update has none', () => {
   const row = toCardScheduleRow({ interval: 1, repetition: 1, easeFactor: 2.5, nextReview: T, lastReviewed: T });
   expect('fsrs_state' in row).toBe(false);
+});
+
+it('schedules exactly like the website study screen with fitted weights and 85% retention', () => {
+  const weights = [...FSRS_PARAMETERS].map((w, i) => (i === 2 ? w * 1.3 : w));
+  const opts = { weightsOverride: weights, retention: DEFAULT_TARGET_RETENTION, profileLabel: 'tough-learner' };
+  const { update } = planReview(newCard, Rating.GOOD, T, opts);
+  // StudyModePage.handleRate: bias the first review, then calculateSRS(card, rating, weights, retention).
+  const biased = applyPersonalizedDifficultyInit(newCard, 'tough-learner', weights);
+  const web = calculateSRS(biased.card, Rating.GOOD, weights, 0.85);
+  expect(DEFAULT_TARGET_RETENTION).toBe(0.85);
+  expect(update.interval).toBe(web.interval);
+  expect(update.fsrsState).toEqual(web.fsrsState);
+  expect(update.interval).not.toBe(planReview(newCard, Rating.GOOD, T).update.interval);
 });

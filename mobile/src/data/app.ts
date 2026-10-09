@@ -19,7 +19,13 @@ export async function initAppData(): Promise<void> {
   const db = await openBonaDb();
   await loadKv(db);
   data = createBonaMindData(getSupabase());
-  outbox = createOutbox({ store: createSqliteOutboxStore(db), data, onDeadLetter: reportDeadLetter });
+  outbox = createOutbox({
+    store: createSqliteOutboxStore(db),
+    data,
+    onDeadLetter: reportDeadLetter,
+    // The review RPC runs as the caller: never send for a user who isn't signed in.
+    canSend: async (userId) => (await getSupabase().auth.getSession()).data.session?.user.id === userId,
+  });
   startSync(outbox);
 }
 

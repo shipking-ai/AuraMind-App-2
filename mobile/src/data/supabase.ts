@@ -14,7 +14,15 @@ let client: SupabaseClient | null = null;
 export function getSupabase(): SupabaseClient {
   if (client) return client;
   const c = createClient(env.supabaseUrl || 'https://placeholder.supabase.co', env.supabaseAnonKey || 'placeholder', {
-    auth: { storage: chunkedSecureStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+    auth: {
+      storage: chunkedSecureStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+      // OAuth returns ?code= to bonamind://auth/callback (the implicit flow's
+      // #access_token fragment can't be exchanged by the app).
+      flowType: 'pkce',
+    },
   });
   AppState.addEventListener('change', (state) => {
     if (state === 'active') c.auth.startAutoRefresh();

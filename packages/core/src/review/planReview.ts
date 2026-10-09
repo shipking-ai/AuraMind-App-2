@@ -5,10 +5,22 @@
  */
 import type { Card, FSRSState, SRSResult } from '../types';
 import { Rating } from '../types';
-import { calculateSRS } from '../scheduling/srs';
+import { applyPersonalizedDifficultyInit } from '../scheduling/fsrs';
+import { calculateSRS, retentionFromSetting } from '../scheduling/srs';
 import { msToIso } from '../time';
 
 const DAY_MS = 86_400_000;
+
+/** The website's default study setting, 'Balanced - 85%'. */
+export const DEFAULT_TARGET_RETENTION = retentionFromSetting('Balanced - 85%');
+
+/** What the website's study screen schedules with (StudyModePage.handleRate). */
+export interface ScheduleOptions {
+  weightsOverride?: number[];
+  retention?: number;
+  profileLabel?: string | null;
+  pacingTarget?: number;
+}
 
 export interface CardScheduleUpdate {
   interval: number;
@@ -30,9 +42,14 @@ export function planReview(
   card: Card,
   rating: Rating,
   reviewedAt: number,
-  opts?: { weightsOverride?: number[]; retention?: number },
+  opts?: ScheduleOptions,
 ): { update: CardScheduleUpdate; record: ReviewRecord } {
-  const srsResult = calculateSRS(card, rating, opts?.weightsOverride, opts?.retention);
+  // A first review carries the user's personalized difficulty bias, exactly
+  // as the website applies it; later reviews pass through unchanged.
+  const base = opts?.profileLabel || opts?.pacingTarget !== undefined
+    ? applyPersonalizedDifficultyInit(card, opts.profileLabel ?? null, opts.weightsOverride, opts.pacingTarget).card
+    : card;
+  const srsResult = calculateSRS(base, rating, opts?.weightsOverride, opts?.retention);
   const update: CardScheduleUpdate = {
     interval: srsResult.interval,
     repetition: srsResult.repetition,
