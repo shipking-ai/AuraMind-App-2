@@ -1,6 +1,3 @@
-import { View } from 'react-native';
+import { LinneaSheet } from '../linnea/LinneaSheet';
 
-// Built in a later Part 1 task.
-export default function Placeholder() {
-  return <View />;
-}
+export default LinneaSheet;
