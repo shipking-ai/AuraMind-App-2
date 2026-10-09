@@ -1,6 +1,3 @@
-import { View } from 'react-native';
+import { CoursesScreen } from '../../../courses/CoursesScreen';
 
-// Built in a later Part 1 task.
-export default function Placeholder() {
-  return <View />;
-}
+export default CoursesScreen;

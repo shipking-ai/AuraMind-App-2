@@ -12,16 +12,18 @@ import { SerifTitle } from '../design/components/SerifTitle';
 import { useMotion } from '../design/motion';
 import { colors, confettiColors, fonts, radius, space } from '../design/tokens';
 import { minutesLabel, summarizeToday } from './summary';
+import { useNow } from '../hooks/useNow';
 
 const STAGGER_MS = 70;
 
 export function TodayScreen() {
   const { userId } = useAuth();
   const { reduce } = useMotion();
+  const now = useNow();
   const decks = useDecks(userId).data ?? [];
   const cards = useCards(userId).data ?? [];
   const sessions = useSessions(userId).data ?? [];
-  const s = summarizeToday(decks, cards, sessions, new Date());
+  const s = summarizeToday(decks, cards, sessions, new Date(now));
   const rise = (i: number) => (reduce ? undefined : FadeInDown.delay(i * STAGGER_MS).springify().damping(14).stiffness(160));
 
   return (
@@ -35,7 +37,7 @@ export function TodayScreen() {
       />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         <Animated.View entering={rise(0)}>
-          <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+          <Text style={styles.date}>{new Date(now).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
         </Animated.View>
 
         <Animated.View entering={rise(1)}>
