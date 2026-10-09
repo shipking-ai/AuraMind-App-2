@@ -38,7 +38,7 @@ it('shows the due count and the time it takes', async () => {
 it('starts the review on the deck with the most due cards', async () => {
   given([deck('bio', 'Cell biology'), deck('es', 'Spanish')], [card('a', 'es', 'a', -1), card('b', 'bio', 'b', -1), card('c', 'bio', 'c', -1)]);
   await render(<TodayScreen />);
-  fireEvent.press(screen.getByRole('button', { name: 'Start review' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Start review' }));
   expect(router.push).toHaveBeenCalledWith('/study/bio');
 });
 
