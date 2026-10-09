@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    // @bonamind/core is a file: link to ../packages/core. Resolve its imports
+    // (ts-fsrs, supabase-js) from this app's node_modules, as Vite's dedupe
+    // does at bundle time; CI never installs core's own node_modules here.
+    "preserveSymlinks": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",

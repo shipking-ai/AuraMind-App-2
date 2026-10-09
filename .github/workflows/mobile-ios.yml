@@ -20,11 +20,13 @@ on:
   pull_request:
     paths:
       - 'auramind-gemini/**'
+      - 'packages/core/**'
       - '.github/workflows/mobile-ios.yml'
   push:
     branches: [main]
     paths:
       - 'auramind-gemini/**'
+      - 'packages/core/**'
       - '.github/workflows/mobile-ios.yml'
   workflow_dispatch:
     inputs:

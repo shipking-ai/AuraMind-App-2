@@ -1,0 +1,287 @@
+[
+  {
+    "name": "new card, good x4",
+    "steps": [
+      {
+        "rating": 4,
+        "interval": 3,
+        "repetition": 1,
+        "easeFactor": 2.25,
+        "fsrsState": {
+          "stability": 2.3065,
+          "difficulty": 2.11810397,
+          "elapsedDays": 0,
+          "scheduledDays": 3,
+          "repetitions": 1,
+          "lapses": 0,
+          "lastReview": 1767258000000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 14,
+        "repetition": 2,
+        "easeFactor": 2.25,
+        "fsrsState": {
+          "stability": 13.82690327,
+          "difficulty": 2.11121424,
+          "elapsedDays": 0,
+          "scheduledDays": 14,
+          "repetitions": 2,
+          "lapses": 0,
+          "lastReview": 1767517200000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 57,
+        "repetition": 3,
+        "easeFactor": 2.25,
+        "fsrsState": {
+          "stability": 56.95670978,
+          "difficulty": 2.1043314,
+          "elapsedDays": 0,
+          "scheduledDays": 57,
+          "repetitions": 3,
+          "lapses": 0,
+          "lastReview": 1768726800000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 196,
+        "repetition": 4,
+        "easeFactor": 2.25,
+        "fsrsState": {
+          "stability": 196.23528243,
+          "difficulty": 2.09745544,
+          "elapsedDays": 0,
+          "scheduledDays": 196,
+          "repetitions": 4,
+          "lapses": 0,
+          "lastReview": 1773651600000
+        }
+      }
+    ]
+  },
+  {
+    "name": "new card, again then good x3",
+    "steps": [
+      {
+        "rating": 0,
+        "interval": 1,
+        "repetition": 0,
+        "easeFactor": 1.73,
+        "fsrsState": {
+          "stability": 0.212,
+          "difficulty": 6.4133,
+          "elapsedDays": 0,
+          "scheduledDays": 1,
+          "repetitions": 0,
+          "lapses": 0,
+          "lastReview": 1767258000000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 3,
+        "repetition": 1,
+        "easeFactor": 1.73,
+        "fsrsState": {
+          "stability": 1.88678762,
+          "difficulty": 6.40211507,
+          "elapsedDays": 0,
+          "scheduledDays": 3,
+          "repetitions": 1,
+          "lapses": 0,
+          "lastReview": 1767344400000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 8,
+        "repetition": 2,
+        "easeFactor": 1.73,
+        "fsrsState": {
+          "stability": 7.63823104,
+          "difficulty": 6.39094132,
+          "elapsedDays": 0,
+          "scheduledDays": 8,
+          "repetitions": 2,
+          "lapses": 0,
+          "lastReview": 1767603600000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 22,
+        "repetition": 3,
+        "easeFactor": 1.73,
+        "fsrsState": {
+          "stability": 21.60782969,
+          "difficulty": 6.37977875,
+          "elapsedDays": 0,
+          "scheduledDays": 22,
+          "repetitions": 3,
+          "lapses": 0,
+          "lastReview": 1768294800000
+        }
+      }
+    ]
+  },
+  {
+    "name": "new card, easy x3",
+    "steps": [
+      {
+        "rating": 5,
+        "interval": 8,
+        "repetition": 1,
+        "easeFactor": 2.38,
+        "fsrsState": {
+          "stability": 8.2956,
+          "difficulty": 1,
+          "elapsedDays": 0,
+          "scheduledDays": 8,
+          "repetitions": 1,
+          "lapses": 0,
+          "lastReview": 1767258000000
+        }
+      },
+      {
+        "rating": 5,
+        "interval": 66,
+        "repetition": 2,
+        "easeFactor": 2.38,
+        "fsrsState": {
+          "stability": 65.62422648,
+          "difficulty": 1,
+          "elapsedDays": 0,
+          "scheduledDays": 66,
+          "repetitions": 2,
+          "lapses": 0,
+          "lastReview": 1767949200000
+        }
+      },
+      {
+        "rating": 5,
+        "interval": 397,
+        "repetition": 3,
+        "easeFactor": 2.38,
+        "fsrsState": {
+          "stability": 396.77501923,
+          "difficulty": 1,
+          "elapsedDays": 0,
+          "scheduledDays": 397,
+          "repetitions": 3,
+          "lapses": 0,
+          "lastReview": 1773651600000
+        }
+      }
+    ]
+  },
+  {
+    "name": "new card, hard good again good",
+    "steps": [
+      {
+        "rating": 3,
+        "interval": 2,
+        "repetition": 1,
+        "easeFactor": 1.89,
+        "fsrsState": {
+          "stability": 1.2931,
+          "difficulty": 5.11217071,
+          "elapsedDays": 0,
+          "scheduledDays": 2,
+          "repetitions": 1,
+          "lapses": 0,
+          "lastReview": 1767258000000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 7,
+        "repetition": 2,
+        "easeFactor": 1.89,
+        "fsrsState": {
+          "stability": 6.57470191,
+          "difficulty": 5.10228691,
+          "elapsedDays": 0,
+          "scheduledDays": 7,
+          "repetitions": 2,
+          "lapses": 0,
+          "lastReview": 1767430800000
+        }
+      },
+      {
+        "rating": 0,
+        "interval": 1,
+        "repetition": 0,
+        "easeFactor": 1.49,
+        "fsrsState": {
+          "stability": 1.12052965,
+          "difficulty": 8.37538339,
+          "elapsedDays": 0,
+          "scheduledDays": 1,
+          "repetitions": 0,
+          "lapses": 1,
+          "lastReview": 1768035600000
+        }
+      },
+      {
+        "rating": 4,
+        "interval": 3,
+        "repetition": 1,
+        "easeFactor": 1.5,
+        "fsrsState": {
+          "stability": 2.55228494,
+          "difficulty": 8.36223638,
+          "elapsedDays": 0,
+          "scheduledDays": 3,
+          "repetitions": 1,
+          "lapses": 1,
+          "lastReview": 1768122000000
+        }
+      }
+    ]
+  },
+  {
+    "name": "legacy SM-2 card, good",
+    "steps": [
+      {
+        "rating": 4,
+        "interval": 31,
+        "repetition": 5,
+        "easeFactor": 1.88,
+        "fsrsState": {
+          "stability": 31.29250517,
+          "difficulty": 5.19002837,
+          "elapsedDays": 0,
+          "scheduledDays": 31,
+          "repetitions": 5,
+          "lapses": 0,
+          "lastReview": 1767258000000
+        }
+      }
+    ]
+  },
+  {
+    "name": "personalized new card, good",
+    "steps": [
+      {
+        "rating": 4,
+        "interval": 3,
+        "repetition": 1,
+        "easeFactor": 2.19,
+        "fsrsState": {
+          "stability": 2.3065,
+          "difficulty": 2.559051985,
+          "elapsedDays": 0,
+          "scheduledDays": 3,
+          "repetitions": 1,
+          "lapses": 0,
+          "lastReview": 1767258000000
+        }
+      }
+    ]
+  }
+]

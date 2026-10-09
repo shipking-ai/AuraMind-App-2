@@ -79,7 +79,10 @@ describe('entitlementPatch drops the pre-arm marker', () => {
 describe('a real customer is not expired by the pre-arm window', () => {
   it('checkout arms, webhook confirms, access survives past the window', () => {
     const atCheckout = afterCheckout();
-    expect(isEntitled(atCheckout)).toBe(true);
+    // At checkout time, on the scenario's clock. Reading the wall clock here
+    // made this a time bomb: it failed once real time passed ARMED_AT plus
+    // PREARM_WINDOW_DAYS.
+    expect(isEntitled(atCheckout, Date.parse(ARMED_AT) + DAY)).toBe(true);
 
     // The webhook lands and reports a real Stripe trial. This is the patch the
     // webhook now builds; before the fix it spread the marker forward.

@@ -77,6 +77,30 @@ jobs:
           path: auramind-gemini/dist
           retention-days: 7
 
+  core:
+    # @bonamind/core is shared by the website and the native app; a change
+    # here re-tests both consumers' contract (types, FSRS goldens, sync).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: 'npm'
+          cache-dependency-path: packages/core/package-lock.json
+      - name: Install core dependencies
+        run: |
+          cd packages/core
+          npm ci
+      - name: Core type check
+        run: |
+          cd packages/core
+          npm run type-check
+      - name: Core tests
+        run: |
+          cd packages/core
+          npm test
+
   e2e:
     runs-on: ubuntu-latest
     needs: build-and-test

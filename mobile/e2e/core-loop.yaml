@@ -1,0 +1,40 @@
+# The core loop on a real build: signed in -> Today -> study 5 cards (going
+# offline mid-session on Android) -> celebration. verify-reviews.mjs then
+# checks the server received exactly those 5 reviews.
+appId: ${APP_ID}
+---
+- openLink: bonamind://e2e/session?rt=${RT}
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 30000
+- takeScreenshot: today
+- tapOn: "Start review"
+- repeat:
+    times: 3
+    commands:
+      - tapOn: "Tap to reveal"
+      - swipe:
+          direction: RIGHT
+          duration: 300
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setAirplaneMode: enabled
+- repeat:
+    times: 2
+    commands:
+      - tapOn: "Tap to reveal"
+      - swipe:
+          direction: RIGHT
+          duration: 300
+- takeScreenshot: celebration
+- assertVisible: "day streak"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setAirplaneMode: disabled
+      - waitForAnimationToEnd:
+          timeout: 15000
+- tapOn: "Done"
