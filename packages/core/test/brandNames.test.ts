@@ -7,7 +7,8 @@ import { listFiles, scan } from './scan';
  */
 const ROOTS = ['packages/core/src', 'packages/core/test', 'mobile/app', 'mobile/src', 'mobile/e2e', 'mobile/app.config.ts'];
 const ALLOW: { file: string; line: RegExp }[] = [
-  { file: 'mobile/app.config.ts', line: /['"]com.auramind.app['"]/ },
+  { file: 'mobile/app.config.ts', line: /['"]com\.auramind\.app['"]/ },
+  { file: 'mobile/src/__tests__/appConfig.test.ts', line: /['"]com\.auramind\.app['"]/ },
   { file: 'packages/core/test/brandNames.test.ts', line: /.*/ },
 ];
 
