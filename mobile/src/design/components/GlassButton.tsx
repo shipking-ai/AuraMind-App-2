@@ -2,6 +2,7 @@ import { BlurView } from 'expo-blur';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useMotion } from '../motion';
 import { colors } from '../tokens';
 
 const SIZE = 38;
@@ -11,9 +12,12 @@ const SIZE = 38;
  * and a plain ripple surface on Android (no faux glass there).
  */
 export function GlassButton({
-  symbol, label, onPress, tint = colors.violetMist,
-}: { symbol: SymbolViewProps['name']; label: string; onPress: () => void; tint?: string }) {
-  const icon = <SymbolView name={symbol} size={19} tintColor={tint} />;
+  symbol, label, onPress, tint = colors.violetMist, lively,
+}: { symbol: SymbolViewProps['name']; label: string; onPress: () => void; tint?: string; lively?: boolean }) {
+  const { reduce } = useMotion();
+  // `lively`: a slow repeating SF Symbol bounce that says "something's here".
+  const animation = lively && !reduce ? { effect: { type: 'bounce' as const }, repeating: true, speed: 0.25 } : undefined;
+  const icon = <SymbolView name={symbol} size={19} tintColor={tint} animationSpec={animation} />;
   let surface;
   if (Platform.OS === 'ios' && isLiquidGlassAvailable()) {
     surface = <GlassView isInteractive style={styles.round}>{icon}</GlassView>;
