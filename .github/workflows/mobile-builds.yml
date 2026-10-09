@@ -1,0 +1,162 @@
+name: Mobile builds
+
+# Manual builds of the native BonaMind app (mobile/):
+#   ios-unsigned-ipa  an unsigned device IPA to sideload with Sideloadly and a
+#                     free Apple ID (no Apple Developer Program needed).
+#   e2e-ios / e2e-android  Maestro runs of the core loop against the real
+#                     backend with the end-to-end test account.
+#
+# Liquid Glass needs the iOS 26 SDK, so iOS jobs select Xcode 26.
+# Secrets: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (public, shared with the
+# website), and for e2e SUPABASE_SERVICE_ROLE_KEY + E2E_EMAIL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'What to build'
+        type: choice
+        default: ios-unsigned-ipa
+        options: [ios-unsigned-ipa, e2e, all]
+
+permissions:
+  contents: read
+
+env:
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+  EXPO_PUBLIC_API_BASE_URL: https://bonamind.app
+  EXPO_PUBLIC_TURNSTILE_SITE_KEY: 0x4AAAAAAAEsHm7dsqEhBi3Nr
+
+jobs:
+  ios-unsigned-ipa:
+    if: inputs.job == 'ios-unsigned-ipa' || inputs.job == 'all'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22.x }
+      - name: Select Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$XC" ] && sudo xcode-select -s "$XC"
+          xcodebuild -version
+      - name: Install
+        run: |
+          (cd packages/core && npm ci)
+          (cd mobile && npm ci)
+      - name: Generate the iOS project
+        working-directory: mobile
+        run: npx expo prebuild --platform ios --clean --no-install && (cd ios && pod install)
+      - name: Build for a real device (unsigned)
+        working-directory: mobile
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/BonaMind.xcworkspace -scheme BonaMind -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build | tail -20
+          test -d build/Build/Products/Release-iphoneos/BonaMind.app
+      - name: Package the IPA
+        working-directory: mobile
+        run: |
+          rm -rf build/Payload && mkdir -p build/Payload
+          cp -R build/Build/Products/Release-iphoneos/BonaMind.app build/Payload/
+          (cd build && zip -qry BonaMind-unsigned.ipa Payload && ls -lh BonaMind-unsigned.ipa)
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bonamind-ios-unsigned-ipa
+          path: mobile/build/BonaMind-unsigned.ipa
+          if-no-files-found: error
+
+  e2e-ios:
+    if: inputs.job == 'e2e' || inputs.job == 'all'
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      EXPO_PUBLIC_E2E: 'true'
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22.x }
+      - name: Select Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$XC" ] && sudo xcode-select -s "$XC"
+      - name: Install
+        run: |
+          (cd packages/core && npm ci)
+          (cd mobile && npm ci)
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Build and install on a simulator
+        working-directory: mobile
+        run: |
+          npx expo prebuild --platform ios --clean --no-install && (cd ios && pod install)
+          xcodebuild -workspace ios/BonaMind.xcworkspace -scheme BonaMind -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build | tail -5
+          DEVICE=$(xcrun simctl list devices available -j | node -e "const d=JSON.parse(require('fs').readFileSync(0)).devices;console.log(Object.values(d).flat().find(x=>/^iPhone \d+ Pro$/.test(x.name)).udid)")
+          xcrun simctl boot "$DEVICE" && xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/Build/Products/Release-iphonesimulator/BonaMind.app
+      - name: Mint a session for the test account
+        id: session
+        working-directory: mobile
+        run: node e2e/mint-session.mjs
+      - name: Run the core loop
+        working-directory: mobile
+        run: maestro test -e APP_ID=com.bonamind.app -e RT=${{ steps.session.outputs.rt }} --test-output-dir ../e2e-ios e2e/core-loop.yaml
+      - name: Verify the server got exactly 5 reviews
+        working-directory: mobile
+        run: node e2e/verify-reviews.mjs "${{ steps.session.outputs.since }}" "${{ steps.session.outputs.user }}" 5
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with: { name: e2e-ios, path: e2e-ios, if-no-files-found: ignore }
+
+  e2e-android:
+    if: inputs.job == 'e2e' || inputs.job == 'all'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      EXPO_PUBLIC_E2E: 'true'
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22.x }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21 }
+      - name: Install
+        run: |
+          (cd packages/core && npm ci)
+          (cd mobile && npm ci)
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Build the APK
+        working-directory: mobile
+        run: npx expo prebuild --platform android --clean --no-install && (cd android && ./gradlew assembleRelease --no-daemon)
+      - name: Mint a session for the test account
+        id: session
+        working-directory: mobile
+        run: node e2e/mint-session.mjs
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Run the core loop on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          script: |
+            adb install mobile/android/app/build/outputs/apk/release/app-release.apk
+            cd mobile && maestro test -e APP_ID=com.auramind.app -e RT=${{ steps.session.outputs.rt }} --test-output-dir ../e2e-android e2e/core-loop.yaml
+      - name: Verify the server got exactly 5 reviews
+        working-directory: mobile
+        run: node e2e/verify-reviews.mjs "${{ steps.session.outputs.since }}" "${{ steps.session.outputs.user }}" 5
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with: { name: e2e-android, path: e2e-android, if-no-files-found: ignore }
