@@ -4,3 +4,5 @@ export * from './types';
 export * from './scheduling/fsrs';
 export * from './scheduling/srs';
 export * from './review/planReview';
+export * from './data/rows';
+export * from './data/queries';
