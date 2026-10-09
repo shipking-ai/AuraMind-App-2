@@ -7,6 +7,8 @@ const { getDefaultConfig } = require('expo/metro-config');
 const config = getDefaultConfig(__dirname);
 const coreDir = path.resolve(__dirname, '../packages/core');
 config.watchFolders = [...(config.watchFolders ?? []), coreDir];
+// Babel-injected helpers (@babel/runtime) in core's files resolve from the app.
+config.resolver.nodeModulesPaths = [...(config.resolver.nodeModulesPaths ?? []), path.resolve(__dirname, 'node_modules')];
 
 const SHARED = new Set(['ts-fsrs', '@supabase/supabase-js']);
 const appOrigin = path.join(__dirname, 'package.json');
