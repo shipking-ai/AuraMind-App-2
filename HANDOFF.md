@@ -431,6 +431,17 @@ gesture-handler:
   `session.rate` advances the queue synchronously; the screen now re-renders
   first and awaits the save after, reporting a failure to Sentry.
 
+### Two Turnstile site keys are in circulation
+
+`mobile-android.yml` and `mobile-ios.yml` hardcode one public Turnstile site
+key for the Capacitor builds (`0x4AAAAAAAEsHm7dsqEhBi3Nr`).
+`auramind-gemini/.env` holds a different one. The native app (`mobile/.env.local`, copied
+from that `.env`) signs in successfully with the `.env` key, so
+`mobile-builds.yml` now uses that one too (2026-10-12). Whether the Capacitor
+key is stale is unverified. If the Capacitor apps' human check fails, compare
+it with the key in the Cloudflare dashboard. A key whose widget lacks the
+app's hostname shows "Unable to connect to website".
+
 ### `@types/jest` 30 breaks Jest 29's failure output
 
 `jest-expo` runs Jest 29. `@types/jest@30` hoists `expect@30` and
