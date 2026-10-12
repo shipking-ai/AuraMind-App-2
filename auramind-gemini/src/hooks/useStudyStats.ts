@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { sessionService } from '../services/database/modules/sessionService';
 import type { StudySession } from '../types';
+import { computeStreak, deriveRetention7d, toLocalDateKey } from '@bonamind/core';
 
 export interface UseStudyStatsReturn {
   /** Raw study sessions fetched from Supabase (newest first). */
@@ -21,78 +22,12 @@ export interface UseStudyStatsReturn {
   refresh: () => Promise<void>;
 }
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
-/**
- * Average accuracy (0..1) across sessions started in the last 7 days.
- * Handles both canonical columns (total_answers/correct_answers) and the
- * older 0..100 `accuracy` column, preferring exact counts when present.
- */
-export function deriveRetention7d(sessions: StudySession[]): number | undefined {
-  const cutoff = Date.now() - WEEK_MS;
-  let answered = 0;
-  let correct = 0;
-  for (const s of sessions) {
-    if ((s.startTime ?? 0) < cutoff) continue;
-    const total = s.totalAnswers ?? s.cardsStudied ?? 0;
-    if (total <= 0) continue;
-    const ok =
-      s.correctAnswers ??
-      (s.accuracy != null ? Math.round((s.accuracy / 100) * total) : 0);
-    answered += total;
-    correct += ok;
-  }
-  return answered > 0 ? correct / answered : undefined;
-}
+// Shared with the native app.
+export { deriveRetention7d };
 
 /** Accuracy (0..100) of the most recent session. Sessions arrive newest-first. */
 export function deriveLastSessionAccuracy(sessions: StudySession[]): number | undefined {
   return sessions[0]?.accuracy ?? undefined;
-}
-
-/**
- * Normalise a session `startTime` (epoch ms OR ISO string, as written by
- * `sessionService` / `StudyModePage`) into a local-calendar-date key so we can
- * compare "same day" regardless of the underlying representation.
- */
-function toLocalDateKey(value: number | string | Date): string {
-  return new Date(value).toDateString();
-}
-
-/**
- * Derive the current study streak from a set of sessions.
- *
- * A "study day" is any local calendar date that has at least one session. The
- * streak counts consecutive study days walking backwards from today. If the
- * user hasn't studied yet today but did yesterday, the streak is still kept
- * (anchored at yesterday) so it isn't broken until a full day is missed.
- * Returns 0 for empty input.
- */
-function computeStreak(sessions: StudySession[]): number {
-  const dateKeys = new Set<string>();
-  for (const s of sessions) {
-    if (s.startTime == null) continue;
-    dateKeys.add(toLocalDateKey(s.startTime));
-  }
-  if (dateKeys.size === 0) return 0;
-
-  const today = new Date();
-  const todayKey = toLocalDateKey(today);
-
-  const anchor = new Date(today);
-  if (!dateKeys.has(todayKey)) {
-    // No session today — allow yesterday as the streak anchor.
-    anchor.setDate(anchor.getDate() - 1);
-    if (!dateKeys.has(toLocalDateKey(anchor))) return 0;
-  }
-
-  let streak = 0;
-  const cursor = new Date(anchor);
-  while (dateKeys.has(toLocalDateKey(cursor))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
 }
 
 /**

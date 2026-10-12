@@ -1,6 +1,6 @@
 # Handoff — BonaMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-28 (FSRS scheduler repair, the iPhone app, one special capability per platform, a sideloadable IPA, Live Activity in CI, the admin oracle closed). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-28 (FSRS scheduler repair, the iPhone app, one special capability per platform, a sideloadable IPA, Live Activity in CI, the admin oracle closed), 2026-10-11 (the native Expo app, part 1, and the shared `@bonamind/core`), and 2026-10-12 (every claim re-verified against the code; the stale rows below corrected, the PR list refreshed, the BonaMind rebrand and the community tab recorded). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,11 +14,12 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main`; open PRs (2026-09-28): #95 (HANDOFF update, conflicts with `main`), #100–#104 (Dependabot, `auramind-gemini/`) |
+| Branch | `main` at `cf63fde8` (2026-10-04, through #146 — the BonaMind rebrand, the community tab, the cards RLS fix); open PRs (2026-10-12): #156 (native app, part 1 — merge by hand), #157 (iOS Live Activity update race), #147 (Android release config), plus Dependabot #112, #113, #148–#155 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
-| Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28) |
+| Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
-| Tests | 95 files / 733 declared cases (557 unit, 115 API, 61 Playwright). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
+| Native app | `mobile/` (Expo SDK 57, RN 0.86) + `packages/core` (`@bonamind/core`), PR #156. Runs in Expo Go on a real iPhone (2026-10-11); never built as a standalone app yet. See "2026-10-11 - Native app, part 1" |
+| Tests | 137 files / 968 declared cases (734 unit, 155 API, 26 seeded Playwright, 53 in `packages/core`). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
 
 ---
 
@@ -59,6 +60,31 @@ the traps that cost real time.
    no APNs. Paying also unlocks TestFlight, where internal testers get builds
    without App Review. Nothing in the code depends on this; it's purely a
    distribution ceiling.
+9. **Merge PR #156 (native app, part 1).** All checks green; `main` needs one
+   approving review and auto mode won't bypass it, so merge by hand (admin:
+   "Merge without waiting for requirements", squash). `mobile-builds.yml` can
+   only be dispatched once it is on `main`. Two more PRs are open and small —
+   worth the same sitting: **#157** (the Live Activity update must be ordered
+   after its start, iOS) and **#147** (Android release config hardening).
+10. **Native app owner items** (none block merging):
+    - ~~Supabase redirect URL `bonamind://auth/callback`~~ — added 2026-10-10.
+    - ~~Expo account~~ — `shipking-ai`, signed in on the dev PC and in Expo Go.
+    - E2E for `mobile-builds.yml`: secrets `E2E_EMAIL_IOS` and
+      `E2E_EMAIL_ANDROID` (`SUPABASE_SERVICE_ROLE_KEY` already exists), two
+      test accounts each with a course of 5+ cards.
+    - Android continuity (the Expo app ships as `com.auramind.app` to replace
+      the Capacitor build): upload the existing upload keystore to EAS and
+      set `ANDROID_VERSION_CODE` above the last Play build.
+    - Trademark search for "Linnea" before any store listing.
+11. **Pick one canonical host: `bonamind.app` or `www.bonamind.app`.** As of
+    2026-10-11 Vercel 308-redirects the apex **to** `www`, the reverse of
+    item 3 above. The code still treats the apex as canonical
+    (`api/_lib/origin.ts` `APP_ORIGIN`, `src/lib/branding.ts`
+    `PRODUCT_SITE_URL`). Either flip Vercel's primary domain back to the apex,
+    or move those constants (and Supabase Site URL / redirect URLs) to `www`.
+    The native app now calls `https://www.bonamind.app` directly; if the apex
+    becomes primary again, change `EXPO_PUBLIC_API_BASE_URL` (in
+    `mobile/.env.local`, `mobile/src/env.ts`, `mobile-builds.yml`) back too.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -316,6 +342,113 @@ indexing it is a type error that only `tsc` sees — the tests pass locally and
 the PR fails on type-check. Run `npm run type-check` after *adding tests*, not
 only after changing source.
 
+### A root gesture recognizer eats every tap on iOS (native app)
+
+`AuroraScreen` once wrapped the whole app in a `GestureDetector` with
+`Gesture.Manual()` so the glow could follow the finger. On iOS that
+recognizer begins on *every* touch, and UIKit then cancels the touch in the
+view underneath: no `Pressable` fired and the Turnstile web view never got its
+tap. Jest can't see this (gesture-handler is mocked); only a phone does. To
+observe touches app-wide, use the passive `onTouchStart`/`onTouchMove` View
+props, which never claim the responder. Keep real gestures (`CardStack`)
+scoped to the view they belong to.
+
+### `Stack.Protected` drops a redirect it refuses
+
+`src/app/index.tsx` redirected to `/today` unconditionally. Signed out, the
+guard refuses `/today` and the redirect is silently dropped, leaving the app
+on the empty index route: aurora only, no sign-in. Redirect targets must be
+chosen from the auth state.
+
+### Turnstile retries itself; don't rebuild it on error
+
+The widget's `error-callback` fires on transient failures that Turnstile then
+retries (`retry: 'auto'`). Remounting the web view on each one made the check
+flash and restart forever. Drop the token on error or expiry and keep the
+widget; rebuild it only after a sign-in attempt has spent the single-use
+token.
+
+"Unable to connect to website" in the widget had two causes, fixed
+2026-10-11:
+- **Hostname allowlist.** The Turnstile widget in Cloudflare still listed the
+  old domain after the move to `bonamind.app`. The native app's widget runs
+  with `baseUrl: https://bonamind.app`, so that hostname must be allowed.
+  Re-check this on any future domain change.
+- **WebView allowlist.** react-native-webview checks `originWhitelist` on
+  *every* navigation, iframes included, and only `about:blank` is implicitly
+  allowed. Turnstile's challenge also uses `about:srcdoc`, which
+  `['https://*']` refused. `allowTurnstileNavigation` in
+  `mobile/src/auth/TurnstileGate.tsx` now decides each request instead.
+
+### A cross-host redirect strips the API token (native app)
+
+`https://bonamind.app/api/...` answers 308 to `www.bonamind.app`. Fetch
+drops `Authorization` on a cross-origin redirect, and on the phone the
+redirected streaming POST to `/api/ai/chat/stream` never answered: Prof.
+Linnea sat on "Thinking…" forever. Point API clients at the host that serves
+(`curl -sI https://bonamind.app/` shows which), never one that redirects.
+
+### The AI proxy reports failures inside a 200 stream
+
+When every provider fails, `api/_aiHandler.ts` still answers 200 and writes
+`data: {"error": "..."}` then `[DONE]`. A client that reads only
+`choices[0].delta.content` sees an empty reply. `streamLinnea` in
+`packages/core` now throws `unavailable` on an in-stream error and `busy` on a
+reply with no words; the app also abandons a reply that is silent for 30 s.
+
+### `isFetchedAfterMount` can wait forever inside `staleTime`
+
+The study screen waited for `isFetchedAfterMount` so it would build the queue
+from fresh data. With `staleTime: 30_000`, opening it within 30 s of Today's
+fetch triggers no refetch, so the flag never turns true: a black screen.
+Screens that need fresh data pass `{ refetchOnMount: 'always' }` to
+`useCards` / `useFsrsProfile`, and the study screen falls back to the cached
+copy after 6 s regardless.
+
+### `formSheet` with detents collapses a flex layout (native app)
+
+The Linnea chat was a react-native-screens `formSheet` with
+`sheetAllowedDetents: [0.5, 1]` and a transparent background. On iOS the
+column collapsed: the message list drew over the header, and Today showed
+through the sheet. It is now `presentation: 'modal'` (an iOS page sheet) with
+its own night background and aurora. Re-test layout on a device before going
+back to detents.
+
+### A swipe that "does nothing" on the study card (native app)
+
+Three separate causes, all fixed 2026-10-12. Check all three before blaming
+gesture-handler:
+- **A scroll view inside the card.** Each face's text sits in a `ScrollView`
+  so long cards can scroll. On iOS a scroll view that can scroll *or bounce*
+  claims the drag before the card's `Gesture.Pan` sees it. `FaceBody` in
+  `CardStack.tsx` enables scrolling and bouncing only when the text overflows.
+- **Swiping the question.** Swipes rate only after the answer is shown, so a
+  swipe on the question rubber-banded back. That read as broken. A full
+  swipe on the question now flips the card. It still never rates a card whose
+  answer hasn't been seen.
+- **Waiting on the save.** `StudyScreen` awaited the outbox write before
+  re-rendering, so a slow or failing SQLite write held the next card back.
+  `session.rate` advances the queue synchronously; the screen now re-renders
+  first and awaits the save after, reporting a failure to Sentry.
+
+### Two Turnstile site keys are in circulation
+
+`mobile-android.yml` and `mobile-ios.yml` hardcode one public Turnstile site
+key for the Capacitor builds (`0x4AAAAAAAEsHm7dsqEhBi3Nr`).
+`auramind-gemini/.env` holds a different one. The native app (`mobile/.env.local`, copied
+from that `.env`) signs in successfully with the `.env` key, so
+`mobile-builds.yml` now uses that one too (2026-10-12). Whether the Capacitor
+key is stale is unverified. If the Capacitor apps' human check fails, compare
+it with the key in the Cloudflare dashboard. A key whose widget lacks the
+app's hostname shows "Unable to connect to website".
+
+### `@types/jest` 30 breaks Jest 29's failure output
+
+`jest-expo` runs Jest 29. `@types/jest@30` hoists `expect@30` and
+`jest-message-util@30`, and any failing suite then prints only
+`isError is not a function` with no assertion or stack. Keep `@types/jest` at
+the version `npx expo install --check` expects (29.5.14 for SDK 57).
+
 ---
 
 ## Environment quirks (this machine)
@@ -332,6 +465,16 @@ only after changing source.
 - **Claude Code's auto mode blocks** `gh pr merge` on unreviewed PRs,
   branch-protection edits and production migrations. Those are done by hand
   (or allowed in permission settings).
+- **`npx expo login -b` crashes on Windows.** The CLI opens the URL with
+  `cmd /c start`, which splits it at the first `&`, so the browser never opens
+  and the callback server dies. Use plain `npx expo login` (username +
+  password) or an `EXPO_TOKEN` access token.
+- **Expo Go requires sign-in** on both the phone and the CLI before it will
+  open a project ("You need to be signed in to Expo Go and Expo CLI").
+- **`npx expo install` fails with `EALLOWSCRIPTS`** under this machine's npm
+  allow-scripts policy. Use `npm install <pkg>@<version expo expects>`.
+- **The iMac is a Late 2013 on Catalina** (Xcode 12.4 max) and cannot build
+  the iOS app. iOS builds run on GitHub's macOS runners (or EAS).
 
 ---
 
@@ -441,6 +584,14 @@ app plus its extension burn two per sideload.
   ts-fsrs; bad intervals in production were repaired by migration
 - **Authorization** — the admin oracle (`is_admin(uuid)`) is closed to clients,
   and role and entitlement are read from `app_metadata` only
+- **Identity** — the product is BonaMind now (#139, #143–#145, merged
+  2026-10-04): the app name and the domain moved to bonamind.app through
+  single-source-of-truth constants. `auramind` survives only where Play
+  already keyed it — the Android package (`com.auramind.app`) and the CI
+  artifact names (`auramind-ios-unsigned-ipa`). The Windows/`AuraMind-windows`
+  checkouts predate this and still carry the old names.
+- **Community tab** (#137) — browse and fork published decks, migration
+  `20260930_marketplace_fork_and_listing.sql`.
 
 ---
 
@@ -1163,3 +1314,74 @@ Full suite 553 green at the time.
 - **Trap for the next person:** `auramind_ci_live_session` is **not** a
   boolean — `LiveActivityDriver` writes `session-mounted:<path>`. Comparing it
   to `true` fails every run. The other five keys are `"true"`/`"false"`.
+
+---
+
+## 2026-10-11 - Native app, part 1 (#156)
+
+A real native app (React Native + Expo), not a web wrapper, beside the
+Capacitor builds. Spec and plan:
+`docs/superpowers/specs/2026-10-08-bonamind-native-app-part1-design.md`,
+`docs/superpowers/plans/2026-10-08-bonamind-native-app-part1.md`.
+
+### What shipped
+
+- **`packages/core` (`@bonamind/core`)** — platform-free TypeScript shared by
+  the website and the app: domain types, FSRS scheduling (moved from the
+  website; golden fixtures prove identical output), `planReview`, Supabase
+  queries, an offline outbox, and the Prof. Linnea streaming client. Linked
+  with `file:` so each app keeps its own lockfile. The website's old
+  `services/study/fsrs.ts`/`srs.ts` are one-line re-exports.
+- **`mobile/`** — Expo SDK 57 / RN 0.86, dark-only "Aurora + Paper" design,
+  native tabs (Liquid Glass on iOS 26), Today / Courses / Search / You,
+  swipe study session, Prof. Linnea sheet, SQLite cache + outbox so study
+  works offline. iOS bundle id `com.bonamind.app`; Android keeps
+  `com.auramind.app` so it can replace the Capacitor app as an update.
+- **CI** — `mobile.yml` (type-check, lint, tests), a `core` job in `ci.yml`,
+  and manual `mobile-builds.yml` (unsigned IPA for Sideloadly, Maestro e2e).
+
+### Running it on a phone (Expo Go)
+
+`mobile/.env.local` (git-ignored) holds the four public `EXPO_PUBLIC_*`
+values copied from `auramind-gemini/.env`. Then, inside `mobile/`:
+`npx expo login` once, `npx expo start --go`, scan the QR code with the iPhone
+camera. Google sign-in can't work in Expo Go (it uses its own `exp://` scheme
+instead of `bonamind://`); email + password and email codes do.
+
+### Found on the first real-device run (all fixed on the PR)
+
+Blank launch when signed out, no button responding, and a human check that
+kept restarting. Each is a trap above ("`Stack.Protected` drops a redirect",
+"A root gesture recognizer eats every tap", "Turnstile retries itself").
+
+After sign-in worked (same day): **Start review** opened a black screen
+("`isFetchedAfterMount` can wait forever"), and Prof. Linnea never answered,
+with her messages drawn over the sheet header ("A cross-host redirect strips
+the API token", "The AI proxy reports failures inside a 200 stream",
+"`formSheet` with detents collapses a flex layout"). The study screen now
+shows `LoadingScreen` (`mobile/src/design/components/LoadingScreen.tsx`)
+while it fetches: the prism logo drawn in Skia, a light comet running its
+outline, a breathing core, orbiting sparks, and a rotating status line. It is
+still under Reduce Motion. The Send button is disabled while Linnea answers.
+
+2026-10-12: swiping a card didn't move to the next one. See the trap "A swipe
+that 'does nothing' on the study card". The card hint now reads "Tap or
+swipe to reveal" (`e2e/core-loop.yaml` taps that text).
+
+### Known gaps
+
+- **Device clock skew** isn't handled: a phone clock running ahead writes
+  future `last_reviewed` values, and the conflict rule then refuses website
+  updates to those cards until real time catches up. Needs a server time
+  reference.
+- **Retention** is the website default (85%); the website stores it per
+  browser, so the phone can't read the user's choice.
+- **Unverified on hardware:** Liquid Glass, frame rates, haptics, Reduce
+  Motion, the swipe study loop, offline sync. `mobile-builds.yml` has never
+  run.
+
+### Next
+
+Rename pass (AuraMind → BonaMind and Prof. Aura → Prof. Linnea in the existing
+code, `auramind_*` storage keys), then part 2 (course creation in the app),
+part 3 (billing, notifications), part 4 (iOS-only features), part 5 (stores).

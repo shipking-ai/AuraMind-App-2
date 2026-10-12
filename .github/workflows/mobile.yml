@@ -1,0 +1,36 @@
+name: Mobile
+
+# Checks for the native app and the shared core on every PR that touches
+# them. Builds and device runs are manual (mobile-builds.yml).
+on:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'packages/core/**'
+      - '.github/workflows/mobile.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'packages/core/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+      - name: Install core
+        run: cd packages/core && npm ci
+      - name: Core tests
+        run: cd packages/core && npm run type-check && npm test
+      - name: Install mobile
+        run: cd mobile && npm ci
+      - name: Type check
+        run: cd mobile && npm run type-check
+      - name: Lint
+        run: cd mobile && npm run lint
+      - name: Tests
+        run: cd mobile && npx jest --ci

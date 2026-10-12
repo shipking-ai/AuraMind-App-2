@@ -15,6 +15,10 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
+      // @bonamind/core is linked from ../packages/core (file: dependency) and
+      // has its own node_modules for its tests. Resolve these from the
+      // website's install so the bundle holds one copy of each.
+      dedupe: ['ts-fsrs', '@supabase/supabase-js'],
     },
     server: {
       port: Number(process.env.PORT) || 3000,
@@ -57,6 +61,8 @@ export default defineConfig(({ mode }) => {
       // fails to collect them (`test.describe()` is not a Vitest API).
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
       exclude: ['node_modules', 'dist', 'e2e', 'api/node_modules'],
+      // Linked TypeScript source; let Vite transform it like app code.
+      server: { deps: { inline: ['@bonamind/core'] } },
     },
 
     build: {
