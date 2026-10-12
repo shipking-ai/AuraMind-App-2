@@ -11,21 +11,27 @@ jest.mock('../../data/auth', () => ({
 }));
 jest.mock('../oauth', () => ({ signInWithGoogle: jest.fn() }));
 jest.mock('../apple', () => ({ signInWithApple: jest.fn() }));
+let mockGateMounts = 0;
 jest.mock('../TurnstileGate', () => {
+  const { useEffect } = require('react');
   const { Pressable, Text } = require('react-native');
   return {
-    TurnstileGate: ({ onToken, onError }: { onToken(t: string): void; onError(): void }) => (
-      <>
-        <Pressable onPress={() => onToken('tok')}><Text>captcha ok</Text></Pressable>
-        <Pressable onPress={onError}><Text>captcha fail</Text></Pressable>
-      </>
-    ),
+    TurnstileGate: ({ onToken, onExpire, onError }: { onToken(t: string): void; onExpire(): void; onError(): void }) => {
+      useEffect(() => { mockGateMounts += 1; }, []);
+      return (
+        <>
+          <Pressable onPress={() => onToken('tok')}><Text>captcha ok</Text></Pressable>
+          <Pressable onPress={onExpire}><Text>captcha expire</Text></Pressable>
+          <Pressable onPress={onError}><Text>captcha fail</Text></Pressable>
+        </>
+      );
+    },
   };
 });
 jest.mock('../../design/motion', () => ({ useMotion: () => ({ reduce: true, spring: () => ({ duration: 180 }) }) }));
 const passwordSignIn = signInWithPassword as jest.Mock;
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => { jest.clearAllMocks(); mockGateMounts = 0; });
 
 async function openEmail() {
   await render(<WelcomeScreen />);
@@ -60,10 +66,34 @@ it('explains a wrong password and keeps the email', async () => {
   expect(screen.getByLabelText('Email').props.value).toBe('sam@example.com');
 });
 
-it('explains a failed human check', async () => {
+it('explains a failed human check but leaves the widget to retry itself', async () => {
   await openEmail();
   await fireEvent.press(screen.getByText('captcha fail'));
   expect(screen.getByText("We couldn't verify you're human. Try again.")).toBeTruthy();
+  // Rebuilding the web view on every widget error fought Turnstile's own retry
+  // and made the check flash and restart.
+  expect(mockGateMounts).toBe(1);
+  await fireEvent.press(screen.getByText('captcha ok'));
+  expect(screen.queryByText("We couldn't verify you're human. Try again.")).toBeNull();
+});
+
+it('drops an expired token without an error and without a rebuild', async () => {
+  await openEmail();
+  await fireEvent.press(screen.getByText('captcha ok'));
+  await fireEvent.press(screen.getByText('captcha expire'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+  expect(passwordSignIn).not.toHaveBeenCalled();
+  expect(screen.getByText('Complete the check above first.')).toBeTruthy();
+  expect(mockGateMounts).toBe(1);
+});
+
+it('re-arms the check after a sign-in attempt spends the token', async () => {
+  passwordSignIn.mockResolvedValueOnce({ error: 'invalid_credentials' });
+  await openEmail();
+  await fireEvent.press(screen.getByText('captcha ok'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+  await screen.findByText("That email and password don't match. Try again or use a code.");
+  expect(mockGateMounts).toBe(2);
 });
 
 it('says so when Google sign-in fails instead of doing nothing', async () => {

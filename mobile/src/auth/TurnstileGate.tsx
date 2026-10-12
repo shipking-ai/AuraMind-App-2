@@ -9,24 +9,27 @@ import { env } from '../env';
  */
 function html(siteKey: string) {
   return [
-    '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">',
     '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=boot&render=explicit" async defer></script>',
-    '<style>html,body{margin:0;background:transparent;display:flex;justify-content:center}</style></head>',
+    '<style>html,body{margin:0;background:transparent;display:flex;justify-content:center;overflow:hidden}</style></head>',
     '<body><div id="t"></div><script>',
     'function post(m){window.ReactNativeWebView.postMessage(JSON.stringify(m))}',
-    `function boot(){turnstile.render('#t',{sitekey:${JSON.stringify(siteKey)},theme:'dark',`,
+    // retry and refresh-expired are 'auto': Turnstile recovers by itself, the
+    // app only tracks whether it currently holds a valid token.
+    `function boot(){turnstile.render('#t',{sitekey:${JSON.stringify(siteKey)},theme:'dark',retry:'auto','refresh-expired':'auto',`,
     "callback:function(token){post({type:'token',token:token})},",
-    "'error-callback':function(){post({type:'error'})},",
+    "'error-callback':function(code){post({type:'error',code:String(code)})},",
     "'expired-callback':function(){post({type:'expired'})}})}",
     '</script></body></html>',
   ].join('\n');
 }
 
-export function TurnstileGate({ onToken, onError }: { onToken(token: string): void; onError(): void }) {
+export function TurnstileGate({ onToken, onExpire, onError }: { onToken(token: string): void; onExpire(): void; onError(): void }) {
   const onMessage = (e: WebViewMessageEvent) => {
     try {
       const m = JSON.parse(e.nativeEvent.data) as { type: string; token?: string };
       if (m.type === 'token' && m.token) onToken(m.token);
+      else if (m.type === 'expired') onExpire();
       else onError();
     } catch {
       onError();
@@ -37,7 +40,10 @@ export function TurnstileGate({ onToken, onError }: { onToken(token: string): vo
       source={{ html: html(env.turnstileSiteKey), baseUrl: 'https://bonamind.app' }}
       onMessage={onMessage}
       style={styles.view}
+      containerStyle={styles.view}
       scrollEnabled={false}
+      bounces={false}
+      overScrollMode="never"
       originWhitelist={['https://*']}
       setSupportMultipleWindows={false}
     />

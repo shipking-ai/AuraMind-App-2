@@ -37,9 +37,10 @@ export function WelcomeScreen() {
   const [error, setError] = useState<keyof typeof SIGN_IN_COPY | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // A sign-in attempt spends the single-use Turnstile token, so any failure
+  // after one re-arms the check with a fresh widget.
   const fail = (e: keyof typeof SIGN_IN_COPY) => {
     setError(e);
-    // A Turnstile token is single-use: re-arm the check after any failure.
     if (e !== 'no_captcha') { setCaptcha(null); setCaptchaKey((k) => k + 1); }
   };
 
@@ -108,7 +109,13 @@ export function WelcomeScreen() {
                 />
               )}
               {!(mode === 'code' && codeSent) && (
-                <TurnstileGate key={captchaKey} onToken={(t) => { setCaptcha(t); setError((e) => (e === 'no_captcha' ? null : e)); }} onError={() => fail('captcha_failed')} />
+                <TurnstileGate
+                  key={captchaKey}
+                  onToken={(t) => { setCaptcha(t); setError((e) => (e === 'no_captcha' || e === 'captcha_failed' ? null : e)); }}
+                  onExpire={() => setCaptcha(null)}
+                  // The widget retries on its own: keep it mounted and just say so.
+                  onError={() => { setCaptcha(null); setError('captcha_failed'); }}
+                />
               )}
               {error && <Text style={styles.error} accessibilityLiveRegion="polite">{SIGN_IN_COPY[error]}</Text>}
               <PrimaryButton

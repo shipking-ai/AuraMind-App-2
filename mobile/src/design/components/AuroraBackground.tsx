@@ -1,7 +1,6 @@
 import { Blur, Canvas, Circle, Group } from '@shopify/react-native-skia';
 import { useEffect, type ReactNode } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { StyleSheet, useWindowDimensions, View, type GestureResponderEvent } from 'react-native';
 import {
   Easing, interpolateColor, makeMutable, useAnimatedReaction, useDerivedValue, useSharedValue,
   withRepeat, withTiming, type SharedValue,
@@ -71,21 +70,22 @@ export function AuroraBackground({
   );
 }
 
-/** A screen with the aurora behind it; touches anywhere steer the trailing glow. */
+/**
+ * A screen with the aurora behind it; touches anywhere steer the trailing glow.
+ * The touch props only observe: they never claim the responder, so taps still
+ * reach the buttons and web views underneath. (A root gesture recognizer here
+ * began on every touch and iOS cancelled the tap it landed on.)
+ */
 export function AuroraScreen({
   children, intensity, warmth,
 }: { children: ReactNode; intensity?: number; warmth?: SharedValue<number> }) {
   const touch = useSharedValue<Point>(null);
-  const capture = Gesture.Manual()
-    .onTouchesDown((e) => { const t = e.allTouches[0]; if (t) touch.value = { x: t.x, y: t.y }; })
-    .onTouchesMove((e) => { const t = e.allTouches[0]; if (t) touch.value = { x: t.x, y: t.y }; });
+  const follow = (e: GestureResponderEvent) => touch.set({ x: e.nativeEvent.pageX, y: e.nativeEvent.pageY });
   return (
-    <GestureDetector gesture={capture}>
-      <View style={styles.screen}>
-        <AuroraBackground intensity={intensity} warmth={warmth ?? auroraWarmth} touch={touch} />
-        {children}
-      </View>
-    </GestureDetector>
+    <View style={styles.screen} onTouchStart={follow} onTouchMove={follow} testID="aurora-screen">
+      <AuroraBackground intensity={intensity} warmth={warmth ?? auroraWarmth} touch={touch} />
+      {children}
+    </View>
   );
 }
 
