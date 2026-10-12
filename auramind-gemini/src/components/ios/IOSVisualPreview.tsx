@@ -239,12 +239,15 @@ function Tour() {
 
 /**
  * Drives a real Live Activity on the tour's live step (`?live=1`): start on
- * mount, one update mid-step, never ended (the tour holds the screen for CI's
- * screenshots). Results are logged for local debugging; CI asserts on the
- * Swift plugin's own log lines instead (WKWebView console never reaches the
- * simulator log). Preview-only; the route never exists in release builds.
+ * mount, one update LIVE_ACTIVITY_UPDATE_MS after the start is confirmed,
+ * never ended (the tour holds the screen for CI's screenshots). It is the only
+ * owner of the activity here: StudyModePage leaves the session unmirrored in
+ * the preview, or its own start would replace the driven activity. Results
+ * are logged for local debugging; CI asserts on the Swift plugin's own log
+ * lines instead (WKWebView console never reaches the simulator log).
+ * Preview-only; the route never exists in release builds.
  */
-function LiveActivityDriver() {
+export function LiveActivityDriver() {
   const location = useLocation();
   const routeKey = `${location.pathname}${location.search}`;
   const live = new URLSearchParams(location.search).get("live") === "1";
@@ -257,6 +260,7 @@ function LiveActivityDriver() {
     if (!live) return;
     let cancelled = false;
     let finished = false;
+    let updateTimer: number | undefined;
     const mark = (token: string) => {
       if (!cancelled) setBadge((b) => `${b} ${token}`);
     };
@@ -298,24 +302,36 @@ function LiveActivityDriver() {
       // Intentional: local-debug signal for the driven CI session.
       // eslint-disable-next-line no-console
       if (!cancelled) console.log(`LIVE_ACTIVITY_STARTED:${started}`);
-    })();
-    const timer = window.setTimeout(() => {
-      void (async () => {
-        const updated = await updateLiveActivity(payload(5));
-        await recordLiveMilestone(CI_LIVE_KEYS.updated, String(updated));
+      // The update is timed from the confirmed start, never from mount. On a
+      // slow simulator boot the bridge took longer to answer the calls above
+      // than a mount-anchored timer waited, so the update reached the plugin
+      // before any activity existed and came back updated:false (run
+      // 38197218275). With no start there is nothing to update; record that
+      // explicitly so CI never reads an earlier process's value for this key.
+      if (!started) {
+        await recordLiveMilestone(CI_LIVE_KEYS.updated, "false");
         finished = true;
-        mark(`up=${updated}`);
-        // Intentional: local-debug signal for the driven CI session.
-        // eslint-disable-next-line no-console
-        if (!cancelled) console.log(`LIVE_ACTIVITY_UPDATED:${updated}`);
-      })();
-    }, LIVE_ACTIVITY_UPDATE_MS);
+        mark("up=skipped");
+        return;
+      }
+      await new Promise<void>((resolve) => {
+        updateTimer = window.setTimeout(resolve, LIVE_ACTIVITY_UPDATE_MS);
+      });
+      if (cancelled) return;
+      const updated = await updateLiveActivity(payload(5));
+      await recordLiveMilestone(CI_LIVE_KEYS.updated, String(updated));
+      finished = true;
+      mark(`up=${updated}`);
+      // Intentional: local-debug signal for the driven CI session.
+      // eslint-disable-next-line no-console
+      if (!cancelled) console.log(`LIVE_ACTIVITY_UPDATED:${updated}`);
+    })();
     const hungTimer = window.setTimeout(() => {
       if (!cancelled && !finished) mark("hung?");
     }, 10000);
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      window.clearTimeout(updateTimer);
       window.clearTimeout(hungTimer);
     };
   }, [live, routeKey]);

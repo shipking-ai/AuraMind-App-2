@@ -1591,11 +1591,56 @@ Full suite 553 green at the time.
   only path that proves the ActivityKit integration.
 - **Still unproven, and only a real device can prove it:** the Dynamic Island
   and lock-screen layout, and push-driven updates. There is no `simctl` API to
-  enable Live Activities on a simulator, so CI cannot close this. Tracked with
-  the TestFlight work.
+  enable Live Activities, and a simulator screenshot is not the Island. Tracked
+  with the TestFlight work.
 - **Trap for the next person:** `bonamind_ci_live_session` is **not** a
   boolean — `LiveActivityDriver` writes `session-mounted:<path>`. Comparing it
-  to `true` fails every run. The other five keys are `"true"`/`"false"`.
+  to `true` fails every run. `bonamind_ci_live_plugins` and
+  `bonamind_ci_live_device` are descriptive strings too; `available`,
+  `started` and `updated` are `"true"`/`"false"`.
+
+### Update 2026-10-11 — the simulator now allows them, and a race showed up
+
+- **What changed underneath:** the hosted runners' iPhone18,1 / iOS 26.4.1
+  simulator reports `areActivitiesEnabled == true` (seen since at least run
+  `37882651460`, 2026-10-09). Every run now takes the `available=true` branch,
+  so the gate requires a real `started=true` + `updated=true`. The refusal
+  branch is still there for older images, but it no longer runs. The
+  start/update integration really is exercised in CI now. The layout still is
+  not (see above).
+- **The flake:** run `38197218275` failed with "started but never updated".
+  Its commit only touched `mobile/`, so nothing in the Capacitor app changed.
+  Root cause: `LiveActivityDriver` set its update on a timer from **mount**,
+  independent of its own start. That boot was slow: the first bridge
+  replies came back in one burst 23 s after launch, against ~4 s on a passing
+  run, so the driver's earlier calls sat waiting. By the time the probe
+  finished, the 4 s timer had already fired. The update reached the plugin before any activity existed,
+  and `update()` resolved `updated:false` **without logging**. So the log
+  showed two starts and no update line, and prefs said `updated: false`.
+- **Why two starts:** in the preview, `StudyModePage` mirrored the session
+  itself (`startSessionLiveUpdate`, no probe), as well as the driver. That is
+  the start with no `LIVE_ACTIVITY_PROBE` before it. The two raced:
+  whichever landed second ended the other's activity, and the page could
+  replace the activity after the driver had already updated it. The passing
+  run had the same double start. It only passed because of the order the two
+  happened to land in.
+- **Fix:** the driver now awaits its start, waits `LIVE_ACTIVITY_UPDATE_MS`,
+  and only then updates. If the start fails it records `updated=false` without
+  calling the plugin. `StudyModePage` neither starts nor ends a session when
+  given preview data, so the driver is the only owner of the activity. The
+  plugin logs `LIVE_ACTIVITY_UPDATED:false (no current activity)` instead of
+  failing silently. The live-boot step uninstalls the app before installing:
+  installing over the tour build kept its data container, so any key the
+  live-boot process never wrote still held the tour's value. A driver that
+  stalled before writing `updated` would have read as the tour's `true`.
+  Pinned by `src/__tests__/liveActivityDriver.test.tsx` (a start slower than
+  the hold, a refused start, unmount, and the preview page not starting or
+  ending a session).
+- **Trap:** reading this log, an update with no `LIVE_ACTIVITY_UPDATED` line
+  used to mean either "never called" or "called with no activity". Only the
+  second now logs (`:false`). And the bridge is one serial queue
+  (`CapacitorBridge.dispatchQueue`), so plugin calls run in the order JS
+  issued them. Order the JS. A delay will not fix this.
 
 ---
 
