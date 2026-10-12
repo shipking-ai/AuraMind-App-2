@@ -12,7 +12,7 @@ appId: ${APP_ID}
 - repeat:
     times: 3
     commands:
-      - tapOn: "Tap to reveal"
+      - tapOn: "Tap or swipe to reveal"
       - swipe:
           direction: RIGHT
           duration: 300
@@ -24,7 +24,7 @@ appId: ${APP_ID}
 - repeat:
     times: 2
     commands:
-      - tapOn: "Tap to reveal"
+      - tapOn: "Tap or swipe to reveal"
       - swipe:
           direction: RIGHT
           duration: 300

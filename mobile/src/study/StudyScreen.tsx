@@ -1,4 +1,5 @@
 import { computeStreak, DEFAULT_TARGET_RETENTION, dueCards, Rating, type Card, type ScheduleOptions, type StudySession as SessionRow } from '@bonamind/core';
+import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -102,14 +103,23 @@ function StudyRun({ deckId, deckTitle, userId, cards, sessions, schedule }: {
   async function rate(rating: Rating) {
     const card = session.current();
     const at = Date.now();
-    const result = await session.rate(rating, at);
+    // session.rate advances the queue synchronously, then saves to the outbox.
+    // Show the next card now: waiting on the device write made a slow or
+    // failing save look like a swipe that did nothing.
+    const saving = session.rate(rating, at);
     if (session.isComplete()) setFinishedAt(at);
-    if (card && result) {
-      queryClient.setQueryData<Card[]>(['cards', userId], (all) => all?.map((c) => (c.id === card.id ? { ...c, ...result.update } : c)));
-    }
     if (rating !== Rating.AGAIN) setBurst((b) => b + 1);
     auroraWarmth.set(withTiming(session.goodRatio(), { duration: 900 }));
     rerender();
+    try {
+      const result = await saving;
+      if (card && result) {
+        queryClient.setQueryData<Card[]>(['cards', userId], (all) => all?.map((c) => (c.id === card.id ? { ...c, ...result.update } : c)));
+      }
+    } catch (e) {
+      console.warn('[study] saving a review failed', e);
+      Sentry.captureException(e);
+    }
   }
 
   async function close() {

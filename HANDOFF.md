@@ -1,6 +1,6 @@
 # Handoff — BonaMind 2.0.0
 
-Written 2026-09-09; updated 2026-09-28 (FSRS scheduler repair, the iPhone app, one special capability per platform, a sideloadable IPA, Live Activity in CI, the admin oracle closed) and 2026-10-11 (the native Expo app, part 1, and the shared `@bonamind/core`). Context for continuing this work in another tool.
+Written 2026-09-09; updated 2026-09-28 (FSRS scheduler repair, the iPhone app, one special capability per platform, a sideloadable IPA, Live Activity in CI, the admin oracle closed), 2026-10-11 (the native Expo app, part 1, and the shared `@bonamind/core`), and 2026-10-12 (every claim re-verified against the code; the stale rows below corrected, the PR list refreshed, the BonaMind rebrand and the community tab recorded). Context for continuing this work in another tool.
 
 Read `CLAUDE.md` first for conventions, then `ARCHITECTURE.md` for structure.
 This file covers only what those two don't: current state, what's left, and
@@ -14,12 +14,12 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main`; open PRs (2026-09-28): #95 (HANDOFF update, conflicts with `main`), #100–#104 (Dependabot, `auramind-gemini/`) |
+| Branch | `main` at `cf63fde8` (2026-10-04, through #146 — the BonaMind rebrand, the community tab, the cards RLS fix); open PRs (2026-10-12): #156 (native app, part 1 — merge by hand), #157 (iOS Live Activity update race), #147 (Android release config), plus Dependabot #112, #113, #148–#155 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
-| Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28) |
+| Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
 | Native app | `mobile/` (Expo SDK 57, RN 0.86) + `packages/core` (`@bonamind/core`), PR #156. Runs in Expo Go on a real iPhone (2026-10-11); never built as a standalone app yet. See "2026-10-11 - Native app, part 1" |
-| Tests | 95 files / 733 declared cases (557 unit, 115 API, 61 Playwright). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
+| Tests | 137 files / 968 declared cases (734 unit, 155 API, 26 seeded Playwright, 53 in `packages/core`). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
 
 ---
 
@@ -63,7 +63,9 @@ the traps that cost real time.
 9. **Merge PR #156 (native app, part 1).** All checks green; `main` needs one
    approving review and auto mode won't bypass it, so merge by hand (admin:
    "Merge without waiting for requirements", squash). `mobile-builds.yml` can
-   only be dispatched once it is on `main`.
+   only be dispatched once it is on `main`. Two more PRs are open and small —
+   worth the same sitting: **#157** (the Live Activity update must be ordered
+   after its start, iOS) and **#147** (Android release config hardening).
 10. **Native app owner items** (none block merging):
     - ~~Supabase redirect URL `bonamind://auth/callback`~~ — added 2026-10-10.
     - ~~Expo account~~ — `shipking-ai`, signed in on the dev PC and in Expo Go.
@@ -412,6 +414,23 @@ through the sheet. It is now `presentation: 'modal'` (an iOS page sheet) with
 its own night background and aurora. Re-test layout on a device before going
 back to detents.
 
+### A swipe that "does nothing" on the study card (native app)
+
+Three separate causes, all fixed 2026-10-12. Check all three before blaming
+gesture-handler:
+- **A scroll view inside the card.** Each face's text sits in a `ScrollView`
+  so long cards can scroll. On iOS a scroll view that can scroll *or bounce*
+  claims the drag before the card's `Gesture.Pan` sees it. `FaceBody` in
+  `CardStack.tsx` enables scrolling and bouncing only when the text overflows.
+- **Swiping the question.** Swipes rate only after the answer is shown, so a
+  swipe on the question rubber-banded back. That read as broken. A full
+  swipe on the question now flips the card. It still never rates a card whose
+  answer hasn't been seen.
+- **Waiting on the save.** `StudyScreen` awaited the outbox write before
+  re-rendering, so a slow or failing SQLite write held the next card back.
+  `session.rate` advances the queue synchronously; the screen now re-renders
+  first and awaits the save after, reporting a failure to Sentry.
+
 ### `@types/jest` 30 breaks Jest 29's failure output
 
 `jest-expo` runs Jest 29. `@types/jest@30` hoists `expect@30` and
@@ -554,6 +573,14 @@ app plus its extension burn two per sideload.
   ts-fsrs; bad intervals in production were repaired by migration
 - **Authorization** — the admin oracle (`is_admin(uuid)`) is closed to clients,
   and role and entitlement are read from `app_metadata` only
+- **Identity** — the product is BonaMind now (#139, #143–#145, merged
+  2026-10-04): the app name and the domain moved to bonamind.app through
+  single-source-of-truth constants. `auramind` survives only where Play
+  already keyed it — the Android package (`com.auramind.app`) and the CI
+  artifact names (`auramind-ios-unsigned-ipa`). The Windows/`AuraMind-windows`
+  checkouts predate this and still carry the old names.
+- **Community tab** (#137) — browse and fork published decks, migration
+  `20260930_marketplace_fork_and_listing.sql`.
 
 ---
 
@@ -1325,6 +1352,10 @@ shows `LoadingScreen` (`mobile/src/design/components/LoadingScreen.tsx`)
 while it fetches: the prism logo drawn in Skia, a light comet running its
 outline, a breathing core, orbiting sparks, and a rotating status line. It is
 still under Reduce Motion. The Send button is disabled while Linnea answers.
+
+2026-10-12: swiping a card didn't move to the next one. See the trap "A swipe
+that 'does nothing' on the study card". The card hint now reads "Tap or
+swipe to reveal" (`e2e/core-loop.yaml` taps that text).
 
 ### Known gaps
 

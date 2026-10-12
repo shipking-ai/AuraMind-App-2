@@ -1,5 +1,5 @@
 import { Rating, type Card } from '@bonamind/core';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type AccessibilityActionEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -37,6 +37,31 @@ export function CardStack({ card, turn, depth, onRate }: { card: Card | null; tu
       {/* Keyed by turn too: an Again card that comes straight back starts fresh. */}
       {card && <SwipeCard key={`${card.id}:${turn}`} card={card} onRate={onRate} />}
     </View>
+  );
+}
+
+/**
+ * A card face's text. It scrolls only when it overflows: on iOS a scroll view
+ * that can scroll or bounce claims the drag before the card's pan sees it, so
+ * swiping a short card did nothing.
+ */
+function FaceBody({ testID, children }: { testID: string; children: ReactNode }) {
+  const [box, setBox] = useState(0);
+  const [content, setContent] = useState(0);
+  const overflows = box > 0 && content > box + 1;
+  return (
+    <ScrollView
+      testID={testID}
+      contentContainerStyle={styles.faceBody}
+      scrollEnabled={overflows}
+      bounces={overflows}
+      alwaysBounceVertical={false}
+      showsVerticalScrollIndicator={overflows}
+      onLayout={(e) => setBox(e.nativeEvent.layout.height)}
+      onContentSizeChange={(_, h) => setContent(h)}
+    >
+      {children}
+    </ScrollView>
   );
 }
 
@@ -93,6 +118,11 @@ function SwipeCard({ card, onRate }: { card: Card; onRate(rating: Rating): void 
       if (rating !== null) {
         scheduleOnRN(commit, rating);
         return;
+      }
+      // A full swipe on the question turns it over instead of doing nothing;
+      // a card is never rated before its answer has been seen.
+      if (!isFlipped.value && decide(e.translationX, e.translationY, e.velocityX, e.velocityY) !== null) {
+        scheduleOnRN(flip);
       }
       tx.value = withSpring(0, { damping: 12, stiffness: 160 });
       ty.value = withSpring(0, { damping: 12, stiffness: 160 });
@@ -161,16 +191,16 @@ function SwipeCard({ card, onRate }: { card: Card; onRate(rating: Rating): void 
         >
           <Animated.View style={[styles.face, front]} pointerEvents={flipped ? 'none' : 'auto'}>
             <Text style={styles.label}>Question</Text>
-            <ScrollView testID="card-front-scroll" contentContainerStyle={styles.faceBody}>
+            <FaceBody testID="card-front-scroll">
               <Text style={styles.front}>{card.front}</Text>
-            </ScrollView>
-            <Text style={styles.hint}>Tap to reveal</Text>
+            </FaceBody>
+            <Text style={styles.hint}>Tap or swipe to reveal</Text>
           </Animated.View>
           <Animated.View style={[styles.face, styles.faceBack, back]} pointerEvents={flipped ? 'auto' : 'none'}>
             <Text style={styles.label}>Answer</Text>
-            <ScrollView contentContainerStyle={styles.faceBody}>
+            <FaceBody testID="card-back-scroll">
               <Text style={styles.back}>{card.back}</Text>
-            </ScrollView>
+            </FaceBody>
             <Text style={styles.hint}>Swipe → good · ← again · ↑ easy · hold for more</Text>
           </Animated.View>
           <Animated.Text style={[styles.stamp, styles.stampGood, good]}>Good</Animated.Text>

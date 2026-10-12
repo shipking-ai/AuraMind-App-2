@@ -54,6 +54,22 @@ it('does not rate before the answer is shown', async () => {
   expect(onRate).not.toHaveBeenCalled();
 });
 
+// Swiping the question used to rubber-band and do nothing, which read as a
+// broken swipe. A full swipe now turns the card over (still no rating).
+it('turns the card over when the question is swiped', async () => {
+  const { onRate } = await setup();
+  fireGestureHandler(getByGestureTestId('card-pan'), pan(160));
+  expect(await screen.findByLabelText('Answer: Metaphase')).toBeTruthy();
+  expect(onRate).not.toHaveBeenCalled();
+});
+
+it('leaves the question up after a small nudge', async () => {
+  await setup();
+  fireGestureHandler(getByGestureTestId('card-pan'), pan(30));
+  await new Promise((r) => setTimeout(r, 50));
+  expect(screen.getByLabelText(/^Question:/)).toBeTruthy();
+});
+
 it('springs back from a short drag', async () => {
   const { onRate, flip } = await setup();
   await flip();
@@ -78,7 +94,22 @@ it('exposes the ratings to screen readers', async () => {
 
 it('scrolls a very long card instead of shrinking it', async () => {
   await setup({ ...card, front: 'x'.repeat(2000) });
-  expect(screen.getByTestId('card-front-scroll')).toBeTruthy();
+  const scroll = screen.getByTestId('card-front-scroll');
+  await fireEvent(scroll, 'layout', { nativeEvent: { layout: { height: 300 } } });
+  await fireEvent(scroll, 'contentSizeChange', 320, 2400);
+  expect(screen.getByTestId('card-front-scroll').props.scrollEnabled).toBe(true);
+});
+
+// A scroll view that can scroll (or bounce) claims vertical drags on iOS before
+// the card's pan does. A card whose text fits must not be scrollable at all.
+it('keeps a card that fits from scrolling or bouncing, so swipes reach the card', async () => {
+  await setup();
+  const scroll = screen.getByTestId('card-front-scroll');
+  await fireEvent(scroll, 'layout', { nativeEvent: { layout: { height: 300 } } });
+  await fireEvent(scroll, 'contentSizeChange', 320, 120);
+  const after = screen.getByTestId('card-front-scroll');
+  expect(after.props.scrollEnabled).toBe(false);
+  expect(after.props.bounces).toBe(false);
 });
 
 it('shows the question again when an Again card comes straight back', async () => {
