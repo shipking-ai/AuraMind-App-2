@@ -34,7 +34,7 @@ describe('streamLinnea', () => {
   });
 
   it('sends the proxy request without a model', async () => {
-    const { fetchImpl, sent } = sse(['data: [DONE]\n\n']);
+    const { fetchImpl, sent } = sse([delta('ok'), 'data: [DONE]\n\n']);
     await collect(streamLinnea({ ...base, fetchImpl }));
     expect(sent[0].url).toBe('https://bonamind.app/api/ai/chat/stream');
     expect(sent[0].init.method).toBe('POST');
@@ -47,6 +47,22 @@ describe('streamLinnea', () => {
     const err = await collect(streamLinnea({ ...base, fetchImpl })).catch((e) => e);
     expect(err).toBeInstanceOf(LinneaError);
     expect(err.kind).toBe(kind);
+  });
+
+  // The proxy answers 200 and puts provider failures inside the stream. Read
+  // as text, that was an empty reply: a blank bubble or an endless spinner.
+  it('surfaces an in-stream error instead of a silent empty reply', async () => {
+    const { fetchImpl } = sse([`data: ${JSON.stringify({ error: 'All AI providers failed.' })}\n\n`, 'data: [DONE]\n\n']);
+    const err = await collect(streamLinnea({ ...base, fetchImpl })).catch((e) => e);
+    expect(err).toBeInstanceOf(LinneaError);
+    expect(err.kind).toBe('unavailable');
+  });
+
+  it('treats a reply with no words as busy, not as an answer', async () => {
+    const { fetchImpl } = sse(['data: [DONE]\n\n']);
+    const err = await collect(streamLinnea({ ...base, fetchImpl })).catch((e) => e);
+    expect(err).toBeInstanceOf(LinneaError);
+    expect(err.kind).toBe('busy');
   });
 
   it('maps a failed request to network', async () => {

@@ -16,6 +16,7 @@ export interface ChatItem {
 
 export type StreamFn = (opts: { messages: LinneaMessage[]; signal?: AbortSignal }) => AsyncGenerator<string>;
 
+const SILENCE_MS = 30_000;
 const isAbort = (e: unknown) => (e as { name?: string } | null)?.name === 'AbortError';
 const threadKey = (userId: string) => `linnea.thread.${userId}`;
 let seq = 0;
@@ -94,24 +95,36 @@ export function useLinneaChat(opts: {
       current = [...current.filter((m) => m.id !== reply.id), { ...reply }, ...extra];
       commit(current);
     };
+    // A reply that goes quiet for SILENCE_MS is abandoned with a retry,
+    // instead of leaving "Thinking…" up forever.
+    let stalled = false;
+    let silence: ReturnType<typeof setTimeout> | undefined;
+    const arm = () => {
+      clearTimeout(silence);
+      silence = setTimeout(() => { stalled = true; ctrl.abort(); }, SILENCE_MS);
+    };
     try {
+      arm();
       for await (const token of streamRef.current({ messages: toApi(history), signal: ctrl.signal })) {
         if (ctrl.signal.aborted) break;
+        arm();
         update({ text: reply.text + token });
       }
+      if (stalled) throw new LinneaError('busy', 'no reply');
       if (!ctrl.signal.aborted) update({ state: 'done' });
     } catch (e) {
-      if (isAbort(e) || ctrl.signal.aborted) {
+      if (!stalled && (isAbort(e) || ctrl.signal.aborted)) {
         // The sheet closed: keep whatever arrived, add no error line.
         if (reply.text) update({ state: 'done' });
         else commit(current.filter((m) => m.id !== reply.id));
       } else {
-        const kind: LinneaErrorKind = e instanceof LinneaError ? e.kind : 'network';
+        const kind: LinneaErrorKind = stalled ? 'busy' : e instanceof LinneaError ? e.kind : 'network';
         const errorItem: ChatItem = { id: nextId(), role: 'linnea', text: linneaErrorLine(kind), state: 'error', errorKind: kind };
         if (reply.text) update({ state: 'done' }, [errorItem]);
         else commit([...current.filter((m) => m.id !== reply.id), errorItem]);
       }
     } finally {
+      clearTimeout(silence);
       if (live.current === ctrl) live.current = null;
       setStreaming(false);
     }

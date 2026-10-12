@@ -6,6 +6,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAuth } from '../data/auth';
 import { useCards, useDisplayName } from '../data/hooks';
+import { AuroraBackground } from '../design/components/AuroraBackground';
 import { GlassButton } from '../design/components/GlassButton';
 import { haptic } from '../design/haptics';
 import { useMotion } from '../design/motion';
@@ -79,15 +80,20 @@ export function LinneaSheet() {
   const [draft, setDraft] = useState('');
   const list = useRef<FlatList<ChatItem>>(null);
   const showChips = !streaming && messages.at(-1)?.role === 'linnea';
-  const submit = (text: string) => { haptic('light'); send(text); setDraft(''); };
+  const submit = (text: string) => {
+    if (streaming || !text.trim()) return;
+    haptic('light'); send(text); setDraft('');
+  };
 
   return (
     <KeyboardAvoidingView style={styles.sheet} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <AuroraBackground intensity={0.4} />
+      <View style={styles.grabber} />
       <View style={styles.header}>
         <Orb />
         <View>
           <Text style={styles.name}>{TUTOR_NAME}</Text>
-          <Text style={styles.sub}>{streaming ? 'Thinking…' : 'Drag up for the full conversation'}</Text>
+          <Text style={styles.sub}>{streaming ? 'Thinking…' : 'Your tutor. Ask me anything.'}</Text>
         </View>
       </View>
       <FlatList
@@ -110,14 +116,18 @@ export function LinneaSheet() {
           value={draft} onChangeText={setDraft} placeholder={`Ask ${TUTOR_NAME}`} placeholderTextColor={colors.textMuted}
           style={styles.input} multiline accessibilityLabel={`Message ${TUTOR_NAME}`}
         />
-        <GlassButton symbol={{ ios: 'arrow.up', android: 'arrow_upward' }} label="Send" onPress={() => submit(draft)} tint={colors.text} />
+        <GlassButton
+          symbol={{ ios: 'arrow.up', android: 'arrow_upward' }} label="Send" onPress={() => submit(draft)} tint={colors.text}
+          disabled={streaming || !draft.trim()}
+        />
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: { flex: 1, paddingTop: space.lg },
+  sheet: { flex: 1, backgroundColor: colors.night },
+  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.25)', marginTop: space.sm, marginBottom: space.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingBottom: space.sm },
   orbBox: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: colors.violetSoft },

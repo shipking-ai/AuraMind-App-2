@@ -13,6 +13,7 @@ import { getSyncEngine, useSync } from '../data/sync';
 import { auroraWarmth } from '../design/components/AuroraBackground';
 import { Confetti } from '../design/components/Confetti';
 import { GlassButton } from '../design/components/GlassButton';
+import { LoadingScreen } from '../design/components/LoadingScreen';
 import { PaperCard } from '../design/components/PaperCard';
 import { PrimaryButton } from '../design/components/PrimaryButton';
 import { ProgressBar } from '../design/components/ProgressBar';
@@ -22,22 +23,35 @@ import { Celebration } from './Celebration';
 import { createStudySession } from './session';
 import { useCloseOnLeave } from './useCloseOnLeave';
 
+const FRESH_WAIT_MS = 6_000;
+
 const queued = async (p: Promise<void>) => { await p; getSyncEngine().notifyEnqueued(); };
 
 export function StudyScreen() {
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
   const { userId } = useAuth();
-  const cardsQuery = useCards(userId);
-  const fsrs = useFsrsProfile(userId);
+  // 'always': Today fetched these moments ago, and inside staleTime a plain
+  // mount never refetches, so isFetchedAfterMount stayed false forever.
+  const cardsQuery = useCards(userId, { refetchOnMount: 'always' });
+  const fsrs = useFsrsProfile(userId, { refetchOnMount: 'always' });
   const sessions = useSessions(userId).data;
   const deck = (useDecks(userId).data ?? []).find((d) => d.id === deckId);
   const { online } = useSync(userId);
+  // A slow network shouldn't hold the deck hostage: after FRESH_WAIT_MS the
+  // session starts from the on-device copy (the outbox keeps it consistent).
+  const [waitedOut, setWaitedOut] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setWaitedOut(true), FRESH_WAIT_MS);
+    return () => clearTimeout(id);
+  }, []);
   // Online, the queue is built from a fresh fetch, not the launch snapshot,
   // so cards studied on the website meanwhile aren't reviewed again.
-  const fresh = !online || cardsQuery.isFetchedAfterMount || cardsQuery.isError;
-  const fsrsReady = !online || fsrs.isFetchedAfterMount || fsrs.isError;
+  const fresh = !online || waitedOut || cardsQuery.isFetchedAfterMount || cardsQuery.isError;
+  const fsrsReady = !online || waitedOut || fsrs.isFetchedAfterMount || fsrs.isError;
   const cards = cardsQuery.data;
-  if (!cards || !sessions || !userId || !fresh || !fsrsReady) return <View style={styles.fill} />;
+  if (!cards || !sessions || !userId || !fresh || !fsrsReady) {
+    return <LoadingScreen title={deck ? `Getting ${deck.title} ready` : 'Getting your cards ready'} />;
+  }
   return (
     <StudyRun
       deckId={deckId} deckTitle={deck?.title} userId={userId} cards={cards} sessions={sessions}

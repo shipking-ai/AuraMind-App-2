@@ -97,7 +97,10 @@ export default function RootLayout() {
                 <Stack.Screen name="study/[deckId]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
                 <Stack.Screen
                   name="linnea"
-                  options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: 'transparent' } }}
+                  // A page sheet, not a detented formSheet: under formSheet the
+                  // flex column collapsed and the list drew over the header,
+                  // and the transparent sheet let Today show through.
+                  options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.night } }}
                 />
               </Stack.Protected>
               <Stack.Protected guard={!signedIn}>

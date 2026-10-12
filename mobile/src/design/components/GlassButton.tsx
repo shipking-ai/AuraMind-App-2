@@ -12,8 +12,8 @@ const SIZE = 38;
  * and a plain ripple surface on Android (no faux glass there).
  */
 export function GlassButton({
-  symbol, label, onPress, tint = colors.violetMist, lively,
-}: { symbol: SymbolViewProps['name']; label: string; onPress: () => void; tint?: string; lively?: boolean }) {
+  symbol, label, onPress, tint = colors.violetMist, lively, disabled,
+}: { symbol: SymbolViewProps['name']; label: string; onPress: () => void; tint?: string; lively?: boolean; disabled?: boolean }) {
   const { reduce } = useMotion();
   // `lively`: a slow repeating SF Symbol bounce that says "something's here".
   const animation = lively && !reduce ? { effect: { type: 'bounce' as const }, repeating: true, speed: 0.25 } : undefined;
@@ -27,7 +27,8 @@ export function GlassButton({
     surface = <View style={[styles.round, styles.android]}>{icon}</View>;
   }
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={8}
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled }}
+      onPress={disabled ? undefined : onPress} disabled={disabled} hitSlop={8} style={disabled ? styles.disabled : undefined}
       android_ripple={{ color: 'rgba(255,255,255,0.15)', borderless: true }}>
       {surface}
     </Pressable>
@@ -37,4 +38,5 @@ export function GlassButton({
 const styles = StyleSheet.create({
   round: { width: SIZE, height: SIZE, borderRadius: SIZE / 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   android: { backgroundColor: colors.raised },
+  disabled: { opacity: 0.4 },
 });

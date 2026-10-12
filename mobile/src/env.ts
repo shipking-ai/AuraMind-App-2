@@ -7,7 +7,10 @@
 export const env = {
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
   supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
-  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://bonamind.app',
+  // The host that serves the API, not one that redirects to it: a cross-host
+  // redirect drops the Authorization header, and Linnea then never answers.
+  // (Vercel 308s bonamind.app -> www.bonamind.app as of 2026-10-11.)
+  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://www.bonamind.app',
   turnstileSiteKey: process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY ?? '',
   sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN || undefined,
   appleSignIn: process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true',

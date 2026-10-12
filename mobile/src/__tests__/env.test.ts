@@ -10,6 +10,6 @@ it('reads env only through static property access', () => {
 it('defaults the API to the production site', () => {
   jest.isolateModules(() => {
     delete process.env.EXPO_PUBLIC_API_BASE_URL;
-    expect(require('../env').env.apiBaseUrl).toBe('https://bonamind.app');
+    expect(require('../env').env.apiBaseUrl).toBe('https://www.bonamind.app');
   });
 });

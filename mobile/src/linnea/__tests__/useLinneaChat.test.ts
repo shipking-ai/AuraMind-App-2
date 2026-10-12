@@ -35,6 +35,25 @@ it('streams a reply into one message', async () => {
   expect(reply).toMatchObject({ role: 'linnea', text: 'Which phase?', state: 'done' });
 });
 
+// A request that never answers (a redirect that stalled, a dead socket) left
+// "Thinking…" and the dots up forever.
+it('gives up on a silent reply and offers a retry', async () => {
+  jest.useFakeTimers();
+  try {
+    const stream = scripted(async function* (signal) {
+      await new Promise((_, reject) => (signal as AbortSignal).addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+    });
+    const { result } = await renderHook(() => useLinneaChat({ ...base, stream }));
+    await act(async () => { result.current.send('Quiz me'); });
+    expect(result.current.streaming).toBe(true);
+    await act(async () => { jest.advanceTimersByTime(30_000); });
+    await waitFor(() => expect(result.current.streaming).toBe(false));
+    expect(result.current.messages.at(-1)).toMatchObject({ state: 'error', errorKind: 'busy', text: linneaErrorLine('busy') });
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
 it('answers a rate limit in her own voice', async () => {
   const stream = scripted(async function* () { throw new LinneaError('rate_limited'); });
   const { result } = await renderHook(() => useLinneaChat({ ...base, stream }));

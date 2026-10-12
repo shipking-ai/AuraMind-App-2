@@ -74,6 +74,15 @@ the traps that cost real time.
       the Capacitor build): upload the existing upload keystore to EAS and
       set `ANDROID_VERSION_CODE` above the last Play build.
     - Trademark search for "Linnea" before any store listing.
+11. **Pick one canonical host: `bonamind.app` or `www.bonamind.app`.** As of
+    2026-10-11 Vercel 308-redirects the apex **to** `www`, the reverse of
+    item 3 above. The code still treats the apex as canonical
+    (`api/_lib/origin.ts` `APP_ORIGIN`, `src/lib/branding.ts`
+    `PRODUCT_SITE_URL`). Either flip Vercel's primary domain back to the apex,
+    or move those constants (and Supabase Site URL / redirect URLs) to `www`.
+    The native app now calls `https://www.bonamind.app` directly; if the apex
+    becomes primary again, change `EXPO_PUBLIC_API_BASE_URL` (in
+    `mobile/.env.local`, `mobile/src/env.ts`, `mobile-builds.yml`) back too.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -368,6 +377,40 @@ token.
   allowed. Turnstile's challenge also uses `about:srcdoc`, which
   `['https://*']` refused. `allowTurnstileNavigation` in
   `mobile/src/auth/TurnstileGate.tsx` now decides each request instead.
+
+### A cross-host redirect strips the API token (native app)
+
+`https://bonamind.app/api/...` answers 308 to `www.bonamind.app`. Fetch
+drops `Authorization` on a cross-origin redirect, and on the phone the
+redirected streaming POST to `/api/ai/chat/stream` never answered: Prof.
+Linnea sat on "Thinking…" forever. Point API clients at the host that serves
+(`curl -sI https://bonamind.app/` shows which), never one that redirects.
+
+### The AI proxy reports failures inside a 200 stream
+
+When every provider fails, `api/_aiHandler.ts` still answers 200 and writes
+`data: {"error": "..."}` then `[DONE]`. A client that reads only
+`choices[0].delta.content` sees an empty reply. `streamLinnea` in
+`packages/core` now throws `unavailable` on an in-stream error and `busy` on a
+reply with no words; the app also abandons a reply that is silent for 30 s.
+
+### `isFetchedAfterMount` can wait forever inside `staleTime`
+
+The study screen waited for `isFetchedAfterMount` so it would build the queue
+from fresh data. With `staleTime: 30_000`, opening it within 30 s of Today's
+fetch triggers no refetch, so the flag never turns true: a black screen.
+Screens that need fresh data pass `{ refetchOnMount: 'always' }` to
+`useCards` / `useFsrsProfile`, and the study screen falls back to the cached
+copy after 6 s regardless.
+
+### `formSheet` with detents collapses a flex layout (native app)
+
+The Linnea chat was a react-native-screens `formSheet` with
+`sheetAllowedDetents: [0.5, 1]` and a transparent background. On iOS the
+column collapsed: the message list drew over the header, and Today showed
+through the sheet. It is now `presentation: 'modal'` (an iOS page sheet) with
+its own night background and aurora. Re-test layout on a device before going
+back to detents.
 
 ### `@types/jest` 30 breaks Jest 29's failure output
 
@@ -1272,6 +1315,16 @@ instead of `bonamind://`); email + password and email codes do.
 Blank launch when signed out, no button responding, and a human check that
 kept restarting. Each is a trap above ("`Stack.Protected` drops a redirect",
 "A root gesture recognizer eats every tap", "Turnstile retries itself").
+
+After sign-in worked (same day): **Start review** opened a black screen
+("`isFetchedAfterMount` can wait forever"), and Prof. Linnea never answered,
+with her messages drawn over the sheet header ("A cross-host redirect strips
+the API token", "The AI proxy reports failures inside a 200 stream",
+"`formSheet` with detents collapses a flex layout"). The study screen now
+shows `LoadingScreen` (`mobile/src/design/components/LoadingScreen.tsx`)
+while it fetches: the prism logo drawn in Skia, a light comet running its
+outline, a breathing core, orbiting sparks, and a rotating status line. It is
+still under Reduce Motion. The Send button is disabled while Linnea answers.
 
 ### Known gaps
 

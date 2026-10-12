@@ -75,17 +75,37 @@ function parseLines(lines: string[]): { deltas: string[]; done: boolean } {
     if (!line.startsWith('data:')) continue;
     const payload = line.slice(5).trim();
     if (payload === '[DONE]') return { deltas, done: true };
+    let event: any;
     try {
-      const content = JSON.parse(payload)?.choices?.[0]?.delta?.content;
-      if (typeof content === 'string' && content.length > 0) deltas.push(content);
+      event = JSON.parse(payload);
     } catch {
-      // A keep-alive or malformed line; skip it.
+      continue; // A keep-alive or malformed line; skip it.
     }
+    // The proxy reports provider failures in-stream with a 200 status.
+    if (event?.error) throw new LinneaError('unavailable', String(event.error.message ?? event.error));
+    const content = event?.choices?.[0]?.delta?.content;
+    if (typeof content === 'string' && content.length > 0) deltas.push(content);
   }
   return { deltas, done: false };
 }
 
+/** Prof. Linnea's reply, token by token. A reply with no words is an error, never an answer. */
 export async function* streamLinnea(opts: {
+  apiBaseUrl: string;
+  token: string;
+  messages: LinneaMessage[];
+  signal?: SignalLike;
+  fetchImpl?: FetchLike;
+}): AsyncGenerator<string> {
+  let words = 0;
+  for await (const token of streamDeltas(opts)) {
+    words += 1;
+    yield token;
+  }
+  if (words === 0) throw new LinneaError('busy', 'empty reply');
+}
+
+async function* streamDeltas(opts: {
   apiBaseUrl: string;
   token: string;
   messages: LinneaMessage[];
