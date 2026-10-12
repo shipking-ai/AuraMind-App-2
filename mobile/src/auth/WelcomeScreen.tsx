@@ -1,10 +1,12 @@
 import { APP_NAME, APP_TAGLINE } from '@bonamind/core';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { sendEmailCode, signInWithPassword, verifyEmailCode, type SignInError } from '../data/auth';
 import { PrimaryButton } from '../design/components/PrimaryButton';
+import { haptic } from '../design/haptics';
 import { SecondaryButton } from '../design/components/SecondaryButton';
 import { useMotion } from '../design/motion';
 import { colors, fonts, radius, space } from '../design/tokens';
@@ -30,6 +32,7 @@ export function WelcomeScreen() {
   const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
@@ -97,10 +100,22 @@ export function WelcomeScreen() {
                 textContentType="emailAddress" style={styles.input}
               />
               {mode === 'password' && (
-                <TextInput
-                  accessibilityLabel="Password" value={password} onChangeText={setPassword} placeholder="Password"
-                  placeholderTextColor={colors.textMuted} secureTextEntry autoComplete="current-password" textContentType="password" style={styles.input}
-                />
+                <View>
+                  <TextInput
+                    accessibilityLabel="Password" value={password} onChangeText={setPassword} placeholder="Password"
+                    placeholderTextColor={colors.textMuted} secureTextEntry={!showPassword} autoComplete="current-password"
+                    textContentType="password" autoCapitalize="none" autoCorrect={false} style={[styles.input, styles.passwordInput]}
+                  />
+                  <Pressable
+                    accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    onPress={() => { haptic('selection'); setShowPassword((v) => !v); }} hitSlop={8} style={styles.reveal}
+                  >
+                    <SymbolView
+                      name={showPassword ? { ios: 'eye.slash', android: 'visibility_off' } : { ios: 'eye', android: 'visibility' }}
+                      size={20} tintColor={colors.textMuted}
+                    />
+                  </Pressable>
+                </View>
               )}
               {mode === 'code' && codeSent && (
                 <TextInput
@@ -148,5 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.tile, paddingHorizontal: space.lg, paddingVertical: 14,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline,
   },
+  passwordInput: { paddingRight: 52 },
+  reveal: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 52, alignItems: 'center', justifyContent: 'center' },
   error: { color: colors.again, fontFamily: fonts.ui, fontSize: 14 },
 });

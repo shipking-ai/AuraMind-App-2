@@ -357,6 +357,18 @@ flash and restart forever. Drop the token on error or expiry and keep the
 widget; rebuild it only after a sign-in attempt has spent the single-use
 token.
 
+"Unable to connect to website" in the widget had two causes, fixed
+2026-10-11:
+- **Hostname allowlist.** The Turnstile widget in Cloudflare still listed the
+  old domain after the move to `bonamind.app`. The native app's widget runs
+  with `baseUrl: https://bonamind.app`, so that hostname must be allowed.
+  Re-check this on any future domain change.
+- **WebView allowlist.** react-native-webview checks `originWhitelist` on
+  *every* navigation, iframes included, and only `about:blank` is implicitly
+  allowed. Turnstile's challenge also uses `about:srcdoc`, which
+  `['https://*']` refused. `allowTurnstileNavigation` in
+  `mobile/src/auth/TurnstileGate.tsx` now decides each request instead.
+
 ### `@types/jest` 30 breaks Jest 29's failure output
 
 `jest-expo` runs Jest 29. `@types/jest@30` hoists `expect@30` and

@@ -28,6 +28,7 @@ jest.mock('../TurnstileGate', () => {
     },
   };
 });
+jest.mock('expo-symbols', () => ({ SymbolView: 'SymbolView' }));
 jest.mock('../../design/motion', () => ({ useMotion: () => ({ reduce: true, spring: () => ({ duration: 180 }) }) }));
 const passwordSignIn = signInWithPassword as jest.Mock;
 
@@ -102,4 +103,13 @@ it('says so when Google sign-in fails instead of doing nothing', async () => {
   await render(<WelcomeScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
   expect(await screen.findByText('Something went wrong. Try again in a moment.')).toBeTruthy();
+});
+
+it('shows and hides the password on request', async () => {
+  await openEmail();
+  expect(screen.getByLabelText('Password').props.secureTextEntry).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Show password' }));
+  expect(screen.getByLabelText('Password').props.secureTextEntry).toBe(false);
+  await fireEvent.press(screen.getByRole('button', { name: 'Hide password' }));
+  expect(screen.getByLabelText('Password').props.secureTextEntry).toBe(true);
 });

@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Linking, StyleSheet } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 import { env } from '../env';
 
@@ -7,6 +7,23 @@ import { env } from '../env';
  * in a small web view whose base URL is the production site, so the token is
  * issued for the hostname the widget is configured to allow.
  */
+const BASE_URL = 'https://bonamind.app';
+
+/**
+ * Turnstile runs its challenge in nested about:srcdoc / about:blank frames
+ * (Cloudflare's WebView requirements list both). An https-only origin
+ * whitelist refused about:srcdoc, so the widget said "Unable to connect to
+ * website". Frames may load anything the challenge needs; the page itself
+ * stays on the widget, and links it offers (Privacy, Help) open in the
+ * browser. Android reports no isTopFrame and only asks about the top frame.
+ */
+export function allowTurnstileNavigation({ url, isTopFrame }: { url: string; isTopFrame?: boolean }): boolean {
+  if (isTopFrame === false) return /^(https:|about:|blob:)/.test(url);
+  if (url === 'about:blank' || url.startsWith(BASE_URL)) return true;
+  if (url.startsWith('https://')) void Linking.openURL(url);
+  return false;
+}
+
 function html(siteKey: string) {
   return [
     '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">',
@@ -37,14 +54,18 @@ export function TurnstileGate({ onToken, onExpire, onError }: { onToken(token: s
   };
   return (
     <WebView
-      source={{ html: html(env.turnstileSiteKey), baseUrl: 'https://bonamind.app' }}
+      source={{ html: html(env.turnstileSiteKey), baseUrl: BASE_URL }}
       onMessage={onMessage}
       style={styles.view}
       containerStyle={styles.view}
       scrollEnabled={false}
       bounces={false}
       overScrollMode="never"
-      originWhitelist={['https://*']}
+      // Every request is decided by allowTurnstileNavigation instead.
+      originWhitelist={['*']}
+      onShouldStartLoadWithRequest={allowTurnstileNavigation}
+      javaScriptEnabled
+      domStorageEnabled
       setSupportMultipleWindows={false}
     />
   );
