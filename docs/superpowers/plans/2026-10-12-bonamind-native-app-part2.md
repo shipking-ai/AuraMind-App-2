@@ -136,12 +136,12 @@ it('asks for exactly N cards as JSON only', () => {
 **Interfaces:**
 - Consumes: Task 1 `splitSource`, `COURSE_SIZES`; Task 2 prompts, parsers, `dedupeCards`.
 - Produces:
-  - `type CreateErrorKind = 'offline' | 'subscription' | 'rate_limited' | 'unreadable' | 'too_large' | 'empty' | 'busy'`; `class CreateError extends Error { kind: CreateErrorKind; retryable: boolean }`.
+  - `type CreateErrorKind = 'offline' | 'subscription' | 'rate_limited' | 'unreadable' | 'too_large' | 'empty' | 'busy'`; `class CreateError extends Error { kind: CreateErrorKind; partial?: { donePieces: number; cards: DraftCard[] } }` (`partial` is set by `buildCourse` when it stops on `offline`).
   - `type CourseSource = { kind: 'topic'; topic: string } | { kind: 'text'; text: string; title: string; label: string }`.
   - `type AskFn = (prompt: string, signal?: AbortSignal) => Promise<string>` (throws `CreateError`).
   - `interface BuildProgress { step: 'reading' | 'ideas' | 'writing' | 'done'; cardsSoFar: number; target: number; latest?: DraftCard }`.
   - `interface CourseDraft { title: string; description: string; cards: DraftCard[]; truncated: boolean; skippedPieces: number }`.
-  - `buildCourse(opts: { source: CourseSource; size: CourseSize; ask: AskFn; onProgress?: (p: BuildProgress) => void; signal?: AbortSignal; sleep?: (ms: number) => Promise<void> }): Promise<CourseDraft>`.
+  - `buildCourse(opts: { source: CourseSource; size: CourseSize; ask: AskFn; onProgress?: (p: BuildProgress) => void; signal?: AbortSignal; sleep?: (ms: number) => Promise<void>; resume?: { donePieces: number; cards: DraftCard[] } }): Promise<CourseDraft>`.
 
 - [ ] **Step 1: Write the failing tests** (scripted `ask` returning queued replies or throwing; `sleep` injected as a resolved spy)
 
@@ -178,6 +178,13 @@ it('fails with empty when no piece yields cards', async () => {
 });
 it('dedupes across pieces and caps at the target', async () => { /* two pieces returning overlapping fronts → unique, ≤ target */ });
 it('carries truncation from splitSource', async () => { /* 8+ pieces of text → truncated true */ });
+it('stops on offline with the cards so far, and resumes after the last finished piece', async () => {
+  const err = await buildCourse({ source: twoPieceText(), size: 'standard', ask: scripted(cardsArrayJson(10, 'a'), offline()) }).catch((e) => e);
+  expect(err).toMatchObject({ kind: 'offline', partial: { donePieces: 1 } });
+  const ask = scripted(cardsArrayJson(10, 'b'));
+  const d = await buildCourse({ source: twoPieceText(), size: 'standard', ask, resume: err.partial });
+  expect(ask).toHaveBeenCalledTimes(1); expect(d.cards).toHaveLength(20);
+});
 ```
 
 - [ ] **Step 2: Run** `npx vitest run test/createBuild.test.ts` — Expected: FAIL.
@@ -289,7 +296,7 @@ it('422 when the model finds no text', async () => { /* reply '' or 'NO_TEXT' �
 
 **Interfaces:**
 - Consumes: Task 3 `AskFn`, `CreateError`, `CourseSource`; `env.apiBaseUrl`; `getSupabase().auth.getSession()`.
-- Produces: `authedPost<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T>` (45 s timeout, throws `CreateError` mapped from status: 401 `busy`→ re-auth handled upstream as `busy`, 402 `subscription`, 413 `too_large`, 415/422 `unreadable`, 429 `rate_limited`, 5xx/timeout `busy`, fetch throw `offline`); `ask: AskFn`; `readTopic(topic: string): CourseSource`; `readLink(url: string): Promise<CourseSource>`; `isYouTube(url: string): boolean`; `pickPdf(): Promise<PickedPdf | null>` with `PickedPdf = { name: string; size: number; uri: string }`; `readPdf(file: PickedPdf): Promise<CourseSource>`; `pickPhotos(from: 'camera' | 'library'): Promise<string[]>` (local URIs); `readPhotos(uris: string[]): Promise<CourseSource>`; `CREATE_COPY` (all §5 strings, keyed by `CreateErrorKind` plus `offlineButton`, `proButton`, `partial`, `pasteInstead`).
+- Produces: `authedPost<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T>` (45 s timeout; throws `CreateError` by status: 401, 5xx and timeout → `busy`; 402 → `subscription`; 413 → `too_large`; 415/422 → `unreadable`; 429 → `rate_limited`; a thrown fetch → `offline`); `ask: AskFn`; `readTopic(topic: string): CourseSource`; `readLink(url: string): Promise<CourseSource>`; `isYouTube(url: string): boolean`; `pickPdf(): Promise<PickedPdf | null>` with `PickedPdf = { name: string; size: number; uri: string }`; `readPdf(file: PickedPdf): Promise<CourseSource>`; `pickPhotos(from: 'camera' | 'library'): Promise<string[]>` (local URIs); `readPhotos(uris: string[]): Promise<CourseSource>`; `CREATE_COPY` (all §5 strings, keyed by `CreateErrorKind` plus `offlineButton`, `proButton`, `partial`, `pasteInstead`).
 
 - [ ] **Step 1: Install** `cd mobile && npm install expo-document-picker@<v> expo-image-picker@<v> expo-image-manipulator@<v> expo-file-system@<v> expo-clipboard@<v>` with the versions SDK 57 expects (read them from `npx expo install --check` / the Expo SDK 57 version map), then `npx expo install --check` → "Dependencies are up to date".
 - [ ] **Step 2: Write the failing tests**
@@ -340,7 +347,8 @@ Resize uses the longer side: pass `{ width: 1600 }` for landscape, `{ height: 16
 ```ts
 it('ignores a second start while building', async () => { start(src, 'quick'); start(src, 'quick'); await settle(); expect(buildCourse).toHaveBeenCalledTimes(1); });
 it('keeps building after the screen unmounts', async () => { /* render a component using the store, unmount, resolve build → phase 'review', draft set */ });
-it('pauses for a connection and resumes', async () => { /* ask throws offline → phase 'waiting'; NetInfo online → build continues → 'review' */ });
+it('pauses for a connection and resumes without losing cards', async () => { /* buildCourse rejects CreateError offline with partial → phase 'waiting'; NetInfo online → buildCourse called again with resume: partial and the same source → 'review' */ });
+it('shows reading while the source is fetched', async () => { /* source() pending → progress.step 'reading' */ });
 it('remove, restore, edit and rename change the draft', () => { /* draft mutations */ });
 it('save success → ready with the new deck id', async () => { /* createCourse resolves → phase 'ready', savedDeckId */ });
 it('save failure keeps the draft and returns to review with an error', async () => { /* phase 'review', error 'busy', draft intact */ });
@@ -348,7 +356,7 @@ it('a 402 ends in error subscription', async () => { /* phase 'error', error 'su
 ```
 
 - [ ] **Step 2: Run** `npx jest src/create/__tests__/store.test.ts` — Expected: FAIL.
-- [ ] **Step 3: Implement** — `buildCourse` and `createCourse` are module-level imports (mocked in tests); resuming re-runs `buildCourse` with the same source text (pieces already done are not tracked in v1 — the spec's "pause and resume" keeps the draft only on save failure; on reconnect the build restarts from the source text it already has, which is acceptable because reading is not repeated).
+- [ ] **Step 3: Implement** — `buildCourse` and `createCourse` are module-level imports (mocked in tests). The store sets `progress = { step: 'reading', cardsSoFar: 0, target }` before awaiting the source reader and keeps the resolved `CourseSource`. On `CreateError('offline')` it stores `error.partial`, enters `waiting`, and on reconnect calls `buildCourse({ …, resume: partial })`, so finished pieces are neither re-read nor re-generated.
 - [ ] **Step 4: Run** — Expected: PASS.
 - [ ] **Step 5: Commit** `feat(mobile): an app-wide course build that survives navigation`
 
