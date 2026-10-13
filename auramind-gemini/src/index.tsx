@@ -1,3 +1,6 @@
+// Must stay the first import: moves pre-rename storage keys before any other
+// module reads them (see lib/storageMigration/legacyKeys.ts).
+import './lib/storageMigration/runFirst';
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
