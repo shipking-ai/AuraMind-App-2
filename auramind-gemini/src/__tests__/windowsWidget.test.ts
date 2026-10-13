@@ -22,7 +22,7 @@ describe('publishWindowsWidgetState', () => {
     const { publishWindowsWidgetState } = await load();
     await publishWindowsWidgetState({ due: 12.7, deck: '  Neuroscience  ', streak: 5 });
     expect(postMessage).toHaveBeenCalledWith({
-      type: 'auramind-widget-state',
+      type: 'bonamind-widget-state',
       state: { due: 12, deck: 'Neuroscience', streak: 5 },
     });
   });
@@ -31,7 +31,7 @@ describe('publishWindowsWidgetState', () => {
     const { publishWindowsWidgetState } = await load();
     await publishWindowsWidgetState({ due: -3, deck: null, streak: null });
     expect(postMessage).toHaveBeenCalledWith({
-      type: 'auramind-widget-state',
+      type: 'bonamind-widget-state',
       state: { due: 0, deck: '', streak: 0 },
     });
   });
@@ -123,7 +123,7 @@ describe('widget service worker', () => {
   it('renders the card from the state the app posted, and re-renders on resume', async () => {
     const { fire, updateByTag } = await bootWorker();
     await fire('message', {
-      data: { type: 'auramind-widget-state', state: { due: 7, deck: 'Neuroscience', streak: 4 } },
+      data: { type: 'bonamind-widget-state', state: { due: 7, deck: 'Neuroscience', streak: 4 } },
     });
     const data = JSON.parse(updateByTag.mock.calls[0][1].data);
     expect(data).toMatchObject({
@@ -141,7 +141,7 @@ describe('widget service worker', () => {
   it('says all caught up with nothing due, and hides a one-day streak', async () => {
     const { fire, updateByTag } = await bootWorker();
     await fire('message', {
-      data: { type: 'auramind-widget-state', state: { due: 0, deck: '', streak: 1 } },
+      data: { type: 'bonamind-widget-state', state: { due: 0, deck: '', streak: 1 } },
     });
     expect(JSON.parse(updateByTag.mock.calls[0][1].data)).toMatchObject({
       headline: 'All caught up',

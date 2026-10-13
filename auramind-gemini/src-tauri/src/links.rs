@@ -22,7 +22,9 @@ pub enum LaunchIntent {
 /// crafted link can't reach the web layer at all.
 pub fn is_app_url(s: &str) -> bool {
     let Ok(url) = Url::parse(s) else { return false };
-    if url.scheme() != "auramind" {
+    // bonamind:// is current; auramind:// is still sent by links made before
+    // the rename (pinned shortcuts, old notifications, OAuth returns).
+    if url.scheme() != "bonamind" && url.scheme() != "auramind" {
         return false;
     }
     match url.host_str() {
@@ -107,6 +109,18 @@ mod tests {
             vec![LaunchIntent::Open("auramind://app/study".into())]
         );
         assert!(is_app_url("auramind://auth/callback?code=abc"));
+    }
+
+    #[test]
+    fn the_bonamind_scheme_passes_the_same_way() {
+        assert_eq!(
+            parse_args(&args(&["bonamind://app/study"])),
+            vec![LaunchIntent::Open("bonamind://app/study".into())]
+        );
+        assert!(is_app_url("bonamind://auth/callback?code=abc"));
+        assert!(!is_app_url("bonamind://auth/other"));
+        assert!(!is_app_url("bonamind://evil/app"));
+        assert!(!is_app_url("https://bonamind.app/app/study"));
     }
 
     #[test]

@@ -177,7 +177,7 @@ export default function AIChatPage() {
   const [localCards, setLocalCards] = useState<Card[]>([]);
 
   const [selectedDeckId, setSelectedDeckId] = useState("");
-  const [saveChatHistory] = useAppPreference("auramind_saveChatHistory", true);
+  const [saveChatHistory] = useAppPreference("bonamind_saveChatHistory", true);
   const [personality, setPersonalityState] = useState<ProfAuraPersonality>(getStoredPersonality);
   const userMeta = workspace?.user as
     { streakCount?: number; lastStudyAt?: number; accuracy7d?: number } | undefined;
@@ -438,7 +438,7 @@ export default function AIChatPage() {
   useEffect(() => {
     if (!saveChatHistory || chat.messages.length === 0) return;
     try {
-      const id = window.localStorage.getItem("auramind.aurachat.active.v1");
+      const id = window.localStorage.getItem("bonamind.aurachat.active.v1");
       if (!id || id === activeSessionIdRef.current) return;
       activeSessionIdRef.current = id;
       queueSession({
@@ -569,7 +569,7 @@ export default function AIChatPage() {
           double-mount doesn't burn the flag prematurely. */}
       <ChatTour />
       {/* Session Replay modal — opens from outside via the
-          `auramind:open-replay` window event. We mount the modal shell here
+          `bonamind:open-replay` window event. We mount the modal shell here
           so it can pop into view when triggered without an extra render
           pass. */}
       <SessionReplayModal open={replayOpen} onClose={() => setReplayOpen(false)} />

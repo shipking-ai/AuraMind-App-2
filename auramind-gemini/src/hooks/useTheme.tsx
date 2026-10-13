@@ -23,8 +23,8 @@ interface ThemeProviderProps {
 
 // Theme preference is persisted centrally so every route sees the same mode.
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [storedTheme, setStoredTheme] = useAppPreference<string>("auramind_theme", "dark");
-  const [autoNightMode] = useAppPreference<boolean>("auramind_autoNightMode", true);
+  const [storedTheme, setStoredTheme] = useAppPreference<string>("bonamind_theme", "dark");
+  const [autoNightMode] = useAppPreference<boolean>("bonamind_autoNightMode", true);
   const theme = normalizeTheme(storedTheme);
   const [systemDark, setSystemDark] = useState(() =>
     typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -58,7 +58,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const resolvedTheme = autoNightMode && isNight ? "dark" : systemResolvedTheme;
 
   useEffect(() => {
-    applyPreferenceToDocument("auramind_theme", resolvedTheme);
+    applyPreferenceToDocument("bonamind_theme", resolvedTheme);
   }, [resolvedTheme]);
 
   const value = useMemo<ThemeContextType>(

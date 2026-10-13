@@ -59,7 +59,7 @@ export interface SparkEvent {
   surface: SparkSurface;
 }
 
-const SPARK_LOG_KEY = 'auramind:sparkLog';
+const SPARK_LOG_KEY = 'bonamind:sparkLog';
 const LOG_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**

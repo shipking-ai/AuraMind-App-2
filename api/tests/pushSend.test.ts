@@ -119,12 +119,20 @@ describe('POST /api/push/send', () => {
       body: { ...VALID_BODY, link: 'https://evil.example' },
     });
 
+    const lookalike = await call('push/send', {
+      ...AUTHED,
+      body: { ...VALID_BODY, link: 'bonamindx://app/dashboard' },
+    });
+
     expect(empty.status).toBe(400);
     expect(badLink.status).toBe(400);
+    expect(lookalike.status).toBe(400);
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  it('sends for an entitled admin when a token exists', async () => {
+  // bonamind:// is the current scheme; auramind:// stays accepted for links
+  // already out there (pinned shortcuts, scheduled sends).
+  it.each(['auramind://app/dashboard', 'bonamind://app/dashboard'])('sends %s for an entitled admin when a token exists', async (link) => {
     vi.stubEnv('FCM_PROJECT_ID', 'proj');
     vi.stubEnv('FCM_SERVICE_ACCOUNT_KEY', SERVICE_KEY_JSON);
     asUser('admin');
@@ -145,7 +153,7 @@ describe('POST /api/push/send', () => {
 
     const { status, body } = await call('push/send', {
       ...AUTHED,
-      body: { ...VALID_BODY, link: 'auramind://app/dashboard' },
+      body: { ...VALID_BODY, link },
     });
 
     expect(status).toBe(200);

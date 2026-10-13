@@ -1,6 +1,6 @@
 /**
  * ReplayEventBridge — zero-render helper that subscribes to the
- * `auramind:open-replay` window event and forwards each fire to a parent
+ * `bonamind:open-replay` window event and forwards each fire to a parent
  * callback. Used by AIChatPage to receive replay-open requests from
  * ConversationHistory (or any embedded surface) WITHOUT prop-drilling an
  * `onOpenReplay` prop through every conversation toolbar.
@@ -18,8 +18,8 @@ interface Props {
 export default function ReplayEventBridge({ onOpen }: Props) {
   useEffect(() => {
     const handler = () => onOpen();
-    window.addEventListener('auramind:open-replay', handler);
-    return () => window.removeEventListener('auramind:open-replay', handler);
+    window.addEventListener('bonamind:open-replay', handler);
+    return () => window.removeEventListener('bonamind:open-replay', handler);
   }, [onOpen]);
   return null;
 }

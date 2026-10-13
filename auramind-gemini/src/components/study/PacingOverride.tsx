@@ -31,7 +31,7 @@ interface PacingOverrideProps {
   onChange: (mode: PacingMode, target: number | null) => void;
 }
 
-const STORAGE_KEY = 'auramind.pacing.override';
+const STORAGE_KEY = 'bonamind.pacing.override';
 
 function readStoredMode(): PacingMode | null {
   if (typeof window === 'undefined') return null;

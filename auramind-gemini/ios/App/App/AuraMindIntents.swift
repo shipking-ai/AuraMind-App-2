@@ -23,10 +23,10 @@ enum AuraMindSiri {
 
     /// Capacitor Preferences stores under UserDefaults with this prefix.
     private static let preferencesPrefix = "CapacitorStorage."
-    private static let dueKey = preferencesPrefix + "auramind_widget_due"
-    private static let deckKey = preferencesPrefix + "auramind_widget_deck"
+    private static let dueKey = preferencesPrefix + "bonamind_widget_due"
+    private static let deckKey = preferencesPrefix + "bonamind_widget_deck"
     /// Read (and cleared) by the web layer on boot; see src/lib/deepLinks.ts.
-    private static let pendingRouteKey = preferencesPrefix + "auramind_pending_route"
+    private static let pendingRouteKey = preferencesPrefix + "bonamind_pending_route"
 
     static let reviewURL = URL(string: "auramind://app/dashboard/study")!
 

@@ -1,7 +1,7 @@
 import { Card, CardCitation, CardSourceType, FlashcardData } from '../../types';
 
-const CARD_META_KEY = 'auramind-card-meta-v1';
-const BETA_CHALLENGE_KEY = 'auramind-beta-challenge-v1';
+const CARD_META_KEY = 'bonamind-card-meta-v1';
+const BETA_CHALLENGE_KEY = 'bonamind-beta-challenge-v1';
 
 export interface CardMetadataTemplate {
   citations?: CardCitation[];

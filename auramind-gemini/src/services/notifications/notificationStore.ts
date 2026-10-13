@@ -22,7 +22,7 @@ type Subscriber = (notifications: AppNotification[]) => void;
 
 // ─── State ───────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'auramind:app-notifications';
+const STORAGE_KEY = 'bonamind:app-notifications';
 
 let notifications: AppNotification[] = [];
 const subscribers = new Set<Subscriber>();

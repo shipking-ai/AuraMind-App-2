@@ -17,7 +17,7 @@
  * not a retry.
  */
 
-export const AI_QUOTA_EXHAUSTED_EVENT = 'auramind:ai-quota-exhausted';
+export const AI_QUOTA_EXHAUSTED_EVENT = 'bonamind:ai-quota-exhausted';
 
 /** Fired when every configured free provider has refused with a 429. */
 export function notifyAiQuotaExhausted(): void {

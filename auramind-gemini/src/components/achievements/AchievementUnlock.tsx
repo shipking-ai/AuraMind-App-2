@@ -139,7 +139,7 @@ interface AchievementUnlockProps {
   // Update level progress when component mounts or achievement changes
   useEffect(() => {
     // Get current user XP from localStorage or default to 0
-    const savedXP = localStorage.getItem('auramind_user_xp');
+    const savedXP = localStorage.getItem('bonamind_user_xp');
     const currentXP = savedXP ? parseInt(savedXP, 10) : 0;
     setUserXP(currentXP);
 
@@ -167,7 +167,7 @@ interface AchievementUnlockProps {
 
     // Award XP for the achievement
     const newXP = currentXP + achievement.xpReward;
-    localStorage.setItem('auramind_user_xp', String(newXP));
+    localStorage.setItem('bonamind_user_xp', String(newXP));
     
     // Animate the XP gain
     const animateXP = () => {

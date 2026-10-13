@@ -19,20 +19,20 @@ import {
   resetUserData,
 } from '../services/gamification/gamificationService';
 
-const KEY_LAST_STUDY = 'auramind_last_study_date';
-const KEY_STREAK_DAYS = 'auramind_streak_days';
+const KEY_LAST_STUDY = 'bonamind_last_study_date';
+const KEY_STREAK_DAYS = 'bonamind_streak_days';
 
 function clearStorage() {
   for (const k of [
     KEY_LAST_STUDY,
     KEY_STREAK_DAYS,
-    'auramind_user_xp',
-    'auramind_cards_studied',
-    'auramind_decks_created',
-    'auramind_sessions_completed',
-    'auramind_accuracy',
-    'auramind_study_time',
-    'auramind_achievements',
+    'bonamind_user_xp',
+    'bonamind_cards_studied',
+    'bonamind_decks_created',
+    'bonamind_sessions_completed',
+    'bonamind_accuracy',
+    'bonamind_study_time',
+    'bonamind_achievements',
   ]) {
     localStorage.removeItem(k);
   }
@@ -134,13 +134,13 @@ describe('trackStudySession — streak date arithmetic', () => {
 
     // The keyset that resetUserData clears MUST stay in lockstep with
     // what trackStudySession + updateUserStats write. Previously the
-    // function cleared an orphan `auramind_user_streak` (computed by
+    // function cleared an orphan `bonamind_user_streak` (computed by
     // nothing in the codebase) and left the actually-used
-    // `auramind_streak_days` untouched — so QA / Playwright runs
+    // `bonamind_streak_days` untouched — so QA / Playwright runs
     // could never reset the streak widget between cases. Guard it.
     expect(getUserStats().streakDays).toBe(0);
     expect(getUserStats().xp).toBe(0);
     expect(getUserStats().sessionsCompleted).toBe(0);
-    expect(localStorage.getItem('auramind_last_study_date')).toBeNull();
+    expect(localStorage.getItem('bonamind_last_study_date')).toBeNull();
   });
 });

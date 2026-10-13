@@ -69,13 +69,13 @@ async function syncSpokenReminder(
 export type ReminderSyncMode = 'maintain' | 'request';
 
 export function useReminderSync(mode: ReminderSyncMode = 'maintain'): void {
-  const [dailyReminder] = useAppPreference('auramind_dailyReminder', true);
-  const [dueReminder] = useAppPreference('auramind_dueReminder', true);
-  const [streakReminder] = useAppPreference('auramind_streakReminder', true);
-  const [weeklySummary] = useAppPreference('auramind_weeklySummary', false);
-  const [reminderTime] = useAppPreference('auramind_reminderTime', '09:00');
-  const [spokenMode] = useAppPreference<SpokenReminderMode>('auramind_spokenReminder', 'off');
-  const [spokenMessage] = useAppPreference('auramind_spokenReminderMessage', '');
+  const [dailyReminder] = useAppPreference('bonamind_dailyReminder', true);
+  const [dueReminder] = useAppPreference('bonamind_dueReminder', true);
+  const [streakReminder] = useAppPreference('bonamind_streakReminder', true);
+  const [weeklySummary] = useAppPreference('bonamind_weeklySummary', false);
+  const [reminderTime] = useAppPreference('bonamind_reminderTime', '09:00');
+  const [spokenMode] = useAppPreference<SpokenReminderMode>('bonamind_spokenReminder', 'off');
+  const [spokenMessage] = useAppPreference('bonamind_spokenReminderMessage', '');
   const [voice] = useAppPreference<string>(VOICE_PREF_KEY, VOICE_AUTO);
 
   const { requestPermissions, checkPermissions, schedule, cancel } = useLocalNotifications();

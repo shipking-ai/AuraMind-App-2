@@ -1,6 +1,7 @@
 import { Capacitor, LocalNotifications, PushNotifications } from '../../lib/nativeShim';
 import { supabase } from '../database/supabase';
 import { isAndroidApp } from '../../lib/platform';
+import { parseDeepLink } from '../../lib/deepLinks';
 
 /**
  * Server-sent push (FCM), wired end to end but dormant until Firebase is
@@ -146,6 +147,16 @@ async function upsertToken(userId: string, token: string): Promise<void> {
  * a cleanup function. Safe to call on every auth change — listeners are
  * namespaced per call and removed by the cleanup.
  */
+/**
+ * The link a tapped notification should open, or null. Either scheme, but
+ * only destinations the deep-link allowlist accepts (same rule as launcher
+ * shortcuts): `bonamind://` from the rename on, `auramind://` from before it.
+ */
+export function pushTapTarget(data: { link?: unknown } | undefined): string | null {
+  const link = data?.link;
+  return typeof link === 'string' && parseDeepLink(link) ? link : null;
+}
+
 export function initPushListeners(userId: string | null): () => void {
   if (!Capacitor.isNativePlatform()) return () => undefined;
   const cleanups: Array<() => void> = [];
@@ -174,10 +185,8 @@ export function initPushListeners(userId: string | null): () => void {
   // somewhere, not vanish: route its deep link if it carries one.
   track(
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      const link = (action?.notification?.data as { link?: string } | undefined)?.link;
-      if (link && link.startsWith('auramind://')) {
-        window.location.href = link;
-      }
+      const target = pushTapTarget(action?.notification?.data as { link?: unknown } | undefined);
+      if (target) window.location.href = target;
     }),
   );
 

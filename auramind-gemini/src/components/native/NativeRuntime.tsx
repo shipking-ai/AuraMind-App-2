@@ -6,6 +6,7 @@ import { initPlayEngagement } from "../../lib/playEngagement";
 import { initDynamicColor } from "../../lib/dynamicColor";
 import { consumeBackPress } from "../../lib/backStack";
 import { setKeepAwake } from "../../lib/auraDevice";
+import { migrateLegacyKeysAsync, preferencesStore } from "../../lib/storageMigration/legacyKeys";
 
 /**
  * Android runtime bridge. The web app keeps rendering normally, while the
@@ -24,6 +25,16 @@ export function NativeRuntime() {
   useEffect(() => {
     locationRef.current = location.pathname;
   }, [location.pathname]);
+
+  // Pre-rename Capacitor Preferences keys (widget counts) move to their
+  // bonamind names. Async-only API, so it runs here rather than before boot;
+  // the Android widget reads the old key as a fallback until it has.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    void import("../../lib/nativeShim")
+      .then(({ Preferences }) => migrateLegacyKeysAsync(preferencesStore(Preferences)))
+      .catch(() => {});
+  }, []);
 
   // Deep links (launcher shortcuts). This component mounts after the auth
   // check, so getLaunchUrl covers the cold start and the listener covers

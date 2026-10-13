@@ -37,8 +37,8 @@ export function VoiceStudyControls({
   onRequestNextCard,
 }: VoiceStudyControlsProps) {
   const [handsFree, setHandsFree] = useState(false);
-  const [textToSpeech] = useAppPreference("auramind_textToSpeech", false);
-  const [autoPlayAudio] = useAppPreference("auramind_autoPlayAudio", false);
+  const [textToSpeech] = useAppPreference("bonamind_textToSpeech", false);
+  const [autoPlayAudio] = useAppPreference("bonamind_autoPlayAudio", false);
   const [verdict, setVerdict] = useState<VoiceVerdict | null>(null);
   const [evaluating, setEvaluating] = useState(false);
   // Written in an effect, not during render — assigning to a ref in the

@@ -2,7 +2,7 @@ import { isOnline } from "../services/offline/offlineStudyService";
 
 export type SubscriptionStatus = "active" | "trialing" | "canceled" | "past_due" | "none";
 
-export const SUBSCRIPTION_STATUS_KEY = "auramind.subscription.status.v1";
+export const SUBSCRIPTION_STATUS_KEY = "bonamind.subscription.status.v1";
 
 const VALID_STATUSES: ReadonlySet<string> = new Set([
   "active",

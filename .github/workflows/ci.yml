@@ -174,10 +174,10 @@ jobs:
           cd auramind-gemini
           npm run build:android
 
-      - name: Compile debug APK (no release secrets required)
+      - name: Compile debug APK + unit tests (no release secrets required)
         run: |
           cd auramind-gemini/android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug :app:testDebugUnitTest
 
       - name: Compile Wear OS app + unit tests
         run: |

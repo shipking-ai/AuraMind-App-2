@@ -57,18 +57,18 @@ describe("cross-platform runtime preferences", () => {
   });
 
   it("uses the shared Settings preference for chat voice output", async () => {
-    setAppPreference("auramind_textToSpeech", false);
+    setAppPreference("bonamind_textToSpeech", false);
     render(<TtsProbe />);
 
     expect(screen.getByTestId("enabled")).toHaveTextContent("false");
     fireEvent.click(screen.getByRole("button", { name: "Toggle" }));
 
     await waitFor(() => expect(screen.getByTestId("enabled")).toHaveTextContent("true"));
-    expect(localStorage.getItem("auramind_textToSpeech")).toBe("true");
-    expect(localStorage.getItem("auramind.tts.enabled.v1")).toBeNull();
+    expect(localStorage.getItem("bonamind_textToSpeech")).toBe("true");
+    expect(localStorage.getItem("bonamind.tts.enabled.v1")).toBeNull();
 
     act(() => {
-      setAppPreference("auramind_textToSpeech", false);
+      setAppPreference("bonamind_textToSpeech", false);
     });
     await waitFor(() => expect(screen.getByTestId("enabled")).toHaveTextContent("false"));
   });

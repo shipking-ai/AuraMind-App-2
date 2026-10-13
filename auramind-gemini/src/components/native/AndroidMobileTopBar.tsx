@@ -29,7 +29,7 @@ function initials(user: UserProfile | null | undefined): string {
 export function AndroidMobileTopBar({ user }: { user: UserProfile | null | undefined }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [offlineMode] = useAppPreference("auramind_offlineMode", false);
+  const [offlineMode] = useAppPreference("bonamind_offlineMode", false);
   // Settings already renders the uploaded avatar; the top bar only ever drew
   // initials, so an account with a picture still showed "MS" on every screen.
   // If the image 404s (deleted from storage, offline) we fall back to the

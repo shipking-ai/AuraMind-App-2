@@ -8,7 +8,7 @@
  * Speech API everywhere else, and applies the user's voice choice the same
  * way on both.
  *
- * Voice choice (preference `auramind_ttsVoice`):
+ * Voice choice (preference `bonamind_ttsVoice`):
  *   - "auto"   → the engine's best voice for the language;
  *   - "random" → a random installed voice, picked once per app session so a
  *                card's question and answer are read by the same voice;
@@ -27,7 +27,7 @@ import { AuraSpeech, hasNativeSpeech } from '../../lib/auraSpeech';
 import { loadVoices } from './speechEngine';
 import { isAiVoice, playAiVoice, stopAiVoice } from './aiVoice';
 
-export const VOICE_PREF_KEY = 'auramind_ttsVoice';
+export const VOICE_PREF_KEY = 'bonamind_ttsVoice';
 export const VOICE_AUTO = 'auto';
 export const VOICE_RANDOM = 'random';
 /**

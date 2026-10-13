@@ -1,4 +1,5 @@
 import { requireSupabase } from "../database/supabase";
+import { CLASSROOM_ERROR_URN } from "../../lib/legacyNames";
 import {
   mapClassroomRow,
   mapMembershipRow,
@@ -154,7 +155,7 @@ export type ClassroomJoinErrorKind = "not_found" | "already_member" | "other";
 /** Classify a join-classroom RPC error into a UI-friendly kind. */
 export function classifyJoinError(err: unknown): ClassroomJoinErrorKind {
   const message = err instanceof Error ? err.message : String(err);
-  if (message.includes("urn:auramind:classroom:not_found")) return "not_found";
-  if (message.includes("urn:auramind:classroom:already_member")) return "already_member";
+  if (message.includes(`${CLASSROOM_ERROR_URN}:not_found`)) return "not_found";
+  if (message.includes(`${CLASSROOM_ERROR_URN}:already_member`)) return "already_member";
   return "other";
 }

@@ -222,13 +222,13 @@ jobs:
           [ -f "$PLIST" ] && echo "prefs plist exists" || echo "::warning::prefs plist missing"
           read_prefs() { /usr/libexec/PlistBuddy -c "Print :CapacitorStorage.$1" "$PLIST" 2>/dev/null || echo MISSING; }
           for k in session seen device available started updated; do
-            echo "driver $k: $(read_prefs auramind_ci_live_$k)"
+            echo "driver $k: $(read_prefs bonamind_ci_live_$k)"
           done
-          echo "tour: $(read_prefs auramind_ci_tour_step)"
-          started=$(read_prefs auramind_ci_live_started)
-          updated=$(read_prefs auramind_ci_live_updated)
-          session=$(read_prefs auramind_ci_live_session)
-          echo "tour attempt: session=$session available=$(read_prefs auramind_ci_live_available) started=$started updated=$updated"
+          echo "tour: $(read_prefs bonamind_ci_tour_step)"
+          started=$(read_prefs bonamind_ci_live_started)
+          updated=$(read_prefs bonamind_ci_live_updated)
+          session=$(read_prefs bonamind_ci_live_session)
+          echo "tour attempt: session=$session available=$(read_prefs bonamind_ci_live_available) started=$started updated=$updated"
           # `session` is a descriptive marker ("session-mounted:<path>"), NOT a
           # boolean - compare by prefix. It is what separates "the tour never
           # reached the study screen" from "the ActivityKit bridge failed".
@@ -279,14 +279,14 @@ jobs:
           [ -f "$PLIST" ] && echo "prefs plist exists" || { echo "::error::prefs plist missing - cannot read driver state"; exit 1; }
           read_prefs() { /usr/libexec/PlistBuddy -c "Print :CapacitorStorage.$1" "$PLIST" 2>/dev/null || echo MISSING; }
           for k in session seen device plugins available started updated; do
-            echo "live-boot $k: $(read_prefs auramind_ci_live_$k)"
+            echo "live-boot $k: $(read_prefs bonamind_ci_live_$k)"
           done
-          echo "tour: $(read_prefs auramind_ci_tour_step)"
-          plugins=$(read_prefs auramind_ci_live_plugins)
-          available=$(read_prefs auramind_ci_live_available)
-          started=$(read_prefs auramind_ci_live_started)
-          updated=$(read_prefs auramind_ci_live_updated)
-          session=$(read_prefs auramind_ci_live_session)
+          echo "tour: $(read_prefs bonamind_ci_tour_step)"
+          plugins=$(read_prefs bonamind_ci_live_plugins)
+          available=$(read_prefs bonamind_ci_live_available)
+          started=$(read_prefs bonamind_ci_live_started)
+          updated=$(read_prefs bonamind_ci_live_updated)
+          session=$(read_prefs bonamind_ci_live_session)
           echo "live-boot available: $available | session: $session | started: $started | updated: $updated"
 
           # Two genuinely different situations, previously reported as one.

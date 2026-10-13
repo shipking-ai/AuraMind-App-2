@@ -49,7 +49,7 @@ export function useTTS(options: TTSOptions = {}): UseTTSReturn {
   // Keep chat voice output and the Settings > Audio preference on the same
   // switch. The old hook used a private storage key, so enabling "Read cards
   // aloud" had no effect in chat and the header toggle reset on every surface.
-  const [isEnabled, setIsEnabled] = useAppPreference<boolean>("auramind_textToSpeech", false);
+  const [isEnabled, setIsEnabled] = useAppPreference<boolean>("bonamind_textToSpeech", false);
   // Bumped on every speak/stop so a superseded utterance never flips
   // isSpeaking off underneath the one that replaced it.
   const tokenRef = useRef(0);

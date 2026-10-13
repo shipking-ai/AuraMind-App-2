@@ -132,7 +132,7 @@ function Avatar({ name, onClick }: { name: string; onClick: () => void }) {
 export function IOSToday() {
   const navigate = useNavigate();
   const { user, decks, cards, startQuickStudy, startStudyForDeck } = useDashboardWorkspace()!;
-  const [goalPref] = useAppPreference("auramind_dailyGoal", "20");
+  const [goalPref] = useAppPreference("bonamind_dailyGoal", "20");
   const goal = Math.max(1, Number.parseInt(String(goalPref), 10) || 20);
   const stats = useDeckStats(decks, cards);
 

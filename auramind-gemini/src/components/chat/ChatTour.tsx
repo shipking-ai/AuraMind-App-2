@@ -139,7 +139,7 @@ export default function ChatTour({ force = false }: Props) {
   const close = useCallback((completed = true) => {
     if (completed) {
       try {
-        window.localStorage.setItem("auramind.aurachat.tourComplete.v1", "1");
+        window.localStorage.setItem("bonamind.aurachat.tourComplete.v1", "1");
       } catch {
         // Storage is best effort.
       }
@@ -154,7 +154,7 @@ export default function ChatTour({ force = false }: Props) {
         setOpen(true);
         return;
       }
-      if (!window.localStorage.getItem("auramind.aurachat.tourComplete.v1")) {
+      if (!window.localStorage.getItem("bonamind.aurachat.tourComplete.v1")) {
         setStep(0);
         setOpen(true);
       }

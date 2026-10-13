@@ -34,7 +34,7 @@ const FEATURES: { key: string; title: string; desc: string; route: string }[] = 
   { key: 'auth', title: 'Auth / Sign-in', desc: 'Sign up, sign in, verification flow', route: '/auth' },
 ];
 
-const WALKTHROUGH_KEY = 'auramind-admin.walkthrough';
+const WALKTHROUGH_KEY = 'bonamind-admin.walkthrough';
 
 const api = () => import.meta.env.VITE_API_BASE_URL || '';
 

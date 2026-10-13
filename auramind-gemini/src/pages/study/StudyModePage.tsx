@@ -124,15 +124,15 @@ export default function StudyModePage() {
   const userId = useCurrentUserId();
   const workspace = useDashboardWorkspace();
   const preview = useContext(StudyPreviewContext);
-  const [dailyGoal] = useAppPreference('auramind_dailyGoal', '20');
-  const [newCards] = useAppPreference('auramind_newCards', '10');
-  const [maxReviews] = useAppPreference('auramind_maxReviews', '100');
-  const [retention] = useAppPreference('auramind_retention', 'Balanced - 85%');
-  const [reviewOrder] = useAppPreference('auramind_reviewOrder', 'FSRS - Optimized');
-  const [showIntervals] = useAppPreference('auramind_showIntervals', true);
-  const [showHintFirst] = useAppPreference('auramind_showHintFirst', false);
-  const [keyboardShortcuts] = useAppPreference('auramind_keyboardShortcuts', true);
-  const [readAloud] = useAppPreference('auramind_textToSpeech', false);
+  const [dailyGoal] = useAppPreference('bonamind_dailyGoal', '20');
+  const [newCards] = useAppPreference('bonamind_newCards', '10');
+  const [maxReviews] = useAppPreference('bonamind_maxReviews', '100');
+  const [retention] = useAppPreference('bonamind_retention', 'Balanced - 85%');
+  const [reviewOrder] = useAppPreference('bonamind_reviewOrder', 'FSRS - Optimized');
+  const [showIntervals] = useAppPreference('bonamind_showIntervals', true);
+  const [showHintFirst] = useAppPreference('bonamind_showHintFirst', false);
+  const [keyboardShortcuts] = useAppPreference('bonamind_keyboardShortcuts', true);
+  const [readAloud] = useAppPreference('bonamind_textToSpeech', false);
   // Tracks when the active study session began. Reset every time the user
   // resets the session via "Study Again" so a re-runs session's startTime
   // doesn't bleed into the prior session row. Used by the session-save
@@ -223,7 +223,7 @@ export default function StudyModePage() {
       try {
         const { decks: fetchedDecks, cards: allCards } = await loadOfflineAwareData(userId, {
           online: isOnline(),
-          offlineMode: getAppPreference('auramind_offlineMode', false),
+          offlineMode: getAppPreference('bonamind_offlineMode', false),
           autoSync: false,
           getCachedDecks,
           getCachedCards,
@@ -266,7 +266,7 @@ export default function StudyModePage() {
         // Pure module; reviews are recorded by the normal path below. Gated
         // on the master spark toggle; the interleave adds ≤20% of the queue.
         let composed = pacedQueue;
-        if (getAppPreference('auramind_sparksEnabled', true)) {
+        if (getAppPreference('bonamind_sparksEnabled', true)) {
           try {
             composed = composeSessionQueue(pacedQueue, allCards, {
               now: Date.now(),
@@ -616,7 +616,7 @@ export default function StudyModePage() {
   );
 
   const lifetimeXp = Number(
-    typeof window !== 'undefined' ? localStorage.getItem('auramind_user_xp') ?? 0 : 0,
+    typeof window !== 'undefined' ? localStorage.getItem('bonamind_user_xp') ?? 0 : 0,
   );
 
   // iPhone gets its own session screen (components/ios/IOSStudySession);

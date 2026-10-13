@@ -82,7 +82,7 @@ const AmbientPlayer: React.FC = () => {
   const [playlist, setPlaylist] = useState<Track[]>(DEFAULT_TRACKS);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useAppPreference("auramind_studyMusicVolume", "50");
+  const [musicVolume, setMusicVolume] = useAppPreference("bonamind_studyMusicVolume", "50");
   const [volume, setVolume] = useState(() => {
     const parsed = Number(musicVolume);
     return Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed / 100)) : 0.5;

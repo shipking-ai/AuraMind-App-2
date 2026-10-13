@@ -193,21 +193,21 @@ export default function AndroidSettingsScreen() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  const [dailyGoal, setDailyGoal] = useStoredValue("auramind_dailyGoal", "20");
-  const [newCards, setNewCards] = useStoredValue("auramind_newCards", "10");
-  const [maxReviews, setMaxReviews] = useStoredValue("auramind_maxReviews", "100");
-  const [retention, setRetention] = useStoredValue("auramind_retention", "Balanced - 85%");
-  const [cardsPerGeneration, setCardsPerGeneration] = useStoredValue("auramind_cardsPerGen", "20");
-  const [includeExamples, setIncludeExamples] = useStoredValue("auramind_includeExamples", true);
+  const [dailyGoal, setDailyGoal] = useStoredValue("bonamind_dailyGoal", "20");
+  const [newCards, setNewCards] = useStoredValue("bonamind_newCards", "10");
+  const [maxReviews, setMaxReviews] = useStoredValue("bonamind_maxReviews", "100");
+  const [retention, setRetention] = useStoredValue("bonamind_retention", "Balanced - 85%");
+  const [cardsPerGeneration, setCardsPerGeneration] = useStoredValue("bonamind_cardsPerGen", "20");
+  const [includeExamples, setIncludeExamples] = useStoredValue("bonamind_includeExamples", true);
   const [defaultLanguage, setDefaultLanguage] = useStoredValue(
-    "auramind_defaultLanguage",
+    "bonamind_defaultLanguage",
     "English",
   );
-  const [reviewOrder, setReviewOrder] = useStoredValue("auramind_reviewOrder", "FSRS - Optimized");
-  const [dailyReminder, setDailyReminder] = useStoredValue("auramind_dailyReminder", true);
-  const [reminderTime, setReminderTime] = useStoredValue("auramind_reminderTime", "09:00");
-  const [dueReminder, setDueReminder] = useStoredValue("auramind_dueReminder", true);
-  const [pushReminders, setPushReminders] = useStoredValue("auramind_pushReminders", false);
+  const [reviewOrder, setReviewOrder] = useStoredValue("bonamind_reviewOrder", "FSRS - Optimized");
+  const [dailyReminder, setDailyReminder] = useStoredValue("bonamind_dailyReminder", true);
+  const [reminderTime, setReminderTime] = useStoredValue("bonamind_reminderTime", "09:00");
+  const [dueReminder, setDueReminder] = useStoredValue("bonamind_dueReminder", true);
+  const [pushReminders, setPushReminders] = useStoredValue("bonamind_pushReminders", false);
 
   /**
    * Server-sent push. Enabling probes Firebase for real: without
@@ -235,18 +235,18 @@ export default function AndroidSettingsScreen() {
       toast.error("Push isn't available on this build yet");
     }
   };
-  const [streakReminder, setStreakReminder] = useStoredValue("auramind_streakReminder", true);
-  const [weeklySummary, setWeeklySummary] = useStoredValue("auramind_weeklySummary", false);
-  const [soundEffects, setSoundEffects] = useStoredValue("auramind_soundEffects", true);
-  const [textToSpeech, setTextToSpeech] = useStoredValue("auramind_textToSpeech", false);
+  const [streakReminder, setStreakReminder] = useStoredValue("bonamind_streakReminder", true);
+  const [weeklySummary, setWeeklySummary] = useStoredValue("bonamind_weeklySummary", false);
+  const [soundEffects, setSoundEffects] = useStoredValue("bonamind_soundEffects", true);
+  const [textToSpeech, setTextToSpeech] = useStoredValue("bonamind_textToSpeech", false);
   const [ttsVoice, setTtsVoice] = useStoredValue<string>(VOICE_PREF_KEY, DEFAULT_VOICE);
   const voiceOptions = useVoiceOptions(ttsVoice);
   const [spokenReminder, setSpokenReminder] = useStoredValue<SpokenReminderMode>(
-    "auramind_spokenReminder",
+    "bonamind_spokenReminder",
     "off",
   );
   const [spokenReminderMessage, setSpokenReminderMessage] = useStoredValue<string>(
-    "auramind_spokenReminderMessage",
+    "bonamind_spokenReminderMessage",
     SPOKEN_REMINDER_MESSAGES[0],
   );
 
@@ -277,23 +277,23 @@ export default function AndroidSettingsScreen() {
       toast.error("Couldn't play the reminder. Check your notification volume.");
     }
   };
-  const [autoPlayAudio, setAutoPlayAudio] = useStoredValue("auramind_autoPlayAudio", false);
-  const [reduceMotion, setReduceMotion] = useStoredValue("auramind_reduceMotion", false);
-  const [highContrast, setHighContrast] = useStoredValue("auramind_highContrast", false);
-  const [compactMode, setCompactMode] = useStoredValue("auramind_compactMode", false);
-  const [autoNightMode, setAutoNightMode] = useStoredValue("auramind_autoNightMode", true);
-  const [showHintFirst, setShowHintFirst] = useStoredValue("auramind_showHintFirst", false);
-  const [showIntervals, setShowIntervals] = useStoredValue("auramind_showIntervals", true);
+  const [autoPlayAudio, setAutoPlayAudio] = useStoredValue("bonamind_autoPlayAudio", false);
+  const [reduceMotion, setReduceMotion] = useStoredValue("bonamind_reduceMotion", false);
+  const [highContrast, setHighContrast] = useStoredValue("bonamind_highContrast", false);
+  const [compactMode, setCompactMode] = useStoredValue("bonamind_compactMode", false);
+  const [autoNightMode, setAutoNightMode] = useStoredValue("bonamind_autoNightMode", true);
+  const [showHintFirst, setShowHintFirst] = useStoredValue("bonamind_showHintFirst", false);
+  const [showIntervals, setShowIntervals] = useStoredValue("bonamind_showIntervals", true);
   const [keyboardShortcuts, setKeyboardShortcuts] = useStoredValue(
-    "auramind_keyboardShortcuts",
+    "bonamind_keyboardShortcuts",
     true,
   );
-  const [fontSize, setFontSize] = useStoredValue("auramind_fontSize", "Medium");
-  const [theme, setTheme] = useStoredValue("auramind_theme", "dark");
-  const [autoSync, setAutoSync] = useStoredValue("auramind_autoSync", true);
-  const [offlineMode, setOfflineMode] = useStoredValue("auramind_offlineMode", false);
-  const [usageAnalytics, setUsageAnalytics] = useStoredValue("auramind_usageAnalytics", true);
-  const [saveChatHistory, setSaveChatHistory] = useStoredValue("auramind_saveChatHistory", true);
+  const [fontSize, setFontSize] = useStoredValue("bonamind_fontSize", "Medium");
+  const [theme, setTheme] = useStoredValue("bonamind_theme", "dark");
+  const [autoSync, setAutoSync] = useStoredValue("bonamind_autoSync", true);
+  const [offlineMode, setOfflineMode] = useStoredValue("bonamind_offlineMode", false);
+  const [usageAnalytics, setUsageAnalytics] = useStoredValue("bonamind_usageAnalytics", true);
+  const [saveChatHistory, setSaveChatHistory] = useStoredValue("bonamind_saveChatHistory", true);
   const [appLock, setAppLock] = useStoredValue(APP_LOCK_PREF_KEY, false);
   const [biometricDetail, setBiometricDetail] = useState<string | null>(null);
   const { getAvailability, authenticate } = useBiometricAuth();
@@ -428,7 +428,7 @@ export default function AndroidSettingsScreen() {
 
   const exportData = () => {
     const values = Object.keys(localStorage)
-      .filter((key) => key.startsWith("auramind_"))
+      .filter((key) => key.startsWith("bonamind_"))
       .reduce<Record<string, string | null>>(
         (all, key) => ({ ...all, [key]: localStorage.getItem(key) }),
         {},
@@ -438,7 +438,7 @@ export default function AndroidSettingsScreen() {
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = `auramind-settings-${Date.now()}.json`;
+    link.download = `bonamind-settings-${Date.now()}.json`;
     link.click();
     URL.revokeObjectURL(url);
     hapticSuccess();
@@ -447,41 +447,41 @@ export default function AndroidSettingsScreen() {
 
   const clearLocalData = () => {
     const preferenceKeys = new Set([
-      "auramind_dailyGoal",
-      "auramind_newCards",
-      "auramind_maxReviews",
-      "auramind_cardsPerGen",
-      "auramind_includeExamples",
-      "auramind_defaultLanguage",
-      "auramind_retention",
-      "auramind_reviewOrder",
-      "auramind_dailyReminder",
-      "auramind_reminderTime",
-      "auramind_dueReminder",
-      "auramind_streakReminder",
-      "auramind_weeklySummary",
-      "auramind_soundEffects",
-      "auramind_textToSpeech",
+      "bonamind_dailyGoal",
+      "bonamind_newCards",
+      "bonamind_maxReviews",
+      "bonamind_cardsPerGen",
+      "bonamind_includeExamples",
+      "bonamind_defaultLanguage",
+      "bonamind_retention",
+      "bonamind_reviewOrder",
+      "bonamind_dailyReminder",
+      "bonamind_reminderTime",
+      "bonamind_dueReminder",
+      "bonamind_streakReminder",
+      "bonamind_weeklySummary",
+      "bonamind_soundEffects",
+      "bonamind_textToSpeech",
       VOICE_PREF_KEY,
-      "auramind_spokenReminder",
-      "auramind_spokenReminderMessage",
-      "auramind_autoPlayAudio",
-      "auramind_reduceMotion",
-      "auramind_highContrast",
-      "auramind_compactMode",
-      "auramind_autoNightMode",
-      "auramind_showHintFirst",
-      "auramind_showIntervals",
-      "auramind_keyboardShortcuts",
-      "auramind_fontSize",
-      "auramind_theme",
-      "auramind_autoSync",
-      "auramind_offlineMode",
-      "auramind_usageAnalytics",
-      "auramind_saveChatHistory",
+      "bonamind_spokenReminder",
+      "bonamind_spokenReminderMessage",
+      "bonamind_autoPlayAudio",
+      "bonamind_reduceMotion",
+      "bonamind_highContrast",
+      "bonamind_compactMode",
+      "bonamind_autoNightMode",
+      "bonamind_showHintFirst",
+      "bonamind_showIntervals",
+      "bonamind_keyboardShortcuts",
+      "bonamind_fontSize",
+      "bonamind_theme",
+      "bonamind_autoSync",
+      "bonamind_offlineMode",
+      "bonamind_usageAnalytics",
+      "bonamind_saveChatHistory",
     ]);
     Object.keys(localStorage)
-      .filter((key) => key.startsWith("auramind_") && !preferenceKeys.has(key))
+      .filter((key) => key.startsWith("bonamind_") && !preferenceKeys.has(key))
       .forEach((key) => localStorage.removeItem(key));
     hapticSuccess();
     toast.success("Local cache cleared");

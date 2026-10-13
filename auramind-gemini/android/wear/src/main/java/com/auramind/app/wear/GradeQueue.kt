@@ -1,6 +1,7 @@
 package com.auramind.app.wear
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.google.android.gms.tasks.Tasks
 import org.json.JSONArray
 import org.json.JSONObject
@@ -70,13 +71,21 @@ object GradeQueueLogic {
  * thread — Tasks.await blocks).
  */
 object GradeQueue {
-    private const val PREFS = "auramind_wear_grade_queue"
+    private const val PREFS = "bonamind_wear_grade_queue"
+    /** Pre-rename file, moved into PREFS on first use (see LegacyPrefs). */
+    private const val LEGACY_PREFS = "auramind_wear_grade_queue"
     private const val KEY_QUEUE = "queue"
     private const val KEY_OVERFLOWED = "overflowed"
     private const val SEND_TIMEOUT_SECONDS = 5L
 
+    private fun prefs(context: Context): SharedPreferences {
+        val current = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        LegacyPrefs.migrate(context.getSharedPreferences(LEGACY_PREFS, Context.MODE_PRIVATE), current)
+        return current
+    }
+
     fun enqueue(context: Context, grade: GradeResult) {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val prefs = prefs(context)
         val current = JSONArray(prefs.getString(KEY_QUEUE, "[]"))
         val (next, dropped) = GradeQueueLogic.append(current, grade)
         prefs.edit().putString(KEY_QUEUE, next.toString()).apply()
@@ -85,7 +94,7 @@ object GradeQueue {
 
     /** Attempts delivery of every queued grade; keeps the ones that failed. */
     fun flush(context: Context): Int {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val prefs = prefs(context)
         val arr = JSONArray(prefs.getString(KEY_QUEUE, "[]"))
         if (arr.length() == 0) return 0
         var sent = 0
@@ -105,11 +114,11 @@ object GradeQueue {
     }
 
     fun size(context: Context): Int =
-        GradeQueueLogic.size(JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_QUEUE, "[]")))
+        GradeQueueLogic.size(JSONArray(prefs(context).getString(KEY_QUEUE, "[]")))
 
     /** Retracts the newest still-queued grade for a card. False = already synced. */
     fun removeLastMatching(context: Context, cardId: String): Boolean {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val prefs = prefs(context)
         val current = JSONArray(prefs.getString(KEY_QUEUE, "[]"))
         val (next, removed) = GradeQueueLogic.removeLastMatching(current, cardId)
         if (removed) prefs.edit().putString(KEY_QUEUE, next.toString()).apply()
@@ -117,5 +126,5 @@ object GradeQueue {
     }
 
     fun overflowed(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_OVERFLOWED, false)
+        prefs(context).getBoolean(KEY_OVERFLOWED, false)
 }

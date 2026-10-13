@@ -53,7 +53,7 @@ describe('DesktopSettingsSection', () => {
     await act(async () => { fireEvent.keyDown(window, { code: 'KeyQ', key: 'q', ctrlKey: true, altKey: true }); });
     expect(bridge.setShortcut).toHaveBeenCalledWith('CommandOrControl+Alt+Q');
     expect(screen.getByText('Ctrl + Alt + Q')).toBeInTheDocument();
-    expect(localStorage.getItem('auramind_quickReviewShortcut')).toBe(JSON.stringify('CommandOrControl+Alt+Q'));
+    expect(localStorage.getItem('bonamind_quickReviewShortcut')).toBe(JSON.stringify('CommandOrControl+Alt+Q'));
   });
 
   it('explains a shortcut another app owns and keeps the old one', async () => {

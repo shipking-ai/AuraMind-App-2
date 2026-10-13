@@ -9,13 +9,13 @@ import {
 type CellState = "yes" | "partial" | "no";
 
 interface ProductDef {
-  id: "auramind" | "anki" | "quizlet" | "remnote";
+  id: "bonamind" | "anki" | "quizlet" | "remnote";
   label: string;
   highlight: boolean;
 }
 
 const PRODUCTS: ProductDef[] = [
-  { id: "auramind", label: "BonaMind", highlight: true },
+  { id: "bonamind", label: "BonaMind", highlight: true },
   { id: "anki", label: "Anki", highlight: false },
   { id: "quizlet", label: "Quizlet", highlight: false },
   { id: "remnote", label: "RemNote", highlight: false },
@@ -31,32 +31,32 @@ const ROWS: ComparisonRow[] = [
   {
     feature: "AI deck generation",
     detail: "Paste a topic — get a complete deck in 30 seconds",
-    values: { auramind: "yes", anki: "no", quizlet: "partial", remnote: "partial" },
+    values: { bonamind: "yes", anki: "no", quizlet: "partial", remnote: "partial" },
   },
   {
     feature: "FSRS v5 scheduling",
     detail: "Modern memory science, designed to need fewer reviews (Anki users can opt in)",
-    values: { auramind: "yes", anki: "partial", quizlet: "no", remnote: "no" },
+    values: { bonamind: "yes", anki: "partial", quizlet: "no", remnote: "no" },
   },
   {
     feature: "Bring your Anki decks (.apkg)",
     detail: "Import your existing library in one click",
-    values: { auramind: "yes", anki: "yes", quizlet: "no", remnote: "no" },
+    values: { bonamind: "yes", anki: "yes", quizlet: "no", remnote: "no" },
   },
   {
     feature: "Concept map linking",
     detail: "Link cards across decks to see the bigger picture",
-    values: { auramind: "yes", anki: "no", quizlet: "no", remnote: "partial" },
+    values: { bonamind: "yes", anki: "no", quizlet: "no", remnote: "partial" },
   },
   {
     feature: "Native mobile + desktop",
     detail: "Offline study, OS-level notifications, no churn",
-    values: { auramind: "yes", anki: "yes", quizlet: "partial", remnote: "partial" },
+    values: { bonamind: "yes", anki: "yes", quizlet: "partial", remnote: "partial" },
   },
   {
     feature: "Generous free tier",
     detail: "No card caps to start, no zero-day schedule paywall",
-    values: { auramind: "yes", anki: "yes", quizlet: "partial", remnote: "yes" },
+    values: { bonamind: "yes", anki: "yes", quizlet: "partial", remnote: "yes" },
   },
 ];
 

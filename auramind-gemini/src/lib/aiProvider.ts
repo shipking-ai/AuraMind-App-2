@@ -11,7 +11,7 @@ import { readClientEnv } from './env';
 
 export type AIProvider = 'cloud' | 'local';
 
-const STORAGE_KEY = 'auramind_ai_provider';
+const STORAGE_KEY = 'bonamind_ai_provider';
 
 function readEnv(key: string): string | undefined {
 // Allowlisted read — see CLIENT_ENV in lib/env.ts. Dynamic indexing of

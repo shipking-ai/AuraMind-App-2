@@ -50,7 +50,7 @@ export async function publishWindowsWidgetState(state: WidgetState): Promise<voi
   try {
     const registration = await navigator.serviceWorker.ready;
     const worker = registration.active ?? navigator.serviceWorker.controller;
-    worker?.postMessage({ type: 'auramind-widget-state', state: payload });
+    worker?.postMessage({ type: 'bonamind-widget-state', state: payload });
   } catch {
     // No worker yet (first load, private window): the next change re-posts.
     lastPublished = '';

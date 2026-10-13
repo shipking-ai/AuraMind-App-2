@@ -147,7 +147,7 @@ onConnectionChange(
   () => {
     isCurrentlyOnline = true;
     console.warn('[Network] Connection restored');
-    const autoSync = getAppPreference('auramind_autoSync', true);
+    const autoSync = getAppPreference('bonamind_autoSync', true);
     if (!autoSync) return;
     syncOfflineData().then(result => {
       if (result.synced > 0) {

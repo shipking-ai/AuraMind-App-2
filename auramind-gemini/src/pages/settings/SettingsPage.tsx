@@ -279,46 +279,46 @@ export default function SettingsPage() {
   // Use workspace user for display name (matches sidebar), fall back to profile
   const displayName = workspace?.user?.name || profile?.name || 'User';
 
-  const [dailyGoal, setDailyGoal] = useLocalStorage('auramind_dailyGoal', '20');
-  const [newCards, setNewCards] = useLocalStorage('auramind_newCards', '10');
-  const [maxReviews, setMaxReviews] = useLocalStorage('auramind_maxReviews', '100');
-  const [retention, setRetention] = useLocalStorage('auramind_retention', 'Balanced - 85%');
-  const [showIntervals, setShowIntervals] = useLocalStorage('auramind_showIntervals', true);
-  const [keyboardShortcuts, setKeyboardShortcuts] = useLocalStorage('auramind_keyboardShortcuts', true);
-  const [cardsPerGen, setCardsPerGen] = useLocalStorage('auramind_cardsPerGen', '20');
-  const [includeExamples, setIncludeExamples] = useLocalStorage('auramind_includeExamples', true);
-  const [defaultLanguage, setDefaultLanguage] = useLocalStorage('auramind_defaultLanguage', 'English');
-  const [dailyReminder, setDailyReminder] = useLocalStorage('auramind_dailyReminder', true);
+  const [dailyGoal, setDailyGoal] = useLocalStorage('bonamind_dailyGoal', '20');
+  const [newCards, setNewCards] = useLocalStorage('bonamind_newCards', '10');
+  const [maxReviews, setMaxReviews] = useLocalStorage('bonamind_maxReviews', '100');
+  const [retention, setRetention] = useLocalStorage('bonamind_retention', 'Balanced - 85%');
+  const [showIntervals, setShowIntervals] = useLocalStorage('bonamind_showIntervals', true);
+  const [keyboardShortcuts, setKeyboardShortcuts] = useLocalStorage('bonamind_keyboardShortcuts', true);
+  const [cardsPerGen, setCardsPerGen] = useLocalStorage('bonamind_cardsPerGen', '20');
+  const [includeExamples, setIncludeExamples] = useLocalStorage('bonamind_includeExamples', true);
+  const [defaultLanguage, setDefaultLanguage] = useLocalStorage('bonamind_defaultLanguage', 'English');
+  const [dailyReminder, setDailyReminder] = useLocalStorage('bonamind_dailyReminder', true);
   // Memory sparks (sporadic FSRS-driven resurfacing) — master + per-surface.
-  const [sparksEnabled, setSparksEnabled] = useLocalStorage('auramind_sparksEnabled', true);
-  const [sparksPopup, setSparksPopup] = useLocalStorage('auramind_sparksPopup', true);
-  const [sparksNotifications, setSparksNotifications] = useLocalStorage('auramind_sparksNotifications', true);
-  const [reminderTime, setReminderTime] = useLocalStorage('auramind_reminderTime', '09:00');
-  const [dueReminder, setDueReminder] = useLocalStorage('auramind_dueReminder', true);
-  const [streakReminder, setStreakReminder] = useLocalStorage('auramind_streakReminder', true);
-  const [weeklySummary, setWeeklySummary] = useLocalStorage('auramind_weeklySummary', false);
-  const [theme, setTheme] = useLocalStorage('auramind_theme', 'dark');
-  const [reduceMotion, setReduceMotion] = useLocalStorage('auramind_reduceMotion', false);
-  const [compactMode, setCompactMode] = useLocalStorage('auramind_compactMode', false);
-  const [usageAnalytics, setUsageAnalytics] = useLocalStorage('auramind_usageAnalytics', true);
-  const [saveChatHistory, setSaveChatHistory] = useLocalStorage('auramind_saveChatHistory', true);
-  const [soundEffects, setSoundEffects] = useLocalStorage('auramind_soundEffects', true);
-  const [studyMusicVolume, setStudyMusicVolume] = useLocalStorage('auramind_studyMusicVolume', '50');
-  const [autoSync, setAutoSync] = useLocalStorage('auramind_autoSync', true);
-  const [offlineMode, setOfflineMode] = useLocalStorage('auramind_offlineMode', false);
-  const [fontSize, setFontSize] = useLocalStorage('auramind_fontSize', 'Medium');
-  const [highContrast, setHighContrast] = useLocalStorage('auramind_highContrast', false);
-  const [textToSpeech, setTextToSpeech] = useLocalStorage('auramind_textToSpeech', false);
+  const [sparksEnabled, setSparksEnabled] = useLocalStorage('bonamind_sparksEnabled', true);
+  const [sparksPopup, setSparksPopup] = useLocalStorage('bonamind_sparksPopup', true);
+  const [sparksNotifications, setSparksNotifications] = useLocalStorage('bonamind_sparksNotifications', true);
+  const [reminderTime, setReminderTime] = useLocalStorage('bonamind_reminderTime', '09:00');
+  const [dueReminder, setDueReminder] = useLocalStorage('bonamind_dueReminder', true);
+  const [streakReminder, setStreakReminder] = useLocalStorage('bonamind_streakReminder', true);
+  const [weeklySummary, setWeeklySummary] = useLocalStorage('bonamind_weeklySummary', false);
+  const [theme, setTheme] = useLocalStorage('bonamind_theme', 'dark');
+  const [reduceMotion, setReduceMotion] = useLocalStorage('bonamind_reduceMotion', false);
+  const [compactMode, setCompactMode] = useLocalStorage('bonamind_compactMode', false);
+  const [usageAnalytics, setUsageAnalytics] = useLocalStorage('bonamind_usageAnalytics', true);
+  const [saveChatHistory, setSaveChatHistory] = useLocalStorage('bonamind_saveChatHistory', true);
+  const [soundEffects, setSoundEffects] = useLocalStorage('bonamind_soundEffects', true);
+  const [studyMusicVolume, setStudyMusicVolume] = useLocalStorage('bonamind_studyMusicVolume', '50');
+  const [autoSync, setAutoSync] = useLocalStorage('bonamind_autoSync', true);
+  const [offlineMode, setOfflineMode] = useLocalStorage('bonamind_offlineMode', false);
+  const [fontSize, setFontSize] = useLocalStorage('bonamind_fontSize', 'Medium');
+  const [highContrast, setHighContrast] = useLocalStorage('bonamind_highContrast', false);
+  const [textToSpeech, setTextToSpeech] = useLocalStorage('bonamind_textToSpeech', false);
   const [ttsVoice, setTtsVoice] = useLocalStorage<string>(VOICE_PREF_KEY, DEFAULT_VOICE);
   const voiceOptions = useVoiceOptions(ttsVoice);
   const chooseVoice = (next: string) => {
     if (next === VOICE_RANDOM) resetRandomVoice();
     setTtsVoice(next);
   };
-  const [autoNightMode, setAutoNightMode] = useLocalStorage('auramind_autoNightMode', true);
-  const [reviewOrder, setReviewOrder] = useLocalStorage('auramind_reviewOrder', 'FSRS - Optimized');
-  const [showHintFirst, setShowHintFirst] = useLocalStorage('auramind_showHintFirst', false);
-  const [autoPlayAudio, setAutoPlayAudio] = useLocalStorage('auramind_autoPlayAudio', false);
+  const [autoNightMode, setAutoNightMode] = useLocalStorage('bonamind_autoNightMode', true);
+  const [reviewOrder, setReviewOrder] = useLocalStorage('bonamind_reviewOrder', 'FSRS - Optimized');
+  const [showHintFirst, setShowHintFirst] = useLocalStorage('bonamind_showHintFirst', false);
+  const [autoPlayAudio, setAutoPlayAudio] = useLocalStorage('bonamind_autoPlayAudio', false);
   const [aiProvider, setAiProviderState] = useState<AIProvider>(getAIProvider());
   const [_showPassword, _setShowPassword] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -433,27 +433,27 @@ export default function SettingsPage() {
   }, [workspace, navigate]);
 
   const handleClearCache = useCallback(() => {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('auramind_') && k !== 'auramind_theme');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('bonamind_') && k !== 'bonamind_theme');
     keys.forEach(k => localStorage.removeItem(k));
     toast.success('Cache cleared');
   }, []);
 
   const handleResetProgress = useCallback(() => {
     if (!window.confirm('This will reset all your study progress and streaks. Are you sure?')) return;
-    const keep = ['auramind_theme', 'auramind_dailyGoal', 'auramind_newCards', 'auramind_maxReviews'];
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('auramind_') && !keep.includes(k));
+    const keep = ['bonamind_theme', 'bonamind_dailyGoal', 'bonamind_newCards', 'bonamind_maxReviews'];
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('bonamind_') && !keep.includes(k));
     keys.forEach(k => localStorage.removeItem(k));
     toast.success('Progress reset');
   }, []);
 
   const handleExportData = useCallback(async () => {
     const stats = Object.keys(localStorage)
-      .filter(k => k.startsWith('auramind_'))
+      .filter(k => k.startsWith('bonamind_'))
       .reduce((acc, k) => ({ ...acc, [k]: localStorage.getItem(k) }), {} as Record<string, string | null>);
     const blob = new Blob([JSON.stringify(stats, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `auramind-export-${Date.now()}.json`; a.click();
+    a.href = url; a.download = `bonamind-export-${Date.now()}.json`; a.click();
     URL.revokeObjectURL(url);
     toast.success('Data exported');
   }, []);
@@ -462,7 +462,7 @@ export default function SettingsPage() {
     const blob = new Blob(['# BonaMind Anki Export\n# Format: Front\tBack\n'], { type: 'text/tab-separated-values' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `auramind-anki-${Date.now()}.tsv`; a.click();
+    a.href = url; a.download = `bonamind-anki-${Date.now()}.tsv`; a.click();
     URL.revokeObjectURL(url);
     toast.success('Anki package exported');
   }, []);

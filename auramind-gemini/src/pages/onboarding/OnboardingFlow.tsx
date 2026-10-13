@@ -37,7 +37,7 @@ const ROLE_ICONS: Record<OnboardingRole, LucideIcon> = {
 };
 
 /** Marks the in-app dashboard tour done so it doesn't double-run. */
-const FIRST_RUN_FLAG = "auramind:completedTutorials";
+const FIRST_RUN_FLAG = "bonamind:completedTutorials";
 
 function markFirstRunComplete() {
   try {

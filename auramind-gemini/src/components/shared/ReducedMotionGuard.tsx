@@ -14,7 +14,7 @@ interface ReducedMotionGuardProps {
 }
 
 const ReducedMotionGuard: React.FC<ReducedMotionGuardProps> = ({ children }) => {
-  const [reduceMotion] = useAppPreference("auramind_reduceMotion", false);
+  const [reduceMotion] = useAppPreference("bonamind_reduceMotion", false);
 
   return (
     <MotionConfig reducedMotion={reduceMotion ? "always" : "user"}>

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 export type PreferenceValue = string | number | boolean | null;
 export type PreferenceSetter<T> = T | ((previous: T) => T);
 
-const CHANGE_EVENT = "auramind:preferences-changed";
+const CHANGE_EVENT = "bonamind:preferences-changed";
 
 function readRaw(key: string): string | null {
   if (typeof window === "undefined") return null;
@@ -55,7 +55,7 @@ export function applyPreferenceToDocument(key: string, value: unknown): void {
   const root = document.documentElement;
 
   switch (key) {
-    case "auramind_theme": {
+    case "bonamind_theme": {
       const resolved = resolveTheme(value);
       root.dataset.theme = normalizeTheme(value);
       root.classList.toggle("light", resolved === "light");
@@ -63,34 +63,34 @@ export function applyPreferenceToDocument(key: string, value: unknown): void {
       root.style.colorScheme = resolved;
       break;
     }
-    case "auramind_fontSize":
+    case "bonamind_fontSize":
       root.dataset.fontSize = token(value) || "medium";
       break;
-    case "auramind_highContrast":
+    case "bonamind_highContrast":
       root.dataset.highContrast = String(Boolean(value));
       break;
-    case "auramind_reduceMotion":
+    case "bonamind_reduceMotion":
       root.dataset.reduceMotion = String(Boolean(value));
       break;
-    case "auramind_compactMode":
+    case "bonamind_compactMode":
       root.dataset.compactMode = String(Boolean(value));
       break;
-    case "auramind_autoNightMode":
+    case "bonamind_autoNightMode":
       root.dataset.autoNightMode = String(Boolean(value));
       break;
-    case "auramind_autoSync":
+    case "bonamind_autoSync":
       root.dataset.autoSync = String(Boolean(value));
       break;
-    case "auramind_offlineMode":
+    case "bonamind_offlineMode":
       root.dataset.offlineMode = String(Boolean(value));
       break;
-    case "auramind_soundEffects":
+    case "bonamind_soundEffects":
       root.dataset.soundEffects = String(Boolean(value));
       break;
-    case "auramind_textToSpeech":
+    case "bonamind_textToSpeech":
       root.dataset.textToSpeech = String(Boolean(value));
       break;
-    case "auramind_autoPlayAudio":
+    case "bonamind_autoPlayAudio":
       root.dataset.autoPlayAudio = String(Boolean(value));
       break;
     default:
@@ -101,17 +101,17 @@ export function applyPreferenceToDocument(key: string, value: unknown): void {
 /** Apply all persisted document-level settings during app boot. */
 export function applyStoredPreferences(): void {
   const keys = [
-    "auramind_theme",
-    "auramind_fontSize",
-    "auramind_highContrast",
-    "auramind_reduceMotion",
-    "auramind_compactMode",
-    "auramind_autoNightMode",
-    "auramind_autoSync",
-    "auramind_offlineMode",
-    "auramind_soundEffects",
-    "auramind_textToSpeech",
-    "auramind_autoPlayAudio",
+    "bonamind_theme",
+    "bonamind_fontSize",
+    "bonamind_highContrast",
+    "bonamind_reduceMotion",
+    "bonamind_compactMode",
+    "bonamind_autoNightMode",
+    "bonamind_autoSync",
+    "bonamind_offlineMode",
+    "bonamind_soundEffects",
+    "bonamind_textToSpeech",
+    "bonamind_autoPlayAudio",
   ];
 
   for (const key of keys) {

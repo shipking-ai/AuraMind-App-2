@@ -12,6 +12,9 @@
     <title data-brand="title">AuraMind - Your AI Learning System</title>
     <meta data-brand="description" name="description" content="AuraMind turns any PDF, video, or topic into a personalized course — AI flashcards, quizzes, FSRS v5 spaced repetition, and a tutor that remembers exactly what you struggle with." />
     <meta data-brand="author" name="author" content="AuraMind" />
+    <!-- Must stay the first script: moves pre-rename storage keys before any
+         module can read them (see public/storage-migrate.js). -->
+    <script src="/storage-migrate.js"></script>
     <script src="/platform-detect.js"></script>
     <link rel="stylesheet" href="/src/index.css">
     <!-- Favicons & Logos -->

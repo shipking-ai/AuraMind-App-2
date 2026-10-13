@@ -2074,7 +2074,10 @@ const PushSendSchema = z.object({
   link: z
     .string()
     .max(200)
-    .refine((v) => v.startsWith('auramind://'), { message: 'link must be an auramind:// deep link' })
+    // auramind:// predates the rename; installed apps accept both schemes.
+    .refine((v) => v.startsWith('bonamind://') || v.startsWith('auramind://'), {
+      message: 'link must be a bonamind:// deep link',
+    })
     .optional(),
 });
 

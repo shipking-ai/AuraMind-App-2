@@ -53,8 +53,8 @@ async function pickNotificationCard(userId: string, now: number, excludeCardIds:
 }
 
 export function useSparkSync(mode: SparkSyncMode = 'maintain'): void {
-  const [sparksEnabled] = useAppPreference('auramind_sparksEnabled', true);
-  const [notificationsEnabled] = useAppPreference('auramind_sparksNotifications', true);
+  const [sparksEnabled] = useAppPreference('bonamind_sparksEnabled', true);
+  const [notificationsEnabled] = useAppPreference('bonamind_sparksNotifications', true);
   const { requestPermissions, checkPermissions, schedule, cancel } = useLocalNotifications();
   const userId = useCurrentUserId();
   const plannedDayRef = useRef<number | null>(null);

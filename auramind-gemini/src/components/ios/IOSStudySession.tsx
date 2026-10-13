@@ -26,7 +26,7 @@ import { ActivityRings, deckGradient } from "./IOSPrimitives";
 import { iosSelection } from "./iosHaptics";
 
 export type IOSCardStyle = "paper" | "glass";
-export const IOS_CARD_STYLE_KEY = "auramind_iosCardStyle";
+export const IOS_CARD_STYLE_KEY = "bonamind_iosCardStyle";
 
 const GRADES: Array<{ rating: Rating; label: string; color: string }> = [
   { rating: Rating.AGAIN, label: "Again", color: "var(--ios-red)" },

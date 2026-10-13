@@ -28,7 +28,7 @@ export interface DynamicScheme {
   night: boolean;
 }
 
-const CACHE_KEY = 'auramind_dynamic_scheme';
+const CACHE_KEY = 'bonamind_dynamic_scheme';
 
 const VAR_MAP: Array<[string, keyof Omit<DynamicScheme, 'night'>]> = [
   ['--android-dynamic-primary', 'primary'],
@@ -68,7 +68,7 @@ function applyCached(): void {
  */
 function isNight(): boolean {
   try {
-    const theme = String(getAppPreference('auramind_theme', 'dark')).toLowerCase();
+    const theme = String(getAppPreference('bonamind_theme', 'dark')).toLowerCase();
     if (theme === 'light') return false;
     if (theme === 'dark') return true;
   } catch {

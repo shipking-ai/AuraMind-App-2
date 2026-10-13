@@ -18,7 +18,7 @@ import { useStudyStats } from '../hooks/useStudyStats';
 import { useAppPreference } from '../lib/appPreferences';
 import { supabase } from '../services/database/supabase';
 
-export const QUICK_REVIEW_SHORTCUT_PREF = 'auramind_quickReviewShortcut';
+export const QUICK_REVIEW_SHORTCUT_PREF = 'bonamind_quickReviewShortcut';
 export const DEFAULT_QUICK_REVIEW_SHORTCUT = 'CommandOrControl+Alt+Space';
 const MINUTE = 60_000;
 
@@ -48,9 +48,9 @@ export function useDesktopIntegration(input: {
   const navigate = useNavigate();
   const location = useLocation();
   const { streak } = useStudyStats(userId ?? null);
-  const [reminderTime] = useAppPreference('auramind_reminderTime', DEFAULT_NUDGE_PREFS.reminderTime);
-  const [dailyReminder] = useAppPreference('auramind_dailyReminder', true);
-  const [dueReminder] = useAppPreference('auramind_dueReminder', true);
+  const [reminderTime] = useAppPreference('bonamind_reminderTime', DEFAULT_NUDGE_PREFS.reminderTime);
+  const [dailyReminder] = useAppPreference('bonamind_dailyReminder', true);
+  const [dueReminder] = useAppPreference('bonamind_dueReminder', true);
   const [shortcut] = useAppPreference(QUICK_REVIEW_SHORTCUT_PREF, DEFAULT_QUICK_REVIEW_SHORTCUT);
   const studying = location.pathname.startsWith('/dashboard/study/');
 

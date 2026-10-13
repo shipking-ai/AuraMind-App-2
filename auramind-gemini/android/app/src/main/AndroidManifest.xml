@@ -49,13 +49,16 @@
             </intent-filter>
 
             <!-- Deep links for launcher shortcuts (and anything else that can
-                 open a URL): auramind://app/<path>. Capacitor's App plugin
+                 open a URL): bonamind://app/<path>, and the pre-rename
+                 auramind://app/<path> that older shortcuts, widgets and
+                 notifications still send. Capacitor's App plugin
                  forwards these to the JS `appUrlOpen` listener, which routes
                  them — see NativeRuntime. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bonamind" android:host="app" />
                 <data android:scheme="auramind" android:host="app" />
             </intent-filter>
 

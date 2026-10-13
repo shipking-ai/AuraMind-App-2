@@ -4,6 +4,7 @@ import {
   APP_SHORT_NAME_RESOLVED,
   APP_DESCRIPTION,
 } from '../../app-identity.ts';
+import { WINDOWS_WIDGET_TAG } from './legacyNames.ts';
 
 /**
  * PWA Configuration for BonaMind
@@ -62,8 +63,8 @@ export const pwaConfig = VitePWA({
         name: 'Cards due',
         short_name: 'Due',
         description: 'How many cards are waiting for review, and the deck to start with.',
-        tag: 'auramind-due',
-        template: 'auramind-due',
+        tag: WINDOWS_WIDGET_TAG,
+        template: WINDOWS_WIDGET_TAG,
         ms_ac_template: '/widgets/due-template.json',
         data: '/widgets/due-data.json',
         type: 'application/json',

@@ -20,7 +20,7 @@ import {
 } from '../../services/notifications/notificationStore';
 
 // Track which completions we've already notified about (survives re-renders)
-const NOTIFIED_KEY = 'auramind:notified-quizzes';
+const NOTIFIED_KEY = 'bonamind:notified-quizzes';
 
 function getNotifiedSet(): Set<string> {
   try {

@@ -19,9 +19,9 @@ import { Capacitor, Preferences } from './nativeShim';
  * the right moment and one less bridge call.
  */
 
-const KEY_DUE = 'auramind_widget_due';
-const KEY_DECK = 'auramind_widget_deck';
-const KEY_STREAK = 'auramind_widget_streak';
+const KEY_DUE = 'bonamind_widget_due';
+const KEY_DECK = 'bonamind_widget_deck';
+const KEY_STREAK = 'bonamind_widget_streak';
 
 /**
  * Publish the current due count, the deck a review would start with, and the
