@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Library', path: '/dashboard/decks', icon: BookOpen },
   { label: 'Study', path: '/dashboard/study', icon: Brain },
-  { label: 'Prof. Aura', path: '/dashboard/chat', icon: GraduationCap },
+  { label: 'Prof. Linnea', path: '/dashboard/chat', icon: GraduationCap },
   { label: 'Generate', path: '/dashboard/generator', icon: Sparkles },
 ];
 

@@ -293,7 +293,7 @@ export function IOSToday() {
             />
             <IOSRow
               leading={<IOSIconTile icon={MessageCircle} color="var(--ios-blue)" />}
-              title="Ask Prof. Aura"
+              title="Ask Prof. Linnea"
               subtitle="Your tutor knows what you keep missing"
               chevron
               onClick={() => navigate("/dashboard/chat")}

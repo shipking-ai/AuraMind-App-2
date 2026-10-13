@@ -102,7 +102,7 @@ export const SPOKEN_REMINDER_MESSAGES = [
   'Time for a quick BonaMind review. Your cards are waiting.',
   "Hey, it's study time. Five minutes now saves an hour later.",
   'Your memory curve is dipping. A short review will lift it right back up.',
-  'Prof. Aura here. Ready for a few cards?',
+  'Prof. Linnea here. Ready for a few cards?',
   'Keep your streak alive. Open BonaMind for a quick session.',
   "Small reviews, big results. Let's clear your due cards.",
   "Knock knock. It's your flashcards. They miss you.",

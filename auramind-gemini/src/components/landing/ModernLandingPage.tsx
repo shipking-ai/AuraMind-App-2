@@ -345,7 +345,7 @@ export default function ModernLandingPage() {
               className="text-[#7A7A96] text-sm leading-relaxed mb-8 max-w-md"
             >
               <TextScramble duration={1800} autoplay>
-                Drop in a PDF, a video, or a topic. Aura builds your course — then quizzes you, schedules your reviews, and remembers exactly what you struggle with.
+                Drop in a PDF, a video, or a topic. Linnea builds your course — then quizzes you, schedules your reviews, and remembers exactly what you struggle with.
               </TextScramble>
             </motion.p>
 
@@ -519,10 +519,10 @@ export default function ModernLandingPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <FeatureCard index={0} icon={<FileText className="w-5 h-5" />} title="Anything → a course" desc="Drop in a PDF, a YouTube video, or a topic. Aura builds the cards, lessons, and quizzes around it." />
-            <FeatureCard index={1} icon={<BrainCircuit className="w-5 h-5" />} title="A tutor that remembers you" desc="Aura tracks every review and anchors explanations on what you actually forget — not generic textbook advice." />
-            <FeatureCard index={2} icon={<Headphones className="w-5 h-5" />} title="Study hands-free" desc="Aura speaks each question aloud, listens to your answer, and grades it. Perfect for commutes and chores." />
-            <FeatureCard index={3} icon={<Mic className="w-5 h-5" />} title="Lectures → flashcards" desc="Record a lecture or upload audio. Aura transcribes it and builds your deck in seconds." />
+            <FeatureCard index={0} icon={<FileText className="w-5 h-5" />} title="Anything → a course" desc="Drop in a PDF, a YouTube video, or a topic. Linnea builds the cards, lessons, and quizzes around it." />
+            <FeatureCard index={1} icon={<BrainCircuit className="w-5 h-5" />} title="A tutor that remembers you" desc="Linnea tracks every review and anchors explanations on what you actually forget — not generic textbook advice." />
+            <FeatureCard index={2} icon={<Headphones className="w-5 h-5" />} title="Study hands-free" desc="Linnea speaks each question aloud, listens to your answer, and grades it. Perfect for commutes and chores." />
+            <FeatureCard index={3} icon={<Mic className="w-5 h-5" />} title="Lectures → flashcards" desc="Record a lecture or upload audio. Linnea transcribes it and builds your deck in seconds." />
           </div>
         </div>
       </section>

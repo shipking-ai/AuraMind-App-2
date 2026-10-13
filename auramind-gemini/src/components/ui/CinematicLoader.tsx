@@ -69,7 +69,7 @@ export function CinematicLoader({ ready = false }: { ready?: boolean }) {
       </video>
 
       <div className="loader-wordmark relative z-10">
-        <span style={{ animationDelay: "0ms" }}>Aura</span>
+        <span style={{ animationDelay: "0ms" }}>Bona</span>
         <span className="font-serif italic text-violet-400">Mind</span>
       </div>
 

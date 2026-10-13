@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Widget ground. Matches the app's #060a16 navy so the widget reads as part
-  of AuraMind rather than a stock container. Android 12+ clips widgets to the
+  of BonaMind rather than a stock container. Android 12+ clips widgets to the
   launcher's own corner radius; the explicit radius keeps older versions
   looking the same.
 -->

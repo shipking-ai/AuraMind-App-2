@@ -47,7 +47,7 @@ const sections = [
           <li><strong className="text-[#F0EFFE]">Manual:</strong> Type questions and answers directly.</li>
           <li><strong className="text-[#F0EFFE]">File Upload:</strong> Upload PDF, DOCX, PPTX, TXT, or Markdown files — AI generates flashcards automatically.</li>
           <li><strong className="text-[#F0EFFE]">Bulk Import:</strong> Import cards from CSV or JSON format.</li>
-          <li><strong className="text-[#F0EFFE]">AI Generate:</strong> Describe a topic and Aura will create a full deck for you.</li>
+          <li><strong className="text-[#F0EFFE]">AI Generate:</strong> Describe a topic and Linnea will create a full deck for you.</li>
         </ul>
       </>
     ),
@@ -71,9 +71,9 @@ const sections = [
           <li>Instant feedback with explanations for each answer.</li>
           <li>Track your quiz scores over time.</li>
         </ul>
-        <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">AI Chat (Aura)</h4>
+        <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">AI Chat (Linnea)</h4>
         <ul className="list-disc pl-5 space-y-1.5 text-[#9090A8]">
-          <li>Ask Aura questions about your study material.</li>
+          <li>Ask Linnea questions about your study material.</li>
           <li>Get explanations, summaries, and connections between concepts.</li>
           <li>Choose between Groq cloud inference (fast) or local inference (private).</li>
         </ul>

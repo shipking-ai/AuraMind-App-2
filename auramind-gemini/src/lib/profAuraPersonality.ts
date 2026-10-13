@@ -19,7 +19,7 @@ export const PROF_AURA_PERSONALITY_OPTIONS: {
     id: 'default',
     label: 'Balanced Coach',
     icon: Brain,
-    description: 'Warm, sharp, encouraging — the default Prof. Aura.',
+    description: 'Warm, sharp, encouraging — the default Prof. Linnea.',
     promptModifier: '',
   },
   {

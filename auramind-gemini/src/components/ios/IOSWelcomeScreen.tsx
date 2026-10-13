@@ -25,7 +25,7 @@ const FEATURES = [
     icon: MessageCircle,
     color: "var(--ios-teal)",
     title: "A tutor who knows you",
-    body: "Prof. Aura explains what you keep missing, out loud if you like.",
+    body: "Prof. Linnea explains what you keep missing, out loud if you like.",
   },
 ];
 

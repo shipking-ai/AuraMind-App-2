@@ -1,5 +1,5 @@
 /**
- * ChatTour — first-visit overlay that walks new users through the Prof. Aura
+ * ChatTour — first-visit overlay that walks new users through the Prof. Linnea
  * surfaces in four steps: the live profile, contextual prompts, voice input,
  * and conversation history.
  *
@@ -30,8 +30,8 @@ const STEPS: Step[] = [
   {
     key: "avatar",
     icon: <ProfAura variant="rest" size={32} />,
-    title: "Meet Prof. Aura",
-    body: "This live status mark is Prof. Aura. It responds to your activity and voice, so you can tell when the coach is ready or listening.",
+    title: "Meet Prof. Linnea",
+    body: "This live status mark is Prof. Linnea. It responds to your activity and voice, so you can tell when the coach is ready or listening.",
     target: CHAT_TOUR_TARGETS.avatar,
   },
   {
@@ -192,7 +192,7 @@ export default function ChatTour({ force = false }: Props) {
         className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-[2px]"
         role="dialog"
         aria-modal="true"
-        aria-label="Welcome to Prof. Aura"
+        aria-label="Welcome to Prof. Linnea"
         onClick={() => close(true)}
       />
 

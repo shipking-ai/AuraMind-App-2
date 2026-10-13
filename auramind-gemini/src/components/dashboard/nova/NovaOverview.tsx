@@ -551,7 +551,7 @@ function TodaysPlan({
     },
     {
       done: false,
-      title: 'Ask Prof. Aura',
+      title: 'Ask Prof. Linnea',
       hint: 'Generate cards or explain a concept',
       action: onChat,
     },

@@ -39,7 +39,7 @@ const NAV_ITEMS: {
   { key: "auth", label: "Auth (Login / Signup)", icon: LogIn, hint: "Authentication", path: "/auth" },
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Your study home", path: "/dashboard" },
   { key: "study", label: "Study Mode", icon: Brain, hint: "Flashcard review", path: "/dashboard" },
-  { key: "chat", label: "Ask Aura (AI Tutor)", icon: MessageSquare, hint: "Chat with Aura", path: "/dashboard/chat" },
+  { key: "chat", label: "Ask Linnea (AI Tutor)", icon: MessageSquare, hint: "Chat with Linnea", path: "/dashboard/chat" },
   { key: "settings", label: "Settings", icon: Settings, hint: "Preferences", path: "/dashboard/settings" },
 ];
 
@@ -114,7 +114,7 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={() => go("chat")} className="gap-2">
             <MessageSquare className="h-4 w-4 text-violet-400" />
-            <span>Ask Aura about a card</span>
+            <span>Ask Linnea about a card</span>
           </CommandItem>
           {isAdminOrHigher(workspace?.user?.role) && (
             <CommandItem onSelect={() => go("health")} className="gap-2">

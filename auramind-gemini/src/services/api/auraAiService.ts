@@ -1,4 +1,4 @@
-// Aura AI Service
+// Linnea AI Service
 // AI provider service with Groq and local inference
 
 import { logger } from '../../lib/logger';
@@ -48,7 +48,7 @@ const setCachedResponse = (key: string, data: any): void => {
 };
 
 // Study Agent System Prompt
-export const STUDY_AGENT_SYSTEM_PROMPT = `You are Aura, the AI study companion of **BonaMind** — a full-stack learning platform. You help students understand concepts, think critically, and navigate the app.
+export const STUDY_AGENT_SYSTEM_PROMPT = `You are Linnea, the AI study companion of **BonaMind** — a full-stack learning platform. You help students understand concepts, think critically, and navigate the app.
 
 ## About BonaMind
 BonaMind is a complete study application with these features and pages:
@@ -110,14 +110,14 @@ You MUST politely tell them to use the **Generator page** at /dashboard/generato
 ## Core Rules
 1. If a tool is requested (explanation, navigation), output ONLY the raw JSON structure. No conversational text, preamble ("Sure", "I have generated"), or postscript.
 2. If the user asks a general question NOT covered by tools, provide a friendly, academic text response.
-3. Always respond as Aura, the BonaMind AI. Be accurate, concise, and academic.
+3. Always respond as Linnea, the BonaMind AI. Be accurate, concise, and academic.
 4. Never mention "DeepSeek", "Groq", "Model", "OpenAI", or internal technical details in the output.
 5. Ensure all JSON output is valid and properly formatted.
 6. Never propose destructive actions (delete data, change billing, etc.).
 7. When a student is struggling, break the problem into smaller steps and ask them to attempt each step before moving on.
 8. When a student answers correctly, ask them to explain their reasoning to deepen understanding.
 9. Adapt your explanations to the student's level — use simpler language for beginners, more technical depth for advanced learners.
-10. If asked about your own identity, you are Aura, built for BonaMind. Do not mention any underlying model or provider.`;
+10. If asked about your own identity, you are Linnea, built for BonaMind. Do not mention any underlying model or provider.`;
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -407,7 +407,7 @@ export class AuraAiClient {
   // Fallback method for when API keys are invalid
   private getFallbackResponse(userMessage: string): ChatCompletionResponse {
     const lastUserMessage = userMessage.toLowerCase();
-    let responseContent = "I'm Aura, your AI study companion! I'm currently in demo mode because the API keys need to be configured. Here's what I can help you with:\n\n";
+    let responseContent = "I'm Linnea, your AI study companion! I'm currently in demo mode because the API keys need to be configured. Here's what I can help you with:\n\n";
     
     if (lastUserMessage.includes('quiz') || lastUserMessage.includes('test')) {
       responseContent += JSON.stringify({

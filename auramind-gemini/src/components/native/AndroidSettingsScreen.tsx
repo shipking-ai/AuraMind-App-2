@@ -259,7 +259,7 @@ export default function AndroidSettingsScreen() {
   const testVoice = async () => {
     hapticTap();
     const { interrupted } = await speak(
-      "Hi, I'm Prof. Aura. This is the voice I'll read your cards in.",
+      "Hi, I'm Prof. Linnea. This is the voice I'll read your cards in.",
       { voice: ttsVoice },
     );
     if (interrupted) toast.error("Couldn't play the voice. Check your media volume.");
@@ -681,7 +681,7 @@ export default function AndroidSettingsScreen() {
       <AndroidSettingsSection
         icon={Sparkles}
         title="Generation"
-        detail="Set the defaults Aura uses when making material."
+        detail="Set the defaults Linnea uses when making material."
       >
         <AndroidSettingRow label="Cards per generation">
           <AndroidSelect
@@ -788,7 +788,7 @@ export default function AndroidSettingsScreen() {
 
       <AndroidSettingsSection
         icon={Volume2}
-        title="Aura behavior"
+        title="Linnea behavior"
         detail="Tune voice and feedback for hands-free study."
       >
         <AndroidSettingRow label="Sound effects">

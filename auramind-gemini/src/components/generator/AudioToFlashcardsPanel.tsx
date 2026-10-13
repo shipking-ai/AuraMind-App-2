@@ -1,6 +1,6 @@
 /**
  * AudioToFlashcardsPanel — record a lecture or upload an audio clip and
- * Aura turns it into a flashcard deck via Groq Whisper + the LLM.
+ * Linnea turns it into a flashcard deck via Groq Whisper + the LLM.
  *
  * Self-contained; takes the workspace save callbacks as props. Produces:
  *   - a preview of the generated cards
@@ -76,7 +76,7 @@ export function AudioToFlashcardsPanel({ createDeck, addCardsToDeck }: AudioToFl
         <Mic className="w-4 h-4 text-fuchsia-300" /> Audio → Flashcards
       </h3>
       <p className="text-[11px] text-zinc-500 mb-4">
-        Record a lecture or upload a recording. Aura transcribes it (Whisper) and generates a deck.
+        Record a lecture or upload a recording. Linnea transcribes it (Whisper) and generates a deck.
       </p>
 
       {/* Record */}

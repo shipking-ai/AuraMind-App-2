@@ -9,7 +9,7 @@ function pageTitle(pathname: string): string {
   if (pathname === "/dashboard") return "Today";
   if (pathname.startsWith("/dashboard/decks")) return "Library";
   if (pathname.startsWith("/dashboard/study")) return "Study";
-  if (pathname.startsWith("/dashboard/chat")) return "Prof. Aura";
+  if (pathname.startsWith("/dashboard/chat")) return "Prof. Linnea";
   if (pathname.startsWith("/dashboard/generator")) return "Create";
   if (pathname.startsWith("/dashboard/settings")) return "Settings";
   return "BonaMind";

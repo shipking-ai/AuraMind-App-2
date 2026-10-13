@@ -9,7 +9,7 @@
  *     a labeled chip with the file name and size.
  *
  * Storage: we send the file as a base64 data URL embedded in the next
- * outgoing message. The user can preview it inline; Prof. Aura receives
+ * outgoing message. The user can preview it inline; Prof. Linnea receives
  * it as part of the message body. We intentionally don't ship to Supabase
  * Storage yet — that needs signed-URL plumbing and isn't worth a round-
  * trip for a study-tool's typical attachment (PDF + screenshots only).
@@ -78,7 +78,7 @@ export default function FileAttachment({ attachments, setAttachments }: Props) {
           dataUrl,
         });
       } else {
-        // Text-y doc: read first 1.5KB so Prof. Aura can quote it.
+        // Text-y doc: read first 1.5KB so Prof. Linnea can quote it.
         const text = await file.text().catch(() => '');
         next.push({
           id: nextId(),
@@ -210,7 +210,7 @@ export function formatBytes(b: number): string {
   return `${(b / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Coerce a list of attachments into a single prompt-string for Prof. Aura. */
+/** Coerce a list of attachments into a single prompt-string for Prof. Linnea. */
 export function attachmentsToPrompt(attachments: AttachmentDraft[]): string {
   if (attachments.length === 0) return '';
   const parts: string[] = [];

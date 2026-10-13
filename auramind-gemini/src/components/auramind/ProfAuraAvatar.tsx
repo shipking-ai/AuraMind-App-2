@@ -62,7 +62,7 @@ export default function ProfAuraAvatar({
     <div
       className={`relative inline-flex items-center justify-center ${className}`}
       style={{ width: size, height: size }}
-      aria-label={`Prof. Aura${displayInitial ? ` — initials ${displayInitial}` : ''}`}
+      aria-label={`Prof. Linnea${displayInitial ? ` — initials ${displayInitial}` : ''}`}
     >
       {halo && (
         <span

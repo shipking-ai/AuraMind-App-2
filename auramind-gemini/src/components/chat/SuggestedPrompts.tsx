@@ -19,7 +19,7 @@ interface Suggestion {
 
 /* Mode-only fallback prompts (used when conversation history gives no signal yet).
    Two modes live here, mirroring the ChatMode union in lib/chat-prompts.ts.
-   The set of 4 prompts per mode reflects the four shapes Prof. Aura picks from
+   The set of 4 prompts per mode reflects the four shapes Prof. Linnea picks from
    (teach / quiz / generate / coach) so a fresh conversation surfaces the full
    capability space even before the user types anything. */
 const FALLBACK: Record<ChatMode, Suggestion[]> = {

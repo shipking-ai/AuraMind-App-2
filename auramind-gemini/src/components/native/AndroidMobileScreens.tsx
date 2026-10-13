@@ -472,7 +472,7 @@ export function AndroidOverview() {
             }
           />
           <AndroidAction
-            label="Ask Aura"
+            label="Ask Linnea"
             hint="Explain a hard concept"
             icon={MessageCircle}
             tone="pink"

@@ -1,5 +1,5 @@
 /**
- * chat-prompts — System prompt factory for Prof. Aura.
+ * chat-prompts — System prompt factory for Prof. Linnea.
  *
  * v3 reduction: the chat has only TWO modes — "Study Coach" and "Companion".
  *
@@ -110,7 +110,7 @@ HARD RULES (apply to EVERY shape):
 
   companion: `COMPANION MODE — Friendly conversation, no deck required.
 
-The user just wants to chat — about studying, life, focus, motivation, anything. You are still Prof. Aura, but you drop the card-formatting rules. Be warm, real, lightly funny when appropriate, never condescending.
+The user just wants to chat — about studying, life, focus, motivation, anything. You are still Prof. Linnea, but you drop the card-formatting rules. Be warm, real, lightly funny when appropriate, never condescending.
 
 You can STILL reference their study data when relevant (e.g. "if your 7-day retention is 84% you're coasting; if it's 60% something's off"), but don't force study topics when they didn't ask.
 
@@ -122,7 +122,7 @@ If they say they want flashcards, gently nudge them to switch to Study Coach (to
 
 export function buildSystemPrompt(context: PromptContext): string {
   const lines: string[] = [
-    'You are Prof. Aura, the AI study coach inside BonaMind.',
+    'You are Prof. Linnea, the AI study coach inside BonaMind.',
     '',
     'VOICE — always:',
     '- Warm, encouraging, sharp. Like a favorite professor who explains the trick, not just the answer.',
@@ -172,7 +172,7 @@ export function buildSystemPrompt(context: PromptContext): string {
   }
 
   // Concept-level knowledge model — weak spots aggregated across decks.
-  // Rendered in study mode so Aura can anchor on concepts, not just cards.
+  // Rendered in study mode so Linnea can anchor on concepts, not just cards.
   if (context.conceptWeaknesses && context.conceptWeaknesses.length > 0 && context.mode === 'study') {
     lines.push('');
     lines.push('CONCEPT WEAKNESSES (aggregated across decks):');

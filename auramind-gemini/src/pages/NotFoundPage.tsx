@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Home, ArrowLeft, BookOpen } from '@/components/icons';
 import ProfAuraEmptyState from '../components/ui/ProfAuraEmptyState';
 
-// NotFoundPage: Prof. Aura rescues the user from a dead route. Three concrete
+// NotFoundPage: Prof. Linnea rescues the user from a dead route. Three concrete
 // escape routes + a \u201Cyou\u2019re not lost\u201D reassurance line replace the prior
 // 404 + book icon.
 export default function NotFoundPage(): React.ReactElement {
@@ -17,13 +17,13 @@ export default function NotFoundPage(): React.ReactElement {
           size="lg"
           eyebrow="404 · BETWEEN SESSIONS"
           title="You’re off the map"
-          description="Prof. Aura doesn’t see a route at this address. Pick a place to dock and we’ll take it from there."
+          description="Prof. Linnea doesn’t see a route at this address. Pick a place to dock and we’ll take it from there."
           actions={[
             { label: 'Back to Dashboard', icon: Home, onClick: () => navigate('/dashboard'), primary: true, href: '/dashboard' },
             { label: 'Open Library', icon: BookOpen, onClick: () => navigate('/dashboard/decks'), href: '/dashboard/decks' },
             { label: 'Back a step', icon: ArrowLeft, onClick: () => window.history.back() },
           ]}
-          badges={['Routes reset on next visit', 'Your sessions are saved', 'Prof. Aura is patient']}
+          badges={['Routes reset on next visit', 'Your sessions are saved', 'Prof. Linnea is patient']}
         />
       </motion.div>
     </div>

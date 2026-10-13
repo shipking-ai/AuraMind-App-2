@@ -24,13 +24,13 @@ export interface MoodInputs {
 const FOCUSED_AFTER_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 /** Streak length that earns "encouraging". */
 const ENCOURAGING_AT = 3;
-/** Below this rolling accuracy, Prof. Aura nudges 'focused' even on hot streaks. */
+/** Below this rolling accuracy, Prof. Linnea nudges 'focused' even on hot streaks. */
 const STRUGGLING_ACCURACY = 0.55;
-/** Above this latency ms, Prof. Aura leans into 'focused'. */
+/** Above this latency ms, Prof. Linnea leans into 'focused'. */
 const STRUGGLING_LATENCY_MS = 8_000;
 
 /**
- * Pure derivation from app state → Prof. Aura's mood.
+ * Pure derivation from app state → Prof. Linnea's mood.
  *
  *  - encouraging when streakCount >= 3 (with no struggling signal)
  *  - focused   when there's been a long break (>= 7 days), accuracy is

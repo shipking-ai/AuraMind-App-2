@@ -1,10 +1,10 @@
 /**
- * chatMemory — cross-session memory for Prof. Aura.
+ * chatMemory — cross-session memory for Prof. Linnea.
  *
  * Conversations already persist to localStorage under the same key
  * ConversationHistory uses (`bonamind.aurachat.sessions.v1`, with the active
  * session id under `.active.v1`). This module reads the most recent *other*
- * session and renders a compact, prompt-safe summary so Aura can reference
+ * session and renders a compact, prompt-safe summary so Linnea can reference
  * what the student worked on before — without claiming memory it doesn't have.
  */
 import type { Message } from '../hooks/useAIChat';
@@ -79,7 +79,7 @@ export function buildPriorSessionMemory(): string | undefined {
   const lines = [contextBits.join(' · ')];
 
   for (const m of msgs) {
-    const speaker = m.role === 'assistant' ? 'Aura' : 'Student';
+    const speaker = m.role === 'assistant' ? 'Linnea' : 'Student';
     lines.push(`${speaker}: ${excerpt(m.rawContent || m.content)}`);
   }
 

@@ -1,5 +1,5 @@
 /**
- * ProfAuraEmptyState — Reusable empty-state shell driven by Prof. Aura instead
+ * ProfAuraEmptyState — Reusable empty-state shell driven by Prof. Linnea instead
  * of a dull gray icon. Used wherever the app has nothing to show: empty decks,
  * zero-XP leaderboard, no chat sessions, search miss, expired study queue.
  *
@@ -12,7 +12,7 @@
  *   <ProfAuraEmptyState
  *     mood="inviting"
  *     title="No decks yet"
- *     description="Prof. Aura will quiz you on whatever you teach it. Start with a topic."
+ *     description="Prof. Linnea will quiz you on whatever you teach it. Start with a topic."
  *     actions={[{ label: "Open Generator", icon: Sparkles, onClick: ... }]}
  *   />
  */
@@ -51,7 +51,7 @@ export interface ProfAuraEmptyStateProps {
   description?: string;
   mood?: EmptyMood;
   size?: 'sm' | 'md' | 'lg';
-  /** Optional specific streak / XP to drive Prof. Aura's mood (e.g. celebrating for new users). */
+  /** Optional specific streak / XP to drive Prof. Linnea's mood (e.g. celebrating for new users). */
   streak?: number;
   audioLevel?: number;
   actions?: EmptyAction[];
