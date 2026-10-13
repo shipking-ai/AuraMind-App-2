@@ -2,15 +2,24 @@ import { buildCourse, createCourse, CreateError, type CourseDraft, type CourseSo
 import NetInfo from '@react-native-community/netinfo';
 import { act, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { useCreateStore } from '../store';
+import { RESUME_DELAY_MS, useCreateStore } from '../store';
 
 jest.mock('@bonamind/core', () => ({ ...jest.requireActual('@bonamind/core'), buildCourse: jest.fn(), createCourse: jest.fn() }));
 jest.mock('../ask', () => ({ ask: jest.fn() }));
 jest.mock('../../data/supabase', () => ({ getSupabase: () => ({ tag: 'supabase' }) }));
 jest.mock('../../data/app', () => ({ getData: () => ({ getFsrsProfile: async () => ({ profileLabel: 'fast-learner', weights: [1, 2] }) }) }));
-let mockNetListener: ((s: { isConnected: boolean | null }) => void) | null = null;
+type Net = { isConnected: boolean | null; isInternetReachable?: boolean | null };
+let mockNetListener: ((s: Net) => void) | null = null;
+let mockNetState: Net = { isConnected: false };
+let mockActiveListeners = 0;
+// Like the real library: a new listener is called at once with the current state.
 jest.mock('@react-native-community/netinfo', () => ({
-  addEventListener: jest.fn((l: (s: { isConnected: boolean | null }) => void) => { mockNetListener = l; return () => { mockNetListener = null; }; }),
+  addEventListener: jest.fn((l: (s: Net) => void) => {
+    mockNetListener = l;
+    mockActiveListeners += 1;
+    l(mockNetState);
+    return () => { mockActiveListeners -= 1; if (mockNetListener === l) mockNetListener = null; };
+  }),
 }));
 
 const build = buildCourse as jest.Mock;
@@ -26,6 +35,8 @@ const store = () => useCreateStore.getState();
 beforeEach(() => {
   jest.clearAllMocks();
   mockNetListener = null;
+  mockNetState = { isConnected: false };
+  mockActiveListeners = 0;
   store().reset();
 });
 
@@ -68,19 +79,66 @@ it('keeps building after the screen unmounts', async () => {
 });
 
 it('pauses for a connection and resumes without losing cards', async () => {
-  const partial = { donePieces: 1, cards: draft(5).cards };
-  build.mockRejectedValueOnce(new CreateError('offline', 'gone', partial)).mockResolvedValueOnce(draft(10));
-  store().start(async () => source, 'standard');
-  await settle();
-  expect(store().phase).toBe('waiting');
-  expect(store().draft).toBeNull();
-  await act(async () => { mockNetListener?.({ isConnected: true }); });
-  await settle();
-  expect(build).toHaveBeenCalledTimes(2);
-  expect(build.mock.calls[1][0]).toMatchObject({ source, size: 'standard', resume: partial });
-  expect(store().phase).toBe('review');
-  expect(NetInfo.addEventListener).toHaveBeenCalledTimes(1);
-  expect(mockNetListener).toBeNull();
+  jest.useFakeTimers();
+  try {
+    const partial = { donePieces: 1, cards: draft(5).cards };
+    build.mockRejectedValueOnce(new CreateError('offline', 'gone', partial)).mockResolvedValueOnce(draft(10));
+    store().start(async () => source, 'standard');
+    await act(async () => { await jest.advanceTimersByTimeAsync(0); });
+    expect(store().phase).toBe('waiting');
+    expect(store().draft).toBeNull();
+    await act(async () => { mockNetListener?.({ isConnected: true, isInternetReachable: true }); });
+    await act(async () => { await jest.advanceTimersByTimeAsync(RESUME_DELAY_MS); });
+    expect(build).toHaveBeenCalledTimes(2);
+    expect(build.mock.calls[1][0]).toMatchObject({ source, size: 'standard', resume: partial });
+    expect(store().phase).toBe('review');
+    expect(mockActiveListeners).toBe(0);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+// NetInfo can report "connected" while requests still fail (captive portal,
+// DNS). The listener fires at once on subscribe, so resuming immediately made
+// a tight retry loop that leaked one listener per turn.
+it('resumes once per pause, after a delay, even when NetInfo already says online', async () => {
+  jest.useFakeTimers();
+  try {
+    mockNetState = { isConnected: true, isInternetReachable: true };
+    const partial = { donePieces: 1, cards: draft(5).cards };
+    build
+      .mockRejectedValueOnce(new CreateError('offline', 'gone', partial))
+      .mockRejectedValueOnce(new CreateError('offline', 'gone', partial))
+      .mockResolvedValueOnce(draft(10));
+    store().start(async () => source, 'standard');
+    await act(async () => { await jest.advanceTimersByTimeAsync(0); });
+    expect(store().phase).toBe('waiting');
+    expect(build).toHaveBeenCalledTimes(1);
+    await act(async () => { await jest.advanceTimersByTimeAsync(RESUME_DELAY_MS); });
+    expect(build).toHaveBeenCalledTimes(2);
+    expect(store().phase).toBe('waiting');
+    expect(mockActiveListeners).toBeLessThanOrEqual(1);
+    await act(async () => { await jest.advanceTimersByTimeAsync(RESUME_DELAY_MS); });
+    expect(build).toHaveBeenCalledTimes(3);
+    expect(store().phase).toBe('review');
+    expect(mockActiveListeners).toBe(0);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+it('stays waiting while the internet is known to be unreachable', async () => {
+  jest.useFakeTimers();
+  try {
+    mockNetState = { isConnected: true, isInternetReachable: false };
+    build.mockRejectedValueOnce(new CreateError('offline', 'gone', { donePieces: 0, cards: [] }));
+    store().start(async () => source, 'standard');
+    await act(async () => { await jest.advanceTimersByTimeAsync(RESUME_DELAY_MS * 3); });
+    expect(build).toHaveBeenCalledTimes(1);
+    expect(store().phase).toBe('waiting');
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 it('a 402 ends in error subscription', async () => {

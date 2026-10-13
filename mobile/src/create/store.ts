@@ -30,6 +30,9 @@ interface CreateState {
   reset(): void;
 }
 
+/** Pause before resuming a build after the connection returns. */
+export const RESUME_DELAY_MS = 2_000;
+
 const kindOf = (e: unknown): CreateErrorKind => (e instanceof CreateError ? e.kind : 'busy');
 
 // The build lives outside any screen: leaving the sheet doesn't cancel it.
@@ -45,6 +48,30 @@ export const useCreateStore = create<CreateState>()((set, get) => {
     if (d) set({ draft: fn(d) });
   };
 
+  /**
+   * Resume from the last finished piece once the connection is back: at most
+   * once per pause, after RESUME_DELAY_MS. NetInfo calls a new listener at
+   * once, and can say "connected" while requests still fail, so resuming
+   * immediately would spin and leak a listener per turn.
+   */
+  function waitForConnection(id: number, partial: BuildPartial) {
+    stopWaiting?.();
+    let settled = false;
+    let unsubscribe: (() => void) | null = null;
+    const stop = () => { settled = true; unsubscribe?.(); if (stopWaiting === stop) stopWaiting = null; };
+    unsubscribe = NetInfo.addEventListener((s) => {
+      if (settled || s.isConnected === false || s.isInternetReachable === false) return;
+      settled = true;
+      setTimeout(() => {
+        stop();
+        if (id !== run || get().phase !== 'waiting') return;
+        set({ phase: 'building' });
+        void generate(id, partial);
+      }, RESUME_DELAY_MS);
+    });
+    stopWaiting = stop;
+  }
+
   async function generate(id: number, resume?: BuildPartial) {
     if (!source) return;
     try {
@@ -59,16 +86,8 @@ export const useCreateStore = create<CreateState>()((set, get) => {
     } catch (e) {
       if (id !== run) return;
       if (e instanceof CreateError && e.kind === 'offline' && e.partial) {
-        const partial = e.partial;
         set({ phase: 'waiting' });
-        // Resume from the last finished piece once the connection is back.
-        stopWaiting = NetInfo.addEventListener((s) => {
-          if (s.isConnected === false || get().phase !== 'waiting') return;
-          stopWaiting?.();
-          stopWaiting = null;
-          set({ phase: 'building' });
-          void generate(id, partial);
-        });
+        waitForConnection(id, e.partial);
         return;
       }
       set({ phase: 'error', error: kindOf(e) });
