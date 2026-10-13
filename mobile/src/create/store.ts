@@ -37,6 +37,8 @@ const kindOf = (e: unknown): CreateErrorKind => (e instanceof CreateError ? e.ki
 
 // The build lives outside any screen: leaving the sheet doesn't cancel it.
 let source: CourseSource | null = null;
+/** The title the course was made with: used when the user clears it. */
+let generatedTitle = '';
 let stopWaiting: (() => void) | null = null;
 let run = 0;
 
@@ -82,7 +84,10 @@ export const useCreateStore = create<CreateState>()((set, get) => {
         resume,
         onProgress: (progress) => { if (id === run) set({ progress }); },
       });
-      if (id === run) set({ phase: 'review', draft, error: null });
+      if (id === run) {
+        generatedTitle = draft.title;
+        set({ phase: 'review', draft, error: null });
+      }
     } catch (e) {
       if (id !== run) return;
       if (e instanceof CreateError && e.kind === 'offline' && e.partial) {
@@ -105,13 +110,17 @@ export const useCreateStore = create<CreateState>()((set, get) => {
       const id = ++run;
       set({ ...IDLE, phase: 'building', size, progress: { step: 'reading', cardsSoFar: 0, target: COURSE_SIZES[size] } });
       void (async () => {
+        let next: CourseSource;
         try {
-          source = await read();
+          next = await read();
         } catch (e) {
           if (id === run) set({ phase: 'error', error: kindOf(e) });
           return;
         }
-        if (id === run) await generate(id);
+        // A read that finishes after a reset belongs to a dead build.
+        if (id !== run) return;
+        source = next;
+        await generate(id);
       })();
     },
 
@@ -126,7 +135,8 @@ export const useCreateStore = create<CreateState>()((set, get) => {
       set({ phase: 'saving', error: null });
       try {
         const profile = await getData().getFsrsProfile(userId).catch(() => ({ profileLabel: null, weights: undefined }));
-        const { deck } = await createCourse(getSupabase(), userId, draft, { profileLabel: profile.profileLabel, weightsOverride: profile.weights });
+        const title = draft.title.trim() || generatedTitle || 'My course';
+        const { deck } = await createCourse(getSupabase(), userId, { ...draft, title }, { profileLabel: profile.profileLabel, weightsOverride: profile.weights });
         set({ phase: 'ready', savedDeckId: deck.id, justCreated: deck.id });
         onSaved(deck.id);
       } catch {

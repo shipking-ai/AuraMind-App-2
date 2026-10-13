@@ -190,3 +190,32 @@ it('save failure keeps the draft and returns to review with an error', async () 
   expect(store()).toMatchObject({ phase: 'review', error: 'busy' });
   expect(store().draft?.cards).toHaveLength(2);
 });
+
+it('never lets a stale source read replace the source of a newer build', async () => {
+  jest.useFakeTimers();
+  try {
+    let finishOld: (s: CourseSource) => void = () => {};
+    store().start(() => new Promise<CourseSource>((r) => { finishOld = r; }), 'standard');
+    store().reset();
+    const newer: CourseSource = { kind: 'text', text: 'Newer.', title: 'Newer', label: 'your PDF' };
+    const partial = { donePieces: 0, cards: [] };
+    build.mockRejectedValueOnce(new CreateError('offline', 'gone', partial)).mockResolvedValueOnce(draft(2));
+    store().start(async () => newer, 'standard');
+    await act(async () => { await jest.advanceTimersByTimeAsync(0); });
+    await act(async () => { finishOld(source); await jest.advanceTimersByTimeAsync(0); });
+    await act(async () => { mockNetListener?.({ isConnected: true }); await jest.advanceTimersByTimeAsync(RESUME_DELAY_MS); });
+    expect(build.mock.calls[1][0].source).toBe(newer);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+it('saves a blank title as the one the course was made with', async () => {
+  build.mockResolvedValueOnce(draft(2));
+  save.mockResolvedValueOnce({ deck: { id: 'deck-9' }, cards: [] });
+  store().start(async () => source, 'quick');
+  await settle();
+  store().rename('   ');
+  await act(async () => { await store().save('u1', jest.fn()); });
+  expect(save.mock.calls[0][2]).toMatchObject({ title: 'Cells' });
+});
