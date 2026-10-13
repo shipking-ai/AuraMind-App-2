@@ -1,6 +1,6 @@
 /**
  * Course-generation prompts, adapted from the website's generateFlashcards
- * and generateDeckFromTopic (auramind-gemini/src/services/api/groqService.ts).
+ * and generateDeckFromTopic (the website's services/api/groqService.ts).
  * Both ask for an exact count and a JSON-only reply with question/answer keys.
  */
 
