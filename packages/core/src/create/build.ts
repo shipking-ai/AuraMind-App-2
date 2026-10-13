@@ -11,8 +11,12 @@ import { COURSE_SIZES, splitSource, type CourseSize } from './split';
 export type CreateErrorKind = 'offline' | 'subscription' | 'rate_limited' | 'unreadable' | 'too_large' | 'empty' | 'busy';
 
 export interface BuildPartial {
+  /** Pieces (text) or rounds (topic) already finished. */
   donePieces: number;
   cards: DraftCard[];
+  /** A topic's model-given title and description, once known. */
+  title?: string;
+  description?: string;
 }
 
 export class CreateError extends Error {
@@ -72,8 +76,10 @@ export async function buildCourse(opts: {
   const emit = (p: Omit<BuildProgress, 'target'>) => opts.onProgress?.({ ...p, target });
 
   let all: DraftCard[] = opts.resume ? [...opts.resume.cards] : [];
+  // Cards past the target are dropped at the end; don't show them arriving.
   const add = (fresh: DraftCard[]) => {
     for (const card of fresh) {
+      if (all.length >= target) return;
       const next = dedupeCards([...all, card]);
       if (next.length === all.length) continue;
       all = next;
@@ -98,7 +104,7 @@ export async function buildCourse(opts: {
         const kind = e instanceof CreateError ? e.kind : 'busy';
         if (kind === 'rate_limited') {
           const wait = waits.shift();
-          if (wait === undefined) return null;
+          if (wait === undefined) { rateLimitedSkip = true; return null; }
           await sleep(wait);
           continue;
         }
@@ -109,29 +115,47 @@ export async function buildCourse(opts: {
     }
   }
   const nonEmpty = (cards: DraftCard[]) => (cards.length ? cards : null);
+  let rateLimitedSkip = false;
+
+  let title = '';
+  let description = '';
+  /** A lost connection stops the build with what's done, so it can resume. */
+  async function guard<T>(done: number, run: () => Promise<T>): Promise<T> {
+    try {
+      return await run();
+    } catch (e) {
+      if (e instanceof CreateError && e.kind === 'offline') {
+        throw new CreateError('offline', e.message, { donePieces: done, cards: all, title, description });
+      }
+      throw e;
+    }
+  }
 
   emit({ step: 'reading', cardsSoFar: all.length });
 
-  let title: string;
-  let description: string;
   let truncated = false;
   let skippedPieces = 0;
 
   if (source.kind === 'topic') {
-    title = source.topic;
-    description = '';
-    emit({ step: 'ideas', cardsSoFar: 0 });
-    const first = await attempt(topicPrompt(source.topic, Math.min(target, TOPIC_FIRST_ROUND)), (reply) => {
-      const deck = parseTopicDeck(reply);
-      return deck?.cards.length ? deck : null;
-    });
-    if (first) {
-      title = first.title || source.topic;
-      description = first.description;
-      add(first.cards);
+    const done = opts.resume?.donePieces ?? 0;
+    title = opts.resume?.title || source.topic;
+    description = opts.resume?.description ?? '';
+    emit({ step: 'ideas', cardsSoFar: all.length });
+    let firstRound = done >= 1;
+    if (!firstRound) {
+      const first = await guard(0, () => attempt(topicPrompt(source.topic, Math.min(target, TOPIC_FIRST_ROUND)), (reply) => {
+        const deck = parseTopicDeck(reply);
+        return deck?.cards.length ? deck : null;
+      }));
+      if (first) {
+        title = first.title || source.topic;
+        description = first.description;
+        add(first.cards);
+        firstRound = true;
+      }
     }
-    if (first && all.length < target) {
-      const more = await attempt(topicPrompt(source.topic, target - all.length, all.map((c) => c.front)), (r) => nonEmpty(parseCards(r)));
+    if (firstRound && all.length < target) {
+      const more = await guard(1, () => attempt(topicPrompt(source.topic, target - all.length, all.map((c) => c.front)), (r) => nonEmpty(parseCards(r))));
       if (more) add(more);
     }
   } else {
@@ -143,22 +167,15 @@ export async function buildCourse(opts: {
     emit({ step: 'ideas', cardsSoFar: all.length });
     for (let i = opts.resume?.donePieces ?? 0; i < split.pieces.length; i++) {
       const piece = split.pieces[i];
-      let cards: DraftCard[] | null;
-      try {
-        cards = await attempt(cardsPrompt(piece.text, piece.cards, source.title), (r) => nonEmpty(parseCards(r)));
-      } catch (e) {
-        if (e instanceof CreateError && e.kind === 'offline') {
-          throw new CreateError('offline', e.message, { donePieces: i, cards: all });
-        }
-        throw e;
-      }
+      const cards = await guard(i, () => attempt(cardsPrompt(piece.text, piece.cards, source.title), (r) => nonEmpty(parseCards(r))));
       if (cards) add(cards);
       else skippedPieces += 1;
     }
   }
 
   const cards = all.slice(0, target);
-  if (!cards.length) throw new CreateError('empty');
+  // Nothing made because the AI was rate limited: say so, not "try another source".
+  if (!cards.length) throw new CreateError(rateLimitedSkip ? 'rate_limited' : 'empty');
   emit({ step: 'done', cardsSoFar: cards.length });
   return { title, description, cards, truncated, skippedPieces };
 }

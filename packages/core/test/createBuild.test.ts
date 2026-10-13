@@ -126,3 +126,34 @@ describe('buildCourse', () => {
     expect(d.cards).toHaveLength(20);
   });
 });
+
+describe('buildCourse, after review', () => {
+  it('says rate_limited, not empty, when rate limits ate every piece', async () => {
+    const ask = scripted(rate(), rate(), rate(), rate(), rate(), rate());
+    await expect(buildCourse({ source: twoPieceText(), size: 'standard', ask, sleep: noSleep() })).rejects.toMatchObject({ kind: 'rate_limited' });
+  });
+
+  it('pauses a topic build that goes offline and resumes into the second round', async () => {
+    const err = await buildCourse({ source: { kind: 'topic', topic: 'Cells' }, size: 'deep', ask: scripted(deckJson(20, 'a', 'Cell biology'), offline()), sleep: noSleep() }).catch((e) => e);
+    expect(err).toMatchObject({ kind: 'offline', partial: { donePieces: 1, title: 'Cell biology', description: 'About cells' } });
+    expect(err.partial.cards).toHaveLength(20);
+    const ask = scripted(cardsArrayJson(15, 'b'));
+    const d = await buildCourse({ source: { kind: 'topic', topic: 'Cells' }, size: 'deep', ask, resume: err.partial, sleep: noSleep() });
+    expect(ask).toHaveBeenCalledTimes(1);
+    expect(d).toMatchObject({ title: 'Cell biology', description: 'About cells' });
+    expect(d.cards).toHaveLength(35);
+  });
+
+  it('keeps every prompt inside the proxy limit, however long the topic or avoid list', async () => {
+    const longFronts = Array.from({ length: 20 }, (_, i) => ({ question: `${'q'.repeat(590)}${i}`, answer: 'a' }));
+    const ask = scripted(JSON.stringify({ title: 't', description: 'd', cards: longFronts }), cardsArrayJson(15, 'b'));
+    await buildCourse({ source: { kind: 'topic', topic: 'x'.repeat(5000) }, size: 'deep', ask, sleep: noSleep() });
+    for (const [prompt] of ask.mock.calls) expect(prompt.length).toBeLessThanOrEqual(7500);
+  });
+
+  it('never reports cards beyond the target', async () => {
+    const seen: BuildProgress[] = [];
+    await buildCourse({ source: twoPieceText(), size: 'quick', ask: scripted(cardsArrayJson(8, 'a'), cardsArrayJson(8, 'b')), onProgress: (p) => seen.push(p), sleep: noSleep() });
+    expect(Math.max(...seen.map((p) => p.cardsSoFar))).toBe(10);
+  });
+});
