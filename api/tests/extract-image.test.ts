@@ -89,9 +89,10 @@ describe('POST /api/extract/image', () => {
     expect(r.body.code).toBe('too_large');
   });
 
-  it('503 without a Gemini key', async () => {
+  it('503 with neither a Gemini nor a Groq key', async () => {
     asPro();
     vi.stubEnv('GEMINI_API_KEY', '');
+    vi.stubEnv('GROQ_API_KEY', '');
     const fetch = stubGemini('x');
     const r = await call('extract/image', authed({ images: [jpeg()] }));
     expect(r.status).toBe(503);
@@ -113,5 +114,46 @@ describe('POST /api/extract/image', () => {
     const r = await call('extract/image', authed({ images: [jpeg()] }));
     expect(r.status).toBe(503);
     expect(r.body.code).toBe('unavailable');
+  });
+
+  // Vercel has a Groq key but no Gemini key: photos go through Groq's image
+  // model, capped below its free-tier 1,000 output tokens per minute.
+  it("reads photos with Groq's vision model when there is no Gemini key", async () => {
+    asPro();
+    vi.stubEnv('GEMINI_API_KEY', '');
+    vi.stubEnv('GROQ_API_KEY', 'groq-key');
+    const fetch = stubGemini('Photosynthesis makes glucose.');
+    const r = await call('extract/image', authed({ images: [jpeg(), jpeg()] }));
+    expect(r.status).toBe(200);
+    expect(r.body.data.text).toBe('Photosynthesis makes glucose.');
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toBe('https://api.groq.com/openai/v1/chat/completions');
+    expect(init.headers.Authorization).toBe('Bearer groq-key');
+    const sent = JSON.parse(init.body);
+    expect(sent.model).toBe('qwen/qwen3.8-27b');
+    expect(sent.max_tokens).toBe(900);
+    expect(sent.messages[0].content.filter((p: { type: string }) => p.type === 'image_url')).toHaveLength(2);
+  });
+
+  it('uses GROQ_VISION_MODEL when set', async () => {
+    asPro();
+    vi.stubEnv('GEMINI_API_KEY', '');
+    vi.stubEnv('GROQ_API_KEY', 'groq-key');
+    vi.stubEnv('GROQ_VISION_MODEL', 'qwen/qwen4-vision');
+    const fetch = stubGemini('text');
+    await call('extract/image', authed({ images: [jpeg()] }));
+    expect(JSON.parse(fetch.mock.calls[0][1].body).model).toBe('qwen/qwen4-vision');
+  });
+
+  it('falls back to Groq when Gemini fails', async () => {
+    asPro();
+    vi.stubEnv('GROQ_API_KEY', 'groq-key');
+    const fetch = vi.fn(async (url: string) => (url.includes('googleapis')
+      ? { ok: false, status: 503, json: async () => ({}), text: async () => '' }
+      : { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'From Groq.' } }] }), text: async () => '' }));
+    vi.stubGlobal('fetch', fetch);
+    const r = await call('extract/image', authed({ images: [jpeg()] }));
+    expect(r.body.data.text).toBe('From Groq.');
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

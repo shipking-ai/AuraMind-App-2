@@ -88,9 +88,10 @@ the traps that cost real time.
 12. **Course creation on the phone (Part 2) needs the API deployed.** The app
     calls the new `/api/extract/document` and `/api/extract/image` endpoints on
     `www.bonamind.app`, so they work only after the Part 2 PR is merged and
-    Vercel deploys. Photo reading needs **`GEMINI_API_KEY`** in Vercel (it is
-    already one of the AI providers; set it if it isn't there). Optional:
-    `GEMINI_VISION_MODEL` to swap the image model (default `gemini-2.0-flash`).
+    Vercel deploys. Photo reading uses Gemini when **`GEMINI_API_KEY`** is set,
+    otherwise Groq's image model through the existing `GROQ_API_KEY` (default
+    `qwen/qwen3.8-27b`, swap with `GROQ_VISION_MODEL`; Gemini's with
+    `GEMINI_VISION_MODEL`). No new key is required.
     Then make one course from each source in Expo Go and check it appears on
     bonamind.app.
 
@@ -1496,6 +1497,11 @@ The final review's 11 minor items are fixed, each with a test:
 ### Owner check
 
 Outstanding item 12 above covers deploying, `GEMINI_API_KEY` and one course
-per source on the phone. As of 2026-10-12, Vercel has **no** `GEMINI_API_KEY`
-(only `GROQ_API_KEY`), so the Photo source returns "unavailable" until it's
-added. A free key is at aistudio.google.com/apikey.
+per source on the phone. Vercel has no `GEMINI_API_KEY` (2026-10-12), so
+photos go through Groq. Its free tier caps that model at ~1,000 output tokens
+per minute (requests use `max_tokens: 900`), so a dense multi-page photo set
+can come back partial and back-to-back photo courses can hit a 429 ("give it a
+minute"). Adding a free Gemini key (aistudio.google.com/apikey) makes Gemini
+the first choice. Planned: on-device text recognition (Apple Vision / ML Kit)
+once the app moves off Expo Go to development builds; it's free, offline and
+private, with the server as the fallback.

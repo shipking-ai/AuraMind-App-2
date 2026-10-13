@@ -23,8 +23,9 @@ cd ../packages/core && npm ci && cd ../../mobile && npm ci
 
 Creating a course on the phone (`src/create/`) uses the API's
 `/api/extract/document` and `/api/extract/image` endpoints, so it needs the API
-those live in deployed to the host in `EXPO_PUBLIC_API_BASE_URL`, and
-`GEMINI_API_KEY` set there for photos.
+those live in deployed to the host in `EXPO_PUBLIC_API_BASE_URL`. Photos are
+read by Gemini when `GEMINI_API_KEY` is set there, otherwise by Groq's image
+model with the existing `GROQ_API_KEY`.
 
 iOS builds run in the cloud (EAS Build or the `mobile-builds.yml` GitHub
 workflow); there is no local Xcode requirement.
