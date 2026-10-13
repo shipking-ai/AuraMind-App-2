@@ -107,6 +107,11 @@ const PROVIDERS: readonly Provider[] = [
   },
 ];
 
+/** One provider by name (e.g. 'gemini' for image input), whether or not it has a key. */
+export function providerByName(name: string): Provider | undefined {
+  return PROVIDERS.find((p) => p.name === name);
+}
+
 /** Providers with a key configured, in failover order. */
 export function availableProviders(): Provider[] {
   return PROVIDERS.filter((p) => Boolean(process.env[p.keyEnv]));

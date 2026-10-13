@@ -45,7 +45,7 @@ export function CardStack({ card, turn, depth, onRate }: { card: Card | null; tu
  * that can scroll or bounce claims the drag before the card's pan sees it, so
  * swiping a short card did nothing.
  */
-function FaceBody({ testID, children }: { testID: string; children: ReactNode }) {
+export function FaceBody({ testID, children }: { testID: string; children: ReactNode }) {
   const [box, setBox] = useState(0);
   const [content, setContent] = useState(0);
   const overflows = box > 0 && content > box + 1;

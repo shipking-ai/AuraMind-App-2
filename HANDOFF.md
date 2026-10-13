@@ -18,7 +18,7 @@ the traps that cost real time.
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
 | Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
-| Native app | `mobile/` (Expo SDK 57, RN 0.86) + `packages/core` (`@bonamind/core`), PR #156. Runs in Expo Go on a real iPhone (2026-10-11); never built as a standalone app yet. See "2026-10-11 - Native app, part 1" |
+| Native app | `mobile/` (Expo SDK 57, RN 0.86) + `packages/core` (`@bonamind/core`). Part 1 merged (#156) and runs in Expo Go on a real iPhone; unsigned IPA built on `main` 2026-10-12. Part 2 (create a course on the phone) on `feat/native-app-part2`. See the 2026-10-11 and 2026-10-12 sections |
 | Tests | 137 files / 968 declared cases (734 unit, 155 API, 26 seeded Playwright, 53 in `packages/core`). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
 
 ---
@@ -60,7 +60,7 @@ the traps that cost real time.
    no APNs. Paying also unlocks TestFlight, where internal testers get builds
    without App Review. Nothing in the code depends on this; it's purely a
    distribution ceiling.
-9. **Merge PR #156 (native app, part 1).** All checks green; `main` needs one
+9. ~~**Merge PR #156 (native app, part 1).**~~ Merged 2026-10-12. All checks green; `main` needs one
    approving review and auto mode won't bypass it, so merge by hand (admin:
    "Merge without waiting for requirements", squash). `mobile-builds.yml` can
    only be dispatched once it is on `main`. Two more PRs are open and small —
@@ -85,6 +85,15 @@ the traps that cost real time.
     The native app now calls `https://www.bonamind.app` directly; if the apex
     becomes primary again, change `EXPO_PUBLIC_API_BASE_URL` (in
     `mobile/.env.local`, `mobile/src/env.ts`, `mobile-builds.yml`) back too.
+12. **Course creation on the phone (Part 2) needs the API deployed.** The app
+    calls the new `/api/extract/document` and `/api/extract/image` endpoints on
+    `www.bonamind.app`, so they work only after the Part 2 PR is merged and
+    Vercel deploys. Photo reading uses Gemini when **`GEMINI_API_KEY`** is set,
+    otherwise Groq's image model through the existing `GROQ_API_KEY` (default
+    `qwen/qwen3.8-27b`, swap with `GROQ_VISION_MODEL`; Gemini's with
+    `GEMINI_VISION_MODEL`). No new key is required.
+    Then make one course from each source in Expo Go and check it appears on
+    bonamind.app.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -441,6 +450,24 @@ from that `.env`) signs in successfully with the `.env` key, so
 key is stale is unverified. If the Capacitor apps' human check fails, compare
 it with the key in the Cloudflare dashboard. A key whose widget lacks the
 app's hostname shows "Unable to connect to website".
+
+### The dependency audit fails PRs that didn't touch dependencies
+
+`Dependency audit (prod deps, critical gate)` runs `npm audit --omit=dev
+--audit-level=critical` for `auramind-gemini/` and `api/` on every PR. A newly
+published critical advisory therefore fails whichever PR runs next, whatever
+that PR changed. On 2026-10-12 it was `proxy-addr` ≤ 2.0.7 (GHSA-jqcg-44mw-7w3h),
+pulled in through Express in both packages (shadcn → MCP SDK → express on the
+website). `npm audit fix` (never `--force`) in the failing package, then run
+the type-check, tests and build.
+
+### Full website suite timeouts on this PC
+
+`npx vitest run` in `auramind-gemini/` on this machine sometimes ends with a
+few "Test timed out" and "Worker forks emitted error" failures in different
+files each run (androidNative, desktopShell, analyticsFunnel, realtimeE2E…).
+Rerun the named files alone before suspecting a change. They pass alone, and
+CI is the arbiter.
 
 ### `@types/jest` 30 breaks Jest 29's failure output
 
@@ -1383,5 +1410,98 @@ swipe to reveal" (`e2e/core-loop.yaml` taps that text).
 ### Next
 
 Rename pass (AuraMind → BonaMind and Prof. Aura → Prof. Linnea in the existing
-code, `auramind_*` storage keys), then part 2 (course creation in the app),
-part 3 (billing, notifications), part 4 (iOS-only features), part 5 (stores).
+code, `auramind_*` storage keys), then part 3 (billing, notifications), part 4
+(iOS-only features), part 5 (stores). Part 2 is below.
+
+---
+
+## 2026-10-12 - Native app, part 2: create a course on the phone
+
+Spec `docs/superpowers/specs/2026-10-12-bonamind-native-app-part2-create-design.md`,
+plan `docs/superpowers/plans/2026-10-12-bonamind-native-app-part2.md`.
+
+### What shipped
+
+- **Four sources:** topic, link (web page or YouTube transcript), PDF (≤ 3 MB),
+  photos (1–5 pages, camera or library). The sizes are Quick ~10, Standard ~20
+  and Deep ~35 cards. Then a review deck (swipe left to remove with Undo,
+  right to keep, hold to edit, rename) and save. The flow is reached from the
+  Courses header **+** or Today's empty state.
+- **`@bonamind/core/src/create/`:** `splitSource` (6,000-character pieces, at
+  most 8, because `/api/ai/chat` caps a message at 8,000), the prompts,
+  `parseCards` (it never throws and dedupes), and `buildCourse` (a busy or
+  unparseable piece is retried once, then skipped; rate limits wait 3 s and
+  8 s; a 402 aborts; offline stops with `partial` so the build can resume).
+  `createCourse` lives in `src/data/queries.ts`: it inserts the deck, then all
+  cards with the same initial FSRS and personalized difficulty as the website,
+  and deletes the deck if the cards fail.
+- **API:** `POST /api/extract/document` (`unpdf`) and `POST /api/extract/image`
+  (Gemini's OpenAI-compatible endpoint with `image_url` data URIs). Both are
+  signed-in and entitled (402) and sit in the `ai` rate-limit bucket.
+  `_providers.ts` gained `providerByName`.
+- **App (`mobile/src/create/`):** source readers (`expo-document-picker`,
+  `expo-file-system/legacy`, `expo-image-picker`, `expo-image-manipulator`,
+  `expo-clipboard`), `ask` (45 s timeout), and a zustand build store that lives
+  outside the screens (leaving the sheet doesn't cancel; going offline pauses
+  and resumes from the last finished piece). Then the New course sheet, the
+  live building view (prism, real steps, cards landing on paper), the review
+  deck and the ready screen (confetti, Study now).
+
+### Traps found here
+
+- **Core has no DOM or Node types.** `AbortSignal` and `setTimeout` don't
+  type-check in `packages/core`. Use structural types (`AbortLike`) and reach
+  timers through `globalThis`.
+- **A brand guard scans core's comments.** `test/brandNames.test.ts` failed on
+  a comment naming the `auramind-gemini` folder. Refer to "the website"
+  instead.
+- **`expo install --check` moves after any install.** Adding modules pulled a
+  newer SDK 57 patch list. Six existing packages had to be bumped to keep it
+  clean.
+- **`task-done` and pipes.** Piping the test runner through `grep` hides its
+  exit code, so a failing suite got recorded as passing once. Never pipe the
+  runner in a gate command.
+- **A sentence regex that consumes text drops it.** `/[^.!?]+[.!?]+(?=\s|$)/`
+  silently skipped everything before "3.14", "e.g." or "U.S.". That hit every
+  link, because `/api/fetch-url` collapses a page into one paragraph.
+  `splitSource` now splits without consuming text (`replace(/([.!?])\s+/g,
+  '$1\0')`, with no lookbehind, for Hermes). A test joins the pieces back and
+  checks that no characters were lost.
+- **NetInfo calls a new listener at once.** It can also report "connected"
+  while requests fail. A "resume when online" listener therefore fired
+  immediately and looped, leaking a listener each turn. The build store
+  resumes once per pause, after 2 s, and skips `isInternetReachable ===
+  false`. The jest mock now calls listeners on subscribe, like the library.
+- **Tabs stay mounted.** The Courses screen read `justCreated` once at mount
+  and never saw a course made from its own **+**. It now subscribes.
+
+### Review follow-ups (all fixed on the PR, 2026-10-12)
+
+The final review's 11 minor items are fixed, each with a test:
+- **Errors:** a fully rate-limited build reports `rate_limited`, not `empty`.
+- **Topic builds:** they pause offline and resume. Prompts are capped
+  (topic 200 characters, avoid list 3,000) so the proxy's silent
+  8,000-character cut can't drop the JSON rules.
+- **Progress:** it never counts past the target.
+- **Photos:** they're size-checked before upload (1.5 MB each, 3 MB in all),
+  with photo-specific wording.
+- **Link field:** the clipboard fills it once per visit to Link.
+- **Review deck:** editing a card no longer remounts it.
+- **Titles:** a blank title saves as the one the course was made with.
+- **Store:** a stale source read can't hijack a newer build.
+- **Closing the sheet:** it clears the build on unmount, so it no longer
+  flashes.
+- **Dev server:** `api/server.js` parses JSON bodies up to 5 MB. Express's
+  100 KB default returned 413 for every real PDF or photo.
+
+### Owner check
+
+Outstanding item 12 above covers deploying, `GEMINI_API_KEY` and one course
+per source on the phone. Vercel has no `GEMINI_API_KEY` (2026-10-12), so
+photos go through Groq. Its free tier caps that model at ~1,000 output tokens
+per minute (requests use `max_tokens: 900`), so a dense multi-page photo set
+can come back partial and back-to-back photo courses can hit a 429 ("give it a
+minute"). Adding a free Gemini key (aistudio.google.com/apikey) makes Gemini
+the first choice. Planned: on-device text recognition (Apple Vision / ML Kit)
+once the app moves off Expo Go to development builds; it's free, offline and
+private, with the server as the fallback.

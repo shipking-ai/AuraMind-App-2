@@ -31,7 +31,9 @@ app.use(cors({
 // serializing the JSON body would break signature verification.
 app.use('/api/stripe-webhook', express.raw({ type: '*/*' }), webhookHandler);
 
-app.use(express.json());
+// Course creation uploads PDFs and photos as base64 JSON (up to ~4 MB);
+// Express's default 100 KB limit rejected them on the dev server.
+app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // AI proxy router — also mounted before the Vercel catch-all so streaming

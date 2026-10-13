@@ -42,7 +42,15 @@ export function TodayScreen() {
 
         <Animated.View entering={rise(1)}>
           <PaperCard>
-            {s.due > 0 ? (
+            {decks.length === 0 ? (
+              <>
+                <Text style={styles.dueCount}>Make your first course</Text>
+                <Text style={styles.paperMeta}>Turn a topic, a link, a PDF or a photo of your notes into cards.</Text>
+                <View style={styles.cta}>
+                  <PrimaryButton label="Add course" onPress={() => router.push('/create')} />
+                </View>
+              </>
+            ) : s.due > 0 ? (
               <>
                 <Text style={styles.paperLabel}>Due today</Text>
                 <Text style={styles.dueCount}>

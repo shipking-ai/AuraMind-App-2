@@ -12,6 +12,7 @@
     "express": "^5.2.1",
     "resend": "^6.28.1",
     "stripe": "^22.6.2",
+    "unpdf": "^1.8.1",
     "zod": "^4.6.5"
   },
   "overrides": {

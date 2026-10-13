@@ -14,3 +14,8 @@ it('only adds the Apple sign-in entitlement when enabled', () => {
   expect(config.ios?.usesAppleSignIn).toBe(false);
   expect(JSON.stringify(config.plugins)).not.toContain('expo-apple-authentication');
 });
+
+it('explains camera and photo access for making courses from notes', () => {
+  expect(config.ios?.infoPlist?.NSCameraUsageDescription).toBe('BonaMind reads your notes to make cards.');
+  expect(config.ios?.infoPlist?.NSPhotoLibraryUsageDescription).toBe('BonaMind reads your notes to make cards.');
+});

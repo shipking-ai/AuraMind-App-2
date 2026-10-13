@@ -102,6 +102,7 @@ export default function RootLayout() {
                   // and the transparent sheet let Today show through.
                   options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.night } }}
                 />
+                <Stack.Screen name="create" options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.night } }} />
               </Stack.Protected>
               <Stack.Protected guard={!signedIn}>
                 <Stack.Screen name="welcome" />
