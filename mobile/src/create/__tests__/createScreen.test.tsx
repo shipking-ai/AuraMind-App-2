@@ -1,6 +1,6 @@
 import { CreateError } from '@bonamind/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import { CreateScreen } from '../CreateScreen';
 import { CREATE_COPY } from '../copy';
@@ -99,6 +99,23 @@ it('words an unreadable source for the source that failed', async () => {
   await render(<CreateScreen />);
   await fireEvent.press(tile('PDF'));
   expect(screen.getByText(CREATE_COPY.unreadable.pdf)).toBeTruthy();
+});
+
+// The form used to unmount while building, so an error brought back the Topic
+// tile with empty inputs: the PDF-specific advice never showed and the file,
+// link or photos had to be chosen again.
+it('keeps the chosen source, its input and the size when a build fails', async () => {
+  await render(<CreateScreen />);
+  await fireEvent.press(tile('PDF'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Choose a PDF' }));
+  await screen.findByText('Cells.pdf · 1 KB');
+  await fireEvent.press(screen.getByRole('tab', { name: 'Deep' }));
+  await fireEvent.press(make());
+  await act(async () => { useCreateStore.setState({ phase: 'building', progress: { step: 'reading', cardsSoFar: 0, target: 35 } }); });
+  await act(async () => { useCreateStore.setState({ phase: 'error', error: 'unreadable' }); });
+  expect(screen.getByText(CREATE_COPY.unreadable.pdf)).toBeTruthy();
+  expect(screen.getByText('Cells.pdf · 1 KB')).toBeTruthy();
+  expect(screen.getByRole('tab', { name: 'Deep' }).props.accessibilityState).toMatchObject({ selected: true });
 });
 
 it('caps photos at 5 and removes a page on its close button', async () => {

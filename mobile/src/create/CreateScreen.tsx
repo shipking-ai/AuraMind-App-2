@@ -227,11 +227,11 @@ export function CreateScreen() {
             </View>
             <GlassButton symbol={{ ios: 'xmark', android: 'close' }} label="Close" onPress={() => router.back()} tint={colors.text} />
           </View>
-          {editing && (
-            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <CreateForm />
-            </ScrollView>
-          )}
+          {/* Stays mounted (hidden) through building and review, so an error
+              comes back to the same source, inputs and size. */}
+          <ScrollView style={!editing && styles.hidden} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+            <CreateForm />
+          </ScrollView>
           {(phase === 'building' || phase === 'waiting') && <BuildingView />}
           {(phase === 'review' || phase === 'saving') && <ReviewDeck />}
           {phase === 'ready' && <ReadyView onStudy={studyNow} onDone={done} />}
@@ -273,4 +273,5 @@ const styles = StyleSheet.create({
   sectionLabel: { color: colors.textMuted, fontFamily: fonts.ui, fontSize: 13 },
   error: { color: colors.again, fontFamily: fonts.ui, fontSize: 14 },
   dim: { opacity: 0.6 },
+  hidden: { display: 'none' },
 });
