@@ -75,12 +75,15 @@ not by a fixed list**: any key that starts with `auramind` followed by
 Only the prefix changes; the rest of the key stays as it is.
 
 Some modules read localStorage while they are being imported, before
-any startup code runs. So the localStorage migration is
-**synchronous** and lives in a module that `src/index.tsx` imports
-first, which makes it run before every other module. Capacitor
-Preferences only has an async API, and only native surfaces read it
-(the widget keys and the iOS pending route). Its migration runs right
-after startup without blocking the first render. Both use the same
+any startup code runs. A first import in `src/index.tsx` doesn't run
+first in the built bundle, because the bundler evaluates the entry's
+shared chunks ahead of the entry's own code. So the localStorage
+migration is a **classic script**, `public/storage-migrate.js`, loaded
+first in `index.html`'s `<head>`. Classic scripts run while the page is
+still parsing, before any module script. Capacitor Preferences only has
+an async API, and only native surfaces read it (the widget keys and the
+iOS pending route). Its migration (`migrateLegacyKeysAsync`) runs right
+after startup without blocking the first render. Both follow the same
 steps:
 
 1. If the marker `bonamind_storage_migrated_v1` is set, stop.
@@ -119,27 +122,31 @@ label, the `auramind-desktop` crate, the `auramind-dir-` test name, the
 `offlineStudyService.ts` keeps queued reviews in the database
 `auramind-offline`. A queued review that is lost is lost for good, so
 this one is careful. In this PR the service switches to
-`bonamind-offline`, and its open step does the move. **While
-`auramind-offline` exists, it is the source of truth.**
+`bonamind-offline`, and its open step moves the records. **No database
+is ever deleted.** A delete that another tab blocks stays queued, then
+removes the database whenever that tab closes, and every open behind it
+hangs. The first review of this design found both failures: two tabs
+booting together (which a service-worker update causes) lost every
+queued review.
 
-1. On open, check whether `auramind-offline` exists. (Open it without a
-   version; if that would create it, abort the upgrade so nothing gets
-   created.) If it doesn't exist, open `bonamind-offline` and use it.
-2. If it does, delete any `bonamind-offline` left by an earlier try,
-   create a fresh one, copy every record from the three stores in one
-   transaction, and compare record counts per store.
-3. Only if every count matches, delete `auramind-offline` and use
-   `bonamind-offline`.
-4. If the copy or the count check fails, delete the half-made
-   `bonamind-offline` and **keep using `auramind-offline`** for this
-   session. The next launch tries again from step 1.
-5. If deleting `auramind-offline` is blocked (another tab still has it
-   open), use `bonamind-offline`: the copy is verified, and the delete
-   finishes when the other tab closes.
+1. Where the browser has Web Locks, the move runs under the lock
+   `bonamind-offline-migration`, so tabs take turns.
+2. Open `bonamind-offline`, creating it if needed. Check whether
+   `auramind-offline` exists by opening it without a version; if that
+   would create it, abort the upgrade so nothing is created. If it
+   doesn't exist, use `bonamind-offline`.
+3. Otherwise copy every legacy record into `bonamind-offline` **by key,
+   only where the key is absent**. A record already there is newer and
+   wins.
+4. Remove from `auramind-offline` each record whose key
+   `bonamind-offline` now holds. Records written to the legacy database
+   later (an old-bundle tab, a rolled-back deploy) stay there and move
+   on the next launch.
+5. If the copy fails, keep using `auramind-offline` for this session
+   (nothing was removed from it). The next launch tries again.
 
-A crash at any point is safe. The old database survives until a
-verified copy exists, and a new database left behind by an unfinished
-copy is thrown away and rebuilt.
+A crash at any point is safe, and every launch drains whatever is left.
+An empty `auramind-offline` stays on the device, at no cost.
 
 ### Widget service-worker cache
 

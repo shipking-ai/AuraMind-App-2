@@ -14,11 +14,11 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main` at `cf63fde8` (2026-10-04, through #146 — the BonaMind rebrand, the community tab, the cards RLS fix); open PRs (2026-10-12): #156 (native app, part 1 — merge by hand), #157 (iOS Live Activity update race), #147 (Android release config), plus Dependabot #112, #113, #148–#155 |
+| Branch | `main` at `9fe827e3` (2026-10-12, through #164: native app part 2). Rename PR1 (storage migration) on `feat/rename-1-storage`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
 | Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
-| Native app | `mobile/` (Expo SDK 57, RN 0.86) + `packages/core` (`@bonamind/core`). Part 1 merged (#156) and runs in Expo Go on a real iPhone; unsigned IPA built on `main` 2026-10-12. Part 2 (create a course on the phone) on `feat/native-app-part2`. See the 2026-10-11 and 2026-10-12 sections |
+| Native app | `mobile/` (Expo SDK 57, RN 0.86) + `packages/core` (`@bonamind/core`). Part 1 merged (#156) and runs in Expo Go on a real iPhone; unsigned IPA built on `main` 2026-10-12. Part 2 (create a course on the phone) merged (#164). See the 2026-10-11 and 2026-10-12 sections |
 | Tests | 137 files / 968 declared cases (734 unit, 155 API, 26 seeded Playwright, 53 in `packages/core`). The seeded e2e specs skip in CI — they mint real accounts with the service-role key, which CI does not have |
 
 ---
@@ -94,6 +94,16 @@ the traps that cost real time.
     `GEMINI_VISION_MODEL`). No new key is required.
     Then make one course from each source in Expo Go and check it appears on
     bonamind.app.
+13. **BonaMind rename, owner steps** (spec
+    `docs/superpowers/specs/2026-10-13-bonamind-rename-design.md`, four PRs):
+    - After **PR1** (storage migration) merges: ship new **Android** and
+      **Windows** builds. They carry the native half of the migration and
+      register `bonamind://`.
+    - Before **PR3** merges: add `bonamind://auth/callback` to Supabase →
+      Authentication → URL Configuration → Redirect URLs. Keep the
+      `auramind://auth/callback` entry, because older Windows installs still send it.
+    - After **PR2**: paste the new store text from `store/android/` into Play Console.
+    - After **PR3**: ship Android and Windows builds again.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -461,6 +471,34 @@ pulled in through Express in both packages (shadcn → MCP SDK → express on th
 website). `npm audit fix` (never `--force`) in the failing package, then run
 the type-check, tests and build.
 
+### Don't roll back the rename's storage migration; roll forward
+
+Once the PR1 web deploy has run on a browser, that browser's settings,
+saved chats and local XP live under `bonamind…` keys only. A Vercel instant
+rollback to an older build would read the old `auramind…` keys, find nothing,
+and show every returning user default settings: theme, consent banner, an
+empty chat history. Rolling forward again doesn't recover what they changed
+in between, because the migration's run-once marker is already set.
+
+Queued offline reviews are safe either way. The IndexedDB move never deletes
+a database and drains the old one again on every launch. If PR1's web build
+misbehaves, ship a fix forward.
+
+### Pre-rename names live in one web file
+
+The rename to BonaMind moved every stored key from `auramind…` to
+`bonamind…`. `auramind-gemini/src/lib/legacyNames.ts` is the **only** web
+source file allowed to spell a pre-rename name, and
+`src/__tests__/legacyStorageNames.test.ts` fails CI on any other. It holds the
+migration's old prefix and the old link scheme. It also holds names that can
+never change: `urn:auramind:classroom:*` (raised by an applied migration), the
+Windows widget tag `auramind-due` (the widget board finds pinned widgets by
+tag), and the owner's Google Group address. Don't "finish the rename" on
+those. Other permanent names are listed in the spec's "What never changes"
+table: `com.auramind.app`, the signing-key alias `auramind-upload`, the Wear
+paths `/auramind/sync` and `/auramind/grade`, the notification channel
+`auramind_study_session` and `auramind_biometric_creds`.
+
 ### Full website suite timeouts on this PC
 
 `npx vitest run` in `auramind-gemini/` on this machine sometimes ends with a
@@ -619,6 +657,43 @@ app plus its extension burn two per sideload.
   checkouts predate this and still carry the old names.
 - **Community tab** (#137) — browse and fork published decks, migration
   `20260930_marketplace_fork_and_listing.sql`.
+
+---
+
+## 2026-10-13 - BonaMind rename, PR1: stored data moves to new names
+
+Spec `docs/superpowers/specs/2026-10-13-bonamind-rename-design.md`; plan
+`docs/superpowers/plans/2026-10-13-bonamind-rename.md` (PR1 = Tasks 1–6). The
+GitHub repo is now `shipking-ai/BonaMind`; the old URL redirects.
+
+- **Web storage.** `public/storage-migrate.js` is a classic script, loaded
+  first in `index.html`, so it runs before every module. A first import in
+  `index.tsx` would not, because the bundler runs shared chunks ahead of the
+  entry. It moves every localStorage key that starts with `auramind` +
+  `_ - . :` to `bonamind` + the same rest.
+  - A key that already exists under the new name wins.
+  - If a write fails, the old value goes back under its old name.
+  - The marker `bonamind_storage_migrated_v1` is set only when every key moved.
+  - Capacitor Preferences gets the async twin (`migrateLegacyKeysAsync`) from
+    `NativeRuntime`. The code itself reads and writes only the new names.
+- **Offline reviews.** `src/services/offline/offlineDb.ts` merges
+  `auramind-offline` into `bonamind-offline`, by key and only where the key is
+  missing, under a Web Lock. It then removes the copied records from the old
+  database. It **never deletes a database**: a delete blocked by another tab
+  stays queued, wipes the database when that tab closes and hangs every open
+  behind it. That is how the first design lost every queued review.
+- **Push taps.** `pushTapTarget` follows `bonamind://` and `auramind://` links
+  through the deep-link allowlist.
+- **Android.** `LegacyPrefs` moves `auramind_spoken_reminder` and the Wear
+  `auramind_wear_grade_queue` on first read. `WidgetPrefs.read` lets the widget
+  and Quick Settings tile fall back to the old key until the app has run once.
+  CI now runs the phone app's JVM tests (`:app:testDebugUnitTest`).
+- **Links.** Android, iOS, Windows, the web router and `POST /api/push/send`
+  accept both `bonamind://` and `auramind://`. Everything still **sends**
+  `auramind://` until PR3.
+- **Also renamed.** The iOS Siri keys (`bonamind_widget_due`/`_deck`/
+  `_pending_route`) and the `bonamind_ci_*` keys `mobile-ios.yml` reads. The
+  `robots.txt` sitemap now points at `https://www.bonamind.app`.
 
 ---
 
