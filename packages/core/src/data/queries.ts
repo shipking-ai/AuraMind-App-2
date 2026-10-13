@@ -6,6 +6,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Card, Deck, StudySession } from '../types';
 import { type CardScheduleUpdate, type ReviewRecord, toCardScheduleRow } from '../review/planReview';
 import { msToIso } from '../time';
+import { applyPersonalizedDifficultyInit } from '../scheduling/fsrs';
+import { getInitialCardState } from '../scheduling/srs';
 import { mapCardRow, mapDeckRow, mapSessionRow } from './rows';
 
 /**
@@ -153,4 +155,40 @@ export function createBonaMindData(client: SupabaseClient): BonaMindData {
       if (error) raise(error);
     },
   };
+}
+
+/**
+ * Saves a generated course the way the website does (deckService.createDeck
+ * then cardService.saveCards): one decks row, then every card in one insert,
+ * each starting from the initial FSRS state with the user's personalized
+ * difficulty. A failed card insert deletes the deck, so no empty course is
+ * ever left behind.
+ */
+export async function createCourse(
+  client: SupabaseClient,
+  userId: string,
+  draft: { title: string; description: string; cards: { front: string; back: string }[] },
+  personalization: { profileLabel: string | null; weightsOverride?: number[] },
+): Promise<{ deck: Deck; cards: Card[] }> {
+  const { data: deckRow, error: deckError } = await client
+    .from('decks')
+    .insert({ user_id: userId, name: draft.title, description: draft.description, created_at: msToIso(Date.now()) })
+    .select()
+    .single();
+  if (deckError || !deckRow) throw deckError ?? new Error('deck insert returned no row');
+
+  const rows = draft.cards.map(({ front, back }) => {
+    const seeded = applyPersonalizedDifficultyInit(
+      getInitialCardState(deckRow.id, front, back),
+      personalization.profileLabel,
+      personalization.weightsOverride,
+    ).card;
+    return { user_id: userId, deck_id: deckRow.id, front, back, fsrs_state: JSON.stringify(seeded.fsrsState) };
+  });
+  const { data: cardRows, error: cardError } = await client.from('cards').insert(rows).select();
+  if (cardError || !cardRows) {
+    await client.from('decks').delete().eq('id', deckRow.id);
+    throw cardError ?? new Error('card insert returned no rows');
+  }
+  return { deck: mapDeckRow(deckRow, cardRows.length), cards: cardRows.map(mapCardRow) };
 }
