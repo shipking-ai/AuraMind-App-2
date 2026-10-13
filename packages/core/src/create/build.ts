@@ -26,8 +26,13 @@ export type CourseSource =
   | { kind: 'topic'; topic: string }
   | { kind: 'text'; text: string; title: string; label: string };
 
+/** The part of an AbortSignal this module reads (core has no DOM types). */
+export interface AbortLike {
+  readonly aborted: boolean;
+}
+
 /** One call to /api/ai/chat; returns the reply text or throws a CreateError. */
-export type AskFn = (prompt: string, signal?: AbortSignal) => Promise<string>;
+export type AskFn = (prompt: string, signal?: AbortLike) => Promise<string>;
 
 export interface BuildProgress {
   step: 'reading' | 'ideas' | 'writing' | 'done';
@@ -48,7 +53,8 @@ export interface CourseDraft {
 const TOPIC_FIRST_ROUND = 20;
 const RATE_LIMIT_WAITS_MS = [3000, 8000];
 
-const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const timers = globalThis as unknown as { setTimeout(fn: () => void, ms: number): unknown };
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => { timers.setTimeout(resolve, ms); });
 const isAbort = (e: unknown) => (e as { name?: string } | null)?.name === 'AbortError';
 
 export async function buildCourse(opts: {
@@ -56,7 +62,7 @@ export async function buildCourse(opts: {
   size: CourseSize;
   ask: AskFn;
   onProgress?: (p: BuildProgress) => void;
-  signal?: AbortSignal;
+  signal?: AbortLike;
   sleep?: (ms: number) => Promise<void>;
   resume?: BuildPartial;
 }): Promise<CourseDraft> {
