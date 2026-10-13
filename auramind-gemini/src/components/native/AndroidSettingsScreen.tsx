@@ -31,7 +31,7 @@ import { useReminderSync } from "../../hooks/useReminderSync";
 import { useVoiceOptions } from "../../hooks/useVoiceOptions";
 import { AuraSpeech } from "../../lib/auraSpeech";
 import { deviceName, isAndroidApp } from "../../lib/platform";
-import { SPOKEN_REMINDER_MESSAGES, type SpokenReminderMode } from "../../lib/reminderSchedule";
+import { SPOKEN_REMINDER_MESSAGES, currentReminderMessage, type SpokenReminderMode } from "../../lib/reminderSchedule";
 import {
   resetRandomVoice,
   speak,
@@ -245,10 +245,13 @@ export default function AndroidSettingsScreen() {
     "bonamind_spokenReminder",
     "off",
   );
-  const [spokenReminderMessage, setSpokenReminderMessage] = useStoredValue<string>(
+  const [storedSpokenReminderMessage, setSpokenReminderMessage] = useStoredValue<string>(
     "bonamind_spokenReminderMessage",
     SPOKEN_REMINDER_MESSAGES[0],
   );
+  // Saved as text, so a line chosen before the rename is shown and spoken in
+  // its current wording (see currentReminderMessage).
+  const spokenReminderMessage = currentReminderMessage(storedSpokenReminderMessage);
 
   const chooseVoice = (next: string) => {
     // A fresh pick every time Random is chosen, so "Test voice" shows it off.

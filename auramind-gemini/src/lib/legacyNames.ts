@@ -5,6 +5,10 @@
  * else imports from here.
  */
 
+/** The product's and the tutor's names before the rename, for mapping saved text. */
+export const LEGACY_BRAND = 'AuraMind';
+export const LEGACY_TUTOR = 'Prof. Aura';
+
 /** Storage keys used to start with this, followed by `_`, `-`, `.` or `:`. */
 export const LEGACY_PREFIX = 'auramind';
 

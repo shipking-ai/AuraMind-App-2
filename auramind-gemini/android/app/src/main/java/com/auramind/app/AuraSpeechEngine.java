@@ -19,7 +19,7 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * One Android TextToSpeech engine plus the voice rules AuraMind uses.
+ * One Android TextToSpeech engine plus the voice rules BonaMind uses.
  *
  * Exists because Android System WebView has no speechSynthesis at all:
  * `window.speechSynthesis` is undefined inside the Capacitor app, so every

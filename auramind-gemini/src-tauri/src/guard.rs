@@ -16,7 +16,7 @@ const NOTIFICATION_SETTINGS: &str = "ms-settings:notifications";
 /// Anything else (Stripe checkout, help links, sign-in providers) opens in the
 /// user's own browser, the way Capacitor sends outside links out of the phone
 /// apps. Keeping checkout out of the app window also means Stripe's success
-/// redirect to auramind.app lands in the browser, not over the bundled app;
+/// redirect to bonamind.app lands in the browser, not over the bundled app;
 /// the app re-checks the subscription when its window regains focus.
 pub fn stays_in_app(url: &Url) -> bool {
     match url.scheme() {
@@ -56,7 +56,7 @@ mod tests {
     fn outside_sites_leave_the_window() {
         for outside in [
             "https://checkout.stripe.com/c/pay/cs_live_123",
-            "https://auramind.app/subscribe?payment=success",
+            "https://bonamind.app/subscribe?payment=success",
             "https://accounts.google.com/o/oauth2/auth",
             "https://tauri.localhost.evil.example/",
             "http://evil.example/https://tauri.localhost",
@@ -67,8 +67,8 @@ mod tests {
 
     #[test]
     fn only_web_and_mail_links_are_handed_to_the_os() {
-        assert!(opens_externally(&url("https://auramind.app/privacy")));
-        assert!(opens_externally(&url("mailto:hello@auramind.app")));
+        assert!(opens_externally(&url("https://bonamind.app/privacy")));
+        assert!(opens_externally(&url("mailto:hello@bonamind.app")));
         assert!(!opens_externally(&url("file:///C:/Windows/System32/cmd.exe")));
         assert!(!opens_externally(&url("ms-settings:privacy")));
     }

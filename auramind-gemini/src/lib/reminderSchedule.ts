@@ -1,3 +1,5 @@
+import { LEGACY_BRAND, LEGACY_TUTOR } from './legacyNames';
+
 export const REMINDER_IDS = {
   daily: 7401,
   due: 7402,
@@ -108,6 +110,17 @@ export const SPOKEN_REMINDER_MESSAGES = [
   "Knock knock. It's your flashcards. They miss you.",
   'Quick brain workout? Your review queue is ready.',
 ] as const;
+
+/**
+ * The chosen spoken line in its current wording. The setting stores the
+ * line's text, so a line saved before the rename still says the old names;
+ * it is mapped forward, and anything that is no longer a line falls back to
+ * the first one (the same line the settings picker then shows as selected).
+ */
+export function currentReminderMessage(stored: string): string {
+  const current = stored.split(LEGACY_TUTOR).join('Prof. Linnea').split(LEGACY_BRAND).join('BonaMind');
+  return (SPOKEN_REMINDER_MESSAGES as readonly string[]).includes(current) ? current : SPOKEN_REMINDER_MESSAGES[0];
+}
 
 /**
  * When the spoken reminder fires: with the first reminder the user enabled,

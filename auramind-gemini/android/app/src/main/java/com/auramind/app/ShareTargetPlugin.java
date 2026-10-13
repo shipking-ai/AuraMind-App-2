@@ -11,7 +11,7 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * Share target — receives content shared into AuraMind from any other app.
+ * Share target — receives content shared into BonaMind from any other app.
  *
  * This is the capability a website cannot have. A browser tab is somewhere you
  * go; a share target is somewhere the operating system can send things. It

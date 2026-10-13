@@ -4,7 +4,7 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- AuraMind watch mark: a smartwatch with violet straps, a white case,
+    <!-- BonaMind watch mark: a smartwatch with violet straps, a white case,
          a violet screen and a cyan review-complete check. -->
     <!-- top strap -->
     <path

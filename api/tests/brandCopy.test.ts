@@ -9,7 +9,7 @@ import { join, relative, resolve } from 'node:path';
 import { expect, it } from 'vitest';
 
 const API_ROOT = resolve(__dirname, '..');
-const OLD = /AuraMind|Prof(?:\. ?| )Aura\b|(?<![A-Za-z0-9_\-./])Aura(?![A-Za-z0-9_])/;
+const OLD = /AuraMind|AURAMIND|Prof(?:\. ?| )Aura\b|(?<![A-Za-z0-9_\-./])(Aura|AURA)(?![A-Za-z0-9_])/;
 
 function sources(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

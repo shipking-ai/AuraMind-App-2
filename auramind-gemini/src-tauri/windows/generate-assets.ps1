@@ -60,7 +60,7 @@ function Save-Aurora([int]$w, [int]$h, [string]$name, [int]$markSize, [bool]$wit
   if ($withWordmark) {
     $font = New-Object System.Drawing.Font 'Segoe UI Semilight', 20, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
     $fmt = New-Object System.Drawing.StringFormat; $fmt.Alignment = 'Center'
-    $g.DrawString('AuraMind', $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, ($y + $markSize + 10), $w, 30), $fmt)
+    $g.DrawString('BonaMind', $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, ($y + $markSize + 10), $w, 30), $fmt)
   }
   $flat = New-Object System.Drawing.Bitmap $w, $h, ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
   $fg = [System.Drawing.Graphics]::FromImage($flat); $fg.DrawImage($bmp, 0, 0, $w, $h); $fg.Dispose()

@@ -361,7 +361,7 @@ export default function AndroidGeneratorScreen() {
     <div className="android-native-generator" data-testid="android-generator-screen">
       <div className="android-native-screen-heading">
         <div>
-          <p className="android-eyebrow">CREATE WITH AURA</p>
+          <p className="android-eyebrow">CREATE WITH LINNEA</p>
           <h1>Make something worth remembering.</h1>
           <p>Build a focused study session from a thought, file, video, or voice memo.</p>
         </div>

@@ -19,7 +19,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 /**
- * WearSync — exposes the Wear OS data layer to the AuraMind JS app.
+ * WearSync — exposes the Wear OS data layer to the BonaMind JS app.
  *
  * - pushReviewPayload(payload): pushes today's due cards to the watch.
  * - onGradeResult event: fired when the watch sends a grade back.

@@ -87,7 +87,7 @@ const sections = [
     content: (
       <>
         <p>
-          BonaMind provides AI-powered features including an AI study assistant ("Linnea"), flashcard generation, quiz generation, research packs, fact-checking, and homework assistance. These features use large language models from third-party providers.
+          BonaMind provides AI-powered features including an AI study assistant ("Prof. Linnea"), flashcard generation, quiz generation, research packs, fact-checking, and homework assistance. These features use large language models from third-party providers.
         </p>
 
         <h4 className="text-sm font-semibold text-[#F0EFFE] mt-4 mb-2">AI Output Disclaimer</h4>

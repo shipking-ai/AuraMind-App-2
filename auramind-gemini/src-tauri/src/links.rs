@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn anything_else_is_dropped() {
         for bad in [
-            "https://auramind.app/app/study",
+            "https://bonamind.app/app/study",
             "auramind://auth/other",
             "auramind://evil/app",
             "auramind:app/study",

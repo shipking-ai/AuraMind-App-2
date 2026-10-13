@@ -12,7 +12,7 @@ import os
  here schedules or grades a card, and a failure to show an activity must never
  disturb a session, so every method resolves rather than rejecting.
 
- Live Activities need iOS 16.1, the user's permission (Settings › AuraMind ›
+ Live Activities need iOS 16.1, the user's permission (Settings › BonaMind ›
  Live Activities, which `areActivitiesEnabled` reports), and a session that is
  actually open — the system ends orphaned activities, but ending ours in
  `end()` is what keeps the Island honest.

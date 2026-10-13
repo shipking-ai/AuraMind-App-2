@@ -30,7 +30,7 @@ const sections = [
           <li><strong className="text-[#F0EFFE]">Profile Information:</strong> Avatar image, study preferences, and any information you add to your profile.</li>
           <li><strong className="text-[#F0EFFE]">Study Content:</strong> Flashcards, decks, notes, study sessions, quiz responses, and any content you create or upload.</li>
           <li><strong className="text-[#F0EFFE]">Documents:</strong> PDFs, PowerPoint files, text documents, and markdown files you upload for content processing.</li>
-          <li><strong className="text-[#F0EFFE]">AI Interactions:</strong> Prompts, questions, and conversations you submit to our AI study assistant ("Linnea").</li>
+          <li><strong className="text-[#F0EFFE]">AI Interactions:</strong> Prompts, questions, and conversations you submit to our AI study assistant ("Prof. Linnea").</li>
           <li><strong className="text-[#F0EFFE]">Communications:</strong> Information you provide when contacting support or participating in surveys.</li>
         </ul>
 

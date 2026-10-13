@@ -23,7 +23,7 @@ import java.util.concurrent.Executor;
 
 /**
  * BiometricAuth — device biometrics (fingerprint / face / iris) plus
- * hardware-backed credential storage for the AuraMind Android app.
+ * hardware-backed credential storage for the BonaMind Android app.
  *
  * WHY FIRST-PARTY INSTEAD OF A COMMUNITY PLUGIN
  *
@@ -117,7 +117,7 @@ public class BiometricAuthPlugin extends Plugin {
         }
 
         pendingAuth = call;
-        String title = call.getString("title", "Unlock AuraMind");
+        String title = call.getString("title", "Unlock BonaMind");
         String subtitle = call.getString("subtitle", null);
         String description = call.getString("description",
                 call.getString("reason", "Confirm it's you to continue."));

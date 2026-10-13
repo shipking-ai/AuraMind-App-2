@@ -59,7 +59,7 @@ class DueCountComplicationService : SuspendingComplicationDataSourceService() {
 
         val builder = ShortTextComplicationData.Builder(
             PlainComplicationText.Builder(if (due == 0) "Done!" else "$due due").build(),
-            PlainComplicationText.Builder("AuraMind").build(),
+            PlainComplicationText.Builder("BonaMind").build(),
         )
         if (tapAction != null) builder.setTapAction(tapAction)
         return builder.build()
@@ -77,7 +77,7 @@ class DueCountComplicationService : SuspendingComplicationDataSourceService() {
             ).build()
             else -> ShortTextComplicationData.Builder(
                 PlainComplicationText.Builder("3 due").build(),
-                PlainComplicationText.Builder("AuraMind").build(),
+                PlainComplicationText.Builder("BonaMind").build(),
             ).build()
         }
 }

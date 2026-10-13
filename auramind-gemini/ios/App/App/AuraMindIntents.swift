@@ -64,12 +64,12 @@ enum AuraMindSiri {
     }
 }
 
-/// "Hey Siri, quiz me in AuraMind."
+/// "Hey Siri, quiz me in BonaMind."
 @available(iOS 16.0, *)
 struct StartReviewIntent: AppIntent {
     static var title: LocalizedStringResource = "Quiz me"
     static var description = IntentDescription(
-        "Start a review session with the cards AuraMind says are due.")
+        "Start a review session with the cards BonaMind says are due.")
     static var openAppWhenRun: Bool = true
 
     @MainActor
@@ -79,7 +79,7 @@ struct StartReviewIntent: AppIntent {
     }
 }
 
-/// "Hey Siri, what's due in AuraMind?" — answered without opening the app.
+/// "Hey Siri, what's due in BonaMind?" — answered without opening the app.
 @available(iOS 16.0, *)
 struct DueCountIntent: AppIntent {
     static var title: LocalizedStringResource = "Cards due"

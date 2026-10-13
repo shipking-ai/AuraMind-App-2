@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildReminderNotifications, REMINDER_IDS, spokenReminderTime } from "../lib/reminderSchedule";
+import {
+  buildReminderNotifications,
+  currentReminderMessage,
+  REMINDER_IDS,
+  SPOKEN_REMINDER_MESSAGES,
+  spokenReminderTime,
+} from "../lib/reminderSchedule";
 
 describe("reminder schedule", () => {
   it("builds only enabled reminders at predictable offsets", () => {
@@ -93,5 +99,27 @@ describe('spokenReminderTime', () => {
     });
     expect(spokenReminderTime(weekly)).toEqual({ hour: 9, minute: 45, weekday: 2 });
     expect(spokenReminderTime([])).toBeNull();
+  });
+});
+
+describe("spoken reminder message", () => {
+  // The chosen line is stored as its text. A line saved before the rename
+  // must play, and show as selected, in its current wording.
+  it("maps a line saved under the old names to its current wording", () => {
+    expect(currentReminderMessage("Prof. Aura here. Ready for a few cards?")).toBe(
+      "Prof. Linnea here. Ready for a few cards?",
+    );
+    expect(currentReminderMessage("Time for a quick AuraMind review. Your cards are waiting.")).toBe(
+      SPOKEN_REMINDER_MESSAGES[0],
+    );
+    expect(currentReminderMessage("Keep your streak alive. Open AuraMind for a quick session.")).toBe(
+      "Keep your streak alive. Open BonaMind for a quick session.",
+    );
+  });
+
+  it("keeps current lines and falls back to the first line otherwise", () => {
+    expect(currentReminderMessage(SPOKEN_REMINDER_MESSAGES[3])).toBe(SPOKEN_REMINDER_MESSAGES[3]);
+    expect(currentReminderMessage("a line that no longer exists")).toBe(SPOKEN_REMINDER_MESSAGES[0]);
+    expect(currentReminderMessage("")).toBe(SPOKEN_REMINDER_MESSAGES[0]);
   });
 });

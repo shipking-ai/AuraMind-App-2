@@ -138,7 +138,7 @@ public class AuraSpeechPlugin extends Plugin {
             config.put("messages", messages == null ? new JSONArray() : new JSONArray(messages.toString()));
             config.put("voice", call.getString("voice", AuraSpeechEngine.VOICE_AUTO));
             config.put("lang", call.getString("lang", "en-US"));
-            config.put("title", call.getString("title", "AuraMind"));
+            config.put("title", call.getString("title", "BonaMind"));
             SpokenReminderReceiver.saveAndSchedule(getContext(), config);
             call.resolve();
         } catch (JSONException e) {
