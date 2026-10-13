@@ -105,6 +105,10 @@ the traps that cost real time.
     - After **PR2**: paste the new store text into Play Console. That's
       `store/android/listings/en-US/` (`title.txt` is now "BonaMind",
       `full_description.txt`) and `store/android/changelogs/en-US.txt`.
+      Then recapture the Play screenshots with
+      `auramind-gemini/scripts/capture-store-screenshots.mjs` (the current set
+      shows the AuraMind wordmark) and upload them with the feature graphic
+      `store/graphics/android/feature-1024x500.png`.
     - After **PR3**: ship Android and Windows builds again.
 
 After the first publish, `status=completed` in the release workflow makes a
@@ -670,12 +674,25 @@ app plus its extension burn two per sideload.
   the old copy said plain "Aura", it now says "Linnea". The in-app copy uses no
   pronoun for her. The Play listing already said "she" for Prof. Aura, and that
   wording is kept.
+- **Saved reminder lines map forward.** The spoken-reminder line a user picks
+  is stored as its text. `currentReminderMessage` (`src/lib/reminderSchedule.ts`)
+  shows and speaks a line saved as "Prof. Aura here…" (or with "AuraMind") in
+  its current wording.
 - **Every remaining "AuraMind" is now BonaMind:**
   - the HTML shell, the iOS permission strings and the Windows app description;
   - the payment emails (`api/stripe-webhook.ts`), the reminder push title, the
     `User-Agent` and the server logs.
   - The dashboard header and the loading screen built the wordmark from two
     spans (`Aura<span>Mind</span>`), so a plain text search never found them.
+  - The watch app name, its complication and sync text, the Siri description,
+    the Android eyebrows ("CREATE WITH LINNEA") and the Play description
+    (its privacy link pointed at the dead `auramind.app`).
+  - Art: the Windows installer sidebar (`generate-assets.ps1` →
+    `nsis-sidebar.bmp`) and the Play feature graphic were regenerated. The
+    **Play screenshots** still show AuraMind; they need the running app (see
+    owner step 13).
+  - The landing page and share previews say "BonaMind builds your course".
+    A first-time visitor hasn't met Prof. Linnea yet.
 - **Avatar files:**
   - `public/favicons,logos/prof-aura-*` is now `prof-linnea-*`, and
     `scripts/generate-android-assets.mjs` reads the new names;
@@ -685,6 +702,9 @@ app plus its extension burn two per sideload.
     "Prof. Aura" or a standalone "Aura". Uses that never meant the tutor are
     kept on a short list, each with a reason: the font names, two music tracks,
     the focus-aura glow and the top league tier.
+  - The web guard also scans the native code (Java, Kotlin, Swift, Rust), the
+    watch app, the Windows asset script and the Play listing text. It catches
+    all-caps forms and the dead `auramind.app` domain.
   - `api/tests/brandCopy.test.ts` does the same for the API.
 - **Windows auto-update** now points at `shipking-ai/BonaMind` releases.
 - **Unchanged:** stored chat history still says "Prof. Aura" where it was
