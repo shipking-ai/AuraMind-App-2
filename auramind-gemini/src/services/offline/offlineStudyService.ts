@@ -7,9 +7,8 @@
  */
 
 import { Card, Deck } from '../../types';
+import { openOfflineDb } from './offlineDb';
 
-const DB_NAME = 'auramind-offline';
-const DB_VERSION = 1;
 const DECKS_STORE = 'decks';
 const CARDS_STORE = 'cards';
 const SYNC_QUEUE_STORE = 'syncQueue';
@@ -31,40 +30,7 @@ interface _OfflineDB {
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDB(): Promise<IDBDatabase> {
-  if (dbPromise) return dbPromise;
-
-  dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      // Decks store
-      if (!db.objectStoreNames.contains(DECKS_STORE)) {
-        const decksStore = db.createObjectStore(DECKS_STORE, { keyPath: 'id' });
-        decksStore.createIndex('userId', 'userId', { unique: false });
-      }
-
-      // Cards store
-      if (!db.objectStoreNames.contains(CARDS_STORE)) {
-        const cardsStore = db.createObjectStore(CARDS_STORE, { keyPath: 'id' });
-        cardsStore.createIndex('deckId', 'deckId', { unique: false });
-        cardsStore.createIndex('userId', 'userId', { unique: false });
-        cardsStore.createIndex('nextReview', 'nextReview', { unique: false });
-      }
-
-      // Sync queue store
-      if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
-        const syncStore = db.createObjectStore(SYNC_QUEUE_STORE, { keyPath: 'id' });
-        syncStore.createIndex('timestamp', 'timestamp', { unique: false });
-        syncStore.createIndex('retryCount', 'retryCount', { unique: false });
-      }
-    };
-  });
-
+  if (!dbPromise) dbPromise = openOfflineDb();
   return dbPromise;
 }
 
