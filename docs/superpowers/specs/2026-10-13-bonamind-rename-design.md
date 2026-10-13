@@ -17,7 +17,11 @@ This finishes the job.
 ## Decisions already made
 
 - **Scope: users and code, keep the folder.** The `auramind-gemini/`
-  folder, the GitHub repo name and the app IDs stay as they are.
+  folder and the app IDs stay as they are.
+- **The GitHub repo is now `shipking-ai/BonaMind`.** The owner renamed
+  it on 2026-10-13. GitHub redirects the old `AuraMind-App-2` URLs, so
+  nothing broke, but every reference moves to the new name (see Stage 3
+  and Stage 4).
 - **Native code names are renamed too.** Android classes that the system
   remembers by name keep working through stand-in subclasses (see
   "Android").
@@ -32,7 +36,10 @@ This finishes the job.
 | `com.auramind.app` | Android `applicationId` and the Java package `com.auramind.app` | Play Store identity. Changing it makes a new app with no users. |
 | `com.auramind.app` | Tauri `identifier` | Windows install and update identity. Changing it orphans installs and their saved data. |
 | `auramind-gemini/` | Folder name | Owner decision. About 277 path references, and the CI paths depend on it. |
-| `shipking-ai/AuraMind-App-2` | GitHub repo | Owner decision. |
+| `auramind_biometric_creds` | Android `EncryptedSharedPreferences` file (`BiometricAuthPlugin`) | Encrypted with a Keystore key. Moving it means decrypting and re-encrypting sign-in tokens, and a failure signs people out of biometric unlock. Nobody sees the file name. |
+| `auramind_study_session` | Android notification channel ID (`AuraLiveUpdatePlugin`) | Android keeps each user's sound, vibration and mute choices per channel ID. A new ID resets them and leaves the old channel listed in system settings. The visible channel name is renamed in Stage 2. |
+| `auramind-upload` | Release signing key alias (`android/app/build.gradle`, `android/wear/build.gradle`, keystore README) | The alias is stored inside the upload keystore. Changing it means re-keying the keystore. |
+| `/auramind/sync`, `/auramind/grade`, `pathPrefix="/auramind"` | Wear OS data-layer paths (`WearSyncPlugin.java`, `WearData.kt`, both manifests) | The phone app and the watch app update separately. If one side changes its path first, phone-to-watch sync breaks. |
 | `supabase/migrations/`, `supabase/migrations-extra/` | Applied SQL | Append-only history. No database object is Aura-named, so nothing needs a new migration. |
 | `CHANGELOG.md` entries before the rename, `docs/superpowers/` specs and plans dated before 2026-10-13 | History | Records of what was true at the time. |
 
@@ -57,19 +64,27 @@ server (old installed builds don't know the new scheme).
 
 ### Web storage (localStorage and Capacitor Preferences)
 
-About 75 distinct keys are stored under `auramind_*` or `auramind-*`
-(theme, reminders, XP, streak, achievements, consent, widget state and
-others). Some are built at runtime, so the migration works **by prefix,
-not by a fixed list**.
+About 90 distinct keys are stored under four prefix styles:
+`auramind_*` (settings, XP, streak, achievements, consent, widget
+state), `auramind-*` (saved quizzes, card metadata),
+`auramind.*` (saved chat history, subscription status, tutor
+personality) and `auramind:*` (quiz cache, notifications, tutorials
+done). Some are built at runtime, so the migration works **by prefix,
+not by a fixed list**: any key that starts with `auramind` followed by
+`_`, `-`, `.` or `:` moves to the same key with `bonamind` in front.
+Only the prefix changes; the rest of the key stays as it is.
 
-`migrateLegacyStorage(store)` runs once at startup, before React
-renders. `store` is any object with `keys()`, `get()`, `set()` and
-`remove()`, so the same code covers localStorage and Capacitor
-Preferences. Steps:
+Some modules read localStorage while they are being imported, before
+any startup code runs. So the localStorage migration is
+**synchronous** and lives in a module that `src/index.tsx` imports
+first, which makes it run before every other module. Capacitor
+Preferences only has an async API, and only native surfaces read it
+(the widget keys and the iOS pending route). Its migration runs right
+after startup without blocking the first render. Both use the same
+steps:
 
 1. If the marker `bonamind_storage_migrated_v1` is set, stop.
-2. For every key that starts with `auramind_` or `auramind-`, work out
-   the new key (`bonamind_` / `bonamind-` plus the same suffix).
+2. For every key with a legacy prefix, work out the new key.
 3. If the new key **already exists**, keep it (a newer value always
    wins) and remove the old key.
 4. Otherwise read the old value, remove the old key, then write the new
@@ -82,17 +97,20 @@ each key. A key that fails stays under its old name, the other keys
 still move, and the marker is **not** set, so the next launch tries
 again. Until then that one setting shows its default; nothing is lost.
 
-**Readers and writers:** in this same PR every code reference to an
-`auramind_*` / `auramind-*` storage key becomes the `bonamind_*` /
-`bonamind-*` key (about 330 references). Where a module already has a
-keys file, the names change there; elsewhere the string changes in
-place. No reader keeps a fallback to the old name. The migration runs
-before React renders, so by the time any reader runs, the data is under
-the new name.
+**Readers and writers:** in this same PR every string in
+`auramind-gemini/src/` and `auramind-gemini/public/` that starts with
+`auramind` plus `_`, `-`, `.` or `:` becomes `bonamind` plus the same
+character. That's about 60 source files and 10 test files. The only
+exceptions are the `auramind-gemini` folder name and the migration's own
+legacy-prefix list. This sweep also picks up names that aren't stored
+data: window event names (`auramind:open-replay`), the `auramind-due`
+notification tag, the widget message type and download file names.
+Renaming them in the same bundle is harmless, and it keeps the rule
+simple enough for a test to enforce. No reader keeps a fallback to the
+old name.
 
-Values that are not stored data are just renamed in Stage 3: the
-`auramind-api` / `auramind-upload` labels, the `auramind-due`
-notification tag, the `auramind-desktop` and `auramind-dir-` names, the
+Names outside the web source are renamed in Stage 3: the `auramind-api`
+label, the `auramind-desktop` crate, the `auramind-dir-` test name, the
 `auramind-ios-unsigned-ipa` CI artifact name, and test fixtures such as
 `auramind-does-not-exist`.
 
@@ -100,19 +118,28 @@ notification tag, the `auramind-desktop` and `auramind-dir-` names, the
 
 `offlineStudyService.ts` keeps queued reviews in the database
 `auramind-offline`. A queued review that is lost is lost for good, so
-this one is careful:
+this one is careful. In this PR the service switches to
+`bonamind-offline`, and its open step does the move. **While
+`auramind-offline` exists, it is the source of truth.**
 
-`offlineStudyService.ts` switches to `bonamind-offline` in this PR, and
-its open step does the move:
+1. On open, check whether `auramind-offline` exists. (Open it without a
+   version; if that would create it, abort the upgrade so nothing gets
+   created.) If it doesn't exist, open `bonamind-offline` and use it.
+2. If it does, delete any `bonamind-offline` left by an earlier try,
+   create a fresh one, copy every record from the three stores in one
+   transaction, and compare record counts per store.
+3. Only if every count matches, delete `auramind-offline` and use
+   `bonamind-offline`.
+4. If the copy or the count check fails, delete the half-made
+   `bonamind-offline` and **keep using `auramind-offline`** for this
+   session. The next launch tries again from step 1.
+5. If deleting `auramind-offline` is blocked (another tab still has it
+   open), use `bonamind-offline`: the copy is verified, and the delete
+   finishes when the other tab closes.
 
-1. On open, if `bonamind-offline` already exists, use it.
-2. Otherwise, if `auramind-offline` exists, open both, copy every store
-   and every record into `bonamind-offline` in one transaction, and
-   count the records on both sides.
-3. Only if the counts match, delete `auramind-offline`.
-4. If anything fails, close the new database, delete the half-made
-   `bonamind-offline`, and **keep using `auramind-offline`** for this
-   session. Retry on the next launch.
+A crash at any point is safe. The old database survives until a
+verified copy exists, and a new database left behind by an unfinished
+copy is thrown away and rebuilt.
 
 ### Widget service-worker cache
 
@@ -247,26 +274,32 @@ Pure renames with no behaviour change, except that senders switch to
 
 ### Android
 
-- Plugin classes `Aura*Plugin` become `Bona*Plugin`. `AuraMindIntents`,
-  `AuraMindShortcuts` and similar become `BonaMind*`.
-- **`AuraMindWidgetProvider` and `AuraMindTileService` need care.**
-  Android remembers placed widgets and added Quick Settings tiles by
-  the class name registered in the manifest. If that name disappears,
-  Android removes the widget from the home screen and the tile from
-  Quick Settings. So the real code moves to `BonaMindWidgetProvider` and
-  `BonaMindTileService`, and two three-line stand-ins under the old
-  names stay as the **only** registered entries:
+- Phone app classes `AuraDevicePlugin`, `AuraListenPlugin`,
+  `AuraLiveUpdatePlugin`, `AuraSpeechPlugin` and `AuraSpeechEngine`
+  become `Bona*`. The `@xml/auramind_widget_info` resource becomes
+  `@xml/bonamind_widget_info` (Android looks it up through the receiver,
+  not by remembered name).
+- **`AuraMindWidgetProvider` (phone) and `AuraMindTileService` (the Wear
+  OS tile, in the `wear` module) need care.** Android remembers placed
+  widgets and added tiles by the class name registered in the manifest.
+  If that name disappears, Android removes the widget from the home
+  screen and the tile from the watch. So the real code moves to
+  `BonaMindWidgetProvider` and `BonaMindTileService`, and two
+  three-line stand-ins under the old names stay as the **only**
+  registered entries:
 
   ```java
   /** Registered under the pre-rename name so placed widgets keep working. Do not delete or rename. */
   public class AuraMindWidgetProvider extends BonaMindWidgetProvider {}
   ```
 
-  The manifest keeps `android:name=".AuraMindWidgetProvider"` and
-  `android:name=".AuraMindTileService"` exactly as they are. The new
-  classes are not registered themselves, so the widget picker and the
-  tile list each show one BonaMind entry (the labels come from
-  `strings.xml`, renamed in Stage 2).
+  The phone manifest keeps `android:name=".AuraMindWidgetProvider"` and
+  the wear manifest keeps `android:name=".AuraMindTileService"` exactly
+  as they are. The new classes are not registered themselves, so the
+  widget picker and the tile list each show one BonaMind entry (the
+  labels come from `strings.xml`, renamed in Stage 2). The phone's Quick
+  Settings tile, `QuickReviewTileService`, isn't Aura-named and doesn't
+  change.
 - The Java package stays `com.auramind.app` (it's tied to the app ID).
 
 ### iOS
@@ -284,6 +317,12 @@ builds.
 Rust identifiers and test fixtures that say `auramind` (including
 `links.rs` tests and `guard.rs`) move to `bonamind`. `tauri.conf.json`
 keeps `"identifier": "com.auramind.app"`.
+
+The updater endpoint in `tauri.conf.json` moves to
+`https://github.com/shipking-ai/BonaMind/releases/latest/download/latest.json`.
+Installed copies keep the old URL until they update, and they reach the
+new one through GitHub's redirect. That redirect lasts as long as no new
+repo is created under the old name; HANDOFF records that as a trap.
 
 ### Native app (`mobile/`)
 
@@ -304,6 +343,9 @@ the registered names are still `.AuraMindWidgetProvider` and
   `CONTRIBUTING.md`, `HANDOFF.md` and `auramind-gemini/README.md` say
   BonaMind and Prof. Linnea. Paths keep `auramind-gemini/`.
 - CI workflow step names and artifact names say BonaMind.
+- Repo URLs say `shipking-ai/BonaMind`: root `package.json`
+  (`repository`, `bugs`), `.github/ISSUE_TEMPLATE/config.yml` and the
+  clone steps in `CONTRIBUTING.md`.
 - `CHANGELOG.md` gets an entry for the rename. Older entries stay.
 
 ### The guard test
@@ -325,8 +367,8 @@ reason:
 | `com.auramind.app` (any file) | Permanent app ID (Android, Windows) |
 | `com/auramind/app/` path segments and `package com.auramind.app` | Java package tied to the app ID |
 | `auramind-gemini` (any file) | Folder name, owner decision |
-| `AuraMind-App-2` | GitHub repo name |
-| `AuraMindWidgetProvider`, `AuraMindTileService` (their two stand-in files and `AndroidManifest.xml`) | Keep placed widgets and tiles working |
+| `AuraMindWidgetProvider`, `AuraMindTileService` (their two stand-in files and the phone and wear `AndroidManifest.xml`) | Keep placed widgets and tiles working |
+| `auramind_biometric_creds`, `auramind_study_session`, `auramind-upload`, `/auramind/sync`, `/auramind/grade`, `/auramind` path prefix | Encrypted credentials file, notification channel ID, signing key alias and Wear data-layer paths (see "What never changes") |
 | The legacy names in the Stage 1 migration files (`migrateLegacyStorage`, the IndexedDB migration, `LegacyPrefs` callers, the widget key fallback, the scheme handlers and scheme registrations, the push-send check) | They exist to name the old values |
 | `supabase/migrations/**`, `supabase/migrations-extra/**` | Append-only history |
 | `CHANGELOG.md` above the rename entry | History |
@@ -373,8 +415,7 @@ Each PR gets its own HANDOFF update, per the standing rule.
 
 ## Out of scope
 
-- Renaming the `auramind-gemini/` folder, the GitHub repo or either app
-  ID.
+- Renaming the `auramind-gemini/` folder or either app ID.
 - Rewriting stored chat history.
 - New avatar artwork (files are renamed, not redrawn).
 - Retiring the `auramind://` scheme.
