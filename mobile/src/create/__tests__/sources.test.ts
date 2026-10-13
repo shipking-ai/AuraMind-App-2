@@ -90,3 +90,19 @@ it('turns photos into a text source', async () => {
   ok({ text: 'Photosynthesis makes glucose.' });
   await expect(readPhotos([{ uri: 'file://p', width: 100, height: 100 }])).resolves.toEqual({ kind: 'text', text: 'Photosynthesis makes glucose.', title: 'Your notes', label: 'your photos' });
 });
+
+// The phone checks sizes before uploading (spec §4.2), so a big photo gets a
+// clear message without a round trip, and Vercel's ~4.5 MB body limit is never hit.
+it('refuses a photo over 1.5 MB before uploading', async () => {
+  (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValueOnce({ base64: 'A'.repeat(Math.ceil((1.5 * 1024 * 1024 * 4) / 3) + 8), uri: 'x', width: 1600, height: 1200 });
+  await expect(readPhotos([{ uri: 'file://big', width: 4000, height: 3000 }])).rejects.toMatchObject({ kind: 'too_large' });
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('refuses photos that together exceed the upload limit', async () => {
+  const each = 'A'.repeat(Math.ceil((1.2 * 1024 * 1024 * 4) / 3));
+  (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ base64: each, uri: 'x', width: 1600, height: 1200 });
+  await expect(readPhotos(Array.from({ length: 4 }, (_, i) => ({ uri: `file://p${i}`, width: 4000, height: 3000 })))).rejects.toMatchObject({ kind: 'too_large' });
+  expect(fetchMock).not.toHaveBeenCalled();
+  (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ base64: 'anBlZw==', uri: 'x', width: 1600, height: 1200 });
+});

@@ -9,6 +9,9 @@ import { authedPost } from './api';
 export const MAX_PDF_BYTES = 3 * 1024 * 1024;
 export const MAX_PHOTOS = 5;
 export const PHOTO_MAX_SIDE = 1600;
+/** Per photo, and all photos together (kept well under Vercel's ~4.5 MB request body). */
+export const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
+export const MAX_PHOTOS_UPLOAD_BYTES = 3 * 1024 * 1024;
 const PHOTO_QUALITY = 0.7;
 
 export interface PickedPdf { name: string; size: number; uri: string }
@@ -81,6 +84,10 @@ export async function readPhotos(photos: PickedPhoto[]): Promise<CourseSource> {
     const out = await ImageManipulator.manipulateAsync(uri, resize, { compress: PHOTO_QUALITY, format: ImageManipulator.SaveFormat.JPEG, base64: true });
     return out.base64 ?? '';
   }));
+  const bytes = images.map((b64) => Math.floor((b64.length * 3) / 4));
+  if (bytes.some((n) => n > MAX_PHOTO_BYTES) || bytes.reduce((a, n) => a + n, 0) > MAX_PHOTOS_UPLOAD_BYTES) {
+    throw new CreateError('too_large');
+  }
   const { data } = await authedPost<Extracted>('/api/extract/image', { images });
   return textSource(data?.text, 'Your notes', 'your photos');
 }

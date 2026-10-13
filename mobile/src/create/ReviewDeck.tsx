@@ -148,7 +148,7 @@ export function ReviewDeck() {
 
       <View style={styles.stage}>
         {current ? (
-          <ReviewCard key={`${at}:${current.front}`} card={current} onKeep={() => setAt((i) => i + 1)} onRemove={onRemove} onEdit={() => setEditing(true)} />
+          <ReviewCard key={`${at}:${cards.length}`} card={current} onKeep={() => setAt((i) => i + 1)} onRemove={onRemove} onEdit={() => setEditing(true)} />
         ) : (
           <Animated.View entering={reduce ? undefined : FadeIn.duration(300)} style={styles.endWrap}>
             <PaperCard>

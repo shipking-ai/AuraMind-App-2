@@ -20,6 +20,11 @@ export const CREATE_COPY = {
     empty: "Couldn't make cards from that. Try a different source.",
     busy: 'Something went wrong. Try again in a moment.',
   } satisfies Record<CreateErrorKind, string>,
+  /** Source-specific wording for a source over the size limits. */
+  tooLarge: {
+    pdf: 'That PDF is too big for now (3 MB max).',
+    photo: 'Those photos are too big to send. Try fewer pages or a closer shot.',
+  },
   /** Source-specific wording for an unreadable source. */
   unreadable: {
     link: "Couldn't read that page. Try another link or paste the text.",

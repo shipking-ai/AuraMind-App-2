@@ -118,6 +118,25 @@ it('keeps the chosen source, its input and the size when a build fails', async (
   expect(screen.getByRole('tab', { name: 'Deep' }).props.accessibilityState).toMatchObject({ selected: true });
 });
 
+it('fills the link from the clipboard once per visit to Link, not every time the field is cleared', async () => {
+  (Clipboard.getStringAsync as jest.Mock).mockResolvedValue('https://example.com/a');
+  await render(<CreateScreen />);
+  await fireEvent.press(tile('Link or video'));
+  await waitFor(() => expect(screen.getByLabelText('Link').props.value).toBe('https://example.com/a'));
+  await fireEvent.changeText(screen.getByLabelText('Link'), '');
+  await act(async () => { await Promise.resolve(); });
+  expect(screen.getByLabelText('Link').props.value).toBe('');
+  expect(Clipboard.getStringAsync).toHaveBeenCalledTimes(1);
+  (Clipboard.getStringAsync as jest.Mock).mockResolvedValue('');
+});
+
+it('words a too-large error for photos as photos, not as a PDF', async () => {
+  useCreateStore.setState({ phase: 'error', error: 'too_large' });
+  await render(<CreateScreen />);
+  await fireEvent.press(tile('Photo'));
+  expect(screen.getByText(CREATE_COPY.tooLarge.photo)).toBeTruthy();
+});
+
 it('caps photos at 5 and removes a page on its close button', async () => {
   (pickPhotos as jest.Mock).mockResolvedValueOnce(Array.from({ length: 5 }, (_, i) => ({ uri: `file://p${i}`, width: 10, height: 10 })));
   await render(<CreateScreen />);
@@ -162,19 +181,28 @@ describe('after starting', () => {
     expect(screen.getByRole('button', { name: 'Saving…' })).toBeTruthy();
   });
 
-  it('Study now opens the new course and clears the build', async () => {
+  // Resetting before the sheet left made the form flash for a frame; the
+  // sheet now leaves first and its unmount clears the finished build.
+  it('Study now opens the new course, then clears the build as the sheet leaves', async () => {
     useCreateStore.setState({ phase: 'ready', draft, savedDeckId: 'deck-9' });
-    await render(<CreateScreen />);
+    let phaseWhenLeaving = '';
+    router.replace.mockImplementationOnce(() => { phaseWhenLeaving = useCreateStore.getState().phase; });
+    const view = await render(<CreateScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Study now' }));
     expect(router.replace).toHaveBeenCalledWith('/study/deck-9');
+    expect(phaseWhenLeaving).toBe('ready');
+    await view.unmount();
     expect(useCreateStore.getState().phase).toBe('input');
   });
 
-  it('Done closes the sheet and clears the build', async () => {
+  it('Done closes the sheet, then clears the build as it leaves', async () => {
     useCreateStore.setState({ phase: 'ready', draft, savedDeckId: 'deck-9' });
-    await render(<CreateScreen />);
+    let phaseWhenLeaving = '';
+    router.back.mockImplementationOnce(() => { phaseWhenLeaving = useCreateStore.getState().phase; });
+    const view = await render(<CreateScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
-    expect(router.back).toHaveBeenCalled();
+    expect(phaseWhenLeaving).toBe('ready');
+    await view.unmount();
     expect(useCreateStore.getState().phase).toBe('input');
   });
 });

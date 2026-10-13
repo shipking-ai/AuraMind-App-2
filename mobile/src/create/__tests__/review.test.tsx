@@ -132,3 +132,16 @@ it('refreshes courses and cards once the course is saved', async () => {
   expect(invalidate).toHaveBeenCalledWith({ queryKey: ['decks'] });
   expect(invalidate).toHaveBeenCalledWith({ queryKey: ['cards'] });
 });
+
+// The card key included its front text, so saving an edit remounted it: it
+// played the swipe-away animation and flipped back to the question.
+it('keeps the card in place, on the side it was on, after an edit', async () => {
+  await render(<ReviewDeck />);
+  fireGestureHandler(getByGestureTestId('review-tap'));
+  await screen.findByLabelText('Answer: A1');
+  fireGestureHandler(getByGestureTestId('review-long'), [{ state: State.BEGAN }, { state: State.ACTIVE }, { state: State.END }]);
+  await fireEvent.changeText(await screen.findByLabelText('Question'), 'What is a cell?');
+  await fireEvent.changeText(screen.getByLabelText('Answer'), 'The unit of life');
+  await fireEvent.press(screen.getByRole('button', { name: 'Save card' }));
+  expect(screen.getByLabelText('Answer: The unit of life')).toBeTruthy();
+});

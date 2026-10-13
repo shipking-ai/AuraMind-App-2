@@ -2,7 +2,7 @@ import { COURSE_SIZES, type CourseSize, type CourseSource } from '@bonamind/core
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -96,13 +96,17 @@ function CreateForm() {
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [hint, setHint] = useState<string | null>(null);
 
-  // Choosing Link fills in a link just copied elsewhere (only a real http(s) URL).
+  // Choosing Link fills in a link just copied elsewhere (only a real http(s)
+  // URL), once per visit to the tile: clearing the field must not refill it.
+  const askedClipboard = useRef(false);
   useEffect(() => {
-    if (kind !== 'link' || url) return;
+    if (kind !== 'link') { askedClipboard.current = false; return; }
+    if (askedClipboard.current) return;
+    askedClipboard.current = true;
     let live = true;
-    void Clipboard.getStringAsync().then((text) => { if (live && isHttpUrl(text)) setUrl(text.trim()); }, () => {});
+    void Clipboard.getStringAsync().then((text) => { if (live && isHttpUrl(text)) setUrl((u) => u || text.trim()); }, () => {});
     return () => { live = false; };
-  }, [kind, url]);
+  }, [kind]);
 
   const choose = (k: Kind) => { haptic('selection'); setKind(k); setHint(null); };
   const addPhotos = async (from: 'camera' | 'library') => {
@@ -133,9 +137,10 @@ function CreateForm() {
     start(r.read, size);
   };
 
-  const errorLine = failed && error
-    ? error === 'unreadable' && kind !== 'topic' ? CREATE_COPY.unreadable[kind] : CREATE_COPY.errors[error]
-    : null;
+  let errorLine: string | null = null;
+  if (failed && error === 'unreadable' && kind !== 'topic') errorLine = CREATE_COPY.unreadable[kind];
+  else if (failed && error === 'too_large') errorLine = kind === 'photo' ? CREATE_COPY.tooLarge.photo : CREATE_COPY.tooLarge.pdf;
+  else if (failed && error) errorLine = CREATE_COPY.errors[error];
   const enter = reduce ? undefined : FadeIn.duration(250);
 
   let input: ReactNode;
@@ -206,14 +211,14 @@ function CreateForm() {
 export function CreateScreen() {
   const phase = useCreateStore((s) => s.phase);
   const savedDeckId = useCreateStore((s) => s.savedDeckId);
-  const reset = useCreateStore((s) => s.reset);
   const editing = phase === 'input' || phase === 'error';
+  // Leave first; the unmount below clears the finished build (resetting
+  // first flashed the form for a frame).
   const studyNow = () => {
-    const id = savedDeckId;
-    reset();
-    if (id) router.replace(`/study/${id}`);
+    if (savedDeckId) router.replace(`/study/${savedDeckId}`);
+    else router.back();
   };
-  const done = () => { reset(); router.back(); };
+  const done = () => router.back();
   // Closing the sheet any way (Close, swipe down) forgets a finished course or
   // an error; a build that is running or awaiting review carries on.
   useEffect(() => () => {
