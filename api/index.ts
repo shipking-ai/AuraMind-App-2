@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
 import { isEntitled, readSubscriptionStatus, isEntitledWithRoleAccess } from './_lib/entitlement.js';
 import { isPushConfigured, readPushConfig, sendPushToUsers } from './_lib/push.js';
+import { decodeBase64Limited, isPdf, MAX_DOCUMENT_BYTES, pdfText } from './_lib/extract.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
@@ -57,6 +58,7 @@ const RATE_LIMIT_BUCKETS: Record<string, 'default' | 'ai' | 'auth'> = {
   search: 'ai',
   'fetch-url': 'ai',
   'fetch-youtube-transcript': 'ai',
+  extract: 'ai',
   stripe: 'auth',
 };
 
@@ -374,6 +376,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleFetchUrl(req, res);
       case 'fetch-youtube-transcript':
         return await handleFetchYouTubeTranscript(req, res);
+      case 'extract':
+        return await handleExtract(req, res, action);
       case 'cron':
         return await handleCron(req, res, action);
       case 'push':
@@ -2154,6 +2158,44 @@ async function runDueReminderPushes(supabase: any) {
     pruned: report.pruned,
     skipped: report.skipped,
   };
+}
+
+// --- Course-creation extraction (native app): PDF and photo -> text ---
+
+/**
+ * POST /api/extract/document { name, data } and /api/extract/image { images }.
+ * Signed-in and entitled callers only: both spend compute or model budget on
+ * an upload, exactly like the AI endpoints.
+ */
+async function handleExtract(req: VercelRequest, res: VercelResponse, action: string) {
+  if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (action !== 'document') return json(res, 404, { error: 'Unknown extract action' });
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return json(res, 401, { error: 'Missing authorization' });
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
+  const { data: { user } } = await supabase.auth.getUser(String(authHeader).replace(/^Bearer\s+/i, '').trim());
+  if (!user) return json(res, 401, { error: 'Invalid token' });
+  if (!isEntitledWithRoleAccess(user)) {
+    return json(res, 402, { error: 'A subscription is required to create courses.', code: 'subscription_required' });
+  }
+
+  const parsed = validateBody(res, z.object({ name: z.string().max(255), data: z.string().min(1) }), req.body);
+  if (!parsed.ok) return;
+  const bytes = decodeBase64Limited(parsed.data.data, MAX_DOCUMENT_BYTES);
+  if (bytes === 'too_large') return json(res, 413, { error: 'That PDF is too big (3 MB max).', code: 'too_large' });
+  if (!bytes || !isPdf(bytes)) return json(res, 415, { error: 'That file is not a PDF.', code: 'not_pdf' });
+
+  let result: { text: string; pages: number };
+  try {
+    result = await pdfText(bytes);
+  } catch {
+    return json(res, 422, { error: 'That PDF could not be read.', code: 'no_text' });
+  }
+  if (!result.text) return json(res, 422, { error: 'That PDF has no text (it may be scanned images).', code: 'no_text' });
+  const title = parsed.data.name.replace(/\.[^.]+$/, '').trim() || 'Your PDF';
+  return json(res, 200, { success: true, data: { text: result.text, title, pages: result.pages } });
 }
 
 // --- URL extraction endpoints (used by GeneratorPage) ---
