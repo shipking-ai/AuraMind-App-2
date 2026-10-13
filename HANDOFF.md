@@ -1456,7 +1456,28 @@ plan `docs/superpowers/plans/2026-10-12-bonamind-native-app-part2.md`.
 - **Tabs stay mounted.** The Courses screen read `justCreated` once at mount
   and never saw a course made from its own **+**. It now subscribes.
 
+### Review follow-ups (all fixed on the PR, 2026-10-12)
+
+The final review's 11 minor items are fixed, each with a test:
+- **Errors:** a fully rate-limited build reports `rate_limited`, not `empty`.
+- **Topic builds:** they pause offline and resume. Prompts are capped
+  (topic 200 characters, avoid list 3,000) so the proxy's silent
+  8,000-character cut can't drop the JSON rules.
+- **Progress:** it never counts past the target.
+- **Photos:** they're size-checked before upload (1.5 MB each, 3 MB in all),
+  with photo-specific wording.
+- **Link field:** the clipboard fills it once per visit to Link.
+- **Review deck:** editing a card no longer remounts it.
+- **Titles:** a blank title saves as the one the course was made with.
+- **Store:** a stale source read can't hijack a newer build.
+- **Closing the sheet:** it clears the build on unmount, so it no longer
+  flashes.
+- **Dev server:** `api/server.js` parses JSON bodies up to 5 MB. Express's
+  100 KB default returned 413 for every real PDF or photo.
+
 ### Owner check
 
 Outstanding item 12 above covers deploying, `GEMINI_API_KEY` and one course
-per source on the phone.
+per source on the phone. As of 2026-10-12, Vercel has **no** `GEMINI_API_KEY`
+(only `GROQ_API_KEY`), so the Photo source returns "unavailable" until it's
+added. A free key is at aistudio.google.com/apikey.
