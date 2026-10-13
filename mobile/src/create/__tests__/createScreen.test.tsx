@@ -178,3 +178,30 @@ describe('after starting', () => {
     expect(useCreateStore.getState().phase).toBe('input');
   });
 });
+
+// Swiping the sheet down or tapping Close after saving (or after a Pro
+// error) used to leave that state behind for the next visit.
+describe('closing the sheet', () => {
+  const draft = { title: 'Cells', description: '', truncated: false, skippedPieces: 0, cards: [{ front: 'Q', back: 'A' }] };
+
+  it('forgets a finished course', async () => {
+    useCreateStore.setState({ phase: 'ready', draft, savedDeckId: 'deck-9' });
+    const view = await render(<CreateScreen />);
+    await view.unmount();
+    expect(useCreateStore.getState().phase).toBe('input');
+  });
+
+  it('forgets an error', async () => {
+    useCreateStore.setState({ phase: 'error', error: 'subscription' });
+    const view = await render(<CreateScreen />);
+    await view.unmount();
+    expect(useCreateStore.getState()).toMatchObject({ phase: 'input', error: null });
+  });
+
+  it('keeps a build that is still running or under review', async () => {
+    useCreateStore.setState({ phase: 'building', progress: { step: 'reading', cardsSoFar: 0, target: 20 } });
+    const view = await render(<CreateScreen />);
+    await view.unmount();
+    expect(useCreateStore.getState().phase).toBe('building');
+  });
+});

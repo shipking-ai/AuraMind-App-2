@@ -214,6 +214,12 @@ export function CreateScreen() {
     if (id) router.replace(`/study/${id}`);
   };
   const done = () => { reset(); router.back(); };
+  // Closing the sheet any way (Close, swipe down) forgets a finished course or
+  // an error; a build that is running or awaiting review carries on.
+  useEffect(() => () => {
+    const { phase: last, reset: clear } = useCreateStore.getState();
+    if (last === 'ready' || last === 'error') clear();
+  }, []);
   return (
     <View style={styles.sheet}>
       <AuroraBackground intensity={0.4} />
