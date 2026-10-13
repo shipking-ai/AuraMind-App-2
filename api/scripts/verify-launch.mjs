@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-launch — pre-launch gate check for AuraMind.
+ * verify-launch — pre-launch gate check for BonaMind.
  *
  * Runs the checks from STRIPE_LAUNCH_CHECKLIST.md as a single command so a
  * misconfigured launch can't slip through silently:
@@ -60,7 +60,7 @@ const client = {
 };
 
 const OFFLINE = process.argv.includes('--offline');
-console.log(`AuraMind pre-launch verification${OFFLINE ? ' (offline — no Stripe API calls)' : ''}\n`);
+console.log(`BonaMind pre-launch verification${OFFLINE ? ' (offline — no Stripe API calls)' : ''}\n`);
 
 // ── 1. API env ─────────────────────────────────────────────────────────────
 const secretKey = api.STRIPE_SECRET_KEY || '';

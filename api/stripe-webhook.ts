@@ -18,14 +18,14 @@ const sendPaymentSuccessEmail = async (email: string, name: string, amount: stri
     await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: 'Payment successful - Your AuraMind subscription is active',
+      subject: 'Payment successful - Your BonaMind subscription is active',
       html: `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Payment Successful - AuraMind</title>
+          <title>Payment Successful - BonaMind</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -48,9 +48,9 @@ const sendPaymentSuccessEmail = async (email: string, name: string, amount: stri
             </ul>
             <p><strong>Your subscription is now active.</strong> You can start using all premium features right away.</p>
             <a href="${appUrl('/dashboard')}" style="color: #000; font-weight: bold;">Go to Dashboard →</a>
-            <p>Thanks for being a valued member of AuraMind!</p>
+            <p>Thanks for being a valued member of BonaMind!</p>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} BonaMind. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -74,7 +74,7 @@ const sendPaymentFailedEmail = async (email: string, name: string, amount: strin
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Payment Failed - AuraMind</title>
+          <title>Payment Failed - BonaMind</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -101,7 +101,7 @@ const sendPaymentFailedEmail = async (email: string, name: string, amount: strin
             <a href="${appUrl('/subscribe')}" class="button">Update Payment Method</a>
             <p><strong>Need help?</strong> Reply to this email and we'll assist you.</p>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} BonaMind. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -118,14 +118,14 @@ const sendSubscriptionCancelledEmail = async (email: string, name: string, plan:
     await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: 'Your AuraMind subscription has been cancelled',
+      subject: 'Your BonaMind subscription has been cancelled',
       html: `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Subscription Cancelled - AuraMind</title>
+          <title>Subscription Cancelled - BonaMind</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -146,9 +146,9 @@ const sendSubscriptionCancelledEmail = async (email: string, name: string, plan:
             <p><strong>Want to keep your subscription?</strong></p>
             <p>You can reactivate it anytime before or after the cancellation date.</p>
             <a href="${appUrl('/subscribe')}" class="button">Reactivate Subscription</a>
-            <p>Thanks for trying AuraMind. We hope to see you again!</p>
+            <p>Thanks for trying BonaMind. We hope to see you again!</p>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} BonaMind. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -177,14 +177,14 @@ const sendTrialEndingEmail = async (email: string, name: string, trialEndDate: s
     await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: 'Your AuraMind trial ends soon — keep your progress',
+      subject: 'Your BonaMind trial ends soon — keep your progress',
       html: `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Trial Ending Soon - AuraMind</title>
+          <title>Trial Ending Soon - BonaMind</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -199,12 +199,12 @@ const sendTrialEndingEmail = async (email: string, name: string, trialEndDate: s
               <h2>⏳ Your trial ends ${trialEndDate}</h2>
             </div>
             <p>Hi ${name},</p>
-            <p>Your 7-day AuraMind trial ends on <strong>${trialEndDate}</strong>. Your decks, quizzes, and learning progress are all saved and waiting.</p>
-            <p>Upgrade to keep unlimited studying, Aura tutoring, and personalized review scheduling — and your progress carries over automatically.</p>
+            <p>Your 7-day BonaMind trial ends on <strong>${trialEndDate}</strong>. Your decks, quizzes, and learning progress are all saved and waiting.</p>
+            <p>Upgrade to keep unlimited studying, Linnea tutoring, and personalized review scheduling — and your progress carries over automatically.</p>
             <a href="${appUrl('/subscribe')}" class="button">Upgrade to Pro →</a>
             <p>Questions? Reply to this email and we'll help.</p>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} AuraMind. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} BonaMind. All rights reserved.</p>
             </div>
           </div>
         </body>

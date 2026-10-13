@@ -114,7 +114,7 @@ if (hasStaticBuild) {
 
 const server = app.listen(PORT, () => {
   const mode = hasStaticBuild ? 'production' : 'development';
-  console.log(`AuraMind API server (${mode}) running on http://localhost:${PORT}`);
+  console.log(`BonaMind API server (${mode}) running on http://localhost:${PORT}`);
   console.log(`API endpoints available at http://localhost:${PORT}/api/*`);
   if (hasStaticBuild) {
     console.log(`Frontend being served from ${distDir}`);
@@ -123,7 +123,7 @@ const server = app.listen(PORT, () => {
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`\n[FATAL] Port ${PORT} is already in use — another AuraMind process may be running.`);
+    console.error(`\n[FATAL] Port ${PORT} is already in use — another BonaMind process may be running.`);
     console.error(`        Stop it (or set PORT to a free port) and restart the API. Exiting.`);
     process.exit(1);
   }
