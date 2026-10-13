@@ -78,8 +78,8 @@ import { readClientEnv } from "./lib/env";
 function loadWorkspaceData(userId: string) {
   return loadOfflineAwareData(userId, {
     online: isOnline(),
-    offlineMode: getAppPreference("auramind_offlineMode", false),
-    autoSync: getAppPreference("auramind_autoSync", true),
+    offlineMode: getAppPreference("bonamind_offlineMode", false),
+    autoSync: getAppPreference("bonamind_autoSync", true),
     getCachedDecks,
     getCachedCards,
     fetchDecks: (id) => dbService.fetchDecks(id),

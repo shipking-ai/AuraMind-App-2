@@ -1,5 +1,5 @@
 # BonaMind robots.txt
-# https://auramind.app/robots.txt
+# https://www.bonamind.app/robots.txt
 
 User-agent: *
 Allow: /
@@ -15,4 +15,4 @@ Disallow: /settings
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://auramind.app/sitemap.xml
+Sitemap: https://www.bonamind.app/sitemap.xml

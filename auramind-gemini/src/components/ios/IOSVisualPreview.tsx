@@ -71,9 +71,9 @@ export function previewTourUrl(path: string): string {
  * `CapacitorStorage.` — reading the bare key always misses.
  */
 export const CI_LIVE_KEYS = {
-  seen: "auramind_ci_live_seen",
-  session: "auramind_ci_live_session",
-  device: "auramind_ci_live_device",
+  seen: "bonamind_ci_live_seen",
+  session: "bonamind_ci_live_session",
+  device: "bonamind_ci_live_device",
   /**
    * Whether the bridge reports the app-local plugins as registered.
    *
@@ -84,10 +84,10 @@ export const CI_LIVE_KEYS = {
    * build with no plugins passed, because a missing plugin and the OS declining
    * both surface as available=false.
    */
-  plugins: "auramind_ci_live_plugins",
-  available: "auramind_ci_live_available",
-  started: "auramind_ci_live_started",
-  updated: "auramind_ci_live_updated",
+  plugins: "bonamind_ci_live_plugins",
+  available: "bonamind_ci_live_available",
+  started: "bonamind_ci_live_started",
+  updated: "bonamind_ci_live_updated",
 } as const;
 
 async function recordLiveMilestone(key: string, value: string): Promise<void> {
@@ -224,7 +224,7 @@ function Tour() {
           // Preview-only tour telemetry (see CI_LIVE_KEYS): which step was
           // commanded and when, so a frozen tour is distinguishable from a
           // dead bridge in the simulator artifacts.
-          void recordLiveMilestone("auramind_ci_tour_step", `${i}:${path}@${Date.now()}`);
+          void recordLiveMilestone("bonamind_ci_tour_step", `${i}:${path}@${Date.now()}`);
           navigate(previewTourUrl(path));
         },
         i * IOS_PREVIEW_STEP_MS,

@@ -9,10 +9,12 @@
  * can drive a logged-out user somewhere odd, so only first-party app
  * destinations pass. Everything else (including the dev harness) is dropped.
  */
+import { LEGACY_SCHEME } from "./legacyNames";
+
 const ALLOWED_PREFIXES = ["/dashboard", "/generator", "/study", "/decks", "/chat", "/settings"];
 
 /** Where a native surface asked the app to go before it had finished booting. */
-export const PENDING_ROUTE_KEY = "auramind_pending_route";
+export const PENDING_ROUTE_KEY = "bonamind_pending_route";
 
 export function parseDeepLink(url: string): string | null {
   let parsed: URL;
@@ -21,7 +23,7 @@ export function parseDeepLink(url: string): string | null {
   } catch {
     return null;
   }
-  if (parsed.protocol !== "auramind:") return null;
+  if (parsed.protocol !== `${LEGACY_SCHEME}:`) return null;
   const path = parsed.pathname || "/";
   if (path.startsWith("/__e2e")) return null;
   if (!ALLOWED_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {

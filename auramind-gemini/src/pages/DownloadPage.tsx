@@ -11,6 +11,7 @@ import {
   MailIcon as Mail,
 } from '../components/icons/CustomIcons';
 import { TechGridBackground, GridDotPattern } from '../components/landing/TechGridBackground';
+import { NOTIFY_LIST_EMAIL } from '../lib/legacyNames';
 
 interface Feature {
   icon: React.ReactNode;
@@ -230,7 +231,7 @@ const DownloadPage: React.FC = () => {
 
                      {platform.disabled ? (
                       <a
-                        href="mailto:auramind-app@googlegroups.com?subject=Notify me when BonaMind mobile launches&body=I want to be notified when the BonaMind native mobile app is available on Android."
+                        href={`mailto:${NOTIFY_LIST_EMAIL}?subject=Notify me when BonaMind mobile launches&body=I want to be notified when the BonaMind native mobile app is available on Android.`}
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-xl hover:bg-primary hover:text-black transition-colors"
                       >
                         <Mail size={18} />
@@ -265,7 +266,7 @@ const DownloadPage: React.FC = () => {
                 <p className="text-zinc-300">
                   The Android app is in closed testing on Google Play.{' '}
                   <a
-                    href="mailto:auramind-app@googlegroups.com?subject=Notify me when BonaMind mobile launches&body=I want to be notified when the BonaMind native mobile app is available on Android."
+                    href={`mailto:${NOTIFY_LIST_EMAIL}?subject=Notify me when BonaMind mobile launches&body=I want to be notified when the BonaMind native mobile app is available on Android.`}
                     className="text-primary hover:underline font-medium"
                   >
                     Join the waitlist to get notified.

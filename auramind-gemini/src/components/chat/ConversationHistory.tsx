@@ -29,8 +29,8 @@ export interface ChatSession {
   deckName?: string;
 }
 
-const STORAGE_KEY = "auramind.aurachat.sessions.v1";
-const ACTIVE_KEY = "auramind.aurachat.active.v1";
+const STORAGE_KEY = "bonamind.aurachat.sessions.v1";
+const ACTIVE_KEY = "bonamind.aurachat.active.v1";
 
 function safeRead(): ChatSession[] {
   if (typeof window === "undefined") return [];
@@ -348,7 +348,7 @@ export default function ConversationHistory({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `auramind-chat-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `bonamind-chat-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();

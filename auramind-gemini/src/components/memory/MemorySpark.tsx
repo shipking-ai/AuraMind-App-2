@@ -46,10 +46,10 @@ interface Phase {
 }
 
 function useSparkPreferences(): SparkPreferences {
-  const [enabled] = useAppPreference('auramind_sparksEnabled', true);
-  const [popupEnabled] = useAppPreference('auramind_sparksPopup', true);
-  const [quietStart] = useAppPreference('auramind_sparksQuietStart', '22:00');
-  const [quietEnd] = useAppPreference('auramind_sparksQuietEnd', '08:00');
+  const [enabled] = useAppPreference('bonamind_sparksEnabled', true);
+  const [popupEnabled] = useAppPreference('bonamind_sparksPopup', true);
+  const [quietStart] = useAppPreference('bonamind_sparksQuietStart', '22:00');
+  const [quietEnd] = useAppPreference('bonamind_sparksQuietEnd', '08:00');
   return useMemo(() => ({
     enabled: enabled && popupEnabled,
     popupEnabled,

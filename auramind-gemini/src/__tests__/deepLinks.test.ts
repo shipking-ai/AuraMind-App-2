@@ -50,25 +50,25 @@ describe('consumePendingRoute', () => {
   const load = () => import('../lib/deepLinks');
 
   it('returns the route a native surface left, once', async () => {
-    store.set('auramind_pending_route', '/dashboard/study');
+    store.set('bonamind_pending_route', '/dashboard/study');
     const { consumePendingRoute } = await load();
     expect(await consumePendingRoute()).toBe('/dashboard/study');
-    expect(store.has('auramind_pending_route')).toBe(false);
+    expect(store.has('bonamind_pending_route')).toBe(false);
     expect(await consumePendingRoute()).toBeNull();
   });
 
   it('normalizes a bare path and applies the same allowlist as a deep link', async () => {
-    store.set('auramind_pending_route', 'study/deck-1');
+    store.set('bonamind_pending_route', 'study/deck-1');
     const { consumePendingRoute } = await load();
     expect(await consumePendingRoute()).toBe('/dashboard/study/deck-1');
 
-    store.set('auramind_pending_route', '/admin/backdoor');
+    store.set('bonamind_pending_route', '/admin/backdoor');
     expect(await consumePendingRoute()).toBeNull();
   });
 
   it('is null on the web', async () => {
     native.value = false;
-    store.set('auramind_pending_route', '/dashboard/study');
+    store.set('bonamind_pending_route', '/dashboard/study');
     const { consumePendingRoute } = await load();
     expect(await consumePendingRoute()).toBeNull();
   });

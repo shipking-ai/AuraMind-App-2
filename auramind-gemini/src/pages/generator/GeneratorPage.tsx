@@ -50,9 +50,9 @@ const GeneratorPage: React.FC = () => {
   const [topic, setTopic] = useState('');
   const [numItems, setNumItems] = useState(10);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [cardsPerGeneration] = useAppPreference('auramind_cardsPerGen', '20');
-  const [includeExamples] = useAppPreference('auramind_includeExamples', true);
-  const [defaultLanguage] = useAppPreference('auramind_defaultLanguage', 'English');
+  const [cardsPerGeneration] = useAppPreference('bonamind_cardsPerGen', '20');
+  const [includeExamples] = useAppPreference('bonamind_includeExamples', true);
+  const [defaultLanguage] = useAppPreference('bonamind_defaultLanguage', 'English');
   const [customNumItems, setCustomNumItems] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -403,9 +403,9 @@ const GeneratorPage: React.FC = () => {
 
   const handleSendToQuizLab = () => {
     if (!generatedQuiz) return;
-    const saved = JSON.parse(localStorage.getItem('auramind-saved-quizzes') || '[]');
+    const saved = JSON.parse(localStorage.getItem('bonamind-saved-quizzes') || '[]');
     saved.push({ ...generatedQuiz, savedAt: Date.now() });
-    localStorage.setItem('auramind-saved-quizzes', JSON.stringify(saved));
+    localStorage.setItem('bonamind-saved-quizzes', JSON.stringify(saved));
     toast.success('Quiz saved to Quiz Lab!');
   };
 

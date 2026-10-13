@@ -2,15 +2,15 @@
  * chatMemory — cross-session memory for Prof. Aura.
  *
  * Conversations already persist to localStorage under the same key
- * ConversationHistory uses (`auramind.aurachat.sessions.v1`, with the active
+ * ConversationHistory uses (`bonamind.aurachat.sessions.v1`, with the active
  * session id under `.active.v1`). This module reads the most recent *other*
  * session and renders a compact, prompt-safe summary so Aura can reference
  * what the student worked on before — without claiming memory it doesn't have.
  */
 import type { Message } from '../hooks/useAIChat';
 
-export const SESSION_STORAGE_KEY = 'auramind.aurachat.sessions.v1';
-export const ACTIVE_STORAGE_KEY = 'auramind.aurachat.active.v1';
+export const SESSION_STORAGE_KEY = 'bonamind.aurachat.sessions.v1';
+export const ACTIVE_STORAGE_KEY = 'bonamind.aurachat.active.v1';
 
 /** Max messages pulled from the previous session. */
 const MAX_MESSAGES = 4;

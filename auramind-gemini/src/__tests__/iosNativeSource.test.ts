@@ -148,7 +148,7 @@ describe('CI can tell "plugin missing" from "the OS refused"', () => {
     // hardware string two lines later — so the one signal that distinguishes a
     // build with no plugins from a declined ActivityKit was destroyed before CI
     // read it.
-    expect(driver).toMatch(/plugins:\s*"auramind_ci_live_plugins"/);
+    expect(driver).toMatch(/plugins:\s*"bonamind_ci_live_plugins"/);
   });
 
   it('does not overwrite the plugin signal with device info', () => {
@@ -171,7 +171,7 @@ describe('CI can tell "plugin missing" from "the OS refused"', () => {
       'mobile-ios.yml',
     );
     expect(workflow).toMatch(/LiveActivity:true\*\)/);
-    expect(workflow).toMatch(/auramind_ci_live_plugins/);
+    expect(workflow).toMatch(/bonamind_ci_live_plugins/);
   });
 
   it('exposes a registration check that is distinct from availability', () => {

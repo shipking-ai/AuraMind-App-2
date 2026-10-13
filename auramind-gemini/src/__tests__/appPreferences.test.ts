@@ -29,12 +29,12 @@ describe("app preferences", () => {
   });
 
   it("persists values and applies document effects immediately", () => {
-    setAppPreference("auramind_theme", "light");
-    setAppPreference("auramind_fontSize", "Large");
-    setAppPreference("auramind_reduceMotion", true);
-    setAppPreference("auramind_highContrast", true);
+    setAppPreference("bonamind_theme", "light");
+    setAppPreference("bonamind_fontSize", "Large");
+    setAppPreference("bonamind_reduceMotion", true);
+    setAppPreference("bonamind_highContrast", true);
 
-    expect(getAppPreference("auramind_theme", "dark")).toBe("light");
+    expect(getAppPreference("bonamind_theme", "dark")).toBe("light");
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.classList.contains("light")).toBe(true);
     expect(document.documentElement.classList.contains("dark")).toBe(false);
@@ -47,16 +47,16 @@ describe("app preferences", () => {
     const listener = vi.fn();
     const unsubscribe = subscribeToAppPreferences(listener);
 
-    setAppPreference("auramind_autoSync", false);
+    setAppPreference("bonamind_autoSync", false);
 
     expect(listener).toHaveBeenCalledTimes(1);
-    expect(getAppPreference("auramind_autoSync", true)).toBe(false);
+    expect(getAppPreference("bonamind_autoSync", true)).toBe(false);
     unsubscribe();
   });
 
   it("can apply a preference that came from storage on boot", () => {
-    localStorage.setItem("auramind_theme", JSON.stringify("dark"));
-    applyPreferenceToDocument("auramind_theme", getAppPreference("auramind_theme", "light"));
+    localStorage.setItem("bonamind_theme", JSON.stringify("dark"));
+    applyPreferenceToDocument("bonamind_theme", getAppPreference("bonamind_theme", "light"));
 
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.style.colorScheme).toBe("dark");

@@ -56,7 +56,7 @@ const STEPS: { id: OnboardingStep; label: string }[] = [
   { id: "coach", label: "Coach" },
 ];
 
-const FIRST_RUN_FLAG = "auramind:completedTutorials";
+const FIRST_RUN_FLAG = "bonamind:completedTutorials";
 
 function markOnboardingComplete() {
   try {
@@ -81,7 +81,7 @@ const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ isOpen, onClose
   const finish = useCallback(() => {
     markOnboardingComplete();
     try {
-      if (selectedTopic) localStorage.setItem("auramind:studyTopic", selectedTopic);
+      if (selectedTopic) localStorage.setItem("bonamind:studyTopic", selectedTopic);
       setStoredPersonality(selectedPersonality);
     } catch {
       // Best effort only.

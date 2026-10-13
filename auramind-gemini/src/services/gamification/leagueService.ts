@@ -41,7 +41,7 @@ export interface LeagueBoardData {
 }
 
 /** Local cache so the leaderboard renders instantly after first paint. */
-const LOCAL_KEY_LEAGUE = 'auramind_league_state_v1';
+const LOCAL_KEY_LEAGUE = 'bonamind_league_state_v1';
 
 function readLocalLeague(): { seasonId: string; weeklyXp: number; tier: number } | null {
   if (typeof window === 'undefined') return null;
@@ -253,7 +253,7 @@ export async function fetchLeagueBoard(
 
 /** Build a fully synthetic group when DB is unreachable so the UI never blanks out. */
 function buildFallbackBoard(seasonId: string, startsAt: number, endsAt: number): LeagueBoardData {
-  const tier = tierForLifetimeXp(Number(localStorage.getItem('auramind_user_xp') ?? 0));
+  const tier = tierForLifetimeXp(Number(localStorage.getItem('bonamind_user_xp') ?? 0));
   const demoGroup = buildDemoGroup(undefined, tier, seasonId, startsAt, endsAt);
   return {
     seasonId,

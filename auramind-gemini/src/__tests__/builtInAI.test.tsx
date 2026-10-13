@@ -125,6 +125,6 @@ describe('LocalAIAssist', () => {
       ),
     );
     expect(await screen.findByText('Las sinapsis se fortalecen.')).toBeTruthy();
-    expect(JSON.parse(window.localStorage.getItem('auramind_localAiLanguage') ?? '""')).toBe('fr');
+    expect(JSON.parse(window.localStorage.getItem('bonamind_localAiLanguage') ?? '""')).toBe('fr');
   });
 });

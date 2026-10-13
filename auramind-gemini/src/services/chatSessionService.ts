@@ -170,7 +170,7 @@ async function flushQueue(): Promise<void> {
       const slug = draining[i].session.id;
       const canonical = rows[i].id;
       if (slug !== canonical) {
-        window.dispatchEvent(new CustomEvent('auramind:chat-id-migrated', {
+        window.dispatchEvent(new CustomEvent('bonamind:chat-id-migrated', {
           detail: { from: slug, to: canonical },
         }));
       }

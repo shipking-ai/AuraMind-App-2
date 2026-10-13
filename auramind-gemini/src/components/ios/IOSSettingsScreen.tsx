@@ -68,15 +68,15 @@ export function IOSSettingsScreen() {
   const workspace = useDashboardWorkspace();
   const user = workspace?.user;
 
-  const [dailyGoal, setDailyGoal] = useAppPreference("auramind_dailyGoal", "20");
-  const [textToSpeech, setTextToSpeech] = useAppPreference("auramind_textToSpeech", false);
-  const [soundEffects, setSoundEffects] = useAppPreference("auramind_soundEffects", true);
+  const [dailyGoal, setDailyGoal] = useAppPreference("bonamind_dailyGoal", "20");
+  const [textToSpeech, setTextToSpeech] = useAppPreference("bonamind_textToSpeech", false);
+  const [soundEffects, setSoundEffects] = useAppPreference("bonamind_soundEffects", true);
   const [voice, setVoice] = useAppPreference<string>(VOICE_PREF_KEY, DEFAULT_VOICE);
-  const [dailyReminder, setDailyReminder] = useAppPreference("auramind_dailyReminder", true);
-  const [reminderTime, setReminderTime] = useAppPreference("auramind_reminderTime", "09:00");
-  const [dueReminder, setDueReminder] = useAppPreference("auramind_dueReminder", true);
-  const [streakReminder, setStreakReminder] = useAppPreference("auramind_streakReminder", true);
-  const [reduceMotion, setReduceMotion] = useAppPreference("auramind_reduceMotion", false);
+  const [dailyReminder, setDailyReminder] = useAppPreference("bonamind_dailyReminder", true);
+  const [reminderTime, setReminderTime] = useAppPreference("bonamind_reminderTime", "09:00");
+  const [dueReminder, setDueReminder] = useAppPreference("bonamind_dueReminder", true);
+  const [streakReminder, setStreakReminder] = useAppPreference("bonamind_streakReminder", true);
+  const [reduceMotion, setReduceMotion] = useAppPreference("bonamind_reduceMotion", false);
   const voiceOptions = useVoiceOptions(voice);
   const [cardStyle, setCardStyle] = useAppPreference<IOSCardStyle>(IOS_CARD_STYLE_KEY, "paper");
   const [sheet, setSheet] = useState<"voice" | "time" | "card" | null>(null);

@@ -5,7 +5,7 @@ import { useAppPreference } from "../../lib/appPreferences";
 import { useAppLifecycle, useBiometricAuth } from "../../hooks/useNative";
 import { hapticSuccess, hapticWarning } from "./androidHaptics";
 
-export const APP_LOCK_PREF_KEY = "auramind_app_lock";
+export const APP_LOCK_PREF_KEY = "bonamind_app_lock";
 
 /**
  * Biometric app-lock gate for the installed Android app.

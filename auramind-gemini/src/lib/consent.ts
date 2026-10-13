@@ -1,9 +1,9 @@
 import { getAppPreference, setAppPreference } from "./appPreferences";
 
 /** Marker recording whether the visitor has answered the consent banner. */
-export const CONSENT_CHOICE_KEY = "auramind_consentChoice";
+export const CONSENT_CHOICE_KEY = "bonamind_consentChoice";
 /** The analytics kill-switch, also toggled from both Settings screens. */
-export const ANALYTICS_PREF_KEY = "auramind_usageAnalytics";
+export const ANALYTICS_PREF_KEY = "bonamind_usageAnalytics";
 
 export type ConsentChoice = "accepted" | "declined";
 

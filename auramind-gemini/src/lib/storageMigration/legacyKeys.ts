@@ -1,6 +1,6 @@
 /**
- * Moves stored values from their pre-rename keys (`auramind_*`, `auramind-*`,
- * `auramind.*`, `auramind:*`) to the same key under `bonamind`. Works by
+ * Moves stored values from their pre-rename keys (LEGACY_PREFIX followed by
+ * `_`, `-`, `.` or `:`) to the same key under `bonamind`. Works by
  * prefix, not a fixed list, because some keys are built at runtime.
  *
  * localStorage is migrated synchronously before any other module loads (see

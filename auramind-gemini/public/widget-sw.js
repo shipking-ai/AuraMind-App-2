@@ -12,9 +12,9 @@
  * drift from it — exactly the trap the Android widget avoids the same way.
  */
 
-const WIDGET_TAG = 'auramind-due';
-const STATE_CACHE = 'auramind-widget-state';
-const STATE_URL = '/__auramind-widget-state';
+const WIDGET_TAG = 'auramind-due'; // legacy-name: ok (pinned widgets are found by tag; see src/lib/legacyNames.ts)
+const STATE_CACHE = 'bonamind-widget-state';
+const STATE_URL = '/__bonamind-widget-state';
 const TEMPLATE_URL = '/widgets/due-template.json';
 
 const EMPTY_STATE = { due: 0, deck: '', streak: 0 };
@@ -70,11 +70,16 @@ async function renderWidgets() {
   }
 }
 
+// The pre-rename cache only held derived state the app re-posts on its next
+// sync, so it is dropped rather than copied.
+const LEGACY_STATE_CACHE = 'auramind-widget-state'; // legacy-name: ok
+self.addEventListener('activate', (event) => event.waitUntil(caches.delete(LEGACY_STATE_CACHE)));
+
 self.addEventListener('widgetinstall', (event) => event.waitUntil(renderWidgets()));
 self.addEventListener('widgetresume', (event) => event.waitUntil(renderWidgets()));
 
 self.addEventListener('message', (event) => {
-  if (event.data?.type !== 'auramind-widget-state') return;
+  if (event.data?.type !== 'bonamind-widget-state') return;
   event.waitUntil(writeState(event.data.state ?? EMPTY_STATE).then(renderWidgets));
 });
 

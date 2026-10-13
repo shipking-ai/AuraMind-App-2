@@ -42,7 +42,7 @@ export function LocalAIAssist({ front, back }: { front: string; back: string }) 
   const [output, setOutput] = useState<{ kind: Job; text: string } | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
-  const [language, setLanguage] = useAppPreference('auramind_localAiLanguage', 'es');
+  const [language, setLanguage] = useAppPreference('bonamind_localAiLanguage', 'es');
 
   useEffect(() => {
     if (!supported) return;

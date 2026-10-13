@@ -238,7 +238,7 @@ export const awardXP = (action: keyof typeof XP_REWARDS, multiplier: number = 1)
   // Get current XP
   let currentXP = 0;
   if (typeof window !== 'undefined') {
-    const savedXP = localStorage.getItem('auramind_user_xp');
+    const savedXP = localStorage.getItem('bonamind_user_xp');
     currentXP = savedXP ? parseInt(savedXP, 10) : 0;
   }
   
@@ -247,7 +247,7 @@ export const awardXP = (action: keyof typeof XP_REWARDS, multiplier: number = 1)
   
   // Save XP
   if (typeof window !== 'undefined') {
-    localStorage.setItem('auramind_user_xp', String(newXP));
+    localStorage.setItem('bonamind_user_xp', String(newXP));
   }
   
   // Check for streak bonuses (this would be enhanced with actual streak tracking)
@@ -268,14 +268,14 @@ export const getUserStats = (): UserStats => {
     return getDefaultStats();
   }
 
-  const xp = parseInt(localStorage.getItem('auramind_user_xp') || '0', 10);
-  const streakDays = parseInt(localStorage.getItem('auramind_streak_days') || '0', 10);
-  const cardsStudied = parseInt(localStorage.getItem('auramind_cards_studied') || '0', 10);
-  const decksCreated = parseInt(localStorage.getItem('auramind_decks_created') || '0', 10);
-  const sessionsCompleted = parseInt(localStorage.getItem('auramind_sessions_completed') || '0', 10);
-  const accuracy = parseFloat(localStorage.getItem('auramind_accuracy') || '0');
-  const totalStudyTime = parseInt(localStorage.getItem('auramind_study_time') || '0', 10);
-  const earnedAchievements = JSON.parse(localStorage.getItem('auramind_achievements') || '[]');
+  const xp = parseInt(localStorage.getItem('bonamind_user_xp') || '0', 10);
+  const streakDays = parseInt(localStorage.getItem('bonamind_streak_days') || '0', 10);
+  const cardsStudied = parseInt(localStorage.getItem('bonamind_cards_studied') || '0', 10);
+  const decksCreated = parseInt(localStorage.getItem('bonamind_decks_created') || '0', 10);
+  const sessionsCompleted = parseInt(localStorage.getItem('bonamind_sessions_completed') || '0', 10);
+  const accuracy = parseFloat(localStorage.getItem('bonamind_accuracy') || '0');
+  const totalStudyTime = parseInt(localStorage.getItem('bonamind_study_time') || '0', 10);
+  const earnedAchievements = JSON.parse(localStorage.getItem('bonamind_achievements') || '[]');
 
   const { level, title } = calculateLevel(xp);
 
@@ -314,14 +314,14 @@ export const updateUserStats = (updates: Partial<UserStats>): UserStats => {
   const currentStats = getUserStats();
   const newStats = { ...currentStats, ...updates };
 
-  localStorage.setItem('auramind_user_xp', String(newStats.xp));
-  localStorage.setItem('auramind_streak_days', String(newStats.streakDays));
-  localStorage.setItem('auramind_cards_studied', String(newStats.cardsStudied));
-  localStorage.setItem('auramind_decks_created', String(newStats.decksCreated));
-  localStorage.setItem('auramind_sessions_completed', String(newStats.sessionsCompleted));
-  localStorage.setItem('auramind_accuracy', String(newStats.accuracy));
-  localStorage.setItem('auramind_study_time', String(newStats.totalStudyTime));
-  localStorage.setItem('auramind_achievements', JSON.stringify(newStats.earnedAchievements));
+  localStorage.setItem('bonamind_user_xp', String(newStats.xp));
+  localStorage.setItem('bonamind_streak_days', String(newStats.streakDays));
+  localStorage.setItem('bonamind_cards_studied', String(newStats.cardsStudied));
+  localStorage.setItem('bonamind_decks_created', String(newStats.decksCreated));
+  localStorage.setItem('bonamind_sessions_completed', String(newStats.sessionsCompleted));
+  localStorage.setItem('bonamind_accuracy', String(newStats.accuracy));
+  localStorage.setItem('bonamind_study_time', String(newStats.totalStudyTime));
+  localStorage.setItem('bonamind_achievements', JSON.stringify(newStats.earnedAchievements));
 
   return newStats;
 };
@@ -350,7 +350,7 @@ export const trackStudySession = (duration: number, accuracy: number) => {
 
   // Update streak
   const today = new Date().toDateString();
-  const lastStudy = localStorage.getItem('auramind_last_study_date');
+  const lastStudy = localStorage.getItem('bonamind_last_study_date');
   let newStreak = stats.streakDays;
 
   // Persist this session's contribution to the rolling XP history used
@@ -366,7 +366,7 @@ export const trackStudySession = (duration: number, accuracy: number) => {
     } else if (lastStudy !== today) {
       newStreak = 1;
     }
-    localStorage.setItem('auramind_last_study_date', today);
+    localStorage.setItem('bonamind_last_study_date', today);
   }
 
   const newSessionsCompleted = stats.sessionsCompleted + 1;
@@ -398,7 +398,7 @@ export const trackStudySession = (duration: number, accuracy: number) => {
   // a one-time toast so the user knows data is being trimmed.
   if (typeof window !== 'undefined') {
     try {
-      const HISTORY_KEY = 'auramind_study_history';
+      const HISTORY_KEY = 'bonamind_study_history';
       const HISTORY_CAP = 365;
       const raw = window.localStorage.getItem(HISTORY_KEY);
       const history: Array<{ date: string; xp: number; accuracy: number }> = raw
@@ -419,7 +419,7 @@ export const trackStudySession = (duration: number, accuracy: number) => {
         // Best-effort fire-and-forget; do not block the return.
         try {
           window.dispatchEvent(
-            new CustomEvent('auramind:study-history-truncated', { detail: {} }),
+            new CustomEvent('bonamind:study-history-truncated', { detail: {} }),
           );
         } catch {
           /* no-op */
@@ -486,15 +486,15 @@ export const getNextAchievements = (): { earned: Achievement[]; available: Achie
 // widget or progress widgets between runs. Update both places together.
 export const resetUserData = () => {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('auramind_user_xp');
-    localStorage.removeItem('auramind_streak_days');
-    localStorage.removeItem('auramind_cards_studied');
-    localStorage.removeItem('auramind_decks_created');
-    localStorage.removeItem('auramind_sessions_completed');
-    localStorage.removeItem('auramind_accuracy');
-    localStorage.removeItem('auramind_study_time');
-    localStorage.removeItem('auramind_achievements');
-    localStorage.removeItem('auramind_last_study_date');
+    localStorage.removeItem('bonamind_user_xp');
+    localStorage.removeItem('bonamind_streak_days');
+    localStorage.removeItem('bonamind_cards_studied');
+    localStorage.removeItem('bonamind_decks_created');
+    localStorage.removeItem('bonamind_sessions_completed');
+    localStorage.removeItem('bonamind_accuracy');
+    localStorage.removeItem('bonamind_study_time');
+    localStorage.removeItem('bonamind_achievements');
+    localStorage.removeItem('bonamind_last_study_date');
   }
 };
 

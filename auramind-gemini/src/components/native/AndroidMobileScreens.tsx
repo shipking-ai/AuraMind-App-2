@@ -358,7 +358,7 @@ export function AndroidOverview() {
   ).length;
   const firstName = user?.name?.split(" ")[0] || "Learner";
   const firstDueDeck = decks.find((deck) => deckDue(deck, cards) > 0) ?? decks[0];
-  const [dailyGoalPref] = useAppPreference("auramind_dailyGoal", "20");
+  const [dailyGoalPref] = useAppPreference("bonamind_dailyGoal", "20");
   const dailyGoal = Math.max(1, Number.parseInt(String(dailyGoalPref), 10) || 20);
   const [sheetDeck, setSheetDeck] = useState<Deck | null>(null);
 

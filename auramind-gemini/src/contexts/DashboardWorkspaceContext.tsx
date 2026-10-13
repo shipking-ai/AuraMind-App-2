@@ -157,7 +157,7 @@ export const DashboardWorkspaceProvider: React.FC<DashboardWorkspaceProviderProp
    * There were three competing sources and the UI was wired to the only one
    * that is never written:
    *
-   *   - localStorage ('auramind_streak_days'), updated by gamificationService.
+   *   - localStorage ('bonamind_streak_days'), updated by gamificationService.
    *     Device-local, so it is wrong the moment you study on a second device
    *     and invisible to anything server-side.
    *   - user_profiles.streak / streak_days. Every surface read this, and

@@ -233,7 +233,7 @@ export function FloatReviewer({
 export function StudyFloatButton({ className = '' }: { className?: string }) {
   const workspace = useDashboardWorkspace();
   const userId = useCurrentUserId();
-  const [retentionSetting] = useAppPreference('auramind_retention', 'Balanced - 85%');
+  const [retentionSetting] = useAppPreference('bonamind_retention', 'Balanced - 85%');
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
   const [initialQueue, setInitialQueue] = useState<string[]>([]);
   const pipRef = useRef<Window | null>(null);

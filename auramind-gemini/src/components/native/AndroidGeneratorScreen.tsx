@@ -133,9 +133,9 @@ export default function AndroidGeneratorScreen() {
     // failing that, the opening words of the passage beat an empty field.
     setTopic(title || value.slice(0, 60).replace(/\s+\S*$/, ''));
   }, []);
-  const [cardsPerGeneration] = useAppPreference("auramind_cardsPerGen", "20");
-  const [includeExamples] = useAppPreference("auramind_includeExamples", true);
-  const [defaultLanguage] = useAppPreference("auramind_defaultLanguage", "English");
+  const [cardsPerGeneration] = useAppPreference("bonamind_cardsPerGen", "20");
+  const [includeExamples] = useAppPreference("bonamind_includeExamples", true);
+  const [defaultLanguage] = useAppPreference("bonamind_defaultLanguage", "English");
   const [loadingSource, setLoadingSource] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);

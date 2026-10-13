@@ -596,7 +596,7 @@ function isBleedPath(pathname: string): boolean {
 // flag has ever been written and they don't own any decks yet. Skipping or
 // completing the tour marks the flag, so it can't re-open on every visit.
 
-const FIRST_RUN_FLAG = 'auramind:completedTutorials';
+const FIRST_RUN_FLAG = 'bonamind:completedTutorials';
 
 function readFirstRunFlag(): boolean {
   try {

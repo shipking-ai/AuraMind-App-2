@@ -32,7 +32,7 @@ function createOscillator(
 
 export function useSoundDesign(options: SoundDesignOptions = {}) {
   const { volume = 0.15, enabled } = options;
-  const [preferenceEnabled] = useAppPreference("auramind_soundEffects", true);
+  const [preferenceEnabled] = useAppPreference("bonamind_soundEffects", true);
   const soundEnabled = enabled ?? preferenceEnabled;
   const ctxRef = useRef<AudioContext | null>(null);
 

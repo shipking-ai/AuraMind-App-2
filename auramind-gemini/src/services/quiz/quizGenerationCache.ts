@@ -27,7 +27,7 @@ type GlobalSubscriber = (deckId: string, progress: GenerationProgress) => void;
 
 // ─── State ───────────────────────────────────────────────────────
 
-const STORAGE_PREFIX = 'auramind:quiz:';
+const STORAGE_PREFIX = 'bonamind:quiz:';
 
 /** In-flight generation promises, keyed by deckId. Module-level = survives unmounts. */
 const inFlight = new Map<string, Promise<void>>();

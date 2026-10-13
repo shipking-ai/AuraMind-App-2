@@ -7,7 +7,7 @@ export type ProfAuraPersonality =
   | 'drill-sergeant'
   | 'gentle'
   | 'hype';
-export const PROF_AURA_PERSONALITY_KEY = 'auramind.prof.personality.v1';
+export const PROF_AURA_PERSONALITY_KEY = 'bonamind.prof.personality.v1';
 export const PROF_AURA_PERSONALITY_OPTIONS: {
   id: ProfAuraPersonality;
   label: string;

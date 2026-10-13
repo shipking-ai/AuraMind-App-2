@@ -50,7 +50,7 @@ beforeAll(async () => {
   admin = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  const email = `stats-${Date.now()}@auramind-test.local`;
+  const email = `stats-${Date.now()}@bonamind-test.local`;
   const { data: { user }, error: signupErr } = await admin.auth.admin.createUser({
     email, password: 'TestPass123!', email_confirm: true,
   });

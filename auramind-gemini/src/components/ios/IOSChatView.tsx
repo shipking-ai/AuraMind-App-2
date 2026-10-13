@@ -39,7 +39,7 @@ import { iosSelection, iosSuccess, iosTap } from "./iosHaptics";
 import { useAppPreference } from "../../lib/appPreferences";
 
 export type AuraChatMode = "talk" | "notebook" | "cards";
-export const AURA_CHAT_MODE_KEY = "auramind_auraChatMode";
+export const AURA_CHAT_MODE_KEY = "bonamind_auraChatMode";
 
 export interface IOSChatStarter {
   icon: LucideIcon;

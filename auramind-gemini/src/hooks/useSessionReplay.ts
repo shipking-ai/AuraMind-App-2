@@ -40,7 +40,7 @@ export interface SessionReplayState {
   refresh: () => void;
 }
 
-const LS_KEY = 'auramind.sessionReplay.lastSession';
+const LS_KEY = 'bonamind.sessionReplay.lastSession';
 
 function safeRead(): ReplayEntry[] | null {
   if (typeof window === 'undefined') return null;

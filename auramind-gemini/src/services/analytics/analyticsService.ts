@@ -12,7 +12,7 @@ export const isPostHogConfigured = POSTHOG_KEY && POSTHOG_KEY !== 'phc_placehold
 let posthog: any = null;
 
 export async function getPostHog() {
-  if (getAppPreference<boolean>('auramind_usageAnalytics', true) === false) return null;
+  if (getAppPreference<boolean>('bonamind_usageAnalytics', true) === false) return null;
   if (!posthog && isPostHogConfigured && typeof window !== 'undefined') {
     const module = await import('posthog-js');
     posthog = module.default;
@@ -24,7 +24,7 @@ let initialized = false;
 
 export const analyticsService = {
   init: async () => {
-    if (getAppPreference<boolean>('auramind_usageAnalytics', true) === false) return;
+    if (getAppPreference<boolean>('bonamind_usageAnalytics', true) === false) return;
     // No consent choice yet: tracking must not start before the banner
     // answer. (The banner backfills the marker for legacy explicit
     // opt-outs, so this only delays first-run init until Accept.)
