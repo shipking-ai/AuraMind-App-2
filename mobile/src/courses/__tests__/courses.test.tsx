@@ -1,10 +1,10 @@
 import type { Card, Deck } from '@bonamind/core';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCards, useDecks } from '../../data/hooks';
 import { CourseDetailScreen, MASTERED_INTERVAL_DAYS } from '../CourseDetailScreen';
-import { CoursesScreen } from '../CoursesScreen';
+import { CoursesScreen, NEW_HIGHLIGHT_MS } from '../CoursesScreen';
 import { useCreateStore } from '../../create/store';
 
 // Stack.Screen renders its headerRight so header buttons can be pressed in tests.
@@ -57,14 +57,16 @@ it('has a New course button in the header', async () => {
   expect(router.push).toHaveBeenCalledWith('/create');
 });
 
-it('marks a course just made on the phone as new, once', async () => {
+it('marks a course just made on the phone as new for a few seconds', async () => {
   (useDecks as jest.Mock).mockReturnValue({ data: [deck('bio', 'Cell biology', 3), deck('es', 'Spanish', 1)] });
   (useCards as jest.Mock).mockReturnValue({ data: [] });
   useCreateStore.setState({ justCreated: 'bio' });
   await render(<CoursesScreen />);
   expect(screen.getByLabelText('Cell biology, new')).toBeTruthy();
   expect(screen.getByLabelText('Spanish')).toBeTruthy();
+  await act(async () => { jest.advanceTimersByTime(NEW_HIGHLIGHT_MS); });
   expect(useCreateStore.getState().justCreated).toBeNull();
+  expect(screen.getByLabelText('Cell biology')).toBeTruthy();
 });
 
 it('shows due and mastered counts and starts studying the course', async () => {
@@ -79,4 +81,17 @@ it('shows due and mastered counts and starts studying the course', async () => {
   expect(screen.getByText('1 mastered')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Study this course' }));
   expect(router.push).toHaveBeenCalledWith('/study/bio');
+});
+
+// The Courses tab stays mounted under NativeTabs and its header + opens the
+// sheet, so a course is usually saved while Courses is already on screen.
+it('marks a course made while Courses is open, and lists it first', async () => {
+  (useDecks as jest.Mock).mockReturnValue({ data: [deck('es', 'Spanish', 1), deck('bio', 'Cell biology', 3)] });
+  (useCards as jest.Mock).mockReturnValue({ data: [] });
+  await render(<CoursesScreen />);
+  expect(screen.queryByLabelText('Cell biology, new')).toBeNull();
+  await act(async () => { useCreateStore.setState({ justCreated: 'bio' }); });
+  expect(screen.getByLabelText('Cell biology, new')).toBeTruthy();
+  const order = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel).filter((l) => l === 'Cell biology, new' || l === 'Spanish');
+  expect(order).toEqual(['Cell biology, new', 'Spanish']);
 });

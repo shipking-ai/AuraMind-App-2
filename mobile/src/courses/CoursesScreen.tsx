@@ -1,6 +1,6 @@
 import { dueCards } from '@bonamind/core';
 import { router, Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useCreateStore } from '../create/store';
@@ -20,6 +20,8 @@ import { useNow } from '../hooks/useNow';
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 const newCourse = () => router.push('/create');
+/** How long a course made on the phone stays marked new. */
+export const NEW_HIGHLIGHT_MS = 8_000;
 
 export function CoursesScreen() {
   const { userId } = useAuth();
@@ -27,9 +29,16 @@ export function CoursesScreen() {
   const decks = useDecks(userId).data ?? [];
   const cards = useCards(userId).data ?? [];
   const now = useNow();
-  // A course just made on the phone is marked new for this visit only.
-  const [fresh] = useState(() => useCreateStore.getState().justCreated);
-  useEffect(() => { if (fresh) useCreateStore.getState().clearJustCreated(); }, [fresh]);
+  // A course just made on the phone goes first and is marked new for a few
+  // seconds. Subscribed, not read once: this tab stays mounted while the
+  // create sheet is open over it.
+  const fresh = useCreateStore((s) => s.justCreated);
+  useEffect(() => {
+    if (!fresh) return;
+    const id = setTimeout(() => useCreateStore.getState().clearJustCreated(), NEW_HIGHLIGHT_MS);
+    return () => clearTimeout(id);
+  }, [fresh]);
+  const ordered = fresh ? [...decks].sort((a, b) => Number(b.id === fresh) - Number(a.id === fresh)) : decks;
 
   const header = (
     <Stack.Screen
@@ -57,7 +66,7 @@ export function CoursesScreen() {
     <>
       {header}
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-        {decks.map((d, i) => {
+        {ordered.map((d, i) => {
           const deckCards = cards.filter((c) => c.deckId === d.id);
           const due = dueCards(deckCards, now).length;
           const total = deckCards.length || d.cardCount;

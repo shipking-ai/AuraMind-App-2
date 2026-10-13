@@ -1442,6 +1442,19 @@ plan `docs/superpowers/plans/2026-10-12-bonamind-native-app-part2.md`.
 - **`task-done` and pipes.** Piping the test runner through `grep` hides its
   exit code, so a failing suite got recorded as passing once. Never pipe the
   runner in a gate command.
+- **A sentence regex that consumes text drops it.** `/[^.!?]+[.!?]+(?=\s|$)/`
+  silently skipped everything before "3.14", "e.g." or "U.S.". That hit every
+  link, because `/api/fetch-url` collapses a page into one paragraph.
+  `splitSource` now splits without consuming text (`replace(/([.!?])\s+/g,
+  '$1\0')`, with no lookbehind, for Hermes). A test joins the pieces back and
+  checks that no characters were lost.
+- **NetInfo calls a new listener at once.** It can also report "connected"
+  while requests fail. A "resume when online" listener therefore fired
+  immediately and looped, leaking a listener each turn. The build store
+  resumes once per pause, after 2 s, and skips `isInternetReachable ===
+  false`. The jest mock now calls listeners on subscribe, like the library.
+- **Tabs stay mounted.** The Courses screen read `justCreated` once at mount
+  and never saw a course made from its own **+**. It now subscribes.
 
 ### Owner check
 
