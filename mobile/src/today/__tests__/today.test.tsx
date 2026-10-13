@@ -42,11 +42,12 @@ it('starts the review on the deck with the most due cards', async () => {
   expect(router.push).toHaveBeenCalledWith('/study/bio');
 });
 
-it('is all caught up with no decks', async () => {
+it('offers to add a course when there are none', async () => {
   given([], []);
   await render(<TodayScreen />);
-  expect(screen.getByText('All caught up')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Start review' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Add course' }));
+  expect(router.push).toHaveBeenCalledWith('/create');
 });
 
 it('is all caught up when nothing is due', async () => {

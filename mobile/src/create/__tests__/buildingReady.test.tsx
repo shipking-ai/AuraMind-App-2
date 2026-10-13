@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { haptic } from '../../design/haptics';
 import { BuildingView } from '../BuildingView';
 import { CREATE_COPY } from '../copy';
@@ -41,7 +41,7 @@ it('gives a selection tap when a step finishes', async () => {
   useCreateStore.setState({ phase: 'building', progress: { step: 'reading', cardsSoFar: 0, target: 20 } });
   await render(<BuildingView />);
   (haptic as jest.Mock).mockClear();
-  await useCreateStore.setState({ progress: { step: 'ideas', cardsSoFar: 0, target: 20 } });
+  await act(async () => { useCreateStore.setState({ progress: { step: 'ideas', cardsSoFar: 0, target: 20 } }); });
   await screen.findByLabelText('Reading your source, done');
   expect(haptic).toHaveBeenCalledWith('selection');
 });

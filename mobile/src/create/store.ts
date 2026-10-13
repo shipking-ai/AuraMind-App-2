@@ -17,6 +17,9 @@ interface CreateState {
   draft: CourseDraft | null;
   error: CreateErrorKind | null;
   savedDeckId: string | null;
+  /** The last course saved here, until Courses has shown it as new once; survives reset(). */
+  justCreated: string | null;
+  clearJustCreated(): void;
   /** Reads the source, then builds; ignored unless idle or after an error (one build at a time). */
   start(read: () => Promise<CourseSource>, size: CourseSize): void;
   removeCard(i: number): void;
@@ -75,6 +78,8 @@ export const useCreateStore = create<CreateState>()((set, get) => {
   return {
     ...IDLE,
     size: 'standard',
+    justCreated: null,
+    clearJustCreated: () => set({ justCreated: null }),
 
     start(read, size) {
       if (get().phase !== 'input' && get().phase !== 'error') return;
@@ -103,7 +108,7 @@ export const useCreateStore = create<CreateState>()((set, get) => {
       try {
         const profile = await getData().getFsrsProfile(userId).catch(() => ({ profileLabel: null, weights: undefined }));
         const { deck } = await createCourse(getSupabase(), userId, draft, { profileLabel: profile.profileLabel, weightsOverride: profile.weights });
-        set({ phase: 'ready', savedDeckId: deck.id });
+        set({ phase: 'ready', savedDeckId: deck.id, justCreated: deck.id });
         onSaved(deck.id);
       } catch {
         // createCourse already removed any half-saved deck; the reviewed cards stay here.

@@ -1,4 +1,5 @@
 import { CreateError } from '@bonamind/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import { CreateScreen } from '../CreateScreen';
@@ -134,12 +135,13 @@ describe('after starting', () => {
   });
 
   it('shows the review deck while reviewing or saving', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
     useCreateStore.setState({ phase: 'review', draft });
-    const view = await render(<CreateScreen />);
+    const view = await render(<QueryClientProvider client={client}><CreateScreen /></QueryClientProvider>);
     expect(screen.getByLabelText('Course title')).toBeTruthy();
     await view.unmount();
     useCreateStore.setState({ phase: 'saving', draft });
-    await render(<CreateScreen />);
+    await render(<QueryClientProvider client={client}><CreateScreen /></QueryClientProvider>);
     expect(screen.getByRole('button', { name: 'Saving…' })).toBeTruthy();
   });
 

@@ -59,7 +59,7 @@ it('keeps building after the screen unmounts', async () => {
   build.mockReturnValue(new Promise<CourseDraft>((r) => { finish = r; }));
   function Screen() { return <Text>{useCreateStore((s) => s.phase)}</Text>; }
   const view = await render(<Screen />);
-  store().start(async () => source, 'quick');
+  await act(async () => { store().start(async () => source, 'quick'); });
   await settle();
   await view.unmount();
   await act(async () => { finish(draft()); });

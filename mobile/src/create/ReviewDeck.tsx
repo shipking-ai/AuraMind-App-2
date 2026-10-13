@@ -1,4 +1,5 @@
 import type { DraftCard } from '@bonamind/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type AccessibilityActionEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -93,6 +94,7 @@ function ReviewCard({ card, onKeep, onRemove, onEdit }: { card: DraftCard; onKee
 /** Look through the generated cards, drop or fix any, rename, then save. */
 export function ReviewDeck() {
   const { userId } = useAuth();
+  const queryClient = useQueryClient();
   const { reduce } = useMotion();
   const draft = useCreateStore((s) => s.draft);
   const phase = useCreateStore((s) => s.phase);
@@ -126,7 +128,11 @@ export function ReviewDeck() {
   };
   const onSave = () => {
     if (!userId || !cards.length || phase === 'saving') return;
-    void save(userId, () => {});
+    // The new course and its cards show up in Courses and Today straight away.
+    void save(userId, () => {
+      void queryClient.invalidateQueries({ queryKey: ['decks'] });
+      void queryClient.invalidateQueries({ queryKey: ['cards'] });
+    });
   };
 
   const saveLabel = phase === 'saving' ? 'Saving…' : error ? CREATE_COPY.saveRetry : 'Save course';

@@ -1,5 +1,7 @@
 import type { CourseDraft } from '@bonamind/core';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { CREATE_COPY } from '../copy';
@@ -22,11 +24,14 @@ const draft = (over: Partial<CourseDraft> = {}): CourseDraft => ({
   cards: [{ front: 'Q1', back: 'A1' }, { front: 'Q2', back: 'A2' }, { front: 'Q3', back: 'A3' }],
   ...over,
 });
-const mockSave = jest.fn(async () => {});
+const mockSave = jest.fn(async (_userId: string, onSaved: (id: string) => void) => { onSaved('deck-1'); });
+let client: QueryClient;
+const render = (ui: ReactElement) => rtlRender(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 const fronts = () => useCreateStore.getState().draft!.cards.map((c) => c.front);
 
 beforeEach(() => {
   jest.clearAllMocks();
+  client = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
   useCreateStore.getState().reset();
   useCreateStore.setState({ phase: 'review', draft: draft(), save: mockSave });
 });
@@ -118,4 +123,12 @@ it('will not save a course with every card removed', async () => {
   expect(screen.getByText('Every card was removed. Keep at least one to save.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Save course' }));
   expect(mockSave).not.toHaveBeenCalled();
+});
+
+it('refreshes courses and cards once the course is saved', async () => {
+  const invalidate = jest.spyOn(client, 'invalidateQueries');
+  await render(<ReviewDeck />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Save course' }));
+  expect(invalidate).toHaveBeenCalledWith({ queryKey: ['decks'] });
+  expect(invalidate).toHaveBeenCalledWith({ queryKey: ['cards'] });
 });
