@@ -450,6 +450,24 @@ key is stale is unverified. If the Capacitor apps' human check fails, compare
 it with the key in the Cloudflare dashboard. A key whose widget lacks the
 app's hostname shows "Unable to connect to website".
 
+### The dependency audit fails PRs that didn't touch dependencies
+
+`Dependency audit (prod deps, critical gate)` runs `npm audit --omit=dev
+--audit-level=critical` for `auramind-gemini/` and `api/` on every PR. A newly
+published critical advisory therefore fails whichever PR runs next, whatever
+that PR changed. On 2026-10-12 it was `proxy-addr` ≤ 2.0.7 (GHSA-jqcg-44mw-7w3h),
+pulled in through Express in both packages (shadcn → MCP SDK → express on the
+website). `npm audit fix` (never `--force`) in the failing package, then run
+the type-check, tests and build.
+
+### Full website suite timeouts on this PC
+
+`npx vitest run` in `auramind-gemini/` on this machine sometimes ends with a
+few "Test timed out" and "Worker forks emitted error" failures in different
+files each run (androidNative, desktopShell, analyticsFunnel, realtimeE2E…).
+Rerun the named files alone before suspecting a change. They pass alone, and
+CI is the arbiter.
+
 ### `@types/jest` 30 breaks Jest 29's failure output
 
 `jest-expo` runs Jest 29. `@types/jest@30` hoists `expect@30` and
