@@ -16,7 +16,9 @@ import { SegmentedControl } from '../design/components/SegmentedControl';
 import { haptic } from '../design/haptics';
 import { useMotion } from '../design/motion';
 import { colors, fonts, radius, space } from '../design/tokens';
+import { BuildingView } from './BuildingView';
 import { CREATE_COPY } from './copy';
+import { ReadyView } from './ReadyView';
 import {
   isHttpUrl, isYouTube, MAX_PHOTOS, pickPdf, pickPhotos, readLink, readPdf, readPhotos, readTopic,
   type PickedPdf, type PickedPhoto,
@@ -202,7 +204,15 @@ function CreateForm() {
 /** The "New course" sheet: one build at a time, owned by useCreateStore. */
 export function CreateScreen() {
   const phase = useCreateStore((s) => s.phase);
+  const savedDeckId = useCreateStore((s) => s.savedDeckId);
+  const reset = useCreateStore((s) => s.reset);
   const editing = phase === 'input' || phase === 'error';
+  const studyNow = () => {
+    const id = savedDeckId;
+    reset();
+    if (id) router.replace(`/study/${id}`);
+  };
+  const done = () => { reset(); router.back(); };
   return (
     <View style={styles.sheet}>
       <AuroraBackground intensity={0.4} />
@@ -216,11 +226,13 @@ export function CreateScreen() {
             </View>
             <GlassButton symbol={{ ios: 'xmark', android: 'close' }} label="Close" onPress={() => router.back()} tint={colors.text} />
           </View>
-          {editing ? (
+          {editing && (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <CreateForm />
             </ScrollView>
-          ) : null}
+          )}
+          {(phase === 'building' || phase === 'waiting') && <BuildingView />}
+          {phase === 'ready' && <ReadyView onStudy={studyNow} onDone={done} />}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

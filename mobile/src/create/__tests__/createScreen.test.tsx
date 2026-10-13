@@ -9,7 +9,9 @@ import { useCreateStore } from '../store';
 let mockOnline = true;
 jest.mock('../../data/sync', () => ({ useSync: () => ({ online: mockOnline }) }));
 jest.mock('../../data/auth', () => ({ useAuth: () => ({ userId: 'u1', status: 'signed-in' }) }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), dismissAll: jest.fn(), push: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { back: jest.fn(), replace: jest.fn(), push: jest.fn() } }));
+jest.mock('../../design/components/LoadingScreen', () => ({ Prism: () => null }));
+jest.mock('../../design/components/Confetti', () => ({ Confetti: () => null }));
 jest.mock('expo-clipboard', () => ({ getStringAsync: jest.fn(async () => '') }));
 jest.mock('../sources', () => ({
   ...jest.requireActual('../sources'),
@@ -118,4 +120,32 @@ it('can paste text when a link cannot be read', async () => {
   await fireEvent.press(make());
   await expect(mockStart.mock.calls[0][0]()).resolves.toEqual({ kind: 'text', text: 'Cells divide by mitosis.', title: 'Cells divide by mitosis.', label: 'your text' });
   expect(CreateError).toBeDefined();
+});
+
+describe('after starting', () => {
+  const { router } = jest.requireMock('expo-router') as { router: { back: jest.Mock; replace: jest.Mock } };
+  const draft = { title: 'Cells', description: '', truncated: false, skippedPieces: 0, cards: [{ front: 'Q', back: 'A' }] };
+
+  it('shows the live build while building or waiting', async () => {
+    useCreateStore.setState({ phase: 'building', progress: { step: 'reading', cardsSoFar: 0, target: 20 } });
+    await render(<CreateScreen />);
+    expect(screen.getByText('Building your course')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: CREATE_COPY.make })).toBeNull();
+  });
+
+  it('Study now opens the new course and clears the build', async () => {
+    useCreateStore.setState({ phase: 'ready', draft, savedDeckId: 'deck-9' });
+    await render(<CreateScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Study now' }));
+    expect(router.replace).toHaveBeenCalledWith('/study/deck-9');
+    expect(useCreateStore.getState().phase).toBe('input');
+  });
+
+  it('Done closes the sheet and clears the build', async () => {
+    useCreateStore.setState({ phase: 'ready', draft, savedDeckId: 'deck-9' });
+    await render(<CreateScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(router.back).toHaveBeenCalled();
+    expect(useCreateStore.getState().phase).toBe('input');
+  });
 });

@@ -48,7 +48,7 @@ function Spark({ orbit, phase }: { orbit: SharedValue<number>; phase: number }) 
 }
 
 /** The animated prism: a comet runs the outline, the core breathes, sparks orbit. */
-function Prism({ still }: { still: boolean }) {
+export function Prism({ still }: { still: boolean }) {
   const outer = useMemo(() => Skia.Path.MakeFromSVGString(OUTER), []);
   const inner = useMemo(() => Skia.Path.MakeFromSVGString(INNER), []);
   const trace = useSharedValue(0);
