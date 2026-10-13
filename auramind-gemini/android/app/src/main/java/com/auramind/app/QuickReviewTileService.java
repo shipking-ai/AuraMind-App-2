@@ -24,8 +24,6 @@ import android.service.quicksettings.TileService;
  */
 public class QuickReviewTileService extends TileService {
 
-    private static final String PREFS = "CapacitorStorage";
-    private static final String KEY_DUE = "auramind_widget_due";
 
     @Override
     public void onStartListening() {
@@ -76,9 +74,9 @@ public class QuickReviewTileService extends TileService {
     }
 
     static int readDue(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences(WidgetPrefs.PREFS, Context.MODE_PRIVATE);
         try {
-            String raw = prefs.getString(KEY_DUE, "0");
+            String raw = WidgetPrefs.read(prefs, "widget_due", "0");
             return raw == null || raw.isEmpty() ? 0 : Math.max(0, Integer.parseInt(raw.replaceAll("\"", "").trim()));
         } catch (NumberFormatException e) {
             return 0;

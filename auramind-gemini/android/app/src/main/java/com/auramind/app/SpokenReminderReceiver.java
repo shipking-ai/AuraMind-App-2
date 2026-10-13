@@ -42,7 +42,9 @@ import java.util.Random;
 public class SpokenReminderReceiver extends BroadcastReceiver {
 
     static final String ACTION_SPEAK = "com.auramind.app.SPOKEN_REMINDER";
-    private static final String PREFS = "auramind_spoken_reminder";
+    private static final String PREFS = "bonamind_spoken_reminder";
+    /** Pre-rename file, moved into PREFS on first use (see LegacyPrefs). */
+    private static final String LEGACY_PREFS = "auramind_spoken_reminder";
     private static final String KEY_CONFIG = "config";
     private static final int REQUEST_CODE = 7410;
     /** Give up well before the system's limit for a goAsync receiver. */
@@ -97,7 +99,7 @@ public class SpokenReminderReceiver extends BroadcastReceiver {
     /** Saves the settings (null clears them) and schedules or cancels the alarm. */
     static void saveAndSchedule(Context context, JSONObject config) {
         Context app = context.getApplicationContext();
-        SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = prefs(app);
         if (config == null) {
             prefs.edit().remove(KEY_CONFIG).apply();
             alarms(app).cancel(pendingIntent(app));
@@ -107,8 +109,14 @@ public class SpokenReminderReceiver extends BroadcastReceiver {
         schedule(app, config);
     }
 
+    private static SharedPreferences prefs(Context context) {
+        SharedPreferences current = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        LegacyPrefs.migrate(context.getSharedPreferences(LEGACY_PREFS, Context.MODE_PRIVATE), current);
+        return current;
+    }
+
     private static JSONObject load(Context context) {
-        String raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_CONFIG, null);
+        String raw = prefs(context).getString(KEY_CONFIG, null);
         if (raw == null) return null;
         try {
             return new JSONObject(raw);

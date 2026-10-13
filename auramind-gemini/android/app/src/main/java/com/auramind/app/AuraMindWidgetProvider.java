@@ -35,13 +35,10 @@ import android.widget.RemoteViews;
  */
 public class AuraMindWidgetProvider extends AppWidgetProvider {
 
-    /** Capacitor Preferences' SharedPreferences file. */
-    private static final String PREFS = "CapacitorStorage";
-
-    /** Keys written by the web layer. See src/lib/widgetBridge.ts. */
-    private static final String KEY_DUE = "auramind_widget_due";
-    private static final String KEY_DECK = "auramind_widget_deck";
-    private static final String KEY_STREAK = "auramind_widget_streak";
+    /** Key suffixes the web layer writes (src/lib/widgetBridge.ts); read through WidgetPrefs. */
+    private static final String KEY_DUE = "widget_due";
+    private static final String KEY_DECK = "widget_deck";
+    private static final String KEY_STREAK = "widget_streak";
 
     /** Broadcast the app sends after writing new values. */
     public static final String ACTION_REFRESH = "com.auramind.app.WIDGET_REFRESH";
@@ -76,13 +73,13 @@ public class AuraMindWidgetProvider extends AppWidgetProvider {
     }
 
     private RemoteViews buildViews(Context context, AppWidgetManager manager, int appWidgetId) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences(WidgetPrefs.PREFS, Context.MODE_PRIVATE);
 
         // Capacitor stores everything as strings, and a fresh install has no
         // entry at all, so parse defensively rather than assuming an int.
         int due = 0;
         try {
-            String raw = prefs.getString(KEY_DUE, "0");
+            String raw = WidgetPrefs.read(prefs, KEY_DUE, "0");
             if (raw != null && !raw.isEmpty()) {
                 due = Integer.parseInt(raw.replaceAll("\"", "").trim());
             }
@@ -90,14 +87,14 @@ public class AuraMindWidgetProvider extends AppWidgetProvider {
             due = 0;
         }
 
-        String deck = prefs.getString(KEY_DECK, null);
+        String deck = WidgetPrefs.read(prefs, KEY_DECK, null);
         if (deck != null) {
             deck = deck.replaceAll("^\"|\"$", "");
         }
 
         int streak = 0;
         try {
-            String rawStreak = prefs.getString(KEY_STREAK, "0");
+            String rawStreak = WidgetPrefs.read(prefs, KEY_STREAK, "0");
             if (rawStreak != null && !rawStreak.isEmpty()) {
                 streak = Integer.parseInt(rawStreak.replaceAll("\"", "").trim());
             }
