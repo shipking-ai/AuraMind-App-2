@@ -10,3 +10,4 @@ export * from './stats';
 export * from './sync/outbox';
 export * from './linnea/stream';
 export * from './linnea/copy';
+export * from './create/split';
