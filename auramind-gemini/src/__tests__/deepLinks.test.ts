@@ -22,6 +22,17 @@ describe('parseDeepLink', () => {
     );
   });
 
+  it('accepts bonamind:// exactly like auramind://', () => {
+    expect(parseDeepLink('bonamind://app/study')).toBe('/dashboard/study');
+    expect(parseDeepLink('bonamind://app/dashboard/study?deck=abc#card-2')).toBe('/dashboard/study?deck=abc#card-2');
+  });
+
+  it('keeps the allowlist for the new scheme', () => {
+    expect(parseDeepLink('bonamind://app/admin')).toBeNull();
+    expect(parseDeepLink('bonamind://app/__e2e/x')).toBeNull();
+    expect(parseDeepLink('bonamindx://app/study')).toBeNull();
+  });
+
   it('rejects foreign schemes, unknown paths and the dev harness', () => {
     expect(parseDeepLink('https://bonamind.app/dashboard')).toBeNull();
     expect(parseDeepLink('auramind://app/__e2e/android')).toBeNull();

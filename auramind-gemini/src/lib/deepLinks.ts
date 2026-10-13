@@ -1,8 +1,9 @@
 /**
  * Deep-link parsing for the installed Android app.
  *
- * Launcher shortcuts fire `auramind://app/<path>` VIEW intents; Capacitor's
- * App plugin forwards them to JS as `appUrlOpen` events. This module turns
+ * Launcher shortcuts fire `bonamind://app/<path>` VIEW intents (older ones
+ * `auramind://`); Capacitor's App plugin forwards them to JS as `appUrlOpen`
+ * events. This module turns
  * the URL into a router path — or null when it must be ignored.
  *
  * The allowlist is deliberate: a URL that can drive navigation is a URL that
@@ -10,6 +11,9 @@
  * destinations pass. Everything else (including the dev harness) is dropped.
  */
 import { LEGACY_SCHEME } from "./legacyNames";
+
+/** The app's own link scheme. The pre-rename LEGACY_SCHEME is accepted too. */
+export const APP_SCHEME = "bonamind";
 
 const ALLOWED_PREFIXES = ["/dashboard", "/generator", "/study", "/decks", "/chat", "/settings"];
 
@@ -23,7 +27,7 @@ export function parseDeepLink(url: string): string | null {
   } catch {
     return null;
   }
-  if (parsed.protocol !== `${LEGACY_SCHEME}:`) return null;
+  if (parsed.protocol !== `${APP_SCHEME}:` && parsed.protocol !== `${LEGACY_SCHEME}:`) return null;
   const path = parsed.pathname || "/";
   if (path.startsWith("/__e2e")) return null;
   if (!ALLOWED_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
@@ -52,7 +56,7 @@ export async function consumePendingRoute(): Promise<string | null> {
     const { value } = await Preferences.get({ key: PENDING_ROUTE_KEY });
     if (value) await Preferences.remove({ key: PENDING_ROUTE_KEY });
     if (!value) return null;
-    return parseDeepLink(`auramind://app${value.startsWith("/") ? value : `/${value}`}`);
+    return parseDeepLink(`${APP_SCHEME}://app${value.startsWith("/") ? value : `/${value}`}`);
   } catch {
     return null;
   }

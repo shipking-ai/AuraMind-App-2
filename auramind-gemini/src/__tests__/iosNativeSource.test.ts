@@ -111,6 +111,10 @@ describe('Info.plist registers the deep-link scheme', () => {
     expect(plist).toMatch(/<string>auramind<\/string>/);
   });
 
+  it('also claims the bonamind scheme', () => {
+    expect(plist).toMatch(/<string>bonamind<\/string>/);
+  });
+
   it('keeps the permission strings voice study needs', () => {
     // AuraListenPlugin rejects with "not-allowed" without these, and iOS
     // terminates the app if a permission string is missing entirely rather
@@ -191,6 +195,12 @@ describe('the deep-link scheme agrees with Android', () => {
       'utf8',
     );
     expect(manifest).toMatch(/android:scheme="auramind"/);
+    expect(manifest).toMatch(/android:scheme="bonamind"/);
     expect(manifest).toMatch(/android:host="app"/);
+  });
+
+  it('the Windows app registers both schemes', () => {
+    const conf = JSON.parse(readFileSync(path.resolve(__dirname, '../../src-tauri/tauri.conf.json'), 'utf8'));
+    expect(conf.plugins['deep-link'].desktop.schemes).toEqual(['bonamind', 'auramind']);
   });
 });

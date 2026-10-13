@@ -23,6 +23,12 @@ describe('routeDeepLink', () => {
     expect(d.navigate).toHaveBeenCalledWith('/dashboard');
   });
 
+  it('finishes sign-in from a bonamind:// callback too', async () => {
+    const d = deps();
+    await expect(routeDeepLink('bonamind://auth/callback?code=abc', d)).resolves.toBe('signed-in');
+    expect(d.exchangeCode).toHaveBeenCalledWith('abc');
+  });
+
   it('a failed or refused sign-in returns to the sign-in page', async () => {
     const d = deps();
     d.exchangeCode.mockResolvedValueOnce({ error: new Error('bad verifier') });

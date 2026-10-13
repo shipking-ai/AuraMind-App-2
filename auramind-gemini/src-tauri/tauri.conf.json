@@ -75,7 +75,7 @@
     }
   },
   "plugins": {
-    "deep-link": { "desktop": { "schemes": ["auramind"] } },
+    "deep-link": { "desktop": { "schemes": ["bonamind", "auramind"] } },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY4NTkwODU3RTlGMDFDMkUKUldRdUhQRHBWd2haYUhpSHpJRWxNOTdXWkpEYklNVDFvamt1RnlmTE9lZTU5aUVEZ1Y0SE1JcHgK",
       "endpoints": [
