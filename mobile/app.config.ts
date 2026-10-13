@@ -12,6 +12,8 @@ import type { ExpoConfig } from 'expo/config';
 export const APP_NAME = 'BonaMind';
 
 const IOS_BUNDLE_ID = 'com.bonamind.app';
+/** Shown when course creation asks for the camera or photos. */
+const NOTES_ACCESS = 'BonaMind reads your notes to make cards.';
 const ANDROID_PACKAGE = 'com.auramind.app';
 
 // Sign in with Apple needs the paid Apple Developer Program; its entitlement
@@ -33,6 +35,10 @@ const config: ExpoConfig = {
     bundleIdentifier: IOS_BUNDLE_ID,
     supportsTablet: false,
     usesAppleSignIn: appleSignIn,
+    infoPlist: {
+      NSCameraUsageDescription: NOTES_ACCESS,
+      NSPhotoLibraryUsageDescription: NOTES_ACCESS,
+    },
   },
   android: {
     package: ANDROID_PACKAGE,
