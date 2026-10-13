@@ -1,17 +1,20 @@
 /**
- * Opens the offline study database, moving it from its pre-rename name on the
- * way. Queued reviews in here exist nowhere else until they sync, so the move
- * is built so that a crash or failure at any point loses nothing:
+ * Opens the offline study database, moving its records over from the
+ * pre-rename database on the way. Queued reviews in here exist nowhere else
+ * until they sync, so the move never deletes a database:
  *
- *   - While the legacy database exists it is the source of truth. A
- *     `bonamind-offline` found next to it is a leftover from an unfinished
- *     try and is rebuilt from scratch.
- *   - The legacy database is deleted only after every store's record count
- *     matches in the copy.
- *   - If the copy fails, the half-made copy is thrown away and this session
- *     keeps using the legacy database; the next launch tries again.
- *   - If another tab blocks the delete, the verified copy is used; the delete
- *     finishes once that tab closes.
+ *   - Records merge into `bonamind-offline` by key. A record already there is
+ *     newer and wins, so a second tab or a later launch never overwrites it.
+ *   - A legacy record is removed only after its key is confirmed present in
+ *     `bonamind-offline`. Anything written to the legacy database later (an
+ *     old-bundle tab, a rolled-back deploy) stays there and moves on the next
+ *     launch.
+ *   - Neither database is ever deleted. A delete that another tab blocks stays
+ *     queued, then removes the database whenever that tab closes, and makes
+ *     every open behind it hang. An empty legacy database costs nothing.
+ *   - Where the browser has Web Locks, tabs migrate one at a time.
+ *   - If the copy fails, this session keeps using the legacy database (nothing
+ *     was removed from it) and the next launch tries again.
  */
 import { LEGACY_OFFLINE_DB } from '../../lib/legacyNames';
 
@@ -43,7 +46,12 @@ export function upgradeOfflineDb(db: IDBDatabase): void {
   }
 }
 
+/** Copies records from `from` into `to`, skipping keys `to` already has. */
 export type CopyStores = (from: IDBDatabase, to: IDBDatabase) => Promise<void>;
+
+export type LocksLike = { request<T>(name: string, fn: () => Promise<T>): Promise<T> };
+
+const MIGRATION_LOCK = 'bonamind-offline-migration';
 
 const request = <T>(req: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
@@ -51,18 +59,47 @@ const request = <T>(req: IDBRequest<T>) =>
     req.onerror = () => reject(req.error);
   });
 
-/** Reads every record from `from`, then writes them all to `to` in one transaction. */
+const finished = (tx: IDBTransaction) =>
+  new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error ?? new Error('transaction aborted'));
+  });
+
+const keyOf = (store: IDBObjectStore, record: unknown) => (record as Record<string, IDBValidKey>)[store.keyPath as string];
+
 export const copyAllStores: CopyStores = async (from, to) => {
   const read = from.transaction([...STORES], 'readonly');
   const records = await Promise.all(STORES.map((s) => request(read.objectStore(s).getAll())));
   const write = to.transaction([...STORES], 'readwrite');
-  STORES.forEach((s, i) => records[i].forEach((r) => write.objectStore(s).put(r)));
-  await new Promise<void>((resolve, reject) => {
-    write.oncomplete = () => resolve();
-    write.onerror = () => reject(write.error);
-    write.onabort = () => reject(write.error ?? new Error('copy aborted'));
+  STORES.forEach((s, i) => {
+    const store = write.objectStore(s);
+    const existing = store.getAllKeys();
+    existing.onsuccess = () => {
+      const have = new Set(existing.result.map(String));
+      for (const record of records[i]) {
+        if (!have.has(String(keyOf(store, record)))) store.put(record);
+      }
+    };
   });
+  await finished(write);
 };
+
+/** Removes from `legacy` every record whose key `current` now holds. */
+async function drainCopied(legacy: IDBDatabase, current: IDBDatabase): Promise<void> {
+  const check = current.transaction([...STORES], 'readonly');
+  const present = await Promise.all(STORES.map((s) => request(check.objectStore(s).getAllKeys())));
+  const drain = legacy.transaction([...STORES], 'readwrite');
+  STORES.forEach((s, i) => {
+    const store = drain.objectStore(s);
+    const have = new Set(present[i].map(String));
+    const keys = store.getAllKeys();
+    keys.onsuccess = () => {
+      for (const key of keys.result) if (have.has(String(key))) store.delete(key);
+    };
+  });
+  await finished(drain);
+}
 
 function openCurrent(factory: IDBFactory, name: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -96,50 +133,30 @@ function openLegacyIfPresent(factory: IDBFactory): Promise<IDBDatabase | null> {
   });
 }
 
-function deleteDb(factory: IDBFactory, name: string): Promise<'deleted' | 'blocked'> {
-  return new Promise((resolve, reject) => {
-    const req = factory.deleteDatabase(name);
-    req.onsuccess = () => resolve('deleted');
-    req.onblocked = () => resolve('blocked');
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function countsMatch(a: IDBDatabase, b: IDBDatabase): Promise<boolean> {
-  for (const s of STORES) {
-    const [left, right] = await Promise.all([
-      request(a.transaction(s, 'readonly').objectStore(s).count()),
-      request(b.transaction(s, 'readonly').objectStore(s).count()),
-    ]);
-    if (left !== right) return false;
+async function migrateAndOpen(factory: IDBFactory, copy: CopyStores): Promise<IDBDatabase> {
+  const current = await openCurrent(factory, OFFLINE_DB_NAME);
+  const legacy = await openLegacyIfPresent(factory);
+  if (!legacy) return current;
+  try {
+    await copy(legacy, current);
+  } catch {
+    current.close();
+    return legacy;
   }
-  return true;
+  try {
+    await drainCopied(legacy, current);
+  } catch {
+    // Everything is already in `current`; leftovers drain on the next launch.
+  }
+  legacy.close();
+  return current;
 }
 
 export async function openOfflineDb(
   factory: IDBFactory = indexedDB,
   copy: CopyStores = copyAllStores,
+  locks: LocksLike | undefined = (globalThis.navigator as { locks?: LocksLike } | undefined)?.locks,
 ): Promise<IDBDatabase> {
-  const legacy = await openLegacyIfPresent(factory);
-  if (!legacy) return openCurrent(factory, OFFLINE_DB_NAME);
-
-  let fresh: IDBDatabase | null = null;
-  try {
-    if ((await deleteDb(factory, OFFLINE_DB_NAME)) === 'blocked') throw new Error('stale copy is in use');
-    fresh = await openCurrent(factory, OFFLINE_DB_NAME);
-    await copy(legacy, fresh);
-    if (!(await countsMatch(legacy, fresh))) throw new Error('record counts differ');
-  } catch {
-    if (fresh) {
-      fresh.close();
-      await deleteDb(factory, OFFLINE_DB_NAME).catch(() => 'blocked');
-    }
-    return legacy;
-  }
-
-  legacy.close();
-  // 'blocked' means another tab still has it open; the delete completes when
-  // that tab closes, and the verified copy is already the source of truth.
-  await deleteDb(factory, LEGACY_OFFLINE_DB).catch(() => 'blocked');
-  return fresh;
+  const run = () => migrateAndOpen(factory, copy);
+  return locks ? locks.request(MIGRATION_LOCK, run) : run();
 }

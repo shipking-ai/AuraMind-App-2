@@ -4,30 +4,37 @@ import { describe, expect, it } from 'vitest';
 import {
   MIGRATION_MARKER,
   legacyKeyTarget,
-  migrateLegacyKeys,
   migrateLegacyKeysAsync,
   preferencesStore,
-  type SyncKeyStore,
 } from '../lib/storageMigration/legacyKeys';
 
-/** A Map-backed store; `failSet`/`failGet` make one key throw. */
-function memoryStore(seed: Record<string, string>, opts: { failSet?: string; failGet?: string } = {}) {
+const CLASSIC_SCRIPT = readFileSync(resolve(__dirname, '../../public/storage-migrate.js'), 'utf8');
+
+/**
+ * A Map-backed localStorage; `failSet`/`failGet` make one key throw. Returns
+ * the map and a function that runs public/storage-migrate.js against it.
+ */
+function memoryStorage(seed: Record<string, string>, opts: { failSet?: string; failGet?: string } = {}) {
   const map = new Map(Object.entries(seed));
-  const store: SyncKeyStore = {
-    keys: () => [...map.keys()],
-    get: (k) => {
+  const localStorage = {
+    get length() {
+      return map.size;
+    },
+    key: (i: number) => [...map.keys()][i] ?? null,
+    getItem: (k: string) => {
       if (k === opts.failGet) throw new Error('read failed');
       return map.has(k) ? map.get(k)! : null;
     },
-    set: (k, v) => {
+    setItem: (k: string, v: string) => {
       if (k === opts.failSet) throw new Error('QuotaExceededError');
-      map.set(k, v);
+      map.set(k, String(v));
     },
-    remove: (k) => {
+    removeItem: (k: string) => {
       map.delete(k);
     },
   };
-  return { map, store };
+  const run = () => new Function('window', CLASSIC_SCRIPT)({ localStorage });
+  return { map, run };
 }
 
 describe('legacyKeyTarget', () => {
@@ -42,55 +49,67 @@ describe('legacyKeyTarget', () => {
   });
 });
 
-describe('migrateLegacyKeys', () => {
+describe('storage-migrate.js (localStorage, before any module runs)', () => {
   it('moves keys, keeps an existing new value, and sets the marker', () => {
-    const { map, store } = memoryStore({
+    const { map, run } = memoryStorage({
       auramind_theme: 'dark',
       auramind_ci_tour_step: '3',
       auramind_dailyGoal: '10',
       bonamind_dailyGoal: '25',
       'auramind.aurachat.sessions.v1': '[{"id":"s1"}]',
+      'auramind:quiz:auramind_x': 'q',
       unrelated: 'x',
     });
-    const report = migrateLegacyKeys(store);
+    run();
     expect(map.get('bonamind_theme')).toBe('dark');
     expect(map.get('bonamind_ci_tour_step')).toBe('3');
     expect(map.get('bonamind_dailyGoal')).toBe('25');
     expect(map.get('bonamind.aurachat.sessions.v1')).toBe('[{"id":"s1"}]');
+    expect(map.get('bonamind:quiz:auramind_x')).toBe('q');
     expect([...map.keys()].filter((k) => k.startsWith('auramind'))).toEqual([]);
     expect(map.get('unrelated')).toBe('x');
     expect(map.get(MIGRATION_MARKER)).toBe('1');
-    expect(report.moved).toContain('auramind_theme');
-    expect(report.dropped).toEqual(['auramind_dailyGoal']);
-    expect(report.failed).toEqual([]);
   });
 
   it('does nothing on a second run once the marker is set', () => {
-    const { map, store } = memoryStore({ auramind_theme: 'dark' });
-    migrateLegacyKeys(store);
+    const { map, run } = memoryStorage({ auramind_theme: 'dark' });
+    run();
     map.set('auramind_x', 'late');
-    const report = migrateLegacyKeys(store);
-    expect(report.skipped).toBe(true);
+    run();
     expect(map.get('auramind_x')).toBe('late');
     expect(map.has('bonamind_x')).toBe(false);
   });
 
   it('restores the old key when writing the new one throws, and leaves the marker unset', () => {
-    const { map, store } = memoryStore({ auramind_big: 'payload', auramind_theme: 'dark' }, { failSet: 'bonamind_big' });
-    const report = migrateLegacyKeys(store);
+    const { map, run } = memoryStorage({ auramind_big: 'payload', auramind_theme: 'dark' }, { failSet: 'bonamind_big' });
+    run();
     expect(map.get('auramind_big')).toBe('payload');
-    expect(report.failed).toEqual(['auramind_big']);
     expect(map.get('bonamind_theme')).toBe('dark');
     expect(map.has(MIGRATION_MARKER)).toBe(false);
   });
 
   it('keeps going when one key throws on read', () => {
-    const { map, store } = memoryStore({ auramind_bad: '?', auramind_theme: 'dark' }, { failGet: 'auramind_bad' });
-    const report = migrateLegacyKeys(store);
-    expect(report.failed).toEqual(['auramind_bad']);
+    const { map, run } = memoryStorage({ auramind_bad: '?', auramind_theme: 'dark' }, { failGet: 'auramind_bad' });
+    run();
     expect(map.get('auramind_bad')).toBe('?');
     expect(map.get('bonamind_theme')).toBe('dark');
     expect(map.has(MIGRATION_MARKER)).toBe(false);
+  });
+
+  it('never throws, even when localStorage itself is unavailable', () => {
+    const blocked = {};
+    Object.defineProperty(blocked, 'localStorage', { get: () => { throw new Error('SecurityError'); } });
+    expect(() => new Function('window', CLASSIC_SCRIPT)(blocked)).not.toThrow();
+  });
+
+  it('uses the same marker and prefix rule as the async Preferences migration', () => {
+    expect(CLASSIC_SCRIPT).toContain(`'${MIGRATION_MARKER}'`);
+    for (const key of ['auramind_a', 'auramind-a', 'auramind.a', 'auramind:a', 'auramindx', 'x_auramind_a']) {
+      const { map, run } = memoryStorage({ [key]: 'v' });
+      run();
+      const target = legacyKeyTarget(key);
+      expect(map.get(target ?? key)).toBe('v');
+    }
   });
 });
 
@@ -116,7 +135,11 @@ describe('migrateLegacyKeysAsync', () => {
   });
 });
 
-it('runs before every other module', () => {
-  const src = readFileSync(resolve(__dirname, '../index.tsx'), 'utf8');
-  expect(src.match(/^import\s+[^;]*?['"]([^'"]+)['"]/m)?.[1]).toBe('./lib/storageMigration/runFirst');
+// A first import is not enough: the bundler hoists the entry's shared chunks
+// above its own code. A classic (non-module) script in <head> runs while the
+// page is still parsing, before every module script, in every build.
+it('runs before every other script that could read storage', () => {
+  const html = readFileSync(resolve(__dirname, '../../index.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script\b([^>]*)>/g)].map((m) => m[1]);
+  expect(scripts[0]).toMatch(/^\s*src="\/storage-migrate\.js"\s*$/);
 });

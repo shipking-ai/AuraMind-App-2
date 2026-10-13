@@ -1,11 +1,9 @@
 /**
- * Moves stored values from their pre-rename keys (LEGACY_PREFIX followed by
- * `_`, `-`, `.` or `:`) to the same key under `bonamind`. Works by
- * prefix, not a fixed list, because some keys are built at runtime.
- *
- * localStorage is migrated synchronously before any other module loads (see
- * runFirst.ts); Capacitor Preferences only has an async API, so it gets the
- * async twin. Both follow the same per-key rules:
+ * The Capacitor Preferences half of the storage migration: moves values from
+ * their pre-rename keys (LEGACY_PREFIX followed by `_`, `-`, `.` or `:`) to the
+ * same key under `bonamind`. localStorage is moved earlier, before any module
+ * runs, by the classic script public/storage-migrate.js, which follows the
+ * same rules:
  *   - the new key already exists: it wins, and the old key is removed;
  *   - otherwise: read, remove the old key (freeing space on a full store),
  *     write the new key, and put the old value back if that write fails.
@@ -18,13 +16,6 @@ export const MIGRATION_MARKER = 'bonamind_storage_migrated_v1';
 
 const NEW_PREFIX = 'bonamind';
 const LEGACY_KEY = new RegExp(`^${LEGACY_PREFIX}([_\\-.:])`);
-
-export interface SyncKeyStore {
-  keys(): string[];
-  get(k: string): string | null;
-  set(k: string, v: string): void;
-  remove(k: string): void;
-}
 
 export interface AsyncKeyStore {
   keys(): Promise<string[]>;
@@ -41,39 +32,6 @@ export function legacyKeyTarget(key: string): string | null {
 }
 
 const emptyReport = (): MigrationReport => ({ skipped: false, moved: [], dropped: [], failed: [] });
-
-export function migrateLegacyKeys(store: SyncKeyStore): MigrationReport {
-  const report = emptyReport();
-  if (store.get(MIGRATION_MARKER) !== null) return { ...report, skipped: true };
-  for (const oldKey of store.keys()) {
-    const newKey = legacyKeyTarget(oldKey);
-    if (!newKey) continue;
-    let value: string | null = null;
-    try {
-      if (store.get(newKey) !== null) {
-        store.remove(oldKey);
-        report.dropped.push(oldKey);
-        continue;
-      }
-      value = store.get(oldKey);
-      if (value === null) continue;
-      store.remove(oldKey);
-      store.set(newKey, value);
-      report.moved.push(oldKey);
-    } catch {
-      report.failed.push(oldKey);
-      if (value !== null) {
-        try {
-          if (store.get(oldKey) === null) store.set(oldKey, value);
-        } catch {
-          // Nothing more to try; the value is still in `value` only for this run.
-        }
-      }
-    }
-  }
-  if (report.failed.length === 0) store.set(MIGRATION_MARKER, '1');
-  return report;
-}
 
 export async function migrateLegacyKeysAsync(store: AsyncKeyStore): Promise<MigrationReport> {
   const report = emptyReport();
@@ -99,29 +57,13 @@ export async function migrateLegacyKeysAsync(store: AsyncKeyStore): Promise<Migr
         try {
           if ((await store.get(oldKey)) === null) await store.set(oldKey, value);
         } catch {
-          // As above.
+          // Nothing more to try; the value is still in `value` only for this run.
         }
       }
     }
   }
   if (report.failed.length === 0) await store.set(MIGRATION_MARKER, '1');
   return report;
-}
-
-export function localStorageStore(ls: Storage = window.localStorage): SyncKeyStore {
-  return {
-    keys: () => {
-      const out: string[] = [];
-      for (let i = 0; i < ls.length; i++) {
-        const k = ls.key(i);
-        if (k !== null) out.push(k);
-      }
-      return out;
-    },
-    get: (k) => ls.getItem(k),
-    set: (k, v) => ls.setItem(k, v),
-    remove: (k) => ls.removeItem(k),
-  };
 }
 
 type PreferencesLike = {
