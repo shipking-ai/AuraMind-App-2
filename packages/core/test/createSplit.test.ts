@@ -25,6 +25,18 @@ it('splits text with no paragraph breaks', () => {
   expect(pieces.every((p) => /\.$/.test(p.text))).toBe(true); // cut at sentence ends
 });
 
+// A fetched web page is one huge paragraph. Decimals, abbreviations and
+// domains used to make the sentence matcher skip (and drop) the text before
+// their dot: a course built from fragments.
+it('loses no text when splitting a long paragraph with decimals and abbreviations', () => {
+  const sentence = 'The value of pi is 3.14 roughly. Version 2.0 shipped in the U.S. in 2024! See e.g. example.com for more? ';
+  const text = sentence.repeat(200).trim(); // ~21,000 chars, no blank lines
+  const { pieces, truncated } = splitSource(text, 35);
+  expect(truncated).toBe(false);
+  expect(pieces.every((p) => p.text.length <= MAX_PIECE_CHARS)).toBe(true);
+  expect(pieces.map((p) => p.text).join(' ')).toBe(text);
+});
+
 it('hard-cuts a single sentence longer than the limit', () => {
   const { pieces } = splitSource('x'.repeat(MAX_PIECE_CHARS * 2 + 10), 10);
   expect(pieces.map((p) => p.text.length)).toEqual([MAX_PIECE_CHARS, MAX_PIECE_CHARS, 10]);

@@ -34,7 +34,10 @@ function hardCut(text: string): string[] {
 /** A paragraph over the limit becomes its sentences (and those, if still too long, hard cuts). */
 function units(paragraph: string): { text: string; sep: string }[] {
   if (paragraph.length <= MAX_PIECE_CHARS) return [{ text: paragraph, sep: '\n\n' }];
-  const sentences = paragraph.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) ?? [paragraph];
+  // Split after sentence punctuation that is followed by whitespace, keeping
+  // every character: a matcher that consumed text dropped whatever preceded
+  // a decimal or an abbreviation ("3.14", "e.g.", "U.S.").
+  const sentences = paragraph.replace(/([.!?])\s+/g, '$1\u0000').split('\u0000');
   return sentences
     .map((s) => s.trim())
     .filter(Boolean)
