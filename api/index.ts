@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { sendEmail as sendEmailViaResend, sendCustomEmail } from './_lib/emails.js';
 import { isEntitled, readSubscriptionStatus, isEntitledWithRoleAccess } from './_lib/entitlement.js';
 import { isPushConfigured, readPushConfig, sendPushToUsers } from './_lib/push.js';
-import { decodeBase64Limited, isPdf, MAX_DOCUMENT_BYTES, pdfText } from './_lib/extract.js';
+import { decodeBase64Limited, imageText, isPdf, MAX_DOCUMENT_BYTES, MAX_IMAGE_BYTES, MAX_IMAGES, pdfText, VisionError } from './_lib/extract.js';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
@@ -2169,7 +2169,7 @@ async function runDueReminderPushes(supabase: any) {
  */
 async function handleExtract(req: VercelRequest, res: VercelResponse, action: string) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
-  if (action !== 'document') return json(res, 404, { error: 'Unknown extract action' });
+  if (action !== 'document' && action !== 'image') return json(res, 404, { error: 'Unknown extract action' });
 
   const authHeader = req.headers.authorization;
   if (!authHeader) return json(res, 401, { error: 'Missing authorization' });
@@ -2180,6 +2180,8 @@ async function handleExtract(req: VercelRequest, res: VercelResponse, action: st
   if (!isEntitledWithRoleAccess(user)) {
     return json(res, 402, { error: 'A subscription is required to create courses.', code: 'subscription_required' });
   }
+
+  if (action === 'image') return extractImages(req, res);
 
   const parsed = validateBody(res, z.object({ name: z.string().max(255), data: z.string().min(1) }), req.body);
   if (!parsed.ok) return;
@@ -2196,6 +2198,28 @@ async function handleExtract(req: VercelRequest, res: VercelResponse, action: st
   if (!result.text) return json(res, 422, { error: 'That PDF has no text (it may be scanned images).', code: 'no_text' });
   const title = parsed.data.name.replace(/\.[^.]+$/, '').trim() || 'Your PDF';
   return json(res, 200, { success: true, data: { text: result.text, title, pages: result.pages } });
+}
+
+/** The image half of handleExtract, after auth and entitlement. */
+async function extractImages(req: VercelRequest, res: VercelResponse) {
+  const images = (req.body as { images?: unknown } | undefined)?.images;
+  if (!Array.isArray(images) || images.length < 1 || images.length > MAX_IMAGES || !images.every((i) => typeof i === 'string' && i)) {
+    return json(res, 400, { error: `Send 1 to ${MAX_IMAGES} images.`, code: 'bad_request' });
+  }
+  for (const image of images as string[]) {
+    const bytes = decodeBase64Limited(image, MAX_IMAGE_BYTES);
+    if (bytes === 'too_large') return json(res, 413, { error: 'A photo is too big (1.5 MB max).', code: 'too_large' });
+    if (!bytes) return json(res, 400, { error: 'A photo is not valid base64.', code: 'bad_request' });
+  }
+  try {
+    const text = await imageText(images as string[]);
+    return json(res, 200, { success: true, data: { text } });
+  } catch (e) {
+    if (e instanceof VisionError && e.code === 'no_text') {
+      return json(res, 422, { error: 'No text found in those photos.', code: 'no_text' });
+    }
+    return json(res, 503, { error: 'Reading photos is unavailable right now.', code: 'unavailable' });
+  }
 }
 
 // --- URL extraction endpoints (used by GeneratorPage) ---
