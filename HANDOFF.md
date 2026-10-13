@@ -14,7 +14,7 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main` at `9fe827e3` (2026-10-12, through #164: native app part 2). Rename PR1 (storage migration) on `feat/rename-1-storage`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
+| Branch | `main` at `26f3b097` (2026-10-13, through #168: rename PR1, storage migration). Rename PR2 (Prof. Linnea and visible copy) on `feat/rename-2-linnea`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
 | Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
@@ -102,7 +102,9 @@ the traps that cost real time.
     - Before **PR3** merges: add `bonamind://auth/callback` to Supabase →
       Authentication → URL Configuration → Redirect URLs. Keep the
       `auramind://auth/callback` entry, because older Windows installs still send it.
-    - After **PR2**: paste the new store text from `store/android/` into Play Console.
+    - After **PR2**: paste the new store text into Play Console. That's
+      `store/android/listings/en-US/` (`title.txt` is now "BonaMind",
+      `full_description.txt`) and `store/android/changelogs/en-US.txt`.
     - After **PR3**: ship Android and Windows builds again.
 
 After the first publish, `status=completed` in the release workflow makes a
@@ -659,6 +661,34 @@ app plus its extension burn two per sideload.
   `20260930_marketplace_fork_and_listing.sql`.
 
 ---
+
+## 2026-10-13 - BonaMind rename, PR2: Prof. Linnea and visible copy
+
+- **The tutor is Prof. Linnea everywhere a person reads.** That covers chat,
+  the iPhone and Android screens, the generator, settings, the legal pages, the
+  AI system prompts, Android strings and shortcuts, and the store text. Where
+  the old copy said plain "Aura", it now says "Linnea". The in-app copy uses no
+  pronoun for her. The Play listing already said "she" for Prof. Aura, and that
+  wording is kept.
+- **Every remaining "AuraMind" is now BonaMind:**
+  - the HTML shell, the iOS permission strings and the Windows app description;
+  - the payment emails (`api/stripe-webhook.ts`), the reminder push title, the
+    `User-Agent` and the server logs.
+  - The dashboard header and the loading screen built the wordmark from two
+    spans (`Aura<span>Mind</span>`), so a plain text search never found them.
+- **Avatar files:**
+  - `public/favicons,logos/prof-aura-*` is now `prof-linnea-*`, and
+    `scripts/generate-android-assets.mjs` reads the new names;
+  - `store/graphics/prof-aura-variant-*` is now `prof-linnea-variant-*`.
+- **Guards:**
+  - `src/__tests__/visibleBrand.test.ts` fails on standalone "AuraMind",
+    "Prof. Aura" or a standalone "Aura". Uses that never meant the tutor are
+    kept on a short list, each with a reason: the font names, two music tracks,
+    the focus-aura glow and the top league tier.
+  - `api/tests/brandCopy.test.ts` does the same for the API.
+- **Windows auto-update** now points at `shipking-ai/BonaMind` releases.
+- **Unchanged:** stored chat history still says "Prof. Aura" where it was
+  written that way. Code names (`ProfAura*`, `Aura*` plugins) change in PR3.
 
 ## 2026-10-13 - BonaMind rename, PR1: stored data moves to new names
 
