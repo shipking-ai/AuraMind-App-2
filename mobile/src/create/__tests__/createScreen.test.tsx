@@ -133,6 +133,16 @@ describe('after starting', () => {
     expect(screen.queryByRole('button', { name: CREATE_COPY.make })).toBeNull();
   });
 
+  it('shows the review deck while reviewing or saving', async () => {
+    useCreateStore.setState({ phase: 'review', draft });
+    const view = await render(<CreateScreen />);
+    expect(screen.getByLabelText('Course title')).toBeTruthy();
+    await view.unmount();
+    useCreateStore.setState({ phase: 'saving', draft });
+    await render(<CreateScreen />);
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeTruthy();
+  });
+
   it('Study now opens the new course and clears the build', async () => {
     useCreateStore.setState({ phase: 'ready', draft, savedDeckId: 'deck-9' });
     await render(<CreateScreen />);

@@ -19,6 +19,7 @@ import { colors, fonts, radius, space } from '../design/tokens';
 import { BuildingView } from './BuildingView';
 import { CREATE_COPY } from './copy';
 import { ReadyView } from './ReadyView';
+import { ReviewDeck } from './ReviewDeck';
 import {
   isHttpUrl, isYouTube, MAX_PHOTOS, pickPdf, pickPhotos, readLink, readPdf, readPhotos, readTopic,
   type PickedPdf, type PickedPhoto,
@@ -232,6 +233,7 @@ export function CreateScreen() {
             </ScrollView>
           )}
           {(phase === 'building' || phase === 'waiting') && <BuildingView />}
+          {(phase === 'review' || phase === 'saving') && <ReviewDeck />}
           {phase === 'ready' && <ReadyView onStudy={studyNow} onDone={done} />}
         </KeyboardAvoidingView>
       </SafeAreaView>
