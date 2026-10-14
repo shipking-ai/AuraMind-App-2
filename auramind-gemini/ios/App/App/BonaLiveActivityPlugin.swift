@@ -4,10 +4,10 @@ import Foundation
 import os
 
 /**
- AuraLiveActivity — the study session on the Lock Screen and in the Dynamic
+ BonaLiveActivity — the study session on the Lock Screen and in the Dynamic
  Island, through ActivityKit.
 
- The extension draws it (AuraMindWidgets/StudySessionLiveActivity.swift); this
+ The extension draws it (BonaMindWidgets/StudySessionLiveActivity.swift); this
  side only starts, moves and ends it. It is a mirror of session state: nothing
  here schedules or grades a card, and a failure to show an activity must never
  disturb a session, so every method resolves rather than rejecting.
@@ -17,11 +17,11 @@ import os
  actually open — the system ends orphaned activities, but ending ours in
  `end()` is what keeps the Island honest.
  */
-@objc(AuraLiveActivityPlugin)
-public class AuraLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
+@objc(BonaLiveActivityPlugin)
+public class BonaLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
-    public let identifier = "AuraLiveActivityPlugin"
-    public let jsName = "AuraLiveActivity"
+    public let identifier = "BonaLiveActivityPlugin"
+    public let jsName = "BonaLiveActivity"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "isSupported", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),

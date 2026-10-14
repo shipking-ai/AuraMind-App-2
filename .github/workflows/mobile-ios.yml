@@ -106,7 +106,7 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/ios \
             CODE_SIGNING_ALLOWED=NO \
-            build | tee build/xcodebuild.log | grep -E "error:|warning: .*AuraListen|BUILD (SUCCEEDED|FAILED)" || true
+            build | tee build/xcodebuild.log | grep -E "error:|warning: .*BonaListen|BUILD (SUCCEEDED|FAILED)" || true
           test -d build/ios/Build/Products/Debug-iphonesimulator/App.app
 
       - name: Launch in an iPhone simulator and screenshot
@@ -292,7 +292,7 @@ jobs:
           # Two genuinely different situations, previously reported as one.
           #
           # `available: false` is the OS refusing, not the app failing.
-          # AuraLiveActivityPlugin.start() bails on
+          # BonaLiveActivityPlugin.start() bails on
           # ActivityAuthorizationInfo().areActivitiesEnabled, which reflects the
           # user's Live Activities setting - off on a freshly created simulator.
           # The plugin is behaving correctly, so failing on the refusal itself
@@ -329,7 +329,7 @@ jobs:
           case "$plugins" in
             *LiveActivity:true*) : ;;
             *)
-              echo "::error::AuraLiveActivity is not registered in this build (plugins=$plugins)."
+              echo "::error::BonaLiveActivity is not registered in this build (plugins=$plugins)."
               echo "::error::The app-local plugins are registered in MainViewController.capacitorDidLoad; anything that replaces the storyboard root view controller discards them, and voice study and the Live Activity then fail silently."
               exit 1
               ;;
@@ -493,7 +493,7 @@ jobs:
           set -euo pipefail
           APP=build/device/Build/Products/Release-iphoneos/App.app
           # The Live Activity is useless if the extension did not come along.
-          if [ ! -d "$APP/PlugIns/AuraMindWidgets.appex" ]; then
+          if [ ! -d "$APP/PlugIns/BonaMindWidgets.appex" ]; then
             echo "::error::widget extension missing from the app bundle"
             exit 1
           fi

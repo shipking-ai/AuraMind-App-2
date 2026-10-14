@@ -51,7 +51,7 @@
 	     `auramind://app/<path>`, still sent by older links). Registered here because three
 	     surfaces hand it to the system rather than calling into the app
 	     directly: the Live Activity's widgetURL (see
-	     AuraMindWidgets/StudySessionLiveActivity.swift), Siri and Shortcuts, and
+	     BonaMindWidgets/StudySessionLiveActivity.swift), Siri and Shortcuts, and
 	     notification taps. All of those route through LaunchServices, which
 	     silently does nothing when no handler claims the scheme — the tap looks
 	     like a dead Live Activity rather than a missing configuration.
@@ -78,7 +78,7 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- The study session appears on the Lock Screen and in the Dynamic
-	     Island; see App/AuraLiveActivityPlugin.swift. -->
+	     Island; see App/BonaLiveActivityPlugin.swift. -->
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIRequiredDeviceCapabilities</key>

@@ -19,7 +19,7 @@ import UIKit
  */
 
 @available(iOS 16.0, *)
-enum AuraMindSiri {
+enum BonaMindSiri {
 
     /// Capacitor Preferences stores under UserDefaults with this prefix.
     private static let preferencesPrefix = "CapacitorStorage."
@@ -74,8 +74,8 @@ struct StartReviewIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        AuraMindSiri.openReview()
-        return .result(dialog: IntentDialog(stringLiteral: AuraMindSiri.dueSentence()))
+        BonaMindSiri.openReview()
+        return .result(dialog: IntentDialog(stringLiteral: BonaMindSiri.dueSentence()))
     }
 }
 
@@ -88,16 +88,16 @@ struct DueCountIntent: AppIntent {
     static var openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Int> {
-        let due = AuraMindSiri.dueCount()
+        let due = BonaMindSiri.dueCount()
         return .result(
             value: due,
-            dialog: IntentDialog(stringLiteral: AuraMindSiri.dueSentence()))
+            dialog: IntentDialog(stringLiteral: BonaMindSiri.dueSentence()))
     }
 }
 
 /// The phrases Siri accepts, and the entries in the Shortcuts app.
 @available(iOS 16.0, *)
-struct AuraMindShortcuts: AppShortcutsProvider {
+struct BonaMindShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: StartReviewIntent(),

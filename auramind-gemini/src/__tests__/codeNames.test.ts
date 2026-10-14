@@ -14,7 +14,8 @@ import { expect, it } from 'vitest';
 const APP_ROOT = resolve(__dirname, '../..');
 const OLD_NAME =
   /\b(ProfAura\w*|profAura\w*|PROF_AURA\w*|AuraMind[A-Z]\w*|useAuraMind|AuraChatMode|AURA_CHAT_MODE_KEY|AuraSpeech\w*|auraSpeech\w*|AuraListen\w*|AuraLiveActivity\w*|AuraLiveUpdate\w*|AuraDevice\w*|auraDevice\w*|AuraAi\w*|auraAi\w*|AuraLandingPage|AuraMark)\b|(?<!com)\/auramind\//;
-const SKIP = new Set(['src/lib/legacyNames.ts', 'src/__tests__/codeNames.test.ts']);
+// androidIdentity.test.ts pins the permanent stand-in class names and Wear paths.
+const SKIP = new Set(['src/lib/legacyNames.ts', 'src/__tests__/codeNames.test.ts', 'src/__tests__/androidIdentity.test.ts']);
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

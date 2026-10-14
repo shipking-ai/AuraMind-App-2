@@ -9,7 +9,7 @@
  *
  *   android/app/src/main/res/values/strings.xml   (app_name, title_activity_main)
  *   ios/App/App/Info.plist                        (CFBundleDisplayName)
- *   ios/App/AuraMindWidgets/Info.plist            (CFBundleDisplayName)
+ *   ios/App/BonaMindWidgets/Info.plist            (CFBundleDisplayName)
  *
  * The widget plist is the one that gets forgotten: rename the app and the
  * widget on the home screen keeps the old name, which reads as a bug in the
@@ -103,8 +103,8 @@ function targets(identity) {
       expect: [identity.name],
     },
     {
-      label: 'ios/App/AuraMindWidgets/Info.plist',
-      path: path.join(ROOT, 'ios/App/AuraMindWidgets/Info.plist'),
+      label: 'ios/App/BonaMindWidgets/Info.plist',
+      path: path.join(ROOT, 'ios/App/BonaMindWidgets/Info.plist'),
       apply(src) {
         return src.replace(
           /(<key>CFBundleDisplayName<\/key>\s*<string>)([^<]*)(<\/string>)/,

@@ -204,3 +204,27 @@ describe('the deep-link scheme agrees with Android', () => {
     expect(conf.plugins['deep-link'].desktop.schemes).toEqual(['bonamind', 'auramind']);
   });
 });
+// The Xcode project file is maintained by hand (no Mac here), so a rename
+// that misses a reference only shows up as a failed CI build. Catch it here.
+describe('project.pbxproj', () => {
+  const pbx = read('App.xcodeproj', 'project.pbxproj');
+
+  it('points every source and plist reference at a file that exists', () => {
+    const groups = [...pbx.matchAll(/\/\* (\w+) \*\/ = \{\s*isa = PBXGroup;[\s\S]*?path = (\w+);/g)];
+    const groupPath = new Map(groups.map((m) => [m[1], m[2]]));
+    const refs = [...pbx.matchAll(/\/\* ([\w.]+\.(?:swift|plist)) \*\/ = \{isa = PBXFileReference;[^}]*path = "?([^";]+)"?;/g)];
+    expect(refs.length).toBeGreaterThan(0);
+    for (const [, name, file] of refs) {
+      const candidates = [path.join(APP, 'App', file), ...[...groupPath.values()].map((dir) => path.join(APP, dir, file))];
+      expect(candidates.some((c) => existsSync(c)), `${name} → ${file}`).toBe(true);
+    }
+    // \s before the key so GENERATE_INFOPLIST_FILE = NO isn't read as a path.
+    for (const m of pbx.matchAll(/\sINFOPLIST_FILE = ([^;]+);/g)) {
+      expect(existsSync(path.join(APP, m[1].trim().replace(/"/g, ''))), m[1]).toBe(true);
+    }
+  });
+
+  it('carries no pre-rename names', () => {
+    expect(pbx).not.toMatch(/Aura/);
+  });
+});

@@ -8,8 +8,8 @@ import Capacitor
 
  That indirection is load-bearing. MainViewController is where the app-local
  plugins are registered (see MainViewController.swift) — creating a bare
- CAPBridgeViewController here instead discards it, so AuraListen and
- AuraLiveActivity are never registered and both features silently do nothing.
+ CAPBridgeViewController here instead discards it, so BonaListen and
+ BonaLiveActivity are never registered and both features silently do nothing.
  The web layer cannot tell "plugin absent" from "the OS refused", so neither
  surfaces as an error.
 
