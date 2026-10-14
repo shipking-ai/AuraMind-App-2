@@ -56,27 +56,18 @@ Whether you're prepping for med school (USMLE), law school (BAR), grad school cu
 |---|---|---|---|---|
 | App icon | 512×512 | PNG, no transparency | `store/graphics/android/icon-512.png` | ✅ generated |
 | Feature graphic | 1024×500 | PNG or JPG, ≤ 1 MB | `store/graphics/android/feature-1024x500.png` | ✅ generated |
-| Phone screenshot #1 | 1080×1920 | PNG | `store/graphics/android/screenshots/01-home.png` | ✅ generated |
-| Phone screenshot #2 | 1080×1920 | PNG | `store/graphics/android/screenshots/02-dashboard.png` | ✅ generated |
-| Phone screenshot #3 | 1080×1920 | PNG | `store/graphics/android/screenshots/03-study.png` | ✅ generated |
-| Phone screenshot #4 | 1080×1920 | PNG | `store/graphics/android/screenshots/04-ai-create.png` | ✅ generated |
-| Phone screenshot #5 | 1080×1920 | PNG | `store/graphics/android/screenshots/05-progress.png` | ✅ generated |
-| Phone screenshot #6 | 1080×1920 | PNG | `store/graphics/android/screenshots/06-onboarding.png` | ✅ generated |
-| Phone screenshot #7 | 1080×1920 | PNG | `store/graphics/android/screenshots/07-profile.png` | ✅ generated |
+| Phone screenshot #1 | 1080×1920 | PNG | `store/graphics/android/screenshots/01-home.png` | ✅ captured on the emulator |
+| Phone screenshot #2 | 1080×1920 | PNG | `store/graphics/android/screenshots/02-study.png` | ✅ captured on the emulator |
+| Phone screenshot #3 | 1080×1920 | PNG | `store/graphics/android/screenshots/03-create.png` | ✅ captured on the emulator |
+| Phone screenshot #4 | 1080×1920 | PNG | `store/graphics/android/screenshots/04-library.png` | ✅ captured on the emulator |
+| Phone screenshot #5 | 1080×1920 | PNG | `store/graphics/android/screenshots/05-settings.png` | ✅ captured on the emulator |
 | Tablet screenshot #1 | 1600×2560 | PNG | `store/graphics/android/screenshots/08-tablet-home.png` | ⬜ capture on tablet later |
 | Promo video (optional) | 1920×1080, ≤ 30s | MP4 | `store/graphics/android/promo-30s.mp4` | ⬜ optional |
 
-Screenshots `02`–`05` + `07` are captured from the purpose-built mobile UI
-mockups (see `Mobile UI Examples/`); `01` + `06` are captures of the real app
-marketing/auth pages. Regenerate anytime with:
-
-```bash
-cd auramind-gemini
-npm run build && npm run preview   # serves the real app on :4173
-node scripts/capture-store-screenshots.mjs
-```
-
-Capture them with `auramind-gemini/scripts/capture-store-screenshots.mjs`.
+The phone screenshots are real screens from the Android app, captured on an
+emulator from the development build's sample-data harness. Regenerate them
+with `auramind-gemini/scripts/capture-android-screenshots.mjs`; its header
+lists the build and install steps.
 
 ## Content rating (IARC)
 
