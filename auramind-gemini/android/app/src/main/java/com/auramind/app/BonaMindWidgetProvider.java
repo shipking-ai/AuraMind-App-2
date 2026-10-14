@@ -139,12 +139,12 @@ public class BonaMindWidgetProvider extends AppWidgetProvider {
         }
 
         // Tapping anywhere deep-links straight into the review queue via the
-        // same auramind:// scheme the launcher shortcuts use — one tap from
+        // same bonamind:// scheme the launcher shortcuts use — one tap from
         // the home screen to studying. FLAG_IMMUTABLE is required from API 31
         // and harmless below it. The request code is the widget id so two
         // widgets do not share (and clobber) one PendingIntent.
         Intent launch = new Intent(Intent.ACTION_VIEW,
-                android.net.Uri.parse("auramind://app/dashboard/study"));
+                android.net.Uri.parse("bonamind://app/dashboard/study"));
         launch.setClass(context, MainActivity.class);
         launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pending = PendingIntent.getActivity(

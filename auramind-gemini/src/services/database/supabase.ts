@@ -34,7 +34,7 @@ if (!isValidSupabaseUrl(supabaseUrl) || !supabaseAnonKey) {
 export const supabase: SupabaseClient | null = (() => {
     if (!isValidSupabaseUrl(supabaseUrl) || !supabaseAnonKey) return null;
     try {
-        // The Windows app finishes OAuth through auramind://auth/callback,
+        // The Windows app finishes OAuth through bonamind://auth/callback,
         // which needs PKCE (the code is useless without the verifier stored
         // in this origin). Web and mobile keep the current flow.
         return createClient(

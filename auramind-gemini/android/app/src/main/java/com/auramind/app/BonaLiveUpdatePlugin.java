@@ -124,7 +124,7 @@ public class BonaLiveUpdatePlugin extends Plugin {
         final String deck = value(deckTitle, "Study session");
         final int safeTotal = Math.max(1, total);
         final int safeDone = clamp(done, 0, safeTotal);
-        final String link = value(deepLink, "auramind://app/dashboard/study");
+        final String link = value(deepLink, "bonamind://app/dashboard/study");
 
         ensureChannel(manager);
 

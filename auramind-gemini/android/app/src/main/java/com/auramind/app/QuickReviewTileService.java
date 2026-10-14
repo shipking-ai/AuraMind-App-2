@@ -20,7 +20,7 @@ import android.service.quicksettings.TileService;
  * widget always agree on the count and neither reimplements FSRS in Java.
  *
  * Tapping collapses the shade and opens the review queue through the
- * auramind:// deep link, the same entry point as the launcher shortcuts.
+ * bonamind:// deep link, the same entry point as the launcher shortcuts.
  */
 public class QuickReviewTileService extends TileService {
 
@@ -34,7 +34,7 @@ public class QuickReviewTileService extends TileService {
     @Override
     public void onClick() {
         super.onClick();
-        Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse("auramind://app/dashboard/study"));
+        Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse("bonamind://app/dashboard/study"));
         launch.setClass(this, MainActivity.class);
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         if (Build.VERSION.SDK_INT >= 34) {

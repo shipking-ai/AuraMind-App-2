@@ -14,7 +14,7 @@ import UIKit
  app already published for the widget (Capacitor Preferences, which is
  UserDefaults underneath), because due-ness is an FSRS question TypeScript
  already answers — Swift must never get its own opinion about it. Starting a
- review hands the app the same `auramind://app/dashboard/study` deep link the
+ review hands the app the same `bonamind://app/dashboard/study` deep link the
  shortcuts and notifications use.
  */
 
@@ -28,7 +28,7 @@ enum BonaMindSiri {
     /// Read (and cleared) by the web layer on boot; see src/lib/deepLinks.ts.
     private static let pendingRouteKey = preferencesPrefix + "bonamind_pending_route"
 
-    static let reviewURL = URL(string: "auramind://app/dashboard/study")!
+    static let reviewURL = URL(string: "bonamind://app/dashboard/study")!
 
     static func dueCount() -> Int {
         Int(UserDefaults.standard.string(forKey: dueKey) ?? "") ?? 0

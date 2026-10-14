@@ -25,7 +25,7 @@ const android = (p: SessionProgress) => ({
   total: p.total,
   done: p.done,
   againAt: p.againAt,
-  deepLink: `auramind://app/dashboard/study/${p.deckId}`,
+  deepLink: `bonamind://app/dashboard/study/${p.deckId}`,
 });
 
 // The Live Activity draws a count, not positions.

@@ -32,7 +32,7 @@ import java.util.List;
  *  - Keep awake: the screen stays on while a study session is open, the way
  *    a reader or a video player behaves.
  *
- * Every shortcut is an auramind://app/dashboard/study/<deckId> VIEW intent,
+ * Every shortcut is an bonamind://app/dashboard/study/<deckId> VIEW intent,
  * so it lands in the same deep-link path (and allowlist) as the static ones.
  */
 @CapacitorPlugin(name = "BonaDevice")
@@ -123,7 +123,7 @@ public class BonaDevicePlugin extends Plugin {
 
     private static ShortcutInfoCompat buildDeckShortcut(Context context, String id, String title, int rank) {
         Intent intent = new Intent(Intent.ACTION_VIEW,
-                Uri.parse("auramind://app/dashboard/study/" + Uri.encode(id)));
+                Uri.parse("bonamind://app/dashboard/study/" + Uri.encode(id)));
         intent.setClass(context, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // Short labels are cut at ~10 characters on most launchers.

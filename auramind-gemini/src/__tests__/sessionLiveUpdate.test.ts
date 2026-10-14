@@ -35,7 +35,7 @@ describe('sessionLiveUpdate', () => {
       total: 10,
       done: 4,
       againAt: [2, 3],
-      deepLink: 'auramind://app/dashboard/study/d1',
+      deepLink: 'bonamind://app/dashboard/study/d1',
     });
   });
 
