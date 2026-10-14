@@ -2,14 +2,14 @@ import { motion, useMotionValue } from "framer-motion";
 import { useEffect, useId, useRef } from "react";
 import { useReducedMotion } from "../../utils/reducedMotion";
 
-export type ProfAuraVariant = "rest" | "thinking" | "streaming" | "badge";
-export type ProfAuraMood = "default" | "encouraging" | "focused";
+export type ProfLinneaVariant = "rest" | "thinking" | "streaming" | "badge";
+export type ProfLinneaMood = "default" | "encouraging" | "focused";
 
-export interface ProfAuraProps {
-  variant?: ProfAuraVariant;
+export interface ProfLinneaProps {
+  variant?: ProfLinneaVariant;
   size?: number;
   className?: string;
-  mood?: ProfAuraMood;
+  mood?: ProfLinneaMood;
   /** Live microphone volume in the 0..1 range. */
   audioLevel?: number;
 }
@@ -22,13 +22,13 @@ const INNER_PATH = "M 50 29.5 L 69.7 50 L 50 70.5 L 30.3 50 Z";
 const CORE_X = 50;
 const CORE_Y = 50;
 
-interface ProfAuraPalette {
+interface ProfLinneaPalette {
   halo: [string, string, string];
   core: string;
   ring: string;
 }
 
-const PALETTES: Record<ProfAuraMood, ProfAuraPalette> = {
+const PALETTES: Record<ProfLinneaMood, ProfLinneaPalette> = {
   default: {
     halo: ["#72F4FF", "#8E89FF", "#FF9ACD"],
     core: "#F1FEFF",
@@ -46,13 +46,13 @@ const PALETTES: Record<ProfAuraMood, ProfAuraPalette> = {
   },
 };
 
-export default function ProfAura({
+export default function ProfLinnea({
   variant = "rest",
   size = 28,
   className = "",
   mood = "default",
   audioLevel,
-}: ProfAuraProps) {
+}: ProfLinneaProps) {
   const reduced = useReducedMotion();
   const rawId = useId();
   const id = rawId.replace(/:/g, "");

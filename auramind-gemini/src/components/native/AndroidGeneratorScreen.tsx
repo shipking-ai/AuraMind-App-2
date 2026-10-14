@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDashboardWorkspace } from "../../contexts/DashboardWorkspaceContext";
 import { describeShare, takeStagedShare } from "../../lib/shareTarget";
-import { auraAiClient } from "../../services/api/auraAiService";
+import { bonaAiClient } from "../../services/api/bonaAiService";
 import { extractStudyAssetText } from "../../services/import/documentImportService";
 import { transcribeAudio } from "../../services/api/groqService";
 import { supabase } from "../../services/database/supabase";
@@ -274,7 +274,7 @@ export default function AndroidGeneratorScreen() {
           : `Create ${count} useful flashcards about "${label}" at ${difficultyText} difficulty.${languageInstruction}${exampleInstruction} Return JSON only: {"cards":[{"question":"...","answer":"...","difficulty":"easy|medium|hard"}]}${sourceContext}`;
 
     try {
-      const response = await auraAiClient.chatCompletion({
+      const response = await bonaAiClient.chatCompletion({
         messages: [
           {
             role: "system",

@@ -102,7 +102,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user, cancelled = false }) =>
       {/* Aurora glow background */}
       <div className="fixed inset-0 pointer-events-none">
         <img
-          src="/auramind/aurora-glow.png"
+          src="/bonamind/aurora-glow.png"
           alt=""
           className="w-full h-full object-cover"
           style={{ opacity: 0.2 }}

@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { useRM } from './motion';
 
 // ─── <AnimatedBrandMark /> ─────────────────────────────────────────────────
-// The AuraMark we use in the sidebar brand slot. A subtle "breathing" pulse
+// The BonaMark we use in the sidebar brand slot. A subtle "breathing" pulse
 // ring lets the brand feel alive without dominating the layout. Two colour
 // modes — admin (rose/amber) and user (violet/fuchsia) — selected by prop.
 

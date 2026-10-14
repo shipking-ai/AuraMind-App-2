@@ -1,5 +1,8 @@
-export const WEAR_URI_SYNC = '/auramind/sync';
-export const WEAR_URI_GRADE = '/auramind/grade';
+import { WEAR_GRADE_PATH, WEAR_SYNC_PATH } from '../../lib/legacyNames';
+
+// Permanent: the watch app matches these exact paths (see legacyNames.ts).
+export const WEAR_URI_SYNC = WEAR_SYNC_PATH;
+export const WEAR_URI_GRADE = WEAR_GRADE_PATH;
 export const WEAR_PAYLOAD_VERSION = 1;
 export const WEAR_MAX_CARDS = 40;
 // Per-field safety ceiling — the flashcards must read identically on the

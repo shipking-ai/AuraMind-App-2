@@ -23,10 +23,10 @@ import {
   useAIChat,
   type ChatContext,
   type ChatMode,
-  type ProfAuraPersonality,
+  type ProfLinneaPersonality,
 } from "../../hooks/useAIChat";
 import { useCurrentUserId } from "../../hooks/useCurrentUserId";
-import { useMoodForProfAura } from "../../hooks/useMoodForProfAura";
+import { useMoodForProfLinnea } from "../../hooks/useMoodForProfLinnea";
 import { useStudyStats } from "../../hooks/useStudyStats";
 import { usesLocalAI } from "../../lib/aiProvider";
 import { useMicVolume } from "../../hooks/useMicVolume";
@@ -36,8 +36,8 @@ import { dbService } from "../../services/database/dbService";
 import {
   getStoredPersonality,
   setStoredPersonality,
-  PROF_AURA_PERSONALITY_OPTIONS,
-} from "../../lib/profAuraPersonality";
+  PROF_LINNEA_PERSONALITY_OPTIONS,
+} from "../../lib/profLinneaPersonality";
 import type { Deck, Card } from "../../types";
 import ChatMessage from "./ChatMessage";
 import SuggestedPrompts from "./SuggestedPrompts";
@@ -46,8 +46,8 @@ import FileAttachment, { type AttachmentDraft, attachmentsToPrompt } from "./Fil
 import ChatTour from "./ChatTour";
 import SessionReplayModal from "../study/SessionReplayModal";
 import ReplayEventBridge from "./ReplayEventBridge";
-import ProfAuraEmptyState from "../ui/ProfAuraEmptyState";
-import ProfAura from "./ProfAura";
+import ProfLinneaEmptyState from "../ui/ProfLinneaEmptyState";
+import ProfLinnea from "./ProfLinnea";
 import { queueSession } from "../../services/chatSessionService";
 import { buildConceptWeaknesses, cardLapses, WEAK_LAPSE_THRESHOLD } from "../../lib/conceptModel";
 import { buildPriorSessionMemory } from "../../lib/chatMemory";
@@ -55,7 +55,7 @@ import PageShell from "../dashboard/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
 import { isAndroidApp } from "../../lib/platform";
 import { useIOSDesign } from "../ios/iosDesign";
-import IOSChatView, { type AuraChatMode } from "../ios/IOSChatView";
+import IOSChatView, { type LinneaChatMode } from "../ios/IOSChatView";
 import { toast } from "sonner";
 import { useAppPreference } from "../../lib/appPreferences";
 
@@ -178,7 +178,7 @@ export default function AIChatPage() {
 
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [saveChatHistory] = useAppPreference("bonamind_saveChatHistory", true);
-  const [personality, setPersonalityState] = useState<ProfAuraPersonality>(getStoredPersonality);
+  const [personality, setPersonalityState] = useState<ProfLinneaPersonality>(getStoredPersonality);
   const userMeta = workspace?.user as
     { streakCount?: number; lastStudyAt?: number; accuracy7d?: number } | undefined;
   // Cross-session memory — computed once per page load (reads localStorage).
@@ -323,12 +323,12 @@ export default function AIChatPage() {
   const tts = useTTS();
   const { isEnabled: ttsEnabled, speak: speakTts } = tts;
 
-  const setPersonality = useCallback((p: ProfAuraPersonality) => {
+  const setPersonality = useCallback((p: ProfLinneaPersonality) => {
     setPersonalityState(p);
     setStoredPersonality(p);
     setShowOverflow(false);
   }, []);
-  const mood = useMoodForProfAura({
+  const mood = useMoodForProfLinnea({
     streakCount: userMeta?.streakCount,
     lastActivityAt: userMeta?.lastStudyAt,
   });
@@ -398,7 +398,7 @@ export default function AIChatPage() {
   }, [chat, input, attachments]);
 
   /**
-   * Mic toggle. Coordinates useMicVolume (audioLevel → ProfAura orbit)
+   * Mic toggle. Coordinates useMicVolume (audioLevel → ProfLinnea orbit)
    * with useSpeechRecognition (final transcript → textarea). Stop order
    * is fixed: stopListening FIRST so we capture the final transcript,
    * THEN close the mic hardware so iOS Safari doesn't fight us for it.
@@ -504,7 +504,7 @@ export default function AIChatPage() {
     }, 900);
   }, [chat, sr]);
   const handleModeChange = useCallback(
-    (mode: AuraChatMode) => {
+    (mode: LinneaChatMode) => {
       // Talk mode is a spoken conversation: Linnea answers out loud.
       if (mode === "talk" && !tts.isEnabled) tts.setEnabled(true);
     },
@@ -603,7 +603,7 @@ export default function AIChatPage() {
             <div className="flex items-center gap-2.5">
               <div className="relative" data-chat-tour="avatar">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#7C3AED] via-[#EC4899] to-[#06B6D4] flex items-center justify-center shadow-lg shadow-violet-500/20">
-                  <ProfAura
+                  <ProfLinnea
                     variant={chat.isStreaming ? "thinking" : "badge"}
                     size={22}
                     mood={mood}
@@ -692,7 +692,7 @@ export default function AIChatPage() {
                       Prof. Linnea's Personality
                     </p>
                     <div className="space-y-1">
-                      {PROF_AURA_PERSONALITY_OPTIONS.map((opt) => {
+                      {PROF_LINNEA_PERSONALITY_OPTIONS.map((opt) => {
                         const OptionIcon = opt.icon;
                         return (
                           <button
@@ -819,7 +819,7 @@ export default function AIChatPage() {
             {chat.messages.length === 0 && chat.mode === "companion" ? (
               /* ─── Companion-mode welcome ─── */
               <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in">
-                <ProfAuraEmptyState
+                <ProfLinneaEmptyState
                   mood={chat.isStreaming ? "curious" : "inviting"}
                   size="lg"
                   eyebrow="COMPANION MODE"
@@ -858,7 +858,7 @@ export default function AIChatPage() {
                   className="relative mb-7"
                 >
                   <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#7C3AED] via-[#EC4899] to-[#06B6D4] flex items-center justify-center shadow-2xl shadow-violet-500/25">
-                    <ProfAura
+                    <ProfLinnea
                       variant={chat.isStreaming ? "streaming" : "rest"}
                       size={68}
                       mood={mood}

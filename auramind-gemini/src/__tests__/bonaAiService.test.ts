@@ -11,14 +11,14 @@ process.env.VITE_USE_LOCAL_AI = 'false';
 
 const TEST_KEY = 'test-key-not-real';
 
-type AuraAiModule = typeof import('../services/api/auraAiService');
-let mod: AuraAiModule;
+type BonaAiModule = typeof import('../services/api/bonaAiService');
+let mod: BonaAiModule;
 
-let client: InstanceType<AuraAiModule['AuraAiClient']>;
+let client: InstanceType<BonaAiModule['BonaAiClient']>;
 
 beforeAll(async () => {
-  mod = await import('../services/api/auraAiService');
-  client = new mod.AuraAiClient(TEST_KEY);
+  mod = await import('../services/api/bonaAiService');
+  client = new mod.BonaAiClient(TEST_KEY);
 });
 
 /** Minimal OpenAI-shaped success payload. */
@@ -58,9 +58,9 @@ afterEach(() => {
   delete process.env.VITE_USE_LOCAL_AI;
 });
 
-describe('auraAiService', () => {
+describe('bonaAiService', () => {
   it('exposes the expected client surface', () => {
-    expect(mod.auraAiClient).toBeDefined();
+    expect(mod.bonaAiClient).toBeDefined();
     expect(typeof client.ask).toBe('function');
     expect(typeof client.chatCompletion).toBe('function');
   });

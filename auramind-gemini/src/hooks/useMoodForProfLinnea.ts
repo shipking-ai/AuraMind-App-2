@@ -1,4 +1,4 @@
-import type { ProfAuraMood } from '../components/chat/ProfAura';
+import type { ProfLinneaMood } from '../components/chat/ProfLinnea';
 
 export interface MoodInputs {
   /** Current consecutive-day study streak (0 if unknown). */
@@ -40,9 +40,9 @@ const STRUGGLING_LATENCY_MS = 8_000;
  * Performance-aware inputs are optional: undefined (still loading) keeps
  * the streak/recency-derived mood rather than silently forcing 'focused'.
  * A debounce is the caller's responsibility (study cards flip accuracy
- * cycle every few seconds; ProfAura mood should ignore micro-flickers).
+ * cycle every few seconds; ProfLinnea mood should ignore micro-flickers).
  */
-export function deriveMoodForProfAura(input: MoodInputs): ProfAuraMood {
+export function deriveMoodForProfLinnea(input: MoodInputs): ProfLinneaMood {
   const now = input.now ?? Date.now();
   const last = input.lastActivityAt;
 
@@ -68,8 +68,8 @@ export function deriveMoodForProfAura(input: MoodInputs): ProfAuraMood {
 }
 
 /** React hook wrapper that re-derives on every render but never subscribes. */
-export function useMoodForProfAura(inputs: MoodInputs): ProfAuraMood {
-  return deriveMoodForProfAura(inputs);
+export function useMoodForProfLinnea(inputs: MoodInputs): ProfLinneaMood {
+  return deriveMoodForProfLinnea(inputs);
 }
 
-export default useMoodForProfAura;
+export default useMoodForProfLinnea;

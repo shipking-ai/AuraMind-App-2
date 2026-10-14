@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useSpring, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
-import { Flashcard } from "../auramind/flashcard";
+import { Flashcard } from "../bonamind/flashcard";
 import { MagneticButton } from "../ui/MagneticButton";
 import { Marquee } from "../ui/Marquee";
 import { ManifestoSection } from "../ui/ManifestoSection";
@@ -17,7 +17,7 @@ import { BorderBeam } from "../ui/BorderBeam";
 import { ShineBorder } from "../ui/ShineBorder";
 import { useSoundDesign } from "@/hooks/useSoundDesign";
 import { analyticsService } from "@/services/analytics/analyticsService";
-import type { FlashcardData } from "@/lib/auramind/types";
+import type { FlashcardData } from "@/lib/bonamind/types";
 import { TextSplit, TextScramble, ClickSparkles, DrawPath, ParticleField, useScrollReveal } from "@/lib/effects";
 import { Headphones, Mic, BrainCircuit, FileText, Check } from "../icons";
 

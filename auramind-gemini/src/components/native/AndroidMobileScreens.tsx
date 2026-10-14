@@ -24,7 +24,7 @@ import {
 import { useDashboardWorkspace } from "../../contexts/DashboardWorkspaceContext";
 import { hapticSuccess, hapticTap, hapticWarning } from "./androidHaptics";
 import { publishWidgetState } from "../../lib/widgetBridge";
-import { canPinDecks, pinDeckToHomeScreen, publishRecentDecks } from "../../lib/auraDevice";
+import { canPinDecks, pinDeckToHomeScreen, publishRecentDecks } from "../../lib/bonaDevice";
 import { useAppPreference } from "../../lib/appPreferences";
 import { Share as NativeShare } from "../../lib/nativeShim";
 import AndroidAura from "./AndroidAura";

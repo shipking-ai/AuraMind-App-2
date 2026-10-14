@@ -119,8 +119,8 @@ describe('VideoBackground', () => {
     emitIntersection(true);
 
     expect(sourcesOf(video)).toEqual([
-      '/auramind/video/manifesto.webm',
-      '/auramind/video/manifesto.mp4',
+      '/bonamind/video/manifesto.webm',
+      '/bonamind/video/manifesto.mp4',
     ]);
     expect(video.getAttribute('preload')).toBe('auto');
     expect(play).toHaveBeenCalled();
@@ -142,8 +142,8 @@ describe('VideoBackground', () => {
     const video = container.querySelector('video')!;
 
     expect(sourcesOf(video)).toEqual([
-      '/auramind/video/hero-neural.webm',
-      '/auramind/video/hero-neural.mp4',
+      '/bonamind/video/hero-neural.webm',
+      '/bonamind/video/hero-neural.mp4',
     ]);
     expect(video.getAttribute('preload')).toBe('auto');
     expect(play).toHaveBeenCalled();

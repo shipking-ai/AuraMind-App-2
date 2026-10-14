@@ -6,7 +6,7 @@ import { readClientEnv } from './env';
  * in Settings without touching .env. It falls back to the build-time
  * VITE_USE_LOCAL_AI flag, which developers and tests set via vi.stubEnv /
  * .env.mobile. Keep this module dependency-free — both groqClient and
- * auraAiService import it.
+ * bonaAiService import it.
  */
 
 export type AIProvider = 'cloud' | 'local';

@@ -32,5 +32,13 @@ export const CLASSROOM_ERROR_URN = 'urn:auramind:classroom';
  */
 export const WINDOWS_WIDGET_TAG = 'auramind-due';
 
+/**
+ * Wear OS data-layer paths shared with the watch app (WearSyncPlugin.java,
+ * WearData.kt, both manifests). The phone and watch apps update separately,
+ * so a changed path breaks sync for anyone on mixed versions. Permanent.
+ */
+export const WEAR_SYNC_PATH = '/auramind/sync';
+export const WEAR_GRADE_PATH = '/auramind/grade';
+
 /** The owner's Google Group for launch notifications: a real address. */
 export const NOTIFY_LIST_EMAIL = 'auramind-app@googlegroups.com';

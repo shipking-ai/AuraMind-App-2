@@ -12,8 +12,8 @@
 // announced, and no control semantics when the card is not flippable.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Flashcard } from '../components/auramind/flashcard';
-import type { FlashcardData } from '../lib/auramind/types';
+import { Flashcard } from '../components/bonamind/flashcard';
+import type { FlashcardData } from '../lib/bonamind/types';
 
 const CARD: FlashcardData = {
   id: 'c1',

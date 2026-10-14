@@ -61,7 +61,7 @@ export function VideoBackground({
       muted
       playsInline
       preload={lazy && !armed ? "none" : "auto"}
-      poster={`/auramind/video/${name}-poster.jpg`}
+      poster={`/bonamind/video/${name}-poster.jpg`}
       aria-hidden
       className={cn(
         "absolute inset-0 w-full h-full object-cover pointer-events-none",
@@ -72,8 +72,8 @@ export function VideoBackground({
     >
       {armed && (
         <>
-          <source src={`/auramind/video/${name}.webm`} type="video/webm" />
-          <source src={`/auramind/video/${name}.mp4`} type="video/mp4" />
+          <source src={`/bonamind/video/${name}.webm`} type="video/webm" />
+          <source src={`/bonamind/video/${name}.mp4`} type="video/mp4" />
         </>
       )}
     </video>

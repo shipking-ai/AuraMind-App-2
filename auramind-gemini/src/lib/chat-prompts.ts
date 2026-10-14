@@ -20,8 +20,8 @@
 
 export type ChatMode = 'study' | 'companion';
 
-export type { ProfAuraPersonality } from './profAuraPersonality';
-import { type ProfAuraPersonality, getPersonalityPromptModifier } from './profAuraPersonality';
+export type { ProfLinneaPersonality } from './profLinneaPersonality';
+import { type ProfLinneaPersonality, getPersonalityPromptModifier } from './profLinneaPersonality';
 import type { ConceptWeakness } from './conceptModel';
 
 export interface WeakCardSummary {
@@ -51,7 +51,7 @@ export interface PromptContext {
   currentCard?: CurrentCardFsrs | { term: string; definition: string };
   mode: ChatMode;
   /** User-selected personality that modifies tone and style. */
-  personality?: ProfAuraPersonality;
+  personality?: ProfLinneaPersonality;
   /** User-level study stats for the "performance-aware" preamble. */
   retention7d?: number; // 0..1
   dueThisWeek?: number;

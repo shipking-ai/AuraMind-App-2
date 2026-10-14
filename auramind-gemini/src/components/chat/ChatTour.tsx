@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { X, Sparkles, Mic, History, ArrowRight } from "@/components/icons";
-import ProfAura from "./ProfAura";
+import ProfLinnea from "./ProfLinnea";
 import {
   CHAT_TOUR_TARGETS,
   chatTourSelector,
@@ -29,7 +29,7 @@ interface Step {
 const STEPS: Step[] = [
   {
     key: "avatar",
-    icon: <ProfAura variant="rest" size={32} />,
+    icon: <ProfLinnea variant="rest" size={32} />,
     title: "Meet Prof. Linnea",
     body: "This live status mark is Prof. Linnea. It responds to your activity and voice, so you can tell when the coach is ready or listening.",
     target: CHAT_TOUR_TARGETS.avatar,

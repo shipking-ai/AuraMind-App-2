@@ -8,7 +8,7 @@
  */
 
 import type { Quiz, Card } from '../../types';
-import { auraAiClient } from '../api/auraAiService';
+import { bonaAiClient } from '../api/bonaAiService';
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -239,7 +239,7 @@ export function startGeneration(deckId: string, cards: Card[]): GenerationProgre
         return `Q: ${q}\nA: ${a}`;
       }).join('\n\n');
 
-      const response = await auraAiClient.chatCompletion({
+      const response = await bonaAiClient.chatCompletion({
         messages: [
           { role: 'system', content: 'You are a quiz generator. Return ONLY valid JSON.' },
           {

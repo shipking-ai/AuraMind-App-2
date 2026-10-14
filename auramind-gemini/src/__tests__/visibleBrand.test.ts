@@ -1,7 +1,7 @@
 /**
  * Everything a person reads says BonaMind and Prof. Linnea: screen copy,
  * native strings, the HTML shell, the favicon and the Windows app config.
- * Code identifiers (ProfAuraAvatar, useAuraMind…) are renamed separately
+ * Code identifiers (ProfLinneaAvatar, useBonaMind…) are renamed separately
  * and aren't matched here; a name glued into a longer identifier is not
  * visible text.
  *

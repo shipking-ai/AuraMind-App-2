@@ -4,7 +4,7 @@
  * Inside the Android app `window.speechSynthesis` does not exist (Android
  * System WebView never shipped it), so read-aloud, voice study and slide
  * narration were all silent there. Everything now speaks through this
- * module, which uses the native AuraSpeech plugin on Android and the Web
+ * module, which uses the native BonaSpeech plugin on Android and the Web
  * Speech API everywhere else, and applies the user's voice choice the same
  * way on both.
  *
@@ -23,7 +23,7 @@
  * quality level.
  */
 import { getAppPreference } from '../../lib/appPreferences';
-import { AuraSpeech, hasNativeSpeech } from '../../lib/auraSpeech';
+import { BonaSpeech, hasNativeSpeech } from '../../lib/bonaSpeech';
 import { loadVoices } from './speechEngine';
 import { isAiVoice, playAiVoice, stopAiVoice } from './aiVoice';
 
@@ -101,7 +101,7 @@ export async function listVoices(lang = 'en'): Promise<VoiceOption[]> {
 
   if (hasNativeSpeech()) {
     try {
-      const { voices } = await AuraSpeech.getVoices();
+      const { voices } = await BonaSpeech.getVoices();
       const matching = voices.filter((v) => languageOf(v.lang) === want);
       const pool = matching.length > 0 ? matching : voices;
       const counts = new Map<string, number>();
@@ -246,7 +246,7 @@ export async function speak(text: string, options: SpeakOptions = {}): Promise<{
 
   if (hasNativeSpeech()) {
     try {
-      return await AuraSpeech.speak({
+      return await BonaSpeech.speak({
         text: cleaned,
         voice: voiceId ?? VOICE_AUTO,
         lang,
@@ -266,7 +266,7 @@ export function stopSpeaking(): void {
   generation += 1;
   stopAiVoice();
   if (hasNativeSpeech()) {
-    void AuraSpeech.stop().catch(() => undefined);
+    void BonaSpeech.stop().catch(() => undefined);
     return;
   }
   if (hasWebSpeech()) window.speechSynthesis.cancel();

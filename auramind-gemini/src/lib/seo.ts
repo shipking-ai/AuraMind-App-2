@@ -20,7 +20,7 @@ import { PRODUCT_SITE_URL } from './branding.ts';
 
 const DEFAULT_TITLE = APP_SOCIAL_TITLE;
 const DEFAULT_DESCRIPTION = 'AI flashcards powered by FSRS spaced repetition — learn anything in half the time. Turn notes and PDFs into smart decks that adapt to your memory.';
-const DEFAULT_IMAGE = '/auramind/og-cover.png';
+const DEFAULT_IMAGE = '/bonamind/og-cover.png';
 const SITE_URL = PRODUCT_SITE_URL;
 
 /**

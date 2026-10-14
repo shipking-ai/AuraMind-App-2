@@ -22,10 +22,10 @@ import {
   Zap,
 } from "../../components/icons";
 import {
-  PROF_AURA_PERSONALITY_OPTIONS,
+  PROF_LINNEA_PERSONALITY_OPTIONS,
   setStoredPersonality,
-  type ProfAuraPersonality,
-} from "../../lib/profAuraPersonality";
+  type ProfLinneaPersonality,
+} from "../../lib/profLinneaPersonality";
 
 type OnboardingStep = "welcome" | "focus" | "coach";
 
@@ -73,7 +73,7 @@ function markOnboardingComplete() {
 const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ isOpen, onClose, onComplete }) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [selectedTopic, setSelectedTopic] = useState("");
-  const [selectedPersonality, setSelectedPersonality] = useState<ProfAuraPersonality>("default");
+  const [selectedPersonality, setSelectedPersonality] = useState<ProfLinneaPersonality>("default");
 
   const stepIndex = STEPS.findIndex((step) => step.id === currentStep);
   const isLastStep = stepIndex === STEPS.length - 1;
@@ -277,7 +277,7 @@ const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ isOpen, onClose
                         </p>
                       </div>
                       <div className="mt-6 grid gap-2">
-                        {PROF_AURA_PERSONALITY_OPTIONS.map((option) => {
+                        {PROF_LINNEA_PERSONALITY_OPTIONS.map((option) => {
                           const Icon = option.icon;
                           const selected = selectedPersonality === option.id;
                           return (

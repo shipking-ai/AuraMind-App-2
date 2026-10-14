@@ -1,6 +1,6 @@
 "use client";
 
-import { useCountUp, useInView } from "@/lib/auramind/hooks";
+import { useCountUp, useInView } from "@/lib/bonamind/hooks";
 
 /**
  * TrustStrip — three claims about the product, all substantiable.

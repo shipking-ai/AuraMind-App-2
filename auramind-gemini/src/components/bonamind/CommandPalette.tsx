@@ -12,8 +12,8 @@ import {
   Users,
   Wrench,
 } from "@/components/icons";
-import { useAuraMind } from "@/lib/auramind/store";
-import type { ViewKey } from "@/lib/auramind/types";
+import { useBonaMind } from "@/lib/bonamind/store";
+import type { ViewKey } from "@/lib/bonamind/types";
 import {
   CommandDialog,
   CommandEmpty,
@@ -62,7 +62,7 @@ const ADMIN_PALETTE_ITEMS: {
 ];
 
 export function CommandPalette() {
-  const { cmdOpen, setCmdOpen } = useAuraMind();
+  const { cmdOpen, setCmdOpen } = useBonaMind();
   const navigate = useNavigate();
   const workspace = useDashboardWorkspace();
 

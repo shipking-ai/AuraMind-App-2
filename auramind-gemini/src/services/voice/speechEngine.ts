@@ -18,7 +18,7 @@
  *     event and must not produce the same UI.
  */
 
-import { hasNativeSpeech } from '../../lib/auraSpeech';
+import { hasNativeSpeech } from '../../lib/bonaSpeech';
 import { createNativeRecognition } from './nativeRecognition';
 import { isIOSApp, isNativeApp } from '../../lib/platform';
 
@@ -46,9 +46,9 @@ export function getSpeechCapabilities(): SpeechCapabilities {
   if (typeof window === 'undefined') return { tts: false, stt: false };
   return {
     // The Android app's WebView has no speechSynthesis; it speaks through
-    // the native AuraSpeech plugin instead (see speechOutput.ts).
+    // the native BonaSpeech plugin instead (see speechOutput.ts).
     tts: 'speechSynthesis' in window || hasNativeSpeech(),
-    // Listening in either app goes through AuraListen: Android's WebView has
+    // Listening in either app goes through BonaListen: Android's WebView has
     // no SpeechRecognition, and iOS's WKWebView exposes one that never
     // delivers results (WebKit bug 239816).
     stt: isNativeApp() || getRecognitionCtor() !== null,

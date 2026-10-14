@@ -2,8 +2,8 @@ import { registerPlugin } from '@capacitor/core';
 import { Capacitor } from './nativeShim';
 
 /**
- * Bridge to the native AuraSpeech plugin
- * (android/app/src/main/java/com/auramind/app/AuraSpeechPlugin.java).
+ * Bridge to the native BonaSpeech plugin
+ * (android/app/src/main/java/com/auramind/app/BonaSpeechPlugin.java).
  *
  * Android System WebView has no speechSynthesis, so inside the Android app
  * every spoken word goes through here. Callers should use
@@ -36,7 +36,7 @@ export interface SpokenReminderSettings {
   title?: string;
 }
 
-interface AuraSpeechPlugin {
+interface BonaSpeechPlugin {
   getVoices(): Promise<{ available: boolean; defaultLanguage: string; voices: NativeVoice[] }>;
   speak(options: {
     text: string;
@@ -50,7 +50,7 @@ interface AuraSpeechPlugin {
   previewSpokenReminder(options: { message: string; voice?: string; lang?: string }): Promise<void>;
 }
 
-export const AuraSpeech = registerPlugin<AuraSpeechPlugin>('AuraSpeech');
+export const BonaSpeech = registerPlugin<BonaSpeechPlugin>('BonaSpeech');
 
 export function hasNativeSpeech(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';

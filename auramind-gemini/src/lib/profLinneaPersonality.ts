@@ -1,15 +1,15 @@
 import type { ComponentType } from 'react';
 import { Brain, Flame, Heart, Lightbulb, Zap } from '../components/icons';
 
-export type ProfAuraPersonality =
+export type ProfLinneaPersonality =
   | 'default'
   | 'socratic'
   | 'drill-sergeant'
   | 'gentle'
   | 'hype';
-export const PROF_AURA_PERSONALITY_KEY = 'bonamind.prof.personality.v1';
-export const PROF_AURA_PERSONALITY_OPTIONS: {
-  id: ProfAuraPersonality;
+export const PROF_LINNEA_PERSONALITY_KEY = 'bonamind.prof.personality.v1';
+export const PROF_LINNEA_PERSONALITY_OPTIONS: {
+  id: ProfLinneaPersonality;
   label: string;
   icon: ComponentType<{ size?: number; className?: string }>;
   description: string;
@@ -51,23 +51,23 @@ export const PROF_AURA_PERSONALITY_OPTIONS: {
     promptModifier: '\nPERSONALITY OVERRIDE: You are in Hype Coach mode. Maximum enthusiasm and energy! Use exclamation points, celebrate every correct answer like a championship win, frame study sessions as epic quests. Be the study buddy who makes hard things feel exciting. Use phrases like "LET\'S GO" and "absolute legend."',
   },
 ];
-export function getStoredPersonality(): ProfAuraPersonality {
+export function getStoredPersonality(): ProfLinneaPersonality {
   try {
-    const stored = localStorage.getItem(PROF_AURA_PERSONALITY_KEY);
-    if (stored && PROF_AURA_PERSONALITY_OPTIONS.some(p => p.id === stored)) {
-      return stored as ProfAuraPersonality;
+    const stored = localStorage.getItem(PROF_LINNEA_PERSONALITY_KEY);
+    if (stored && PROF_LINNEA_PERSONALITY_OPTIONS.some(p => p.id === stored)) {
+      return stored as ProfLinneaPersonality;
     }
   } catch { /* ignore */ }
   return 'default';
 }
 
-export function setStoredPersonality(personality: ProfAuraPersonality): void {
+export function setStoredPersonality(personality: ProfLinneaPersonality): void {
   try {
-    localStorage.setItem(PROF_AURA_PERSONALITY_KEY, personality);
+    localStorage.setItem(PROF_LINNEA_PERSONALITY_KEY, personality);
   } catch { /* ignore */ }
 }
 
-export function getPersonalityPromptModifier(personality: ProfAuraPersonality): string {
-  const found = PROF_AURA_PERSONALITY_OPTIONS.find(p => p.id === personality);
+export function getPersonalityPromptModifier(personality: ProfLinneaPersonality): string {
+  const found = PROF_LINNEA_PERSONALITY_OPTIONS.find(p => p.id === personality);
   return found?.promptModifier ?? '';
 }

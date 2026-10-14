@@ -3,8 +3,8 @@ import { Capacitor } from './nativeShim';
 
 /**
  * The study session as an Android Live Update, through the native
- * AuraLiveUpdate plugin (android/app/src/main/java/com/auramind/app/
- * AuraLiveUpdatePlugin.java).
+ * BonaLiveUpdate plugin (android/app/src/main/java/com/auramind/app/
+ * BonaLiveUpdatePlugin.java).
  *
  * On Android 16 the session shows as a status-bar chip and at the top of the
  * lock screen while the user is elsewhere; on older releases it is an
@@ -21,14 +21,14 @@ export interface LiveUpdateSession {
   deepLink?: string;
 }
 
-interface AuraLiveUpdatePlugin {
+interface BonaLiveUpdatePlugin {
   isSupported(): Promise<{ supported: boolean; promoted: boolean }>;
   start(options: LiveUpdateSession): Promise<{ posted: boolean; promoted?: boolean }>;
   update(options: LiveUpdateSession): Promise<{ posted: boolean; promoted?: boolean }>;
   end(): Promise<void>;
 }
 
-const AuraLiveUpdate = registerPlugin<AuraLiveUpdatePlugin>('AuraLiveUpdate');
+const BonaLiveUpdate = registerPlugin<BonaLiveUpdatePlugin>('BonaLiveUpdate');
 
 function isAndroidApp(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -38,7 +38,7 @@ function isAndroidApp(): boolean {
 export async function isLiveUpdateSupported(): Promise<boolean> {
   if (!isAndroidApp()) return false;
   try {
-    const { supported } = await AuraLiveUpdate.isSupported();
+    const { supported } = await BonaLiveUpdate.isSupported();
     return supported;
   } catch {
     return false;
@@ -48,7 +48,7 @@ export async function isLiveUpdateSupported(): Promise<boolean> {
 export async function startLiveUpdate(session: LiveUpdateSession): Promise<void> {
   if (!isAndroidApp()) return;
   try {
-    await AuraLiveUpdate.start(session);
+    await BonaLiveUpdate.start(session);
   } catch {
     // A session without a notification is still a session.
   }
@@ -66,7 +66,7 @@ export async function updateLiveUpdate(session: LiveUpdateSession): Promise<void
   if (key === lastPosted) return;
   lastPosted = key;
   try {
-    await AuraLiveUpdate.update(session);
+    await BonaLiveUpdate.update(session);
   } catch {
     /* see startLiveUpdate */
   }
@@ -77,7 +77,7 @@ export async function endLiveUpdate(): Promise<void> {
   lastPosted = '';
   if (!isAndroidApp()) return;
   try {
-    await AuraLiveUpdate.end();
+    await BonaLiveUpdate.end();
   } catch {
     /* see startLiveUpdate */
   }

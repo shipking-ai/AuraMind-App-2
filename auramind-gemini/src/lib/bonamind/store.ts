@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Bot, CreditCard, Database, Lock, Smartphone, Zap } from "../../components/icons";
 import type { ViewKey, AuthMode, ChatMode, Deck, FlashcardData, ChatMessage, HealthCheck, IssueItem, CategoryScore, AdminUser } from "./types";
 
-interface AuraMindState {
+interface BonaMindState {
   view: ViewKey;
   authMode: AuthMode;
   chatMode: ChatMode;
@@ -13,7 +13,7 @@ interface AuraMindState {
   setCmdOpen: (b: boolean) => void;
 }
 
-export const useAuraMind = create<AuraMindState>((set) => ({
+export const useBonaMind = create<BonaMindState>((set) => ({
   view: "landing",
   authMode: "signup",
   chatMode: "explain",

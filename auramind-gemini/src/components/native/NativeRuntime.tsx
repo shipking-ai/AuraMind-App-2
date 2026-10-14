@@ -5,7 +5,7 @@ import { consumePendingRoute, parseDeepLink } from "../../lib/deepLinks";
 import { initPlayEngagement } from "../../lib/playEngagement";
 import { initDynamicColor } from "../../lib/dynamicColor";
 import { consumeBackPress } from "../../lib/backStack";
-import { setKeepAwake } from "../../lib/auraDevice";
+import { setKeepAwake } from "../../lib/bonaDevice";
 import { migrateLegacyKeysAsync, preferencesStore } from "../../lib/storageMigration/legacyKeys";
 
 /**

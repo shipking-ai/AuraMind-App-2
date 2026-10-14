@@ -69,9 +69,9 @@ describe("deck shortcut deep links", () => {
   });
 });
 
-describe("auraDevice off-device", () => {
+describe("bonaDevice off-device", () => {
   it("is a silent no-op outside the Android app", async () => {
-    const device = await import("../lib/auraDevice");
+    const device = await import("../lib/bonaDevice");
     await expect(device.setKeepAwake(true)).resolves.toBeUndefined();
     await expect(device.publishRecentDecks([{ id: "d", title: "Deck" }])).resolves.toBeUndefined();
     expect(await device.canPinDecks()).toBe(false);
