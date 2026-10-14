@@ -1,22 +1,45 @@
-The only study app where the AI tutor lives ON YOUR PHONE — private, offline, and free forever.
+Study anything. Hands-free. Actually remember.
 
-Meet Prof. Linnea. She turns any PDF, video, or topic into flashcards and quizzes, remembers exactly which cards you struggle with, and adapts her teaching to you — with deeper dives, counter-examples, and questions that target your weak spots.
+BonaMind turns the material you are already studying into personalized flashcards, quizzes, notes, and study sessions. Upload a document, lecture, video, voice memo, or simply enter a topic, and let AI help you build a smarter way to learn.
 
-WHAT MAKES BONAMIND DIFFERENT
+AI-POWERED STUDY MATERIALS
 
-• On-device AI engine — the tutor can run entirely on your phone. No account, no servers, no data leaving your device. Your study session works on a plane, in a tunnel, or anywhere without signal. Download a small model once and study privately forever. No other flashcard app does this.
-• Prof. Linnea remembers you — she tracks every card you rate and reshapes your reviews around your actual memory, not a generic algorithm.
-• FSRS v5 spaced repetition — the modern scheduler shown to retain ~30% more than legacy Anki-style systems. The longer you use BonaMind, the faster you remember.
-• AI-generated flashcards in under a minute — drop in a PDF, a video link, or just a topic; BonaMind builds a clean Q&A deck you can edit.
-• Voice study mode — study hands-free: BonaMind reads cards aloud and listens to your spoken answers, perfect for commutes and walks.
-• Counter-examples, deeper dives, quiz me — every AI answer is a study session, not a chat: follow-up actions that convert weak spots into cards.
-• Memory Palace + Flow Mode — turn your hardest topic into a visual walkthrough or enter distraction-free deep-study mode.
-• Streaks, leagues, and friends — gentle pressure to keep your habit alive, never burn-out inducing.
+• Generate flashcards from PDFs, documents, videos, lectures, audio, or topics
+• Turn your source material into organized study notes
+• Create quizzes and presentation materials with AI
+• Build and manage custom study decks
+• Ask Prof. Linnea to explain difficult concepts or create additional cards
 
-PRIVACY-FIRST
+ADAPTIVE SPACED REPETITION
 
-Your decks, notes, and AI conversations stay on your device by default. The on-device AI engine means your hardest questions never touch a server. We don't sell your study data. We use privacy-respecting analytics (PostHog) for product improvement and Sentry only for crash reports. Full policy: https://bonamind.app/privacy.
+BonaMind uses FSRS spaced repetition to schedule cards based on how well you remember them. Instead of reviewing everything equally, your study sessions focus on the cards and concepts that need the most attention.
 
-BUILT FOR STUDENTS WHO ACTUALLY STUDY
+VOICE-POWERED STUDY
 
-Whether you're prepping for med school (USMLE), law school (BAR), grad school cumulative exams, or learning a new language — BonaMind adapts to whatever you're mastering.
+Study without staring at a screen.
+
+• Listen to flashcard questions aloud
+• Answer verbally using your microphone
+• Practice while commuting, walking, exercising, or doing chores
+• Use audio playback to review your material hands-free
+
+YOUR PERSONAL AI STUDY COACH
+
+Prof. Linnea uses your study context to provide more useful guidance. Linnea can consider your decks, review history, accuracy, retention, streak, weak cards, and difficult concepts when helping you study.
+
+TRACK YOUR PROGRESS
+
+• Monitor retention and accuracy
+• See which cards and concepts need more practice
+• Build study streaks
+• Earn achievements
+• Follow your progress over time
+• Participate in leagues and friendly competition
+
+STUDY WHEREVER YOU ARE
+
+BonaMind is designed for focused, flexible learning across desktop and mobile. Your study experience supports offline review so you can keep learning even when your connection is limited.
+
+Whether you are preparing for exams, learning a language, studying for a certification, or mastering a new subject, BonaMind helps you turn spare moments into meaningful progress.
+
+Start learning smarter with BonaMind.
