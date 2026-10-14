@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * AuraLiveUpdate — the study session as an Android 16 Live Update.
+ * BonaLiveUpdate — the study session as an Android 16 Live Update.
  *
  * Android 16 (API 36) promotes an ongoing notification built with
  * ProgressStyle to the status bar chip and the top of the lock screen, so a
@@ -41,8 +41,8 @@ import java.util.List;
  * state — tapping it deep-links back into the session and nothing else here
  * changes a card.
  */
-@CapacitorPlugin(name = "AuraLiveUpdate")
-public class AuraLiveUpdatePlugin extends Plugin {
+@CapacitorPlugin(name = "BonaLiveUpdate")
+public class BonaLiveUpdatePlugin extends Plugin {
 
     private static final String CHANNEL_ID = "auramind_study_session";
     private static final int NOTIFICATION_ID = 7301;

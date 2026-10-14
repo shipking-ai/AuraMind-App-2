@@ -4,7 +4,7 @@ import { Capacitor, Preferences } from './nativeShim';
  * Feeds the Android home-screen widget.
  *
  * The widget is a plain RemoteViews AppWidget (see
- * android/app/src/main/java/com/auramind/app/AuraMindWidgetProvider.java). It
+ * android/app/src/main/java/com/auramind/app/BonaMindWidgetProvider.java). It
  * cannot call into the web layer, so the contract is deliberately dumb: this
  * writes two strings into Capacitor Preferences — which is SharedNames
  * "CapacitorStorage" underneath — and the provider reads them when it redraws.

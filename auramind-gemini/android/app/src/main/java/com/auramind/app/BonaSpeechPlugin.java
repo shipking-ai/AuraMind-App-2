@@ -18,21 +18,21 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * AuraSpeech — native text-to-speech for the Android app.
+ * BonaSpeech — native text-to-speech for the Android app.
  *
  * The WebView has no speechSynthesis, so read-aloud, voice study and slide
  * narration all route here on Android (see src/services/voice/speechOutput.ts).
  * Also stores and schedules the spoken study reminder, which has to speak
  * while the app is closed and therefore cannot live in JavaScript.
  */
-@CapacitorPlugin(name = "AuraSpeech")
-public class AuraSpeechPlugin extends Plugin {
+@CapacitorPlugin(name = "BonaSpeech")
+public class BonaSpeechPlugin extends Plugin {
 
-    private AuraSpeechEngine engine;
+    private BonaSpeechEngine engine;
 
     @Override
     public void load() {
-        engine = new AuraSpeechEngine(getContext());
+        engine = new BonaSpeechEngine(getContext());
     }
 
     @Override
@@ -48,7 +48,7 @@ public class AuraSpeechPlugin extends Plugin {
             out.put("defaultLanguage", Locale.getDefault().toLanguageTag());
             JSArray voices = new JSArray();
             if (tts != null) {
-                List<Voice> usable = AuraSpeechEngine.usableVoices(tts);
+                List<Voice> usable = BonaSpeechEngine.usableVoices(tts);
                 for (Voice voice : usable) {
                     JSObject item = new JSObject();
                     item.put("id", voice.getName());
@@ -73,13 +73,13 @@ public class AuraSpeechPlugin extends Plugin {
             call.resolve(out);
             return;
         }
-        String voice = call.getString("voice", AuraSpeechEngine.VOICE_AUTO);
+        String voice = call.getString("voice", BonaSpeechEngine.VOICE_AUTO);
         String lang = call.getString("lang", "en-US");
         float rate = call.getFloat("rate", 1f);
         float pitch = call.getFloat("pitch", 1f);
 
         engine.speak(text, voice, lang, rate, pitch, AudioAttributes.USAGE_MEDIA,
-                new AuraSpeechEngine.UtteranceCallback() {
+                new BonaSpeechEngine.UtteranceCallback() {
                     @Override
                     public void onStart() { }
 
@@ -136,7 +136,7 @@ public class AuraSpeechPlugin extends Plugin {
             config.put("mode", "chosen".equals(call.getString("mode")) ? "chosen" : "random");
             config.put("message", message == null ? "" : message.trim());
             config.put("messages", messages == null ? new JSONArray() : new JSONArray(messages.toString()));
-            config.put("voice", call.getString("voice", AuraSpeechEngine.VOICE_AUTO));
+            config.put("voice", call.getString("voice", BonaSpeechEngine.VOICE_AUTO));
             config.put("lang", call.getString("lang", "en-US"));
             config.put("title", call.getString("title", "BonaMind"));
             SpokenReminderReceiver.saveAndSchedule(getContext(), config);
@@ -150,10 +150,10 @@ public class AuraSpeechPlugin extends Plugin {
     @PluginMethod
     public void previewSpokenReminder(PluginCall call) {
         String text = call.getString("message", "");
-        String voice = call.getString("voice", AuraSpeechEngine.VOICE_AUTO);
+        String voice = call.getString("voice", BonaSpeechEngine.VOICE_AUTO);
         String lang = call.getString("lang", "en-US");
         engine.speak(text, voice, lang, 1f, 1f, AudioAttributes.USAGE_NOTIFICATION_EVENT,
-                new AuraSpeechEngine.UtteranceCallback() {
+                new BonaSpeechEngine.UtteranceCallback() {
                     @Override public void onStart() { }
                     @Override public void onFinish(boolean interrupted) { call.resolve(); }
                     @Override public void onError(String message) { call.reject(message, "speech_failed"); }

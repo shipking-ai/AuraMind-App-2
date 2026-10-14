@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * AuraDevice — the launcher and window integrations a WebView cannot reach.
+ * BonaDevice — the launcher and window integrations a WebView cannot reach.
  *
  *  - Dynamic shortcuts: long-pressing the launcher icon lists the decks the
  *    user studied most recently, next to the three static shortcuts.
@@ -35,8 +35,8 @@ import java.util.List;
  * Every shortcut is an auramind://app/dashboard/study/<deckId> VIEW intent,
  * so it lands in the same deep-link path (and allowlist) as the static ones.
  */
-@CapacitorPlugin(name = "AuraDevice")
-public class AuraDevicePlugin extends Plugin {
+@CapacitorPlugin(name = "BonaDevice")
+public class BonaDevicePlugin extends Plugin {
 
     /** Launchers show at most four or five; three are static. */
     private static final int MAX_DYNAMIC = 2;

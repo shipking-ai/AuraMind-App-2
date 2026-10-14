@@ -31,7 +31,7 @@ import java.util.Set;
  * application context: a BroadcastReceiver's own context is not allowed to
  * bind.
  */
-final class AuraSpeechEngine {
+final class BonaSpeechEngine {
 
     interface ReadyCallback {
         void onReady(TextToSpeech tts);
@@ -68,7 +68,7 @@ final class AuraSpeechEngine {
         }
     }
 
-    AuraSpeechEngine(Context context) {
+    BonaSpeechEngine(Context context) {
         tts = new TextToSpeech(context.getApplicationContext(), status -> main.post(() -> {
             state = status == TextToSpeech.SUCCESS ? 1 : -1;
             if (state == 1) tts.setOnUtteranceProgressListener(progressListener);

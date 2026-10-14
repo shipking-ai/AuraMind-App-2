@@ -43,7 +43,7 @@ class WearSyncService : WearableListenerService() {
                     WearState.lastSyncAt.value = System.currentTimeMillis()
                     // The tile and complication read this same process state —
                     // nudge them now instead of waiting for their schedule.
-                    AuraMindTileService.requestUpdate(this@WearSyncService)
+                    BonaMindTileService.requestUpdate(this@WearSyncService)
                 }
             }
         }

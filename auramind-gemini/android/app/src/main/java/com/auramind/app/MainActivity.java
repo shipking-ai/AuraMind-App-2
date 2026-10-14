@@ -31,10 +31,10 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(BiometricAuthPlugin.class);
         registerPlugin(PlayEngagementPlugin.class);
         registerPlugin(ThemeColorsPlugin.class);
-        registerPlugin(AuraDevicePlugin.class);
-        registerPlugin(AuraSpeechPlugin.class);
-        registerPlugin(AuraListenPlugin.class);
-        registerPlugin(AuraLiveUpdatePlugin.class);
+        registerPlugin(BonaDevicePlugin.class);
+        registerPlugin(BonaSpeechPlugin.class);
+        registerPlugin(BonaListenPlugin.class);
+        registerPlugin(BonaLiveUpdatePlugin.class);
         // Edge-to-edge BEFORE super.onCreate(): Capacitor calls setContentView
         // inside super, and the window flags must be set before content exists.
         // With targetSdk 35+ the system enforces this anyway; doing it here
@@ -86,7 +86,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onPause() {
         super.onPause();
-        sendBroadcast(new Intent(AuraMindWidgetProvider.ACTION_REFRESH)
+        sendBroadcast(new Intent(BonaMindWidgetProvider.ACTION_REFRESH)
                 .setPackage(getPackageName()));
         // The Quick Settings tile reads the same count, for the same reason.
         QuickReviewTileService.requestRefresh(this);

@@ -16,7 +16,7 @@ import android.service.quicksettings.TileService;
  * Quick Settings tile: "Review · 12 due", one swipe down from anywhere.
  *
  * It reads the same CapacitorStorage prefs as the home-screen widget (see
- * AuraMindWidgetProvider and src/lib/widgetBridge.ts), so the tile and the
+ * BonaMindWidgetProvider and src/lib/widgetBridge.ts), so the tile and the
  * widget always agree on the count and neither reimplements FSRS in Java.
  *
  * Tapping collapses the shade and opens the review queue through the

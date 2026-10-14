@@ -74,7 +74,7 @@ public class SpokenReminderReceiver extends BroadcastReceiver {
         Handler main = new Handler(Looper.getMainLooper());
         AudioManager audio = (AudioManager) app.getSystemService(Context.AUDIO_SERVICE);
         AudioFocusRequest focus = requestFocus(audio);
-        AuraSpeechEngine engine = new AuraSpeechEngine(app);
+        BonaSpeechEngine engine = new BonaSpeechEngine(app);
 
         final boolean[] done = {false};
         Runnable finish = () -> {
@@ -86,10 +86,10 @@ public class SpokenReminderReceiver extends BroadcastReceiver {
         };
         main.postDelayed(finish, SPEAK_TIMEOUT_MS);
 
-        engine.speak(message, config.optString("voice", AuraSpeechEngine.VOICE_AUTO),
+        engine.speak(message, config.optString("voice", BonaSpeechEngine.VOICE_AUTO),
                 config.optString("lang", "en-US"), 1f, 1f,
                 AudioAttributes.USAGE_NOTIFICATION_EVENT,
-                new AuraSpeechEngine.UtteranceCallback() {
+                new BonaSpeechEngine.UtteranceCallback() {
                     @Override public void onStart() { }
                     @Override public void onFinish(boolean interrupted) { main.post(finish); }
                     @Override public void onError(String error) { main.post(finish); }
