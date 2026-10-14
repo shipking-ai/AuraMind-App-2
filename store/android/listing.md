@@ -92,7 +92,7 @@ Expected rating: **PEGI 3 / ESRB E / IARC General** (everyone, no objectionable 
 
 - **Pricing:** Free
 - **In-app purchases:** Yes (BonaMind Premium subscription — Stripe backs this; Play subs are auto-mapped from Stripe via RevenueCat webhook — see `stripe-webhook.ts`).
-- **Ads:** Planned for the free tier only — Google AdMob native/rewarded placements; Premium removes ads. Gravity is an optional future integration for clearly labeled sponsored suggestions in Prof. Aura.
+- **Ads:** Planned for the free tier only — Google AdMob native/rewarded placements; Premium removes ads. Gravity is an optional future integration for clearly labeled sponsored suggestions in Prof. Linnea.
 - **Target age:** 13+ (US COPPA safe-harbor)
 - **Privacy policy URL:** `https://bonamind.app/privacy`
 - **Terms of service URL:** `https://bonamind.app/terms`

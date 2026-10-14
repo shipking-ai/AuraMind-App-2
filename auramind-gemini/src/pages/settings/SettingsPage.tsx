@@ -593,7 +593,7 @@ export default function SettingsPage() {
 
         {/* AI Generation */}
         <div className="bg-[#111118] border border-[#2A2A3A] rounded-xl p-6">
-          <SectionHeader icon={Zap} title="AI Generation" subtitle="Defaults applied when Aura builds new cards." />
+          <SectionHeader icon={Zap} title="AI Generation" subtitle="Defaults applied when Linnea builds new cards." />
           <div className="space-y-1">
             <SettingRow
               label="AI engine"
@@ -761,7 +761,7 @@ export default function SettingsPage() {
                     <Select value={ttsVoice} onChange={chooseVoice} options={voiceOptions} />
                     <button
                       type="button"
-                      onClick={() => void speak("Hi, I'm Prof. Aura. This is the voice I'll read your cards in.", { voice: ttsVoice })}
+                      onClick={() => void speak("Hi, I'm Prof. Linnea. This is the voice I'll read your cards in.", { voice: ttsVoice })}
                       className="rounded-lg border border-[#2A2A3A] px-3 py-1.5 text-xs text-[#F0EFFE] hover:border-[#7C3AED]/50"
                     >
                       Test
@@ -1022,7 +1022,7 @@ function AvatarEditor({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[#F0EFFE] text-sm font-medium">
-            {hasUploaded ? 'Custom avatar' : 'Using Prof. Aura as default'}
+            {hasUploaded ? 'Custom avatar' : 'Using Prof. Linnea as default'}
           </p>
           <p className="text-[#7A7A96] text-[11px] mt-1 leading-relaxed">
             PNG, JPG, WEBP up to 5 MB · GIF and SVG also supported (animated GIFs play as themselves).

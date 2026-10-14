@@ -93,7 +93,7 @@
 - [ ] Use rewarded ads only when the learner explicitly opts in (for example,
       an extra AI generation or audio allowance).
 - [ ] Evaluate Gravity separately for clearly labeled sponsored suggestions
-      inside Prof. Aura responses; it is optional and not a replacement for
+      inside Prof. Linnea responses; it is optional and not a replacement for
       standard Android ad inventory.
 - [ ] Complete consent, Data safety, and Google Play "Contains ads" disclosures
       before enabling the ad SDK in a release build.

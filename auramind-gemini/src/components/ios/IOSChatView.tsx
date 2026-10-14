@@ -1,12 +1,12 @@
 /**
- * Prof. Aura on iPhone — not a messenger. Three ways to learn with Aura,
+ * Prof. Linnea on iPhone — not a messenger. Three ways to learn with Linnea,
  * switched from the top of the screen and remembered:
  *
- *  - Talk: Aura's orb fills the top of the screen and reacts — breathing at
+ *  - Talk: Linnea's orb fills the top of the screen and reacts — breathing at
  *    rest, swirling while it thinks, pulsing while it speaks. Hold the big
  *    button to ask out loud; the answer is spoken and shown as captions.
  *  - Notebook: the conversation is a page of BonaMind's paper notebook. Your
- *    questions are handwritten in the margin, Aura's answers are typeset,
+ *    questions are handwritten in the margin, Linnea's answers are typeset,
  *    and key terms are highlighted like a marker — tap one to make a card.
  *  - Cards: every answer arrives as a stack of swipeable cards (the idea,
  *    more, check yourself); save any card to the deck with one tap.
@@ -72,7 +72,7 @@ export interface IOSChatViewProps {
   onHoldEnd: () => void;
   speaking: boolean;
   onToggleSpeaking: () => void;
-  /** True while Aura's voice is actually playing. */
+  /** True while Linnea's voice is actually playing. */
   voicePlaying: boolean;
   onModeChange?: (mode: AuraChatMode) => void;
 }
@@ -332,7 +332,7 @@ function TalkMode({
 
   const lastAura = [...messages].reverse().find((m) => m.role === "assistant" && m.content);
   // Captions show what is being said now: the live transcript while
-  // listening, else the last sentence or two of Aura's latest answer.
+  // listening, else the last sentence or two of Linnea's latest answer.
   const caption = listening
     ? liveTranscript || "I'm listening…"
     : lastAura
@@ -342,7 +342,7 @@ function TalkMode({
     listening: "Listening",
     thinking: "Thinking",
     speaking: "Speaking",
-    idle: messages.length ? "Your turn" : "Prof. Aura",
+    idle: messages.length ? "Your turn" : "Prof. Linnea",
   }[state];
   const holding = useRef(false);
   const start = () => {
@@ -446,7 +446,7 @@ function NotebookMode({
   const [made, setMade] = useState<string[]>([]);
   const date = new Date().toLocaleDateString(undefined, { month: "long", day: "numeric" });
 
-  // Tap a highlighted term (Aura's **bold**) to turn it into a card whose
+  // Tap a highlighted term (Linnea's **bold**) to turn it into a card whose
   // back is the sentence it appeared in.
   const onPageClick = async (e: React.MouseEvent<HTMLDivElement>) => {
     const el = (e.target as HTMLElement).closest("strong");
@@ -473,7 +473,7 @@ function NotebookMode({
         <div className="ios-notebook-empty">
           <p className="ios-note-hand">Ask a question in the margin ✎</p>
           <p className="ios-note-small">
-            Aura answers on the page. Tap a highlighted term to turn it into a flashcard.
+            Linnea answers on the page. Tap a highlighted term to turn it into a flashcard.
           </p>
           <Starters starters={starters} onSendPrompt={onSendPrompt} variant="paper" />
         </div>
@@ -488,7 +488,7 @@ function NotebookMode({
               {m.content ? (
                 <div className="ios-note-typeset">{renderMarkdown(m.content)}</div>
               ) : isStreaming && i === messages.length - 1 ? (
-                <p className="ios-note-writing">Aura is writing…</p>
+                <p className="ios-note-writing">Linnea is writing…</p>
               ) : null}
               {m.quizBlock && !(isStreaming && i === messages.length - 1) && (
                 <QuizBlock
@@ -509,7 +509,7 @@ function NotebookMode({
                     onSaveCard(m.id);
                   }}
                 >
-                  <Plus aria-hidden /> Save Aura&rsquo;s card
+                  <Plus aria-hidden /> Save Linnea&rsquo;s card
                 </button>
               )}
             </div>
@@ -650,7 +650,7 @@ function CardsMode({
           <span />
         </div>
         <h2>Answers you can keep</h2>
-        <p>Aura replies in cards you can swipe through and save to your deck.</p>
+        <p>Linnea replies in cards you can swipe through and save to your deck.</p>
         <Starters starters={starters} onSendPrompt={onSendPrompt} variant="glass" />
       </div>
     );
@@ -751,7 +751,7 @@ export function IOSChatView(props: IOSChatViewProps) {
               <ProfAura variant={isStreaming ? "thinking" : "badge"} size={22} />
             </span>
             <span>
-              <span className="ios-chat-name">Prof. Aura</span>
+              <span className="ios-chat-name">Prof. Linnea</span>
               <span className="ios-chat-sub">
                 {isStreaming ? "thinking…" : deck ? deck.title : "Your study coach"}
                 {decks.length > 0 && <ChevronDown aria-hidden />}
@@ -779,7 +779,7 @@ export function IOSChatView(props: IOSChatViewProps) {
         </div>
         <div className="ios-chat-modes">
           <IOSSegmented
-            label="How to talk with Aura"
+            label="How to talk with Linnea"
             value={mode}
             onChange={setMode}
             options={[
@@ -848,7 +848,7 @@ export function IOSChatView(props: IOSChatViewProps) {
           isStreaming={isStreaming}
           listening={listening}
           onToggleMic={onToggleMic}
-          placeholder={mode === "notebook" ? "Ask in the margin…" : "Ask Prof. Aura…"}
+          placeholder={mode === "notebook" ? "Ask in the margin…" : "Ask Prof. Linnea…"}
           variant={mode === "notebook" ? "paper" : "glass"}
         />
       )}

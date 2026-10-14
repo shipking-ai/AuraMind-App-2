@@ -774,7 +774,7 @@ async function handleAdminHealth(req: VercelRequest, res: VercelResponse, supaba
           currency: 'usd',
           // NOTE: do not pass payment_method_types — dynamic payment methods
           // must stay enabled (stripe-best-practices: omit unless Terminal).
-          description: 'AuraMind health check — test payment (not charged)',
+          description: 'BonaMind health check — test payment (not charged)',
           metadata: { source: 'health_check', timestamp: new Date().toISOString() },
         });
         results.testPaymentIntentCreated = paymentIntent.status === 'requires_payment_method';
@@ -2151,7 +2151,7 @@ async function runDueReminderPushes(supabase: any) {
   const report = await sendPushToUsers(
     supabase,
     userIds,
-    { title: 'AuraMind', body: 'Cards are coming due — a short session keeps them fresh.', link: 'auramind://app/dashboard' },
+    { title: 'BonaMind', body: 'Cards are coming due — a short session keeps them fresh.', link: 'auramind://app/dashboard' },
   );
   return {
     configured: true,
@@ -2352,7 +2352,7 @@ async function handleFetchUrl(req: VercelRequest, res: VercelResponse) {
   let response: Response;
   try {
     response = await fetch(guard.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AuraMind/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BonaMind/1.0)' },
       signal: AbortSignal.timeout(15000),
       redirect: 'follow',
     });
@@ -2431,7 +2431,7 @@ async function handleFetchYouTubeTranscript(req: VercelRequest, res: VercelRespo
   let pageHtml = '';
   try {
     const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AuraMind/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BonaMind/1.0)' },
       signal: AbortSignal.timeout(10000),
     });
     pageHtml = await pageRes.text();

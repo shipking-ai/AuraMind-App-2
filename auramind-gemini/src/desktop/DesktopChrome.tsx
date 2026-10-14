@@ -12,7 +12,7 @@ import { isDesktopApp } from '../lib/platform';
 const TITLES: Array<[string, string]> = [
   ['/dashboard/decks', 'Library'],
   ['/dashboard/study', 'Study'],
-  ['/dashboard/chat', 'Prof. Aura'],
+  ['/dashboard/chat', 'Prof. Linnea'],
   ['/dashboard/generator', 'New course'],
   ['/dashboard/classes', 'Classes'],
   ['/dashboard/settings', 'Settings'],

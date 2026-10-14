@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="geometricPrecision" role="img" aria-labelledby="orbit-title orbit-description">
-  <title id="orbit-title">Prof. Aura — Orbit Core</title>
+  <title id="orbit-title">Prof. Linnea — Orbit Core</title>
   <desc id="orbit-description">An open orbital ring surrounding a luminous central core.</desc>
   <defs>
     <linearGradient id="orbit-bg" x1="48" y1="36" x2="464" y2="474" gradientUnits="userSpaceOnUse">

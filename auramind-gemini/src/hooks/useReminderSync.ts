@@ -5,6 +5,7 @@ import {
   buildReminderNotifications,
   REMINDER_IDS,
   SPOKEN_REMINDER_MESSAGES,
+  currentReminderMessage,
   spokenReminderTime,
   type ScheduledReminder,
   type SpokenReminderMode,
@@ -75,7 +76,8 @@ export function useReminderSync(mode: ReminderSyncMode = 'maintain'): void {
   const [weeklySummary] = useAppPreference('bonamind_weeklySummary', false);
   const [reminderTime] = useAppPreference('bonamind_reminderTime', '09:00');
   const [spokenMode] = useAppPreference<SpokenReminderMode>('bonamind_spokenReminder', 'off');
-  const [spokenMessage] = useAppPreference('bonamind_spokenReminderMessage', '');
+  const [storedSpokenMessage] = useAppPreference('bonamind_spokenReminderMessage', '');
+  const spokenMessage = currentReminderMessage(storedSpokenMessage);
   const [voice] = useAppPreference<string>(VOICE_PREF_KEY, VOICE_AUTO);
 
   const { requestPermissions, checkPermissions, schedule, cancel } = useLocalNotifications();

@@ -31,7 +31,7 @@ import { useReminderSync } from "../../hooks/useReminderSync";
 import { useVoiceOptions } from "../../hooks/useVoiceOptions";
 import { AuraSpeech } from "../../lib/auraSpeech";
 import { deviceName, isAndroidApp } from "../../lib/platform";
-import { SPOKEN_REMINDER_MESSAGES, type SpokenReminderMode } from "../../lib/reminderSchedule";
+import { SPOKEN_REMINDER_MESSAGES, currentReminderMessage, type SpokenReminderMode } from "../../lib/reminderSchedule";
 import {
   resetRandomVoice,
   speak,
@@ -245,10 +245,13 @@ export default function AndroidSettingsScreen() {
     "bonamind_spokenReminder",
     "off",
   );
-  const [spokenReminderMessage, setSpokenReminderMessage] = useStoredValue<string>(
+  const [storedSpokenReminderMessage, setSpokenReminderMessage] = useStoredValue<string>(
     "bonamind_spokenReminderMessage",
     SPOKEN_REMINDER_MESSAGES[0],
   );
+  // Saved as text, so a line chosen before the rename is shown and spoken in
+  // its current wording (see currentReminderMessage).
+  const spokenReminderMessage = currentReminderMessage(storedSpokenReminderMessage);
 
   const chooseVoice = (next: string) => {
     // A fresh pick every time Random is chosen, so "Test voice" shows it off.
@@ -259,7 +262,7 @@ export default function AndroidSettingsScreen() {
   const testVoice = async () => {
     hapticTap();
     const { interrupted } = await speak(
-      "Hi, I'm Prof. Aura. This is the voice I'll read your cards in.",
+      "Hi, I'm Prof. Linnea. This is the voice I'll read your cards in.",
       { voice: ttsVoice },
     );
     if (interrupted) toast.error("Couldn't play the voice. Check your media volume.");
@@ -681,7 +684,7 @@ export default function AndroidSettingsScreen() {
       <AndroidSettingsSection
         icon={Sparkles}
         title="Generation"
-        detail="Set the defaults Aura uses when making material."
+        detail="Set the defaults Linnea uses when making material."
       >
         <AndroidSettingRow label="Cards per generation">
           <AndroidSelect
@@ -788,7 +791,7 @@ export default function AndroidSettingsScreen() {
 
       <AndroidSettingsSection
         icon={Volume2}
-        title="Aura behavior"
+        title="Linnea behavior"
         detail="Tune voice and feedback for hands-free study."
       >
         <AndroidSettingRow label="Sound effects">

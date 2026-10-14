@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 /**
- * TypingIndicator — animated dots that appear while Prof. Aura is
+ * TypingIndicator — animated dots that appear while Prof. Linnea is
  * generating a response. Pure presentational; no side-effects.
  *
  * Usage:

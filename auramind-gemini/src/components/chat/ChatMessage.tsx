@@ -219,7 +219,7 @@ export default function ChatMessage({
       className="flex justify-start"
     >
       <div className="flex items-end gap-2.5 max-w-[85%] w-full">
-        {/* Prof. Aura avatar — animated SVG */}
+        {/* Prof. Linnea avatar — animated SVG */}
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#7C3AED] via-[#EC4899] to-[#06B6D4] flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/15 p-[3px]">
           <ProfAura variant={isStreaming ? 'streaming' : 'badge'} size={22} />
         </div>

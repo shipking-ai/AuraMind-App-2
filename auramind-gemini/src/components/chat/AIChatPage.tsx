@@ -107,7 +107,7 @@ function buildInitialContext(decks: Deck[], cards: Card[]): ChatContext {
 /**
  * Companion-mode context: no deck required. We fill EVERY ChatContext field
  * with a sensible value (deckId='', deckCardCount=0, etc.) so the prompt
- * factory never interpolates "undefined" into Prof. Aura's preamble. The
+ * factory never interpolates "undefined" into Prof. Linnea's preamble. The
  * "Companion" deckName is a sentinel so the prompt branch can recognize
  * companion mode without reading mode (defensive in case mode isn't bridged).
  */
@@ -129,7 +129,7 @@ function fmtRelShort(ts: number, now: number = Date.now()): string {
   return new Date(ts).toLocaleDateString();
 }
 
-/** Prof. Aura's suggested starter prompts — deck-aware */
+/** Prof. Linnea's suggested starter prompts — deck-aware */
 function getStarterPrompts(context: ChatContext) {
   const { deckName, cardsDueToday, weakCards } = context;
   const hasWeak = weakCards.length > 0;
@@ -171,7 +171,7 @@ export default function AIChatPage() {
   const workspace = useDashboardWorkspace();
   const userId = useCurrentUserId();
   // Real study data (streak, 7-day retention, last-session accuracy) fed into
-  // the tutor prompt so Aura references what the student actually knows.
+  // the tutor prompt so Linnea references what the student actually knows.
   const stats = useStudyStats(userId);
   const [localDecks, setLocalDecks] = useState<Deck[]>([]);
   const [localCards, setLocalCards] = useState<Card[]>([]);
@@ -309,7 +309,7 @@ export default function AIChatPage() {
         .sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null
     );
   }, [allSessions]);
-  // Mic + mood for Prof. Aura — mic starts/stops on user click so we never
+  // Mic + mood for Prof. Linnea — mic starts/stops on user click so we never
   // surprise the user with a permission prompt. Mood is a pure derivation
   // and accepts whatever streak/lastStudyAt data is available today.
   const mic = useMicVolume();
@@ -386,7 +386,7 @@ export default function AIChatPage() {
 
   const handleSend = useCallback(() => {
     if (chat.isStreaming) return;
-    // Attachments are flattened onto the prompt body so Prof. Aura sees
+    // Attachments are flattened onto the prompt body so Prof. Linnea sees
     // them inline without a separate schema for "messages with files".
     const attachmentBody = attachmentsToPrompt(attachments);
     const composed = [input.trim(), attachmentBody].filter(Boolean).join("\n\n");
@@ -505,7 +505,7 @@ export default function AIChatPage() {
   }, [chat, sr]);
   const handleModeChange = useCallback(
     (mode: AuraChatMode) => {
-      // Talk mode is a spoken conversation: Aura answers out loud.
+      // Talk mode is a spoken conversation: Linnea answers out loud.
       if (mode === "talk" && !tts.isEnabled) tts.setEnabled(true);
     },
     [tts],
@@ -616,7 +616,7 @@ export default function AIChatPage() {
               </div>
               <div>
                 <h1 className="text-[#F0EFFE] text-sm font-semibold flex items-center gap-1.5">
-                  Prof. Aura
+                  Prof. Linnea
                   <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] font-medium">
                     Online
                   </span>
@@ -671,7 +671,7 @@ export default function AIChatPage() {
                           Voice replies
                         </span>
                         <span className="block text-[10px] text-[#7A7A96]">
-                          Prof. Aura reads its answers aloud
+                          Prof. Linnea reads answers aloud
                         </span>
                       </span>
                       <span
@@ -689,7 +689,7 @@ export default function AIChatPage() {
 
                     {/* Personality */}
                     <p className="text-[9px] uppercase tracking-widest text-[#7A7A96] mb-2 px-1">
-                      Prof. Aura's Personality
+                      Prof. Linnea's Personality
                     </p>
                     <div className="space-y-1">
                       {PROF_AURA_PERSONALITY_OPTIONS.map((opt) => {
@@ -765,7 +765,7 @@ export default function AIChatPage() {
                   onClick={() => chat.setMode(mode)}
                   title={
                     mode === "companion"
-                      ? "Talk with Prof. Aura without a deck — chat, coaching, motivation"
+                      ? "Talk with Prof. Linnea without a deck — chat, coaching, motivation"
                       : MODE_LABELS[mode]
                   }
                   className={`px-3 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap ${
@@ -836,21 +836,21 @@ export default function AIChatPage() {
                     {
                       label: "Ask me about my day",
                       icon: MessageCircle,
-                      onClick: () => chat.sendMessage("Hey Prof. Aura — how am I doing today?"),
+                      onClick: () => chat.sendMessage("Hey Prof. Linnea — how am I doing today?"),
                     },
                   ]}
                 />
               </div>
             ) : chat.messages.length === 0 ? (
-              /* ─── Empty state: Prof. Aura welcome ─── */
+              /* ─── Empty state: Prof. Linnea welcome ─── */
               <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in text-center">
                 {/* Avatar + heading pair — the hero intentionally avoids
                     a "brand eyebrow" strip because the route header already
-                    surfaces "Prof. Aura · Online" and the heading below
+                    surfaces "Prof. Linnea · Online" and the heading below
                     shows deck/card counts. Adding a third repetition would
                     erode the premium feel; the avatar's breathing aura ring
                     is the only ambient decoration. */}
-                {/* Prof. Aura avatar */}
+                {/* Prof. Linnea avatar */}
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -905,7 +905,7 @@ export default function AIChatPage() {
                   <h2 className="text-3xl sm:text-4xl font-bold text-[#F0EFFE] mb-3 tracking-tight">
                     Hey, I'm{" "}
                     <span className="bg-gradient-to-r from-[#7C3AED] via-[#EC4899] to-[#06B6D4] bg-clip-text text-transparent">
-                      Prof. Aura
+                      Prof. Linnea
                     </span>
                   </h2>
                   <p className="text-[#8A8AA3] text-sm sm:text-base max-w-lg leading-relaxed mb-8">
@@ -1072,7 +1072,7 @@ export default function AIChatPage() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={
-                    mic.isActive ? "Listening — speak or type…" : "Ask Prof. Aura anything..."
+                    mic.isActive ? "Listening — speak or type…" : "Ask Prof. Linnea anything..."
                   }
                   rows={1}
                   className="flex-1 bg-transparent border-none outline-none px-5 py-3.5 text-sm text-[#F0EFFE] placeholder-[#7A7A96] resize-none max-h-[140px] leading-relaxed"

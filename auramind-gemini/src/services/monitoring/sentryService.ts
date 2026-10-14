@@ -18,7 +18,7 @@ export function initSentry(): void {
     // v11 removes that option entirely: an unset `dataCollection` collects
     // userInfo, cookies, all HTTP request/response bodies, database query data
     // and genAI inputs+outputs *by default*. For this app that would mean
-    // students' flashcard text and Prof. Aura conversations - which go to
+    // students' flashcard text and Prof. Linnea conversations - which go to
     // /api/ai - plus auth and subscription payloads, starting to reach Sentry
     // on a merge nobody would read as a privacy change.
     //

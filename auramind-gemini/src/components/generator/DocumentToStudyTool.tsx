@@ -118,7 +118,7 @@ export function DocumentToStudyTool({ createDeck, addCardsToDeck }: DocumentToSt
         Document → Study Material
       </h3>
       <p className="text-[11px] text-zinc-500 mb-4">
-        Upload a PDF, DOCX, PPTX or TXT. Aura extracts the text and turns it into organized notes, slides, or flashcards.
+        Upload a PDF, DOCX, PPTX or TXT. Linnea extracts the text and turns it into organized notes, slides, or flashcards.
       </p>
 
       {/* File dropzone */}

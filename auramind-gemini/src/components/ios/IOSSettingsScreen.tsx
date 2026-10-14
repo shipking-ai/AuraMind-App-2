@@ -262,7 +262,7 @@ export function IOSSettingsScreen() {
           onChange={(next) => {
             if (next === VOICE_RANDOM) resetRandomVoice();
             setVoice(next);
-            void speak("Hi, I'm Prof. Aura. This is how I'll read your cards.", { voice: next });
+            void speak("Hi, I'm Prof. Linnea. This is how I'll read your cards.", { voice: next });
           }}
         />
         <div className="ios-section-footer" style={{ padding: "10px 32px 0" }}>

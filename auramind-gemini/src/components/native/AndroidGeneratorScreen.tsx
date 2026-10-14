@@ -60,7 +60,7 @@ function parseJsonResponse(content: string): any {
     .replace(/```/g, "")
     .trim();
   const match = cleaned.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("Aura returned an unreadable response.");
+  if (!match) throw new Error("Linnea returned an unreadable response.");
   try {
     return JSON.parse(match[0]);
   } catch {
@@ -305,7 +305,7 @@ export default function AndroidGeneratorScreen() {
       } else if (kind === "flashcards" && Array.isArray(parsed.cards) && parsed.cards.length > 0) {
         setFlashcards(parsed.cards);
       } else {
-        throw new Error("Aura did not return enough study material.");
+        throw new Error("Linnea did not return enough study material.");
       }
     } catch (cause) {
       hapticError();
@@ -361,7 +361,7 @@ export default function AndroidGeneratorScreen() {
     <div className="android-native-generator" data-testid="android-generator-screen">
       <div className="android-native-screen-heading">
         <div>
-          <p className="android-eyebrow">CREATE WITH AURA</p>
+          <p className="android-eyebrow">CREATE WITH LINNEA</p>
           <h1>Make something worth remembering.</h1>
           <p>Build a focused study session from a thought, file, video, or voice memo.</p>
         </div>
@@ -545,7 +545,7 @@ export default function AndroidGeneratorScreen() {
             <div className="android-native-control-row">
               <div>
                 <span>Material count</span>
-                <small>How much should Aura make?</small>
+                <small>How much should Linnea make?</small>
               </div>
               <div className="android-count-control">
                 <button
@@ -598,7 +598,7 @@ export default function AndroidGeneratorScreen() {
             disabled={generating || loadingSource || !sourceReady}
           >
             <Sparkles className="h-5 w-5" aria-hidden />{" "}
-            {generating ? "Aura is building…" : "Generate study material"}{" "}
+            {generating ? "Linnea is building…" : "Generate study material"}{" "}
             <Play className="h-4 w-4" aria-hidden />
           </button>
         </>
@@ -668,7 +668,7 @@ export default function AndroidGeneratorScreen() {
 
       <div className="android-native-tip">
         <BookOpen className="h-4 w-4" aria-hidden />
-        <span>Aura works best with one clear topic and a small first session.</span>
+        <span>Linnea works best with one clear topic and a small first session.</span>
       </div>
     </div>
   );

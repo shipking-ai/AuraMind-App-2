@@ -72,9 +72,9 @@
 		</dict>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>AuraMind listens to your spoken answers during voice study.</string>
+	<string>BonaMind listens to your spoken answers during voice study.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>AuraMind turns your spoken answers into text so it can check them during voice study.</string>
+	<string>BonaMind turns your spoken answers into text so it can check them during voice study.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- The study session appears on the Lock Screen and in the Dynamic

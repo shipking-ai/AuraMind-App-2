@@ -27,8 +27,8 @@ const PUBLIC_BRAND_DIR = resolve(ROOT, 'public', 'favicons,logos');
 const STORE_DIR = resolve(ROOT, '..', 'store', 'graphics', 'android');
 
 const SVG = readFileSync(resolve(PUBLIC_BRAND_DIR, 'favicon.svg'), 'utf8');
-const FOREGROUND_SVG = readFileSync(resolve(PUBLIC_BRAND_DIR, 'prof-aura-foreground.svg'), 'utf8');
-const MONOCHROME_SVG = readFileSync(resolve(PUBLIC_BRAND_DIR, 'prof-aura-monochrome.svg'), 'utf8');
+const FOREGROUND_SVG = readFileSync(resolve(PUBLIC_BRAND_DIR, 'prof-linnea-foreground.svg'), 'utf8');
+const MONOCHROME_SVG = readFileSync(resolve(PUBLIC_BRAND_DIR, 'prof-linnea-monochrome.svg'), 'utf8');
 
 const BG_COLOR = '#211349';          // adaptive icon background (matches the selected Prism Aperture tile)
 const SPLASH_BG = '#0a0a0a';         // app background (PWA theme_color)
@@ -85,7 +85,7 @@ async function generate() {
 
   // ── Browser/PWA fallbacks ────────────────────────────────────────
   // The SVG is the primary favicon; these PNGs keep older browsers,
-  // install prompts, and PWA manifests on the same Prof. Aura artwork.
+  // install prompts, and PWA manifests on the same Prof. Linnea artwork.
   const webIcons = [
     ['favicon-16.png', 16],
     ['favicon-32.png', 32],

@@ -269,7 +269,7 @@ const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ isOpen, onClose
                           <User size={25} className="text-pink-200" />
                         </div>
                         <h2 className="text-2xl font-black tracking-tight text-white">
-                          Choose how Prof. Aura sounds.
+                          Choose how Prof. Linnea sounds.
                         </h2>
                         <p className="mt-3 text-sm leading-6 text-[#9aa8c4]">
                           Pick a tone for explanations and nudges. This is always available in your

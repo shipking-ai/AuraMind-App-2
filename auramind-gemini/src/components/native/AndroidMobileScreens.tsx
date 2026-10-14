@@ -472,7 +472,7 @@ export function AndroidOverview() {
             }
           />
           <AndroidAction
-            label="Ask Aura"
+            label="Ask Linnea"
             hint="Explain a hard concept"
             icon={MessageCircle}
             tone="pink"
@@ -795,7 +795,7 @@ export function AndroidGeneratorFrame({ children }: { children: React.ReactNode 
           <Sparkles className="h-6 w-6" aria-hidden />
         </span>
         <div>
-          <p className="android-eyebrow">CREATE WITH AURA</p>
+          <p className="android-eyebrow">CREATE WITH LINNEA</p>
           <h1>Turn anything into a study session.</h1>
           <p>
             Start with a topic, document, video, or voice memo. BonaMind does the heavy lifting.

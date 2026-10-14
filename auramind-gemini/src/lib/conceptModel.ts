@@ -1,10 +1,10 @@
 /**
- * conceptModel — the concept-level knowledge model behind Prof. Aura.
+ * conceptModel — the concept-level knowledge model behind Prof. Linnea.
  *
  * Cards don't carry tags, so concepts are derived from card *fronts*: we
  * extract meaningful terms, group weak cards by the term that best covers
  * them, and aggregate lapses/difficulty per concept. The result is what lets
- * Aura say "you struggle with photosynthesis — specifically the Calvin
+ * Linnea say "you struggle with photosynthesis — specifically the Calvin
  * cycle" instead of "you forgot 4 cards."
  *
  * Pure functions only — no Supabase, no AI calls, unit-testable.

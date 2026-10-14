@@ -50,7 +50,7 @@ describe('buildPriorSessionMemory', () => {
     expect(mem).toBeDefined();
     expect(mem).toContain('Chemistry');
     expect(mem).toContain('Student: what is a mole?');
-    expect(mem).toContain('Aura: A mole is 6.022e23 particles.');
+    expect(mem).toContain('Linnea: A mole is 6.022e23 particles.');
     expect(mem).not.toContain('old question');
   });
 

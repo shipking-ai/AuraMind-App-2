@@ -56,7 +56,7 @@ const USER_NAV_SECTIONS: NavSection[] = [
   {
     title: 'Create',
     items: [
-      { label: 'Prof. Aura', icon: GraduationCap, path: '/dashboard/chat' },
+      { label: 'Prof. Linnea', icon: GraduationCap, path: '/dashboard/chat' },
       { label: 'Generator', icon: Sparkles, path: '/dashboard/generator' },
     ],
   },
@@ -725,7 +725,7 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
             </>
           ) : (
             <>
-              Aura<span className="bg-gradient-to-r from-violet-200 to-fuchsia-300 bg-clip-text text-transparent font-script font-normal tracking-normal">Mind</span>
+              Bona<span className="bg-gradient-to-r from-violet-200 to-fuchsia-300 bg-clip-text text-transparent font-script font-normal tracking-normal">Mind</span>
             </>
           )}
         </div>

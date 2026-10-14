@@ -29,7 +29,7 @@ const TABS: Tab[] = [
   },
   {
     path: "/dashboard/chat",
-    label: "Aura",
+    label: "Linnea",
     icon: MessageCircle,
     match: (p) => p.startsWith("/dashboard/chat") || p.startsWith("/dashboard/aura"),
   },

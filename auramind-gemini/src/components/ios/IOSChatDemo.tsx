@@ -1,5 +1,5 @@
 /**
- * A sample Prof. Aura conversation for the iOS preview screens, so each chat
+ * A sample Prof. Linnea conversation for the iOS preview screens, so each chat
  * mode can be seen with real content without calling the AI. Preview only
  * (see IOSVisualPreview); the live chat is AIChatPage.
  */

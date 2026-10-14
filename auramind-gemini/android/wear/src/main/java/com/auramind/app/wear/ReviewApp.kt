@@ -520,7 +520,7 @@ private fun IdleScreen(onLoadSample: (() -> Unit)? = null) {
         ) {
             item {
                 Text(
-                    text = "Open AuraMind on your phone to sync your cards",
+                    text = "Open BonaMind on your phone to sync your cards",
                     fontSize = 14.sp,
                     color = MaterialTheme.colors.onBackground,
                     textAlign = TextAlign.Center,

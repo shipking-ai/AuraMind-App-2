@@ -1,5 +1,5 @@
 /**
- * chatSessionService — Supabase persistence layer for Prof. Aura conversations.
+ * chatSessionService — Supabase persistence layer for Prof. Linnea conversations.
  *
  * Strategy:
  *   - Source of truth on the client is still localStorage (instant reads,

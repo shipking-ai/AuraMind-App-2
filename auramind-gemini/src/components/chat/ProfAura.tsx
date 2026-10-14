@@ -16,7 +16,7 @@ export interface ProfAuraProps {
 
 // Prism Aperture geometry translated from the canonical favicon into the
 // avatar's 0..100 viewBox. One faceted outer frame, one inner aperture, and
-// one bright core keep Prof. Aura recognizable without drawing a face.
+// one bright core keep Prof. Linnea recognizable without drawing a face.
 const OUTER_PATH = "M 50 15.4 L 82.8 50 L 50 84.6 L 17.2 50 Z";
 const INNER_PATH = "M 50 29.5 L 69.7 50 L 50 70.5 L 30.3 50 Z";
 const CORE_X = 50;

@@ -1,22 +1,22 @@
 The only study app where the AI tutor lives ON YOUR PHONE — private, offline, and free forever.
 
-Meet Prof. Aura. She turns any PDF, video, or topic into flashcards and quizzes, remembers exactly which cards you struggle with, and adapts her teaching to you — with deeper dives, counter-examples, and questions that target your weak spots.
+Meet Prof. Linnea. She turns any PDF, video, or topic into flashcards and quizzes, remembers exactly which cards you struggle with, and adapts her teaching to you — with deeper dives, counter-examples, and questions that target your weak spots.
 
-WHAT MAKES AURAMIND DIFFERENT
+WHAT MAKES BONAMIND DIFFERENT
 
 • On-device AI engine — the tutor can run entirely on your phone. No account, no servers, no data leaving your device. Your study session works on a plane, in a tunnel, or anywhere without signal. Download a small model once and study privately forever. No other flashcard app does this.
-• Prof. Aura remembers you — she tracks every card you rate and reshapes your reviews around your actual memory, not a generic algorithm.
-• FSRS v5 spaced repetition — the modern scheduler shown to retain ~30% more than legacy Anki-style systems. The longer you use AuraMind, the faster you remember.
-• AI-generated flashcards in under a minute — drop in a PDF, a video link, or just a topic; AuraMind builds a clean Q&A deck you can edit.
-• Voice study mode — study hands-free: AuraMind reads cards aloud and listens to your spoken answers, perfect for commutes and walks.
+• Prof. Linnea remembers you — she tracks every card you rate and reshapes your reviews around your actual memory, not a generic algorithm.
+• FSRS v5 spaced repetition — the modern scheduler shown to retain ~30% more than legacy Anki-style systems. The longer you use BonaMind, the faster you remember.
+• AI-generated flashcards in under a minute — drop in a PDF, a video link, or just a topic; BonaMind builds a clean Q&A deck you can edit.
+• Voice study mode — study hands-free: BonaMind reads cards aloud and listens to your spoken answers, perfect for commutes and walks.
 • Counter-examples, deeper dives, quiz me — every AI answer is a study session, not a chat: follow-up actions that convert weak spots into cards.
 • Memory Palace + Flow Mode — turn your hardest topic into a visual walkthrough or enter distraction-free deep-study mode.
 • Streaks, leagues, and friends — gentle pressure to keep your habit alive, never burn-out inducing.
 
 PRIVACY-FIRST
 
-Your decks, notes, and AI conversations stay on your device by default. The on-device AI engine means your hardest questions never touch a server. We don't sell your study data. We use privacy-respecting analytics (PostHog) for product improvement and Sentry only for crash reports. Full policy: https://auramind.app/privacy.
+Your decks, notes, and AI conversations stay on your device by default. The on-device AI engine means your hardest questions never touch a server. We don't sell your study data. We use privacy-respecting analytics (PostHog) for product improvement and Sentry only for crash reports. Full policy: https://bonamind.app/privacy.
 
 BUILT FOR STUDENTS WHO ACTUALLY STUDY
 
-Whether you're prepping for med school (USMLE), law school (BAR), grad school cumulative exams, or learning a new language — AuraMind adapts to whatever you're mastering.
+Whether you're prepping for med school (USMLE), law school (BAR), grad school cumulative exams, or learning a new language — BonaMind adapts to whatever you're mastering.

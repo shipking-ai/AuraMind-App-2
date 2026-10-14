@@ -846,7 +846,7 @@ a.ios-row:active {
   height: 100%;
 }
 
-/* ── Chat (Prof. Aura, Messages-style) ─────────────────────────────── */
+/* ── Chat (Prof. Linnea, Messages-style) ─────────────────────────────── */
 
 .ios-chat {
   position: relative;
@@ -1507,7 +1507,7 @@ a.ios-row:active {
   margin-top: auto;
 }
 
-/* ── Aura modes: switcher ──────────────────────────────────────────── */
+/* ── Linnea modes: switcher ──────────────────────────────────────────── */
 
 .ios-chat-modes .ios-segmented {
   margin: 2px 16px 10px;
