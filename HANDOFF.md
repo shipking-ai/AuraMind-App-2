@@ -128,7 +128,7 @@ value:
   - Both apps share the phone layout; `src/lib/platform.ts` gates the
     Android-only parts (spoken reminders, widgets, push for now).
   - Listening: WKWebView exposes `webkitSpeechRecognition` but it never
-    returns results (WebKit bug 239816), so `AuraListenPlugin.swift`
+    returns results (WebKit bug 239816), so `BonaListenPlugin.swift`
     (SFSpeechRecognizer) is used; both apps now listen natively. App-local
     plugins register in `MainViewController.swift`. Needs a real iPhone to
     verify transcription.
@@ -155,7 +155,7 @@ value:
 
 - **Voice study listening on Android** (merged in #79).
   Android WebView has no `SpeechRecognition`, so spoken answers never worked
-  in the app. `AuraListenPlugin` wraps `SpeechRecognizer`;
+  in the app. `BonaListenPlugin` wraps `SpeechRecognizer`;
   `services/voice/nativeRecognition.ts` presents it in the Web Speech shape so
   `useVoiceStudy` is unchanged. Verified on the emulator: Android's mic prompt
   appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
@@ -205,7 +205,7 @@ is unset.
 `window.speechSynthesis` and `SpeechRecognition` are both `undefined` inside
 the Capacitor app, while the same code works in Chrome. Every voice feature
 was silent on Android until 2026-09-17. All speaking now goes through
-`services/voice/speechOutput.ts` (native `AuraSpeechPlugin` on Android, Web
+`services/voice/speechOutput.ts` (native `BonaSpeechPlugin` on Android, Web
 Speech elsewhere). Don't call `window.speechSynthesis` directly.
 
 Related native traps:
@@ -308,7 +308,7 @@ reminder simply fires once and never again.
 Android 16's promoted (Live Update) notifications look like one API level.
 They aren't: `Notification.ProgressStyle` landed in 36, but
 `setRequestPromotedOngoing` only exists in **36.1**, and compileSdk 36 rev 2
-fails to compile a direct call. `AuraLiveUpdatePlugin.requestPromotion` calls
+fails to compile a direct call. `BonaLiveUpdatePlugin.requestPromotion` calls
 it reflectively and no-ops when absent, which also keeps the plugin working on
 older Androids. If a platform method "should exist" and doesn't, check it with
 `javap -classpath $ANDROID_HOME/platforms/android-36/android.jar` before
@@ -604,7 +604,7 @@ adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof com
 Then drive it with Playwright over `connectOverCDP('http://127.0.0.1:9222')`,
 or evaluate directly over the page's `webSocketDebuggerUrl` (from
 `curl localhost:9222/json`) to call plugins, e.g.
-`window.Capacitor.Plugins.AuraSpeech.speak({ text: 'hi' })`. Audio can't be
+`window.Capacitor.Plugins.BonaSpeech.speak({ text: 'hi' })`. Audio can't be
 heard, but `adb shell dumpsys audio` lists the playing track and its usage.
 Navigate by URL rather than tapping coordinates — blind taps on a live account
 deleted a card during this work.
@@ -622,7 +622,7 @@ Everything iOS happens on GitHub's macOS runners via `.github/workflows/mobile-i
 - **`ios-simulator`** — builds for the simulator, boots it, and screenshots
   the `/__preview/ios` tour. This is the fast loop: push, read the artifact.
 - **`ios-device-ipa`** (workflow_dispatch) — builds `-sdk iphoneos` with
-  `CODE_SIGNING_ALLOWED=NO`, asserts `App.app/PlugIns/AuraMindWidgets.appex`
+  `CODE_SIGNING_ALLOWED=NO`, asserts `App.app/PlugIns/BonaMindWidgets.appex`
   exists, and zips `Payload/` by hand into `BonaMind-unsigned.ipa`. It uses
   `build`, not `archive`: with signing off, archiving doesn't reliably place
   `App.app` in the `.xcarchive`.

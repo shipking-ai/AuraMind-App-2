@@ -31,6 +31,20 @@ describe('Windows app identity', () => {
     expect(read('src/main.rs')).toContain('bonamind_desktop_lib::run()');
     const hooks = read('windows/installer-hooks.nsh');
     expect(hooks).toMatch(/!macro BonaMindVerb EXT/);
-    expect(hooks).not.toMatch(/AuraMind/);
+    // The only pre-rename name left is the old key being removed.
+    const legacy = hooks.split('\n').filter((l) => l.includes('AuraMind'));
+    expect(legacy.length).toBeGreaterThan(0);
+    for (const line of legacy) expect(line.trim()).toMatch(/^DeleteRegKey HKCU ".*\\shell\\AuraMind"$/);
+  });
+
+  // An install made before the rename wrote shell\AuraMind. Updating over it
+  // (or uninstalling) must not leave that entry pointing at a deleted exe or
+  // showing a second "Make a course" item.
+  it('removes the pre-rename Explorer entry on install and on uninstall', () => {
+    const hooks = read('windows/installer-hooks.nsh');
+    for (const macro of ['BonaMindVerb', 'BonaMindUnverb']) {
+      const body = hooks.split(`!macro ${macro} EXT`)[1].split('!macroend')[0];
+      expect(body, macro).toMatch(/DeleteRegKey HKCU "Software\\Classes\\SystemFileAssociations\\\.\$\{EXT\}\\shell\\AuraMind"/);
+    }
   });
 });

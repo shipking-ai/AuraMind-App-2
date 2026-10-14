@@ -3,7 +3,12 @@
 ; (courseFiles.test.ts checks both). On Windows 11 it appears under
 ; "Show more options"; a top-level entry needs a signed MSIX.
 
+; Installs from before the rename wrote the same entry under the old key name
+; (the DeleteRegKey lines below). Remove it on install and uninstall, or an
+; update leaves a duplicate item
+; and an uninstall leaves one pointing at a deleted exe.
 !macro BonaMindVerb EXT
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind" "" "Make a course with BonaMind"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind" "Icon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" --create "%1"'
@@ -11,6 +16,7 @@
 
 !macro BonaMindUnverb EXT
   DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind"
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL

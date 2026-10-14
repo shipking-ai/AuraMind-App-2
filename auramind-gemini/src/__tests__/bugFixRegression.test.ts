@@ -743,7 +743,7 @@ describe('Bug #6: CogniVect parent-brand placement', () => {
       ['../../capacitor.config.ts',          'auramind-gemini/capacitor.config.ts',          ['appId:', "from './app-identity.ts'", 'appName: APP_NAME']],
       ['../../app-identity.ts',             'auramind-gemini/app-identity.ts',             ["export const APP_NAME = '"]],
       ['../../metadata.json',              'auramind-gemini/metadata.json',               ['"name": "BonaMind"']],
-      ['../../package.json',               'auramind-gemini/package.json',                ['"name": "auramind"']],
+      ['../../package.json',               'auramind-gemini/package.json',                ['"name": "bonamind"']],
       // index.html is rewritten at build time; the data-brand marker is what
       // the transform keys on, and its absence makes the build fail.
       ['../../index.html',                 'auramind-gemini/index.html',                  ['data-brand="title"', 'data-brand="og:title"']],
