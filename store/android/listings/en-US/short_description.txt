@@ -1,1 +1,1 @@
-Private AI tutor on your phone — offline flashcards, spaced repetition.
+AI flashcards with FSRS spaced repetition for smarter study.
