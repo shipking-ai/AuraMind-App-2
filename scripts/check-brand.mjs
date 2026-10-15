@@ -75,7 +75,7 @@ const ALLOW_LINES = [
   {
     test: (file, text) =>
       SCHEME_FILES.has(basename(file)) && /(scheme="auramind"|>auramind<|"auramind")/.test(text), // legacy-name: ok
-    reason: 'Apps keep accepting old auramind:// links',
+    reason: 'Apps keep accepting links in the pre-rename scheme',
   },
   {
     test: (file, text, line, ctx) => file === 'CHANGELOG.md' && line > ctx.changelogHistoryStart,
