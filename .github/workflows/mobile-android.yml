@@ -164,7 +164,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
-          ./gradlew --no-daemon bundleRelease
+          ./gradlew --no-daemon bundleRelease --stacktrace
           ls -lh app/build/outputs/bundle/release/
 
       - name: Verify AAB is signed
