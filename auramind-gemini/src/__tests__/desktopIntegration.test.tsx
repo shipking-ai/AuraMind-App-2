@@ -79,7 +79,7 @@ describe('useDesktopIntegration', () => {
     expect(refresh).toHaveBeenCalled();
     await act(async () => { bridge.handlers.get('open-route')!({ path: '/dashboard/decks' }); });
     expect(getByTestId('where')).toHaveTextContent('/dashboard/decks');
-    await act(async () => { bridge.handlers.get('deep-link')!({ url: 'auramind://app/study' }); });
+    await act(async () => { bridge.handlers.get('deep-link')!({ url: 'auramind://app/study' }); }); // legacy-name: ok
     expect(getByTestId('where')).toHaveTextContent('/dashboard/study');
   });
 });

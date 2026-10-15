@@ -7,6 +7,6 @@ import org.junit.Test
 class StandInTest {
     @Test
     fun `tile stand-in extends the real service`() {
-        assertTrue(BonaMindTileService::class.java.isAssignableFrom(AuraMindTileService::class.java))
+        assertTrue(BonaMindTileService::class.java.isAssignableFrom(AuraMindTileService::class.java)) // legacy-name: ok
     }
 }

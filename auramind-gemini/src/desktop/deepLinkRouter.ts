@@ -1,5 +1,5 @@
 /**
- * bonamind:// links in the Windows app (and pre-rename auramind:// ones). App links go through the same
+ * bonamind:// links in the Windows app (and pre-rename auramind:// ones). App links go through the same // legacy-name: ok
  * allowlist as the phone apps. The auth callback finishes PKCE sign-in: the
  * verifier never left this origin, so a forged code can't sign anyone in.
  */

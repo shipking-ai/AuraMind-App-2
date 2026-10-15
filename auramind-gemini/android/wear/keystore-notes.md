@@ -1,4 +1,4 @@
-# AuraMind Wear OS companion — signing notes
+# BonaMind Wear OS companion — signing notes
 
 The watch app (`android/wear`, package `com.auramind.app.wear`) is a separate
 APK that must be signed to ship on the Play Store. It shares the **same

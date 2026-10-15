@@ -101,7 +101,7 @@ if (process.argv.includes('--gradle')) {
 let failed = 0;
 let missingBinaries = 0;
 
-console.log('\nAuraMind mobile release pre-flight check\n');
+console.log('\nBonaMind mobile release pre-flight check\n');
 
 for (const c of checks) {
   const v = process.env[c.key];

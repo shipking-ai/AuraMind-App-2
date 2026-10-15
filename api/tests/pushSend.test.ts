@@ -130,9 +130,9 @@ describe('POST /api/push/send', () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  // bonamind:// is the current scheme; auramind:// stays accepted for links
+  // bonamind:// is the current scheme; auramind:// stays accepted for links // legacy-name: ok
   // already out there (pinned shortcuts, scheduled sends).
-  it.each(['auramind://app/dashboard', 'bonamind://app/dashboard'])('sends %s for an entitled admin when a token exists', async (link) => {
+  it.each(['auramind://app/dashboard', 'bonamind://app/dashboard'])('sends %s for an entitled admin when a token exists', async (link) => { // legacy-name: ok
     vi.stubEnv('FCM_PROJECT_ID', 'proj');
     vi.stubEnv('FCM_SERVICE_ACCOUNT_KEY', SERVICE_KEY_JSON);
     asUser('admin');

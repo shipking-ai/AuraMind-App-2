@@ -922,7 +922,7 @@ def build_font(out_dir):
         "fullName": "Aura Sans Regular",
         "psName": "AuraSans-Regular",
         "version": "Version 1.000",
-        "copyright": "Copyright (c) 2026 AuraMind. All rights reserved.",
+        "copyright": "Copyright (c) 2026 BonaMind. All rights reserved.",
     })
     fb.setupOS2(sTypoAscender=int(ASC), sTypoDescender=int(DES), sTypoLineGap=200,
                 usWinAscent=1000, usWinDescent=200, usWeightClass=400,

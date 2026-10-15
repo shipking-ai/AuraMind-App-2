@@ -1,6 +1,6 @@
 /**
  * Emails, push titles, the User-Agent and server logs say BonaMind and
- * Prof. Linnea. `auramind://` links (still accepted and, until the rename's
+ * Prof. Linnea. `auramind://` links (still accepted and, until the rename's // legacy-name: ok
  * third PR, still sent) and the `com.auramind.app` ID are lowercase and
  * aren't matched.
  */
@@ -9,7 +9,7 @@ import { join, relative, resolve } from 'node:path';
 import { expect, it } from 'vitest';
 
 const API_ROOT = resolve(__dirname, '..');
-const OLD = /AuraMind|AURAMIND|Prof(?:\. ?| )Aura\b|(?<![A-Za-z0-9_\-./])(Aura|AURA)(?![A-Za-z0-9_])/;
+const OLD = /AuraMind|AURAMIND|Prof(?:\. ?| )Aura\b|(?<![A-Za-z0-9_\-./])(Aura|AURA)(?![A-Za-z0-9_])/; // legacy-name: ok
 
 function sources(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

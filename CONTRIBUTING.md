@@ -10,8 +10,8 @@ three things most contributors trip on:
 ## Local setup
 
 ```bash
-git clone https://github.com/shipking-ai/AuraMind-App-2.git
-cd AuraMind-App-2
+git clone https://github.com/shipking-ai/BonaMind.git
+cd BonaMind
 
 npm install                  # orchestration scripts at the root
 cd auramind-gemini
@@ -101,7 +101,7 @@ maintainer triages by:
 - `.editorconfig` enforces UTF-8, LF endings, 2-space indent (4 for
   Supabase migrations and Android/iOS sources).
 - Prefer imports from the existing utility folders first; new helpers
-  go in `src/lib/auramind/hooks.ts` or a topic-specific module.
+  go in `src/lib/bonamind/hooks.ts` or a topic-specific module.
 
 ## Reporting a bug or security issue
 

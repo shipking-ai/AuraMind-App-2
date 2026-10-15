@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 import { APP_NAME } from './app-identity.ts';
 
 /**
- * Capacitor configuration for the AuraMind Android and iOS apps.
+ * Capacitor configuration for the BonaMind Android and iOS apps.
  *
  * - appId is fixed forever: `com.auramind.app`. Changing it after the first
  *   Play Store upload makes the store treat the app as a brand-new package,

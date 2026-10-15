@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: process.env.ALLOWED_ORIGIN
     ? process.env.ALLOWED_ORIGIN.split(',').map(o => o.trim())
-    : ['http://localhost:5173', 'http://localhost:3000', 'https://auramind.app'],
+    : ['http://localhost:5173', 'http://localhost:3000', 'https://bonamind.app', 'https://www.bonamind.app'],
   credentials: true,
 }));
 
@@ -96,7 +96,7 @@ app.use('/api', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'auramind-api', version: '2.0.0', timestamp: Date.now() });
+  res.json({ status: 'ok', service: 'bonamind-api', version: '2.0.0', timestamp: Date.now() });
 });
 
 // In production, serve the built frontend from dist/
@@ -108,7 +108,7 @@ if (hasStaticBuild) {
   });
 } else {
   app.get('/', (req, res) => {
-    res.json({ status: 'ok', service: 'auramind-api', version: '2.0.0' });
+    res.json({ status: 'ok', service: 'bonamind-api', version: '2.0.0' });
   });
 }
 

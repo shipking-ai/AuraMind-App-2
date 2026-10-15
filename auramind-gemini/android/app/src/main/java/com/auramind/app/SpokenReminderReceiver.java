@@ -44,7 +44,7 @@ public class SpokenReminderReceiver extends BroadcastReceiver {
     static final String ACTION_SPEAK = "com.auramind.app.SPOKEN_REMINDER";
     private static final String PREFS = "bonamind_spoken_reminder";
     /** Pre-rename file, moved into PREFS on first use (see LegacyPrefs). */
-    private static final String LEGACY_PREFS = "auramind_spoken_reminder";
+    private static final String LEGACY_PREFS = "auramind_spoken_reminder"; // legacy-name: ok
     private static final String KEY_CONFIG = "config";
     private static final int REQUEST_CODE = 7410;
     /** Give up well before the system's limit for a goAsync receiver. */

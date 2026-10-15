@@ -73,7 +73,7 @@ object GradeQueueLogic {
 object GradeQueue {
     private const val PREFS = "bonamind_wear_grade_queue"
     /** Pre-rename file, moved into PREFS on first use (see LegacyPrefs). */
-    private const val LEGACY_PREFS = "auramind_wear_grade_queue"
+    private const val LEGACY_PREFS = "auramind_wear_grade_queue" // legacy-name: ok
     private const val KEY_QUEUE = "queue"
     private const val KEY_OVERFLOWED = "overflowed"
     private const val SEND_TIMEOUT_SECONDS = 5L

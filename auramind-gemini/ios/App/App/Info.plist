@@ -48,7 +48,7 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<!-- The `bonamind://app/<path>` deep link (and the pre-rename
-	     `auramind://app/<path>`, still sent by older links). Registered here because three
+	     `auramind://app/<path>`, still sent by older links). Registered here because three (legacy-name: ok)
 	     surfaces hand it to the system rather than calling into the app
 	     directly: the Live Activity's widgetURL (see
 	     BonaMindWidgets/StudySessionLiveActivity.swift), Siri and Shortcuts, and

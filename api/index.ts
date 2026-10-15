@@ -299,7 +299,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const body: Record<string, unknown> = {
       status: 'ok',
-      service: 'auramind-api',
+      service: 'bonamind-api',
       version: '2.0.0',
       timestamp: Date.now(),
       // Surfaced so uptime monitoring can catch the silent-degradation case:
@@ -755,13 +755,16 @@ async function handleAdminHealth(req: VercelRequest, res: VercelResponse, supaba
       // Test 3: Check webhook endpoint exists
       try {
         const webhooks = await stripe.webhookEndpoints.list({ limit: 10 });
-        const auramindWebhook = webhooks.data.find(
-          (w: any) => w.url?.includes('auramind') || w.url?.includes('stripe-webhook'),
+        const appWebhook = webhooks.data.find(
+          (w: any) =>
+            w.url?.includes('bonamind') ||
+            w.url?.includes('auramind') || // legacy-name: ok (endpoint registered before the rename)
+            w.url?.includes('stripe-webhook'),
         );
-        results.webhookConfigured = !!auramindWebhook;
-        if (auramindWebhook) {
-          results.webhookUrl = auramindWebhook.url;
-          results.webhookEnabled = auramindWebhook.enabled_events?.length > 0;
+        results.webhookConfigured = !!appWebhook;
+        if (appWebhook) {
+          results.webhookUrl = appWebhook.url;
+          results.webhookEnabled = appWebhook.enabled_events?.length > 0;
         }
       } catch (err: any) {
         results.errors.push(`Webhook check failed: ${err.message}`);
@@ -1890,7 +1893,7 @@ async function handleAdminBulk(req: VercelRequest, res: VercelResponse, supabase
       return json(res, 200, {
         success: true,
         format: fmt,
-        filename: `auramind-users-export-${new Date().toISOString().slice(0, 10)}.${fmt}`,
+        filename: `bonamind-users-export-${new Date().toISOString().slice(0, 10)}.${fmt}`,
         data: output,
         count: allUsers.length,
       });
@@ -2075,7 +2078,7 @@ const PushSendSchema = z.object({
     .string()
     .max(200)
     // The pre-rename scheme stays accepted: installed apps and old links send it.
-    .refine((v) => v.startsWith('bonamind://') || v.startsWith('auramind://'), {
+    .refine((v) => v.startsWith('bonamind://') || v.startsWith('auramind://'), { // legacy-name: ok
       message: 'link must be a bonamind:// deep link',
     })
     .optional(),

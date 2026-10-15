@@ -1,6 +1,6 @@
-# AuraMind — Frontend SPA
+# BonaMind — Frontend SPA
 
-The web client for **AuraMind, Your AI Learning System** — an adaptive AI learning system that turns anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course, then schedules your reviews with FSRS v5 spaced repetition and tutors you with a knowledge model that remembers what you struggle with.
+The web client for **BonaMind, Your AI Learning System** — an adaptive AI learning system that turns anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course, then schedules your reviews with FSRS v5 spaced repetition and tutors you with a knowledge model that remembers what you struggle with.
 
 **Stack:** React 19 · TypeScript (strict) · Vite · Tailwind 4 · Base UI · Framer Motion · Zustand · react-router v7 · Supabase (auth + data) · Stripe (payments) · Capacitor 8 (Android)
 
@@ -47,7 +47,7 @@ src/
 
 ## Notable pieces
 
-- **Prof. Aura (the tutor)** — `components/chat/AIChatPage.tsx` + `hooks/useAIChat.ts` + `lib/chat-prompts.ts`. The system prompt is assembled from *real* study data: streak, 7-day retention, last-session accuracy, weak cards, and concept-level weaknesses (`lib/conceptModel.ts`) plus cross-session memory (`lib/chatMemory.ts`).
+- **Prof. Linnea (the tutor)** — `components/chat/AIChatPage.tsx` + `hooks/useAIChat.ts` + `lib/chat-prompts.ts`. The system prompt is assembled from *real* study data: streak, 7-day retention, last-session accuracy, weak cards, and concept-level weaknesses (`lib/conceptModel.ts`) plus cross-session memory (`lib/chatMemory.ts`).
 - **FSRS v5 scheduling** — `services/study/fsrs.ts` (free-spaced-repetition-scheduler port).
 - **Offline study** — PWA service worker + IndexedDB offline review queueing.
 

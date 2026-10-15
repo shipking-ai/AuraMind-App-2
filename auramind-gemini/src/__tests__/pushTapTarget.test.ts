@@ -14,7 +14,7 @@ describe('pushTapTarget', () => {
   // both schemes: the server switches its reminders to bonamind:// later.
   it('follows app links in both schemes', () => {
     expect(pushTapTarget({ link: 'bonamind://app/dashboard' })).toBe('bonamind://app/dashboard');
-    expect(pushTapTarget({ link: 'auramind://app/dashboard' })).toBe('auramind://app/dashboard');
+    expect(pushTapTarget({ link: 'auramind://app/dashboard' })).toBe('auramind://app/dashboard'); // legacy-name: ok
   });
 
   it('ignores anything that is not an allowed app link', () => {

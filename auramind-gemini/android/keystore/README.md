@@ -1,6 +1,6 @@
 # Android release keystore
 
-This directory holds the **release upload keystore** for AuraMind
+This directory holds the **release upload keystore** for BonaMind
 (`com.auramind.app`). It is gitignored — the keystore and its passwords must
 never be committed.
 

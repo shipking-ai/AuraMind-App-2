@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=22.22.2"
   },
-  "description": "AuraMind — adaptive AI learning system (React app, PWA, Capacitor Android/iOS, and the Tauri Windows app).",
+  "description": "BonaMind — adaptive AI learning system (React app, PWA, Capacitor Android/iOS, and the Tauri Windows app).",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {

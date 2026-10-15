@@ -1,5 +1,5 @@
 /**
- * AuraMind — Supabase Migration Runner (M6.5 hardened)
+ * BonaMind — Supabase Migration Runner (M6.5 hardened)
  *
  * Usage:
  *   node run-migrations.js                          # apply via linked CLI session

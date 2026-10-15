@@ -1,7 +1,7 @@
 /**
- * Web code names follow the rename: ProfAura* → ProfLinnea*, the Capacitor
- * plugins Aura* → Bona*, the AuraMind store/hooks → BonaMind, and the
- * `auramind/` folders → `bonamind/`.
+ * Web code names follow the rename: ProfAura* → ProfLinnea*, the Capacitor // legacy-name: ok
+ * plugins Aura* → Bona*, the AuraMind store/hooks → BonaMind, and the // legacy-name: ok
+ * `auramind/` folders → `bonamind/`. // legacy-name: ok
  *
  * Not matched on purpose: the aura glow effect (auraDepth, AURA_DEPTH_LAYERS,
  * AndroidAura, VoiceAura, AuraEasingName), the "Aura Sans"/"Aura Script"
@@ -13,7 +13,7 @@ import { expect, it } from 'vitest';
 
 const APP_ROOT = resolve(__dirname, '../..');
 const OLD_NAME =
-  /\b(ProfAura\w*|profAura\w*|PROF_AURA\w*|AuraMind[A-Z]\w*|useAuraMind|AuraChatMode|AURA_CHAT_MODE_KEY|AuraSpeech\w*|auraSpeech\w*|AuraListen\w*|AuraLiveActivity\w*|AuraLiveUpdate\w*|AuraDevice\w*|auraDevice\w*|AuraAi\w*|auraAi\w*|AuraLandingPage|AuraMark)\b|(?<!com)\/auramind\//;
+  /\b(ProfAura\w*|profAura\w*|PROF_AURA\w*|AuraMind[A-Z]\w*|useAuraMind|AuraChatMode|AURA_CHAT_MODE_KEY|AuraSpeech\w*|auraSpeech\w*|AuraListen\w*|AuraLiveActivity\w*|AuraLiveUpdate\w*|AuraDevice\w*|auraDevice\w*|AuraAi\w*|auraAi\w*|AuraLandingPage|AuraMark)\b|(?<!com)\/auramind\//; // legacy-name: ok
 // androidIdentity.test.ts pins the permanent stand-in class names and Wear paths.
 const SKIP = new Set(['src/lib/legacyNames.ts', 'src/__tests__/codeNames.test.ts', 'src/__tests__/androidIdentity.test.ts']);
 

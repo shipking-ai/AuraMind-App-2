@@ -34,11 +34,11 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shipking-ai/AuraMind-App-2.git"
+    "url": "git+https://github.com/shipking-ai/BonaMind.git"
   },
   "homepage": "https://bonamind.app",
   "bugs": {
-    "url": "https://github.com/shipking-ai/AuraMind-App-2/issues"
+    "url": "https://github.com/shipking-ai/BonaMind/issues"
   },
   "devDependencies": {
     "concurrently": "^10.0.0"

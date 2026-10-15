@@ -62,7 +62,7 @@ PANG = [
     ("The quick brown fox jumps over the lazy dog", 48),
     ("Pack my box with five dozen liquor jugs", 32),
     ("Sphinx of black quartz, judge my vow", 28),
-    ("AURA SANS — AuraMind Brand Display", 40),
+    ("AURA SANS — BonaMind Brand Display", 40),
     ("0123456789 $ € £ ¥ ₹ ¢ % ‰ & @ # *", 30),
     ("“Smart quotes” ‘and’ — dashes … ellipses", 26),
     ("À Â Ä Æ Ç È É Ê Ë Î Ï Ñ Ò Ó Ô Ö Ù Û Ü Ÿ ß", 30),

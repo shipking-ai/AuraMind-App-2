@@ -1,7 +1,7 @@
 //! What a launch (or a second launch forwarded by single-instance) asks for.
 //!
 //! The Explorer verb runs `BonaMind.exe --create "<path>"`, autostart runs
-//! `BonaMind.exe --hidden`, and Windows runs `BonaMind.exe "auramind://..."`
+//! `BonaMind.exe --hidden`, and Windows runs `BonaMind.exe "bonamind://..."`
 //! for a deep link. Parsing is pure so every shape is unit-tested; the
 //! allowlist of in-app routes stays in TypeScript (`lib/deepLinks.ts`).
 
@@ -14,7 +14,7 @@ pub enum LaunchIntent {
     Hidden,
     /// Make a course from this file (Explorer verb).
     Create(PathBuf),
-    /// An `auramind://` link to hand to the web layer.
+    /// A `bonamind://` (or pre-rename) link to hand to the web layer.
     Open(String),
 }
 
@@ -22,9 +22,9 @@ pub enum LaunchIntent {
 /// crafted link can't reach the web layer at all.
 pub fn is_app_url(s: &str) -> bool {
     let Ok(url) = Url::parse(s) else { return false };
-    // bonamind:// is current; auramind:// is still sent by links made before
+    // bonamind:// is current; auramind:// is still sent by links made before // legacy-name: ok
     // the rename (pinned shortcuts, old notifications, OAuth returns).
-    if url.scheme() != "bonamind" && url.scheme() != "auramind" {
+    if url.scheme() != "bonamind" && url.scheme() != "auramind" { // legacy-name: ok
         return false;
     }
     match url.host_str() {
@@ -105,10 +105,10 @@ mod tests {
     #[test]
     fn app_links_and_the_auth_callback_pass() {
         assert_eq!(
-            parse_args(&args(&["auramind://app/study"])),
-            vec![LaunchIntent::Open("auramind://app/study".into())]
+            parse_args(&args(&["auramind://app/study"])), // legacy-name: ok
+            vec![LaunchIntent::Open("auramind://app/study".into())] // legacy-name: ok
         );
-        assert!(is_app_url("auramind://auth/callback?code=abc"));
+        assert!(is_app_url("auramind://auth/callback?code=abc")); // legacy-name: ok
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod tests {
     fn intents_become_web_events() {
         let intents = vec![
             LaunchIntent::Hidden,
-            LaunchIntent::Open("auramind://app/study".into()),
+            LaunchIntent::Open("auramind://app/study".into()), // legacy-name: ok
             LaunchIntent::Create(PathBuf::from("C:\\a\\Notes.pdf")),
         ];
         let events = intents_to_events(&intents, |p| {
@@ -136,7 +136,7 @@ mod tests {
         assert_eq!(
             events,
             vec![
-                ("deep-link", serde_json::json!({ "url": "auramind://app/study" })),
+                ("deep-link", serde_json::json!({ "url": "auramind://app/study" })), // legacy-name: ok
                 ("create-from-file", serde_json::json!({ "kind": "file", "name": "Notes.pdf" })),
             ]
         );
@@ -146,9 +146,9 @@ mod tests {
     fn anything_else_is_dropped() {
         for bad in [
             "https://bonamind.app/app/study",
-            "auramind://auth/other",
-            "auramind://evil/app",
-            "auramind:app/study",
+            "auramind://auth/other", // legacy-name: ok
+            "auramind://evil/app", // legacy-name: ok
+            "auramind:app/study", // legacy-name: ok
             "--unknown",
             "not a url",
         ] {

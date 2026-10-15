@@ -506,6 +506,6 @@ jobs:
       - name: Upload the IPA
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.server_url != '' && 'auramind-ios-live-reload-ipa' || 'auramind-ios-unsigned-ipa' }}
+          name: ${{ inputs.server_url != '' && 'bonamind-ios-live-reload-ipa' || 'bonamind-ios-unsigned-ipa' }}
           path: auramind-gemini/build/BonaMind-unsigned.ipa
           if-no-files-found: error

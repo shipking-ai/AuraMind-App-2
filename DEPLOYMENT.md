@@ -89,7 +89,7 @@ window on Ctrl+Alt+Space, drop-to-create (window, Explorer, tray),
 ### Google/Notion sign-in in the app (one-time)
 
 1. Supabase → Authentication → URL Configuration → Redirect URLs: add
-   `bonamind://auth/callback` (keep the older `auramind://auth/callback` entry too:
+   `bonamind://auth/callback` (keep the older `auramind://auth/callback` entry too: <!-- legacy-name: ok -->
    Windows installs from before the rename still send it).
 2. In `auramind-gemini/.env.desktop`, uncomment `VITE_DESKTOP_OAUTH=true`.
 3. Release a new version. Until then the app shows email + password only.
@@ -99,7 +99,11 @@ window on Ctrl+Alt+Space, drop-to-create (window, Explorer, tray),
 Installed apps only accept updates signed with the private key that matches
 `plugins.updater.pubkey` in `tauri.conf.json`. The key pair was generated with
 `npx tauri signer generate` and the private half lives **outside the repo** at
-`%USERPROFILE%\.tauri\BonaMind-updater.key` (no password).
+`%USERPROFILE%\.tauri\auramind-updater.key` (no password; the file kept its pre-rename name). <!-- legacy-name: ok -->
+
+Without the `TAURI_SIGNING_PRIVATE_KEY` secret a `desktop-v*` tag fails at
+"Require the updater signing key" by design (an unsigned release would leave
+every installed app unable to update).
 
 1. Back it up (password manager). **Losing it means no installed copy can ever
    update again**; the only way out is a new key and a manual reinstall for
@@ -193,7 +197,7 @@ Verified against the code in this repo (Aug 2026):
       default, 30 for AI, 10 for auth) applied to every API route.
 - [x] **Cookie consent banner** — `src/components/shared/CookieConsentBanner.tsx`
       (one-time, non-blocking; `analyticsService.init` skips until Accept;
-      choice persisted via `auramind_consentChoice` + `auramind_usageAnalytics`,
+      choice persisted via `bonamind_consentChoice` + `bonamind_usageAnalytics`,
       changeable in Settings).
 - [x] **RLS policies** — created by the append-only migrations in
       `supabase/migrations/` (see `SECURITY.md` for the rules every policy

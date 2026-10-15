@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+// Brand guard: fails when a tracked file still says the product's old name.
+//
+// The product was renamed to BonaMind and its tutor to Prof. Linnea
+// (docs/superpowers/specs/2026-10-13-bonamind-rename-design.md). Some old
+// names are permanent (app IDs, the folder name, data that would be lost if
+// renamed); the allow-list below names each one with its reason. Adding an
+// entry is the owner's decision, never a way to make CI pass.
+//
+// A line can also opt out with the marker `legacy-name: ok` in a comment,
+// for code that exists to read or accept the old name.
+//
+// Usage: node scripts/check-brand.mjs   (exits 1 and prints file:line: text)
+
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const OLD_NAME = /AuraMind|auramind|Prof\.? ?Aura|ProfAura/; // legacy-name: ok
+const MARKER = 'legacy-name: ok';
+
+// Permanent names, removed from a line before it is searched, so the rest of
+// the line is still checked.
+const PERMANENT_TOKENS = [
+  { token: 'com.auramind.app', reason: 'Permanent app ID (Android, Windows)' }, // legacy-name: ok
+  { token: 'com/auramind/app', reason: 'Java package path tied to the app ID' }, // legacy-name: ok
+  { token: 'auramind-gemini', reason: 'Folder name, owner decision' }, // legacy-name: ok
+  { token: 'auramind_biometric_creds', reason: 'Keystore-encrypted credentials file' }, // legacy-name: ok
+  { token: 'auramind_study_session', reason: 'Notification channel ID keeps users’ channel settings' }, // legacy-name: ok
+  { token: 'auramind-upload', reason: 'Signing key alias stored inside the upload keystore' }, // legacy-name: ok
+  { token: '/auramind/sync', reason: 'Wear data-layer path; phone and watch update separately' }, // legacy-name: ok
+  { token: '/auramind/grade', reason: 'Wear data-layer path; phone and watch update separately' }, // legacy-name: ok
+  { token: 'pathPrefix="/auramind"', reason: 'Wear data-layer path filter' }, // legacy-name: ok
+];
+
+const isManifest = (file) => basename(file) === 'AndroidManifest.xml';
+const STAND_IN_FILES = new Set(['AuraMindWidgetProvider.java', 'AuraMindTileService.kt']); // legacy-name: ok
+const SCHEME_FILES = new Set(['AndroidManifest.xml', 'Info.plist', 'tauri.conf.json']);
+const RENAME_DATE = '2026-10-13';
+
+// Whole files that may keep an old name.
+const ALLOW_FILES = [
+  {
+    test: (file) => /^supabase\/migrations(-extra)?\//.test(file),
+    reason: 'Applied SQL is append-only history',
+  },
+  {
+    test: (file) => basename(file) === 'package-lock.json',
+    reason: 'Generated; follows package.json names',
+  },
+  {
+    test: (file) => {
+      const date = /^\d{4}-\d{2}-\d{2}/.exec(basename(file));
+      return file.startsWith('docs/superpowers/') && Boolean(date) && date[0] <= RENAME_DATE;
+    },
+    reason: 'Specs and plans dated up to the rename (its own included) are historical records',
+  },
+  {
+    test: (file) => file === 'auramind-gemini/src/lib/legacyNames.ts', // legacy-name: ok
+    reason: 'The one web module that names the old values',
+  },
+  {
+    test: (file) => STAND_IN_FILES.has(basename(file)),
+    reason: 'Stand-ins keep placed widgets and tiles working',
+  },
+];
+
+// Single lines that may keep an old name.
+const ALLOW_LINES = [
+  {
+    test: (file, text) => isManifest(file) && /AuraMind(WidgetProvider|TileService)/.test(text), // legacy-name: ok
+    reason: 'Manifests register the stand-ins under their old names',
+  },
+  {
+    test: (file, text) =>
+      SCHEME_FILES.has(basename(file)) && /(scheme="auramind"|>auramind<|"auramind")/.test(text), // legacy-name: ok
+    reason: 'Apps keep accepting old auramind:// links',
+  },
+  {
+    test: (file, text, line, ctx) => file === 'CHANGELOG.md' && line > ctx.changelogHistoryStart,
+    reason: 'CHANGELOG entries older than the rename are history',
+  },
+];
+
+function changelogHistoryStart(lines) {
+  // History starts at the first release heading after the rename entry
+  // (a `### BonaMind rename` section inside the release that shipped it).
+  const rename = lines.findIndex((l) => /^#{2,3} .*BonaMind rename/.test(l));
+  if (rename === -1) return Infinity;
+  const next = lines.findIndex((l, i) => i > rename && /^## /.test(l));
+  return next === -1 ? Infinity : next + 1;
+}
+
+function stripPermanent(text) {
+  let out = text;
+  for (const { token } of PERMANENT_TOKENS) out = out.split(token).join('');
+  return out;
+}
+
+function isBinary(buf) {
+  return buf.subarray(0, 8000).includes(0);
+}
+
+export function scanBrand({ root, files }) {
+  const hits = [];
+  for (const file of files) {
+    const path = file.replace(/\\/g, '/');
+    if (ALLOW_FILES.some((a) => a.test(path))) continue;
+    let buf;
+    try {
+      buf = readFileSync(join(root, file));
+    } catch {
+      continue; // deleted in the working tree but still in the index
+    }
+    if (isBinary(buf)) continue;
+    const lines = buf.toString('utf8').split(/\r?\n/);
+    const ctx = { changelogHistoryStart: path === 'CHANGELOG.md' ? changelogHistoryStart(lines) : Infinity };
+    lines.forEach((text, i) => {
+      const line = i + 1;
+      if (!OLD_NAME.test(text) || text.includes(MARKER)) return;
+      if (!OLD_NAME.test(stripPermanent(text))) return;
+      if (ALLOW_LINES.some((a) => a.test(path, text, line, ctx))) return;
+      hits.push({ file: path, line, text: text.trim() });
+    });
+  }
+  return hits;
+}
+
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
+    .split('\0')
+    .filter(Boolean);
+  const hits = scanBrand({ root, files });
+  for (const h of hits) console.log(`${h.file}:${h.line}: ${h.text}`);
+  if (hits.length) {
+    console.error(
+      `\n${hits.length} line(s) still use the old name. Rename them to BonaMind / Prof. Linnea.` +
+        '\nIf a name must stay, see the allow-list in scripts/check-brand.mjs (the owner decides).',
+    );
+    process.exit(1);
+  }
+  console.log('Brand guard: no old names outside the allow-list.');
+}

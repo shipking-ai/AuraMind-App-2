@@ -79,8 +79,6 @@ export function updateMetaTags(config: SEOConfig = {}): void {
   setMetaTag('name', 'twitter:description', description);
   setMetaTag('name', 'twitter:image', image);
   setMetaTag('name', 'twitter:image:alt', APP_SOCIAL_TITLE);
-  setMetaTag('name', 'twitter:site', '@auramindapp');
-  setMetaTag('name', 'twitter:creator', '@auramindapp');
 
   // PWA / Mobile
   setMetaTag('name', 'apple-mobile-web-app-capable', 'yes');

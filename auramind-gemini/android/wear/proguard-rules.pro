@@ -5,7 +5,7 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Wear OS manifest components (WearSyncService, AuraMindTileService,
+# Wear OS manifest components (WearSyncService, AuraMindTileService, # legacy-name: ok
 # DueCountComplicationService, MainActivity) are kept automatically by AGP.
 # The Wear Compose / Tiles / watchface-complications libraries ship their own
 # consumer rules, matching the phone app's setup.

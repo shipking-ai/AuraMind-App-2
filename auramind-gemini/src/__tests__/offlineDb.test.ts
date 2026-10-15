@@ -83,7 +83,7 @@ describe('openOfflineDb', () => {
     db.close();
   });
 
-  it('does not create auramind-offline while probing for it', async () => {
+  it('does not create auramind-offline while probing for it', async () => { // legacy-name: ok
     const factory = new IDBFactory();
     (await openOfflineDb(factory)).close();
     (await openOfflineDb(factory)).close();
