@@ -156,8 +156,17 @@ jobs:
       - name: Assemble signed release AAB
         env:
           # Monotonic and never reused, so repeat releases are not rejected.
-          # github.run_number only ever increases for this workflow.
-          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          # run_number alone is NOT enough: GitHub keeps the original run_number
+          # when a run is re-run, and Play permanently burns every versionCode it
+          # sees, so re-running after a failed upload would be rejected with
+          # "version code already used". Folding run_attempt into the low digits
+          # makes every attempt a distinct, still-increasing code.
+          #
+          # Ceiling: Android caps versionCode at 2,100,000,000. run_number would
+          # have to reach 2.1 million for this to collide, so it is not a
+          # practical limit. Moving the AAB build to a different workflow file
+          # WOULD reset run_number to 1 and could collide with an old upload.
+          ANDROID_VERSION_CODE: ${{ github.run_number * 1000 + github.run_attempt }}
           ANDROID_KEYSTORE_PATH: android/keystore/release.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}

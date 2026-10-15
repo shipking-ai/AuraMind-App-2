@@ -15,17 +15,25 @@
 - [ ] **Terms of service URL returns 200** — `https://bonamind.app/terms`
 - [ ] **Support URL returns 200** — `https://bonamind.app/support` (or
       `mailto:hello@bonamind.app` works)
-- [ ] **Privacy policy lists**: CogniVect, Inc as operator; data collected
-      (account email, optional profile photo, study progress, crash logs,
-      Stripe-billing metadata); all third-party SDKs (Sentry, PostHog,
-      Stripe); storage duration; user's rights under GDPR + CCPA; contact
-      channel.
-- [ ] **Terms of service lists**: subscription auto-renew, cancellation
-      procedure, refund policy, prohibited content rules, limitation of
-      liability (limited to CogniVect and its affiliates), jurisdiction.
-- [ ] **Both pages render CogniVect footer** (the parent-company byline
-      "BonaMind — a CogniVect product") at the bottom, with the year-frozen
-      copyright line on the right.
+- [ ] **Privacy policy names the operating entity** — ⚠️ BLOCKED. It currently
+      says *CogniVect, Inc*, which is being dissolved. A privacy policy must
+      name a real data controller; see the FROZEN block in
+      `src/lib/branding.ts`. Everything else the policy must cover is in place:
+      data collected (account email, optional profile photo, study progress,
+      crash logs, Stripe-billing metadata); all third-party SDKs (Sentry,
+      PostHog, Stripe); storage duration; user's rights under GDPR + CCPA.
+- [ ] **Terms of service names the operating entity** — ⚠️ BLOCKED, same reason.
+      The rest is in place: subscription auto-renew, cancellation procedure,
+      refund policy, prohibited content rules, limitation of liability,
+      jurisdiction.
+- [ ] **Console entity matches the policy** — Play Console "Developer/Vendor
+      Name", address and D-U-N-S; the Google OAuth consent screen's verified
+      legal entity (user-visible on the sign-in prompt); Stripe's merchant
+      entity of record (**payouts fail if it is a dissolved entity**); the W-9
+      or W-8. None of these are files in this repo.
+- [x] **Both legal pages render the plain footer** — product name, contact
+      email, About link, and the year-frozen copyright line. The parent-company
+      byline was removed in #145.
 
 ## 2. Build artifacts
 
@@ -33,7 +41,10 @@
       (`auramind-gemini/android/keystore/release.keystore`).
 - [ ] Wear OS companion AAB signed with the **same upload keystore**
       (`com.auramind.app.wear` — `./gradlew :wear:bundleRelease`).
-- [x] Android `versionCode` increments by 1 every release (currently `1`).
+- [x] Android `versionCode` is monotonic and never reused — derived from
+      `github.run_number * 1000 + github.run_attempt`, so re-running a failed
+      upload still yields a fresh code. Play permanently burns every
+      versionCode it sees.
 - [x] Android target SDK ≥ 34 (we ship **36**).
 - [ ] No leftover debug logs in release AAB (verify with `adb logcat`
       on a sideloaded release build — there should be no `console.log`.
