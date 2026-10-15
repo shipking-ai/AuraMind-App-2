@@ -14,12 +14,12 @@ import UIKit
  app already published for the widget (Capacitor Preferences, which is
  UserDefaults underneath), because due-ness is an FSRS question TypeScript
  already answers — Swift must never get its own opinion about it. Starting a
- review hands the app the same `auramind://app/dashboard/study` deep link the
+ review hands the app the same `bonamind://app/dashboard/study` deep link the
  shortcuts and notifications use.
  */
 
 @available(iOS 16.0, *)
-enum AuraMindSiri {
+enum BonaMindSiri {
 
     /// Capacitor Preferences stores under UserDefaults with this prefix.
     private static let preferencesPrefix = "CapacitorStorage."
@@ -28,7 +28,7 @@ enum AuraMindSiri {
     /// Read (and cleared) by the web layer on boot; see src/lib/deepLinks.ts.
     private static let pendingRouteKey = preferencesPrefix + "bonamind_pending_route"
 
-    static let reviewURL = URL(string: "auramind://app/dashboard/study")!
+    static let reviewURL = URL(string: "bonamind://app/dashboard/study")!
 
     static func dueCount() -> Int {
         Int(UserDefaults.standard.string(forKey: dueKey) ?? "") ?? 0
@@ -74,8 +74,8 @@ struct StartReviewIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        AuraMindSiri.openReview()
-        return .result(dialog: IntentDialog(stringLiteral: AuraMindSiri.dueSentence()))
+        BonaMindSiri.openReview()
+        return .result(dialog: IntentDialog(stringLiteral: BonaMindSiri.dueSentence()))
     }
 }
 
@@ -88,16 +88,16 @@ struct DueCountIntent: AppIntent {
     static var openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Int> {
-        let due = AuraMindSiri.dueCount()
+        let due = BonaMindSiri.dueCount()
         return .result(
             value: due,
-            dialog: IntentDialog(stringLiteral: AuraMindSiri.dueSentence()))
+            dialog: IntentDialog(stringLiteral: BonaMindSiri.dueSentence()))
     }
 }
 
 /// The phrases Siri accepts, and the entries in the Shortcuts app.
 @available(iOS 16.0, *)
-struct AuraMindShortcuts: AppShortcutsProvider {
+struct BonaMindShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: StartReviewIntent(),

@@ -1,15 +1,15 @@
 /**
- * ProfAuraEmptyState — Reusable empty-state shell driven by Prof. Linnea instead
+ * ProfLinneaEmptyState — Reusable empty-state shell driven by Prof. Linnea instead
  * of a dull gray icon. Used wherever the app has nothing to show: empty decks,
  * zero-XP leaderboard, no chat sessions, search miss, expired study queue.
  *
- * The hero shows a gradient ProfAura avatar whose mood reactively shifts
+ * The hero shows a gradient ProfLinnea avatar whose mood reactively shifts
  * based on context (`inviting`, `sleepy`, `celebrating`, `curious`). A short
  * headline + supporting line + 1-3 CTA buttons gives users a concrete next
  * step instead of just a sad-icon stare.
  *
  * Usage:
- *   <ProfAuraEmptyState
+ *   <ProfLinneaEmptyState
  *     mood="inviting"
  *     title="No decks yet"
  *     description="Prof. Linnea will quiz you on whatever you teach it. Start with a topic."
@@ -19,10 +19,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Moon, Sparkles, Star, type LucideIcon } from '@/components/icons';
-import ProfAura from '../chat/ProfAura';
+import ProfLinnea from '../chat/ProfLinnea';
 import { cn } from '@/lib/utils';
 
-// Local tweak: ProfAura's `mood` prop accepts `'default' | 'encouraging'
+// Local tweak: ProfLinnea's `mood` prop accepts `'default' | 'encouraging'
 // | 'focused'`. We map our five-sentiment EmptyMood down to that union so
 // the typed prop validates end-to-end.
 type MoodTone = 'default' | 'encouraging' | 'focused';
@@ -46,7 +46,7 @@ export interface EmptyAction {
   href?: string;
 }
 
-export interface ProfAuraEmptyStateProps {
+export interface ProfLinneaEmptyStateProps {
   title: string;
   description?: string;
   mood?: EmptyMood;
@@ -63,8 +63,8 @@ export interface ProfAuraEmptyStateProps {
 }
 
 /**
- * Map empty-state mood to ProfAura's typed `variant` union. ProfAura's actual
- * `ProfAuraVariant = 'rest' | 'thinking' | 'streaming' | 'badge'` — there is
+ * Map empty-state mood to ProfLinnea's typed `variant` union. ProfLinnea's actual
+ * `ProfLinneaVariant = 'rest' | 'thinking' | 'streaming' | 'badge'` — there is
  * no 'smol' variant, so 'sleepy' falls back to 'thinking' (animated head
  * micro-movement reads as "quiet") and 'celebrating' stays on 'rest'.
  */
@@ -83,8 +83,8 @@ const SIZE_MAP = {
 } as const;
 
 /**
- * Map empty-state mood → numerical mood for useMoodForProfAura.
- * Kept for future integration; not currently forwarded to ProfAura since
+ * Map empty-state mood → numerical mood for useMoodForProfLinnea.
+ * Kept for future integration; not currently forwarded to ProfLinnea since
  * the typed mood sentinel above handles variant-mapped variants correctly.
  */
 const moodTone: Record<EmptyMood, number> = {
@@ -96,7 +96,7 @@ const moodTone: Record<EmptyMood, number> = {
 };
 void moodTone; // reserved for future use
 
-function ProfAuraEmptyState({
+function ProfLinneaEmptyState({
   title,
   description,
   mood = 'inviting',
@@ -107,11 +107,11 @@ function ProfAuraEmptyState({
   eyebrow,
   badges,
   className,
-}: ProfAuraEmptyStateProps) {
+}: ProfLinneaEmptyStateProps) {
   const dim = SIZE_MAP[size];
   const variant = MOOD_TO_PROF_VARIANT[mood];
-  // Forward to ProfAura's typed `mood` sentinel via a small Mood enum mapper.
-  // We deliberately do NOT pass a free 0..1 number — ProfAura rejects it.
+  // Forward to ProfLinnea's typed `mood` sentinel via a small Mood enum mapper.
+  // We deliberately do NOT pass a free 0..1 number — ProfLinnea rejects it.
   const profMood = gap(mood);
   const MoodIcon = mood === 'celebrating' ? Sparkles : mood === 'curious' ? Moon : Star;
 
@@ -143,7 +143,7 @@ function ProfAuraEmptyState({
         <div className="absolute bottom-[-30%] left-[-20%] w-[360px] h-[360px] bg-fuchsia-600/[0.04] blur-[100px] rounded-full" />
       </div>
 
-      {/* Hero halo + ProfAura gradient */}
+      {/* Hero halo + ProfLinnea gradient */}
       <div className="relative mb-5">
         <div className={cn('relative', dim.halo)}>
           <motion.div
@@ -153,7 +153,7 @@ function ProfAuraEmptyState({
             className="absolute inset-[-8px] rounded-[28px] bg-gradient-to-br from-violet-500/30 via-fuchsia-500/20 to-cyan-500/30 blur-md opacity-80"
           />
           <div className="relative w-full h-full rounded-3xl bg-gradient-to-br from-[#7C3AED] via-[#EC4899] to-[#06B6D4] flex items-center justify-center shadow-xl shadow-violet-500/25">
-            <ProfAura variant={variant} size={dim.avatarPx} mood={profMood} audioLevel={audioLevel} />
+            <ProfLinnea variant={variant} size={dim.avatarPx} mood={profMood} audioLevel={audioLevel} />
           </div>
 
           {/* Mood-specific floating icon orbiter */}
@@ -271,4 +271,4 @@ function ProfAuraEmptyState({
   );
 }
 
-export default ProfAuraEmptyState;
+export default ProfLinneaEmptyState;

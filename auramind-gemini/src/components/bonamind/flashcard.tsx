@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "@/components/icons";
 import { useState } from "react";
-import type { FlashcardData } from "@/lib/auramind/types";
+import type { FlashcardData } from "@/lib/bonamind/types";
 
 interface FlashcardProps {
   card: FlashcardData;

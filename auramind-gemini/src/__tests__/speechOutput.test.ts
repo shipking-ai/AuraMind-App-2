@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// speechOutput is the single speaking path: native AuraSpeech inside the
+// speechOutput is the single speaking path: native BonaSpeech inside the
 // Android app (whose WebView has no speechSynthesis) and Web Speech
 // elsewhere, with the Automatic / Random / chosen voice rule applied on both.
 
@@ -11,9 +11,9 @@ const native = vi.hoisted(() => ({
   stop: vi.fn(),
 }));
 
-vi.mock('../lib/auraSpeech', () => ({
+vi.mock('../lib/bonaSpeech', () => ({
   hasNativeSpeech: () => native.enabled,
-  AuraSpeech: { getVoices: native.getVoices, speak: native.speak, stop: native.stop },
+  BonaSpeech: { getVoices: native.getVoices, speak: native.speak, stop: native.stop },
 }));
 
 import {

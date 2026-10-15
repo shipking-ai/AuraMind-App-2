@@ -20,7 +20,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 import java.util.ArrayList;
 
 /**
- * AuraListen — native speech recognition for voice study.
+ * BonaListen — native speech recognition for voice study.
  *
  * Android System WebView has no SpeechRecognition, so spoken answers never
  * worked in the Android app. This wraps android.speech.SpeechRecognizer and
@@ -35,9 +35,9 @@ import java.util.ArrayList;
  * SpeechRecognizer must be created and driven on the main thread.
  */
 @CapacitorPlugin(
-        name = "AuraListen",
+        name = "BonaListen",
         permissions = @Permission(strings = {Manifest.permission.RECORD_AUDIO}, alias = "microphone"))
-public class AuraListenPlugin extends Plugin {
+public class BonaListenPlugin extends Plugin {
 
     private SpeechRecognizer recognizer;
     private String session = "";

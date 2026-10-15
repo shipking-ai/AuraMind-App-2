@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ArrowLeft, BookOpen } from '@/components/icons';
-import ProfAuraEmptyState from '../components/ui/ProfAuraEmptyState';
+import ProfLinneaEmptyState from '../components/ui/ProfLinneaEmptyState';
 
 // NotFoundPage: Prof. Linnea rescues the user from a dead route. Three concrete
 // escape routes + a \u201Cyou\u2019re not lost\u201D reassurance line replace the prior
@@ -12,7 +12,7 @@ export default function NotFoundPage(): React.ReactElement {
   return (
     <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32 }} className="w-[520px] max-w-[92vw]">
-        <ProfAuraEmptyState
+        <ProfLinneaEmptyState
           mood="inviting"
           size="lg"
           eyebrow="404 · BETWEEN SESSIONS"

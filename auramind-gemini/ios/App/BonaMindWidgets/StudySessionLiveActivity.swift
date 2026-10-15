@@ -81,7 +81,7 @@ struct StudySessionLiveActivity: Widget {
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(Self.accent)
             }
-            .widgetURL(URL(string: "auramind://app/dashboard/study"))
+            .widgetURL(URL(string: "bonamind://app/dashboard/study"))
             .keylineTint(Self.accent)
         }
     }

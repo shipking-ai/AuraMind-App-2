@@ -14,7 +14,7 @@ import {
 } from '@/components/icons';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { useSessionReplay, type ReplayEntry } from '../../hooks/useSessionReplay';
-import ProfAuraEmptyState from '../ui/ProfAuraEmptyState';
+import ProfLinneaEmptyState from '../ui/ProfLinneaEmptyState';
 
 interface Props {
   open: boolean;
@@ -126,7 +126,7 @@ export default function SessionReplayModal({ open, onClose }: Props) {
             </div>
           ) : !session || session.entries.length === 0 ? (
             <div className="py-6">
-              <ProfAuraEmptyState
+              <ProfLinneaEmptyState
                 mood="inviting"
                 size="sm"
                 eyebrow="SESSION REPLAY"

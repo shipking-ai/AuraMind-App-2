@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// nativeRecognition turns AuraListen plugin events into the Web Speech API
+// nativeRecognition turns BonaListen plugin events into the Web Speech API
 // shape useVoiceStudy already consumes. These tests drive a fake plugin.
 
 type Listener = (e: Record<string, unknown>) => void;

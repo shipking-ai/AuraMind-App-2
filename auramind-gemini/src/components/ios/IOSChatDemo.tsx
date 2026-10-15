@@ -6,7 +6,7 @@
 import { useParams } from "react-router-dom";
 import type { Message } from "../../hooks/useAIChat";
 import { Brain, Lightbulb, Pencil } from "../icons";
-import { IOSChatView, type AuraChatMode, AURA_CHAT_MODE_KEY } from "./IOSChatView";
+import { IOSChatView, type LinneaChatMode, LINNEA_CHAT_MODE_KEY } from "./IOSChatView";
 
 const MESSAGES: Message[] = [
   {
@@ -42,10 +42,10 @@ const STARTERS = [
 ];
 
 export default function IOSChatDemo() {
-  const { mode = "notebook", state } = useParams<{ mode: AuraChatMode; state?: string }>();
+  const { mode = "notebook", state } = useParams<{ mode: LinneaChatMode; state?: string }>();
   // The view reads its mode from the saved preference on mount.
   try {
-    window.localStorage.setItem(AURA_CHAT_MODE_KEY, JSON.stringify(mode));
+    window.localStorage.setItem(LINNEA_CHAT_MODE_KEY, JSON.stringify(mode));
   } catch {
     /* preview only */
   }

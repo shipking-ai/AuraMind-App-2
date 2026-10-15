@@ -3,8 +3,8 @@ import { Capacitor } from './nativeShim';
 
 /**
  * The study session on the iPhone Lock Screen and in the Dynamic Island,
- * through the native AuraLiveActivity plugin
- * (ios/App/App/AuraLiveActivityPlugin.swift).
+ * through the native BonaLiveActivity plugin
+ * (ios/App/App/BonaLiveActivityPlugin.swift).
  *
  * Off iOS — the web app, the Android app — every call is a silent no-op, and
  * a bridge failure is swallowed: a session without a Live Activity is still a
@@ -19,7 +19,7 @@ export interface LiveActivitySession {
   again?: number;
 }
 
-interface AuraLiveActivityPlugin {
+interface BonaLiveActivityPlugin {
   /**
    * Resolves ONLY when the native plugin is actually registered and answers.
    * A rejection means the plugin is missing from the binary — a build defect,
@@ -31,7 +31,7 @@ interface AuraLiveActivityPlugin {
   end(): Promise<void>;
 }
 
-const AuraLiveActivity = registerPlugin<AuraLiveActivityPlugin>('AuraLiveActivity');
+const BonaLiveActivity = registerPlugin<BonaLiveActivityPlugin>('BonaLiveActivity');
 
 /**
  * Whether the native plugin is present and answering.
@@ -50,7 +50,7 @@ const AuraLiveActivity = registerPlugin<AuraLiveActivityPlugin>('AuraLiveActivit
 export async function isLiveActivityPluginRegistered(): Promise<boolean> {
   if (!isIOSApp()) return false;
   try {
-    await AuraLiveActivity.isSupported();
+    await BonaLiveActivity.isSupported();
     return true;
   } catch {
     return false;
@@ -65,7 +65,7 @@ function isIOSApp(): boolean {
 export async function isLiveActivityAvailable(): Promise<boolean> {
   if (!isIOSApp()) return false;
   try {
-    const { supported, enabled } = await AuraLiveActivity.isSupported();
+    const { supported, enabled } = await BonaLiveActivity.isSupported();
     return supported && enabled;
   } catch {
     return false;
@@ -75,7 +75,7 @@ export async function isLiveActivityAvailable(): Promise<boolean> {
 export async function startLiveActivity(session: LiveActivitySession): Promise<boolean> {
   if (!isIOSApp()) return false;
   try {
-    const { started } = await AuraLiveActivity.start(session);
+    const { started } = await BonaLiveActivity.start(session);
     return started === true;
   } catch {
     return false;
@@ -96,7 +96,7 @@ export async function updateLiveActivity(session: LiveActivitySession): Promise<
   if (key === lastPushed) return false;
   lastPushed = key;
   try {
-    const { updated } = await AuraLiveActivity.update(session);
+    const { updated } = await BonaLiveActivity.update(session);
     return updated === true;
   } catch {
     return false;
@@ -108,7 +108,7 @@ export async function endLiveActivity(): Promise<void> {
   lastPushed = '';
   if (!isIOSApp()) return;
   try {
-    await AuraLiveActivity.end();
+    await BonaLiveActivity.end();
   } catch {
     /* accessory surface */
   }

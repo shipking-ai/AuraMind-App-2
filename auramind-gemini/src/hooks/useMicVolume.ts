@@ -16,7 +16,7 @@ export interface UseMicVolumeResult {
 /**
  * Live microphone RMS volume hook.
  *
- * Pass `audioLevel` from this hook into <ProfAura audioLevel={...} /> to
+ * Pass `audioLevel` from this hook into <ProfLinnea audioLevel={...} /> to
  * make the orbit stars grow outward when the user is dictating.
  *
  * Notes:

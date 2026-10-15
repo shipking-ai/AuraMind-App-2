@@ -21,7 +21,7 @@ import type { Deck } from "../../types";
 import { renderMarkdown } from "../chat/ChatMessage";
 import QuizBlock from "../chat/QuizBlock";
 import TypingIndicator from "../chat/TypingIndicator";
-import ProfAura from "../chat/ProfAura";
+import ProfLinnea from "../chat/ProfLinnea";
 import {
   ArrowUp,
   Check,
@@ -38,8 +38,8 @@ import { IOSChoiceList, IOSSegmented, IOSSheet } from "./IOSPrimitives";
 import { iosSelection, iosSuccess, iosTap } from "./iosHaptics";
 import { useAppPreference } from "../../lib/appPreferences";
 
-export type AuraChatMode = "talk" | "notebook" | "cards";
-export const AURA_CHAT_MODE_KEY = "bonamind_auraChatMode";
+export type LinneaChatMode = "talk" | "notebook" | "cards";
+export const LINNEA_CHAT_MODE_KEY = "bonamind_auraChatMode";
 
 export interface IOSChatStarter {
   icon: LucideIcon;
@@ -74,7 +74,7 @@ export interface IOSChatViewProps {
   onToggleSpeaking: () => void;
   /** True while Linnea's voice is actually playing. */
   voicePlaying: boolean;
-  onModeChange?: (mode: AuraChatMode) => void;
+  onModeChange?: (mode: LinneaChatMode) => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -363,7 +363,7 @@ function TalkMode({
       <div className={`ios-talk-orb is-${state}`}>
         <span className="ios-talk-ring" aria-hidden />
         <span className="ios-talk-ring is-2" aria-hidden />
-        <ProfAura
+        <ProfLinnea
           variant={state === "thinking" ? "thinking" : state === "speaking" ? "streaming" : "rest"}
           size={168}
           mood={state === "listening" ? "focused" : "default"}
@@ -706,7 +706,7 @@ export function IOSChatView(props: IOSChatViewProps) {
     voicePlaying,
     onModeChange,
   } = props;
-  const [mode, setMode] = useAppPreference<AuraChatMode>(AURA_CHAT_MODE_KEY, "notebook");
+  const [mode, setMode] = useAppPreference<LinneaChatMode>(LINNEA_CHAT_MODE_KEY, "notebook");
   const [deckSheet, setDeckSheet] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const deck = decks.find((d) => d.id === selectedDeckId) ?? decks[0];
@@ -748,7 +748,7 @@ export function IOSChatView(props: IOSChatViewProps) {
             disabled={decks.length === 0}
           >
             <span className="ios-chat-avatar" aria-hidden>
-              <ProfAura variant={isStreaming ? "thinking" : "badge"} size={22} />
+              <ProfLinnea variant={isStreaming ? "thinking" : "badge"} size={22} />
             </span>
             <span>
               <span className="ios-chat-name">Prof. Linnea</span>

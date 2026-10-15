@@ -166,7 +166,7 @@ const localBaseUrl = '/local-ai/v1';
 // .env.mobile sets VITE_API_BASE_URL for exactly this reason.
 const PROXY_BASE_URL = `${readClientEnv('VITE_API_BASE_URL') ?? ''}/api/ai`;
 
-export class AuraAiClient {
+export class BonaAiClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly defaultModel: string;
@@ -208,7 +208,7 @@ export class AuraAiClient {
     
     if (this.apiKey && (this.apiKey.includes('your_') || this.apiKey.includes('placeholder'))) {
       throw new Error(
-        'Invalid AI key: a placeholder value was supplied to AuraAiService.',
+        'Invalid AI key: a placeholder value was supplied to BonaAiService.',
       );
     }
   }
@@ -604,7 +604,7 @@ export class AuraAiClient {
   }
 }
 
-export const auraAiClient = new AuraAiClient();
+export const bonaAiClient = new BonaAiClient();
 
 // Export types for use in other components
 export type { Message, ChatCompletionOptions, ChatCompletionResponse };

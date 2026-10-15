@@ -4,8 +4,8 @@
  * These assert things about the Swift sources rather than by running them. The
  * motivation is a real bug that shipped: SceneDelegate created its own window
  * and set rootViewController to a bare CAPBridgeViewController, discarding the
- * storyboard's MainViewController — which is the only place AuraListenPlugin
- * and AuraLiveActivityPlugin are registered. Both features silently did
+ * storyboard's MainViewController — which is the only place BonaListenPlugin
+ * and BonaLiveActivityPlugin are registered. Both features silently did
  * nothing, and CI read the result as "the OS refused".
  *
  * A native XCTest would be the stronger assertion, but none of this can be
@@ -67,12 +67,12 @@ describe('SceneDelegate must not replace the storyboard root view controller', (
 describe('MainViewController registers every app-local plugin', () => {
   const src = read('App', 'MainViewController.swift');
 
-  it('registers AuraListenPlugin', () => {
-    expect(src).toMatch(/registerPluginInstance\(\s*AuraListenPlugin\(\)\s*\)/);
+  it('registers BonaListenPlugin', () => {
+    expect(src).toMatch(/registerPluginInstance\(\s*BonaListenPlugin\(\)\s*\)/);
   });
 
-  it('registers AuraLiveActivityPlugin', () => {
-    expect(src).toMatch(/registerPluginInstance\(\s*AuraLiveActivityPlugin\(\)\s*\)/);
+  it('registers BonaLiveActivityPlugin', () => {
+    expect(src).toMatch(/registerPluginInstance\(\s*BonaLiveActivityPlugin\(\)\s*\)/);
   });
 
   it('is the storyboard root, so it is the one that gets loaded', () => {
@@ -116,7 +116,7 @@ describe('Info.plist registers the deep-link scheme', () => {
   });
 
   it('keeps the permission strings voice study needs', () => {
-    // AuraListenPlugin rejects with "not-allowed" without these, and iOS
+    // BonaListenPlugin rejects with "not-allowed" without these, and iOS
     // terminates the app if a permission string is missing entirely rather
     // than showing the prompt.
     expect(plist).toMatch(/<key>NSMicrophoneUsageDescription<\/key>/);
@@ -129,7 +129,7 @@ describe('Info.plist registers the deep-link scheme', () => {
 });
 
 describe('Live Activity plugin holds no orphaned state', () => {
-  const src = read('App', 'AuraLiveActivityPlugin.swift');
+  const src = read('App', 'BonaLiveActivityPlugin.swift');
 
   it('adopts activities left behind by a previous process', () => {
     // `current` is in-memory, so it is empty after iOS relaunches the app.
@@ -202,5 +202,29 @@ describe('the deep-link scheme agrees with Android', () => {
   it('the Windows app registers both schemes', () => {
     const conf = JSON.parse(readFileSync(path.resolve(__dirname, '../../src-tauri/tauri.conf.json'), 'utf8'));
     expect(conf.plugins['deep-link'].desktop.schemes).toEqual(['bonamind', 'auramind']);
+  });
+});
+// The Xcode project file is maintained by hand (no Mac here), so a rename
+// that misses a reference only shows up as a failed CI build. Catch it here.
+describe('project.pbxproj', () => {
+  const pbx = read('App.xcodeproj', 'project.pbxproj');
+
+  it('points every source and plist reference at a file that exists', () => {
+    const groups = [...pbx.matchAll(/\/\* (\w+) \*\/ = \{\s*isa = PBXGroup;[\s\S]*?path = (\w+);/g)];
+    const groupPath = new Map(groups.map((m) => [m[1], m[2]]));
+    const refs = [...pbx.matchAll(/\/\* ([\w.]+\.(?:swift|plist)) \*\/ = \{isa = PBXFileReference;[^}]*path = "?([^";]+)"?;/g)];
+    expect(refs.length).toBeGreaterThan(0);
+    for (const [, name, file] of refs) {
+      const candidates = [path.join(APP, 'App', file), ...[...groupPath.values()].map((dir) => path.join(APP, dir, file))];
+      expect(candidates.some((c) => existsSync(c)), `${name} → ${file}`).toBe(true);
+    }
+    // \s before the key so GENERATE_INFOPLIST_FILE = NO isn't read as a path.
+    for (const m of pbx.matchAll(/\sINFOPLIST_FILE = ([^;]+);/g)) {
+      expect(existsSync(path.join(APP, m[1].trim().replace(/"/g, ''))), m[1]).toBe(true);
+    }
+  });
+
+  it('carries no pre-rename names', () => {
+    expect(pbx).not.toMatch(/Aura/);
   });
 });

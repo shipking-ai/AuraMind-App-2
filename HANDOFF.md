@@ -14,7 +14,7 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main` at `26f3b097` (2026-10-13, through #168: rename PR1, storage migration). Rename PR2 (Prof. Linnea and visible copy) on `feat/rename-2-linnea`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
+| Branch | `main` at `8e1eac2d` (2026-10-14, through #170: rename PR2, Prof. Linnea and copy). Open: #171 (real-app Play screenshots and the live listing text), rename PR3 (code names and `bonamind://` senders) on `feat/rename-3-code`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
 | Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
@@ -127,7 +127,7 @@ value:
   - Both apps share the phone layout; `src/lib/platform.ts` gates the
     Android-only parts (spoken reminders, widgets, push for now).
   - Listening: WKWebView exposes `webkitSpeechRecognition` but it never
-    returns results (WebKit bug 239816), so `AuraListenPlugin.swift`
+    returns results (WebKit bug 239816), so `BonaListenPlugin.swift`
     (SFSpeechRecognizer) is used; both apps now listen natively. App-local
     plugins register in `MainViewController.swift`. Needs a real iPhone to
     verify transcription.
@@ -154,7 +154,7 @@ value:
 
 - **Voice study listening on Android** (merged in #79).
   Android WebView has no `SpeechRecognition`, so spoken answers never worked
-  in the app. `AuraListenPlugin` wraps `SpeechRecognizer`;
+  in the app. `BonaListenPlugin` wraps `SpeechRecognizer`;
   `services/voice/nativeRecognition.ts` presents it in the Web Speech shape so
   `useVoiceStudy` is unchanged. Verified on the emulator: Android's mic prompt
   appears, *Don't allow* surfaces as `not-allowed`, and after allowing,
@@ -204,7 +204,7 @@ is unset.
 `window.speechSynthesis` and `SpeechRecognition` are both `undefined` inside
 the Capacitor app, while the same code works in Chrome. Every voice feature
 was silent on Android until 2026-09-17. All speaking now goes through
-`services/voice/speechOutput.ts` (native `AuraSpeechPlugin` on Android, Web
+`services/voice/speechOutput.ts` (native `BonaSpeechPlugin` on Android, Web
 Speech elsewhere). Don't call `window.speechSynthesis` directly.
 
 Related native traps:
@@ -307,7 +307,7 @@ reminder simply fires once and never again.
 Android 16's promoted (Live Update) notifications look like one API level.
 They aren't: `Notification.ProgressStyle` landed in 36, but
 `setRequestPromotedOngoing` only exists in **36.1**, and compileSdk 36 rev 2
-fails to compile a direct call. `AuraLiveUpdatePlugin.requestPromotion` calls
+fails to compile a direct call. `BonaLiveUpdatePlugin.requestPromotion` calls
 it reflectively and no-ops when absent, which also keeps the plugin working on
 older Androids. If a platform method "should exist" and doesn't, check it with
 `javap -classpath $ANDROID_HOME/platforms/android-36/android.jar` before
@@ -489,6 +489,24 @@ Queued offline reviews are safe either way. The IndexedDB move never deletes
 a database and drains the old one again on every launch. If PR1's web build
 misbehaves, ship a fix forward.
 
+### The widget and Wear tile keep their pre-rename class names
+
+Android finds a placed home-screen widget, and Wear OS an added tile, by the
+class name registered in the manifest. `AuraMindWidgetProvider` and
+`AuraMindTileService` are now empty subclasses of the `BonaMind*` classes.
+**Never rename or delete them, and never register the BonaMind classes
+instead.** That silently removes the widget or tile from every user's screen.
+Code that asks Android about placed widgets or tiles must name the registered
+class (`new ComponentName(context, AuraMindWidgetProvider.class)`,
+`requestUpdate(AuraMindTileService::class.java)`).
+
+### The old repo URL must never be reused
+
+Installed Windows apps check `shipking-ai/AuraMind-App-2` for updates until
+they update once. GitHub redirects that URL to `shipking-ai/BonaMind` only
+while no repo of the old name exists. **Don't create a repo called
+`AuraMind-App-2`.**
+
 ### Pre-rename names live in one web file
 
 The rename to BonaMind moved every stored key from `auramind…` to
@@ -585,7 +603,7 @@ adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof com
 Then drive it with Playwright over `connectOverCDP('http://127.0.0.1:9222')`,
 or evaluate directly over the page's `webSocketDebuggerUrl` (from
 `curl localhost:9222/json`) to call plugins, e.g.
-`window.Capacitor.Plugins.AuraSpeech.speak({ text: 'hi' })`. Audio can't be
+`window.Capacitor.Plugins.BonaSpeech.speak({ text: 'hi' })`. Audio can't be
 heard, but `adb shell dumpsys audio` lists the playing track and its usage.
 Navigate by URL rather than tapping coordinates — blind taps on a live account
 deleted a card during this work.
@@ -603,7 +621,7 @@ Everything iOS happens on GitHub's macOS runners via `.github/workflows/mobile-i
 - **`ios-simulator`** — builds for the simulator, boots it, and screenshots
   the `/__preview/ios` tour. This is the fast loop: push, read the artifact.
 - **`ios-device-ipa`** (workflow_dispatch) — builds `-sdk iphoneos` with
-  `CODE_SIGNING_ALLOWED=NO`, asserts `App.app/PlugIns/AuraMindWidgets.appex`
+  `CODE_SIGNING_ALLOWED=NO`, asserts `App.app/PlugIns/BonaMindWidgets.appex`
   exists, and zips `Payload/` by hand into `BonaMind-unsigned.ipa`. It uses
   `build`, not `archive`: with signing off, archiving doesn't reliably place
   `App.app` in the `.xcarchive`.
@@ -664,6 +682,37 @@ app plus its extension burn two per sideload.
   `20260930_marketplace_fork_and_listing.sql`.
 
 ---
+
+## 2026-10-14 - BonaMind rename, PR3: code names and bonamind:// links
+
+- **Web.** The code names change, and `src/__tests__/codeNames.test.ts` enforces it:
+  - `ProfAura*` → `ProfLinnea*`, `AuraChatMode` → `LinneaChatMode`;
+  - the Capacitor plugins `AuraSpeech`/`AuraListen`/`AuraLiveActivity`/`AuraLiveUpdate`/`AuraDevice` → `Bona*`;
+  - `auraAiService` → `bonaAiService`, `useAuraMind` → `useBonaMind`;
+  - `components/auramind/` and `lib/auramind/` → `bonamind/`, and `public/auramind/` assets → `public/bonamind/`.
+- **Android.** The plugin classes are now `Bona*`, and the widget resources are
+  `bonamind_widget_info` and `widget_bonamind`. The widget's code moved to
+  `BonaMindWidgetProvider` and the watch tile's to `BonaMindTileService`. The
+  manifests still register **`.AuraMindWidgetProvider` and `.AuraMindTileService`**:
+  empty stand-in subclasses that keep placed widgets and added tiles alive.
+  `src/__tests__/androidIdentity.test.ts` pins this.
+- **iOS.** The types, files, the widget extension folder and the target are all
+  `BonaMind*`. `project.pbxproj` was edited by hand (object IDs unchanged), and
+  `iosNativeSource.test.ts` now checks that every file it references exists.
+  The unsigned build in `mobile-ios.yml` is the real check.
+- **Windows.**
+  - The crate is `bonamind-desktop` and the library `bonamind_desktop_lib`.
+  - The installer's Explorer verb is `BonaMindVerb`, under the registry key `shell\BonaMind`.
+  - The updater points at `shipking-ai/BonaMind`.
+  - The identifier stays `com.auramind.app`.
+- **Links.** Every surface now sends `bonamind://`: shortcuts, widget, tile,
+  Live Update, Live Activity, Siri, push reminders and the Windows OAuth return.
+  `src/__tests__/linkSenders.test.ts` enforces it. Everything still
+  **accepts** `auramind://`.
+- **Kept on purpose:**
+  - the aura glow-effect names (`auraDepth`, `AndroidAura`, `VoiceAura`) and the "Aura Sans"/"Aura Script" typefaces;
+  - the Wear data-layer paths, now `WEAR_SYNC_PATH`/`WEAR_GRADE_PATH` in `legacyNames.ts`. The sweep had renamed them, which would have broken phone↔watch sync.
+- **Owner:** after merging, ship new Android and Windows builds.
 
 ## 2026-10-13 - BonaMind rename, PR2: Prof. Linnea and visible copy
 

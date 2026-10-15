@@ -29,7 +29,7 @@ import { userService } from "../../services/user/userService";
 import { analyticsService } from "../../services/analytics/analyticsService";
 import { useReminderSync } from "../../hooks/useReminderSync";
 import { useVoiceOptions } from "../../hooks/useVoiceOptions";
-import { AuraSpeech } from "../../lib/auraSpeech";
+import { BonaSpeech } from "../../lib/bonaSpeech";
 import { deviceName, isAndroidApp } from "../../lib/platform";
 import { SPOKEN_REMINDER_MESSAGES, currentReminderMessage, type SpokenReminderMode } from "../../lib/reminderSchedule";
 import {
@@ -40,7 +40,7 @@ import {
   DEFAULT_VOICE,
 } from "../../services/voice/speechOutput";
 import { deleteAvatar, uploadAvatar } from "../../services/user/avatarService";
-import ProfAuraAvatar from "../auramind/ProfAuraAvatar";
+import ProfLinneaAvatar from "../bonamind/ProfLinneaAvatar";
 import { DeleteAccountModal } from "../settings/DeleteAccountModal";
 import type { UserProfile } from "../../types";
 
@@ -275,7 +275,7 @@ export default function AndroidSettingsScreen() {
         ? spokenReminderMessage
         : SPOKEN_REMINDER_MESSAGES[Math.floor(Math.random() * SPOKEN_REMINDER_MESSAGES.length)];
     try {
-      await AuraSpeech.previewSpokenReminder({ message, voice: ttsVoice, lang: "en-US" });
+      await BonaSpeech.previewSpokenReminder({ message, voice: ttsVoice, lang: "en-US" });
     } catch {
       toast.error("Couldn't play the reminder. Check your notification volume.");
     }
@@ -515,7 +515,7 @@ export default function AndroidSettingsScreen() {
           {profile?.avatar || workspace?.user.avatar ? (
             <img src={profile?.avatar || workspace?.user.avatar} alt="" />
           ) : (
-            <ProfAuraAvatar
+            <ProfLinneaAvatar
               size={62}
               halo
               variant="badge"

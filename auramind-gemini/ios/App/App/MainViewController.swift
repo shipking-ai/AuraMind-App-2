@@ -6,8 +6,8 @@ import UIKit
 /// plugins are found automatically.
 class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
-        bridge?.registerPluginInstance(AuraListenPlugin())
-        bridge?.registerPluginInstance(AuraLiveActivityPlugin())
+        bridge?.registerPluginInstance(BonaListenPlugin())
+        bridge?.registerPluginInstance(BonaLiveActivityPlugin())
         // Swipe from the left edge goes back, as in every iOS app. The web
         // app's router uses history, so this walks back through its screens.
         webView?.allowsBackForwardNavigationGestures = true

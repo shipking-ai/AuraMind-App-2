@@ -123,7 +123,7 @@ export async function getAccessToken(config: PushConfig, now = Date.now()): Prom
 export interface PushPayload {
   title: string;
   body: string;
-  /** Deep link carried in `data`; the client routes `auramind://` links on tap. */
+  /** Deep link carried in `data`; the client routes `bonamind://` links (and pre-rename ones) on tap. */
   link?: string;
 }
 

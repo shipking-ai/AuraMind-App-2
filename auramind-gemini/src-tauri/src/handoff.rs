@@ -75,7 +75,7 @@ mod tests {
     use std::io::Write;
 
     fn temp_file(name: &str, bytes: &[u8]) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("auramind-handoff-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("bonamind-handoff-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join(name);
         std::fs::File::create(&path).unwrap().write_all(bytes).unwrap();
@@ -103,13 +103,13 @@ mod tests {
 
     #[test]
     fn a_missing_file_is_unreadable() {
-        let path = std::env::temp_dir().join("auramind-does-not-exist.pdf");
-        assert_eq!(read(&path), Handoff::Error { name: "auramind-does-not-exist.pdf".into(), reason: "unreadable" });
+        let path = std::env::temp_dir().join("bonamind-does-not-exist.pdf");
+        assert_eq!(read(&path), Handoff::Error { name: "bonamind-does-not-exist.pdf".into(), reason: "unreadable" });
     }
 
     #[test]
     fn a_directory_is_unreadable() {
-        let dir = std::env::temp_dir().join(format!("auramind-dir-{}.pdf", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("bonamind-dir-{}.pdf", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         assert!(matches!(read(&dir), Handoff::Error { reason: "unreadable", .. }));
     }

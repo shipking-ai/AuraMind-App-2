@@ -2,8 +2,8 @@ import { registerPlugin } from '@capacitor/core';
 import { Capacitor } from './nativeShim';
 
 /**
- * Launcher and window integrations from the native AuraDevice plugin
- * (android/app/src/main/java/com/auramind/app/AuraDevicePlugin.java).
+ * Launcher and window integrations from the native BonaDevice plugin
+ * (android/app/src/main/java/com/auramind/app/BonaDevicePlugin.java).
  *
  * Every function is a silent no-op outside the installed Android app and
  * swallows bridge failures: these are conveniences layered over a working
@@ -15,7 +15,7 @@ interface DeckShortcut {
   title: string;
 }
 
-interface AuraDevicePlugin {
+interface BonaDevicePlugin {
   setKeepAwake(options: { enabled: boolean }): Promise<void>;
   setRecentDecks(options: { decks: DeckShortcut[] }): Promise<void>;
   reportDeckUsed(options: { id: string }): Promise<void>;
@@ -23,7 +23,7 @@ interface AuraDevicePlugin {
   pinDeck(options: DeckShortcut): Promise<{ requested: boolean }>;
 }
 
-const AuraDevice = registerPlugin<AuraDevicePlugin>('AuraDevice');
+const BonaDevice = registerPlugin<BonaDevicePlugin>('BonaDevice');
 
 function isAndroidApp(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -32,7 +32,7 @@ function isAndroidApp(): boolean {
 export async function setKeepAwake(enabled: boolean): Promise<void> {
   if (!isAndroidApp()) return;
   try {
-    await AuraDevice.setKeepAwake({ enabled });
+    await BonaDevice.setKeepAwake({ enabled });
   } catch {
     // The screen timing out is the default behaviour, not a failure.
   }
@@ -54,7 +54,7 @@ export async function publishRecentDecks(decks: DeckShortcut[]): Promise<void> {
   const key = JSON.stringify(clean);
   if (key === lastPublished) return;
   try {
-    await AuraDevice.setRecentDecks({ decks: clean });
+    await BonaDevice.setRecentDecks({ decks: clean });
     lastPublished = key;
   } catch {
     // Shortcuts are garnish on the launcher.
@@ -64,7 +64,7 @@ export async function publishRecentDecks(decks: DeckShortcut[]): Promise<void> {
 export async function reportDeckUsed(id: string): Promise<void> {
   if (!isAndroidApp() || !id) return;
   try {
-    await AuraDevice.reportDeckUsed({ id });
+    await BonaDevice.reportDeckUsed({ id });
   } catch {
     // Ranking signal only.
   }
@@ -73,7 +73,7 @@ export async function reportDeckUsed(id: string): Promise<void> {
 export async function canPinDecks(): Promise<boolean> {
   if (!isAndroidApp()) return false;
   try {
-    return (await AuraDevice.canPinShortcuts()).supported === true;
+    return (await BonaDevice.canPinShortcuts()).supported === true;
   } catch {
     return false;
   }
@@ -83,13 +83,13 @@ export async function canPinDecks(): Promise<boolean> {
 export async function pinDeckToHomeScreen(deck: DeckShortcut): Promise<boolean> {
   if (!isAndroidApp()) return false;
   try {
-    return (await AuraDevice.pinDeck(deck)).requested === true;
+    return (await BonaDevice.pinDeck(deck)).requested === true;
   } catch {
     return false;
   }
 }
 
 /** Test seam: forget the publish dedupe. */
-export function __resetAuraDeviceForTests(): void {
+export function __resetBonaDeviceForTests(): void {
   lastPublished = '';
 }

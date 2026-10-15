@@ -16,8 +16,8 @@
     android:targetCellWidth="2"
     android:targetCellHeight="2"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_auramind"
-    android:previewLayout="@layout/widget_auramind"
+    android:initialLayout="@layout/widget_bonamind"
+    android:previewLayout="@layout/widget_bonamind"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_description" />

@@ -7,7 +7,7 @@ import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { supabase, requireSupabase } from '../../services/database/supabase';
 import { userService } from '../../services/user/userService';
 import { uploadAvatar, deleteAvatar } from '../../services/user/avatarService';
-import ProfAuraAvatar from '../../components/auramind/ProfAuraAvatar';
+import ProfLinneaAvatar from '../../components/bonamind/ProfLinneaAvatar';
 import { DeleteAccountModal } from '../../components/settings/DeleteAccountModal';
 import { Capacitor } from '../../lib/nativeShim';
 import { useAppPreference } from '../../lib/appPreferences';
@@ -1017,7 +1017,7 @@ function AvatarEditor({
               className="w-20 h-20 rounded-full object-cover ring-2 ring-[#7C3AED]/40"
             />
           ) : (
-            <ProfAuraAvatar size={80} halo initial={initial} variant="badge" />
+            <ProfLinneaAvatar size={80} halo initial={initial} variant="badge" />
           )}
         </div>
         <div className="flex-1 min-w-0">

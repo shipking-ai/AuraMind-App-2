@@ -3,12 +3,12 @@ import Capacitor
 import Foundation
 import Speech
 
-/// AuraListen — native speech recognition for voice study on iOS.
+/// BonaListen — native speech recognition for voice study on iOS.
 ///
 /// WKWebView exposes `webkitSpeechRecognition` but it never delivers results
 /// (WebKit bug 239816), so spoken answers would silently fail in the iOS app.
 /// This wraps SFSpeechRecognizer and reports the same events as the Android
-/// plugin (android/.../AuraListenPlugin.java): start, partial, final, level,
+/// plugin (android/.../BonaListenPlugin.java): start, partial, final, level,
 /// error and end, each tagged with the session passed to start(), in Web
 /// Speech API vocabulary. src/services/voice/nativeRecognition.ts turns them
 /// into a browser-shaped recogniser for useVoiceStudy.
@@ -16,10 +16,10 @@ import Speech
 /// Android's recogniser ends by itself after a pause; SFSpeechRecognizer keeps
 /// listening until told to stop, so a silence timer ends the utterance to
 /// behave the same way.
-@objc(AuraListenPlugin)
-public class AuraListenPlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "AuraListenPlugin"
-    public let jsName = "AuraListen"
+@objc(BonaListenPlugin)
+public class BonaListenPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "BonaListenPlugin"
+    public let jsName = "BonaListen"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),

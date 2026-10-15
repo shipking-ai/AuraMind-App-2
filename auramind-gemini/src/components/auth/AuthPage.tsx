@@ -13,7 +13,7 @@ import { isAppShell, isDesktopApp } from "../../lib/platform";
 import { readClientEnv } from "../../lib/env";
 import { hasCompletedOnboarding } from "../../lib/onboardingGate";
 
-/** The Windows app can finish OAuth via auramind:// once Supabase allows it. */
+/** The Windows app can finish OAuth via bonamind:// once Supabase allows it. */
 function desktopOAuthEnabled(): boolean {
   return isDesktopApp() && readClientEnv("VITE_DESKTOP_OAUTH") === "true";
 }
@@ -145,14 +145,14 @@ export default function AuthPage() {
 
   /**
    * Windows app: PKCE OAuth in the user's browser, finished by the
-   * auramind://auth/callback deep link (desktop/deepLinkRouter.ts).
+   * bonamind://auth/callback deep link (desktop/deepLinkRouter.ts).
    */
   const startDesktopOAuth = async (provider: "google" | "notion", label: string) => {
     if (!supabase) return;
     setLoading(true);
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: "auramind://auth/callback", skipBrowserRedirect: true },
+      options: { redirectTo: "bonamind://auth/callback", skipBrowserRedirect: true },
     });
     setLoading(false);
     if (oauthError || !data?.url) {
@@ -226,7 +226,7 @@ export default function AuthPage() {
       {/* Aurora glow background */}
       <div className="fixed inset-0 pointer-events-none">
         <img
-          src="/auramind/aurora-glow.png"
+          src="/bonamind/aurora-glow.png"
           alt=""
           className="w-full h-full object-cover"
           style={{ opacity: 0.3 }}

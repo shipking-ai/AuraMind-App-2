@@ -1,7 +1,7 @@
 /**
  * Everything a person reads says BonaMind and Prof. Linnea: screen copy,
  * native strings, the HTML shell, the favicon and the Windows app config.
- * Code identifiers (ProfAuraAvatar, useAuraMind…) are renamed separately
+ * Code identifiers (ProfLinneaAvatar, useBonaMind…) are renamed separately
  * and aren't matched here; a name glued into a longer identifier is not
  * visible text.
  *
@@ -28,14 +28,14 @@ const ROOTS = [
   'index.html',
   'android/app/src/main/res',
   'ios/App/App/Info.plist',
-  'ios/App/AuraMindWidgets/Info.plist',
+  'ios/App/BonaMindWidgets/Info.plist',
   'src-tauri/tauri.conf.json',
   'src-tauri/src',
   'src-tauri/windows/generate-assets.ps1',
   'android/app/src/main/java',
   'android/wear/src/main',
   'ios/App/App',
-  'ios/App/AuraMindWidgets',
+  'ios/App/BonaMindWidgets',
   '../store/android/listings',
   '../store/android/changelogs',
 ];

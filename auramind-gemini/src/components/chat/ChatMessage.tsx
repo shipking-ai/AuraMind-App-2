@@ -5,7 +5,7 @@ import type { Message } from '../../hooks/useAIChat';
 import QuizBlock from './QuizBlock';
 import TypingIndicator from './TypingIndicator';
 import MessageActions from './MessageActions';
-import ProfAura from './ProfAura';
+import ProfLinnea from './ProfLinnea';
 
 interface Props {
   message: Message;
@@ -221,7 +221,7 @@ export default function ChatMessage({
       <div className="flex items-end gap-2.5 max-w-[85%] w-full">
         {/* Prof. Linnea avatar — animated SVG */}
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#7C3AED] via-[#EC4899] to-[#06B6D4] flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/15 p-[3px]">
-          <ProfAura variant={isStreaming ? 'streaming' : 'badge'} size={22} />
+          <ProfLinnea variant={isStreaming ? 'streaming' : 'badge'} size={22} />
         </div>
 
         <div className="flex-1 min-w-0">

@@ -270,7 +270,7 @@ function LiveActivityDriver() {
       // Bridge health first: Device is a core plugin with no custom code, so
       // this discriminates "bridge dead" from "plugin not registered".
       // isPluginAvailable is synchronous registry truth (no native call).
-      const known = `plugs=LiveActivity:${Capacitor.isPluginAvailable("AuraLiveActivity")},Preferences:${Capacitor.isPluginAvailable("Preferences")}`;
+      const known = `plugs=LiveActivity:${Capacitor.isPluginAvailable("BonaLiveActivity")},Preferences:${Capacitor.isPluginAvailable("Preferences")}`;
       await recordLiveMilestone(CI_LIVE_KEYS.plugins, known);
       mark(known);
       try {

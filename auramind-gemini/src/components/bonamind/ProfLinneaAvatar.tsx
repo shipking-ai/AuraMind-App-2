@@ -1,7 +1,7 @@
 /**
- * ProfAuraAvatar — circular avatar wrapper around the ProfAura SVG.
+ * ProfLinneaAvatar — circular avatar wrapper around the ProfLinnea SVG.
  *
- * Distribution plan ("ProfAura everywhere"):
+ * Distribution plan ("ProfLinnea everywhere"):
  *   - AppShell sidebar user block — replaces the violet pill with the user's
  *     initial; if the user has uploaded a portrait, we show that instead so
  *     we never erase a personal choice (per design review E).
@@ -9,20 +9,20 @@
  *     etc. — centred at 96-128px with a tasty gradient halo.
  *   - Login / Onboarding welcome screens.
  *
- * Why a wrapper rather than just <ProfAura />:
+ * Why a wrapper rather than just <ProfLinnea />:
  *   - Adds the circular clip + halo gradient that the rest of the app uses
  *     for "small portrait in a circle" surfaces.
  *   - Gives us a single place to wire `audioLevel` from useMicVolume so any
  *     mounted avatar reacts to dictation without callers having to thread
  *     the prop themselves.
  */
-import ProfAura, { type ProfAuraVariant, type ProfAuraMood } from '../chat/ProfAura';
+import ProfLinnea, { type ProfLinneaVariant, type ProfLinneaMood } from '../chat/ProfLinnea';
 
 interface Props {
   size?: number;
-  mood?: ProfAuraMood;
-  variant?: ProfAuraVariant;
-  /** Real user-uploaded avatar URL — if present, we show that, NOT ProfAura. */
+  mood?: ProfLinneaMood;
+  variant?: ProfLinneaVariant;
+  /** Real user-uploaded avatar URL — if present, we show that, NOT ProfLinnea. */
   avatarUrl?: string | null;
   /** 1-2 letter initial fallback when no avatar URL is set. */
   initial?: string;
@@ -33,7 +33,7 @@ interface Props {
   className?: string;
 }
 
-export default function ProfAuraAvatar({
+export default function ProfLinneaAvatar({
   size = 56,
   mood = 'default',
   variant = 'badge',
@@ -77,7 +77,7 @@ export default function ProfAuraAvatar({
         style={{ padding: Math.max(2, Math.round(size * 0.1)) }}
       >
         <div className="w-full h-full rounded-full bg-[#0A0A0F] flex items-center justify-center">
-          <ProfAura variant={variant} size={Math.round(size * 0.78)} mood={mood} audioLevel={audioLevel} />
+          <ProfLinnea variant={variant} size={Math.round(size * 0.78)} mood={mood} audioLevel={audioLevel} />
         </div>
       </div>
     </div>

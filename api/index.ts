@@ -2074,7 +2074,7 @@ const PushSendSchema = z.object({
   link: z
     .string()
     .max(200)
-    // auramind:// predates the rename; installed apps accept both schemes.
+    // The pre-rename scheme stays accepted: installed apps and old links send it.
     .refine((v) => v.startsWith('bonamind://') || v.startsWith('auramind://'), {
       message: 'link must be a bonamind:// deep link',
     })
@@ -2151,7 +2151,7 @@ async function runDueReminderPushes(supabase: any) {
   const report = await sendPushToUsers(
     supabase,
     userIds,
-    { title: 'BonaMind', body: 'Cards are coming due — a short session keeps them fresh.', link: 'auramind://app/dashboard' },
+    { title: 'BonaMind', body: 'Cards are coming due — a short session keeps them fresh.', link: 'bonamind://app/dashboard' },
   );
   return {
     configured: true,

@@ -1,7 +1,7 @@
 [package]
-name = "auramind-desktop"
+name = "bonamind-desktop"
 version = "0.0.0" # the app version comes from ../package.json via tauri.conf.json
-description = "AuraMind for Windows"
+description = "BonaMind for Windows"
 authors = ["CogniVect, Inc."]
 license = "LicenseRef-Proprietary"
 publish = false
@@ -11,7 +11,7 @@ rust-version = "1.77.2"
 [lib]
 # The `_lib` suffix keeps the library from clashing with the binary name on
 # Windows (cargo issue #8519).
-name = "auramind_desktop_lib"
+name = "bonamind_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

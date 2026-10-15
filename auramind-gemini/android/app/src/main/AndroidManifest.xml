@@ -106,7 +106,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/auramind_widget_info" />
+                android:resource="@xml/bonamind_widget_info" />
         </receiver>
 
         <!-- Quick Settings tile: due count + one tap into review. Reads the
@@ -158,7 +158,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Voice study answers (AuraListenPlugin / SpeechRecognizer) + audio transcription -->
+    <!-- Voice study answers (BonaListenPlugin / SpeechRecognizer) + audio transcription -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Haptic feedback on study answers (Capacitor Haptics uses the Vibrator) -->
     <uses-permission android:name="android.permission.VIBRATE" />

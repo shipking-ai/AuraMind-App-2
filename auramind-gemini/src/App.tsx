@@ -69,7 +69,7 @@ import QuizGenerationNotifier from "./components/notifications/QuizGenerationNot
 import { Toaster, toast } from "./components/ui/sonner";
 import { ThemeProvider } from "./hooks/useTheme";
 import { supabase, requireSupabase } from "./services/database/supabase";
-import { CommandPalette } from "./components/auramind/CommandPalette";
+import { CommandPalette } from "./components/bonamind/CommandPalette";
 import { CinematicLoader } from "./components/ui/CinematicLoader";
 import { CustomCursor } from "./components/ui/CustomCursor";
 import { registerWorkspaceRefresh } from "./lib/workspaceRefresh";
@@ -122,7 +122,7 @@ const AdminSettingsRoute = React.lazy(() => import("./pages/admin/AdminSettingsP
 const AdminUsersRoute = React.lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminAppCheckRoute = React.lazy(() => import("./pages/admin/AdminAppCheckPage"));
 
-const AuraLandingPage = React.lazy(() => import("./components/landing/ModernLandingPage"));
+const BonaLandingPage = React.lazy(() => import("./components/landing/ModernLandingPage"));
 const AndroidWelcomeScreen = React.lazy(() => import("./components/native/AndroidWelcomeScreen"));
 const IOSWelcomeScreen = React.lazy(() => import("./components/ios/IOSWelcomeScreen"));
 const AndroidVisualPreview = React.lazy(() => import("./components/native/AndroidVisualPreview"));
@@ -942,7 +942,7 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                     authChecked ? <Navigate to={user ? "/dashboard" : "/auth"} replace /> : null
                   ) : (
                     <PageTransition variant={transitionVariant}>
-                      <AuraLandingPage />
+                      <BonaLandingPage />
                     </PageTransition>
                   )
                 }

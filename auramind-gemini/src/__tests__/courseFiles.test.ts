@@ -28,7 +28,7 @@ describe('course files', () => {
   it('matches the Explorer verbs the installer registers', () => {
     const nsh = read('src-tauri/windows/installer-hooks.nsh');
     const install = nsh.slice(nsh.indexOf('NSIS_HOOK_POSTINSTALL'), nsh.indexOf('NSIS_HOOK_POSTUNINSTALL'));
-    const verbs = [...install.matchAll(/AuraMindVerb "(\w+)"/g)].map((m) => m[1]).sort();
+    const verbs = [...install.matchAll(/BonaMindVerb "(\w+)"/g)].map((m) => m[1]).sort();
     expect(verbs).toEqual([...DOC_EXTS, ...AUDIO_EXTS].sort());
   });
 

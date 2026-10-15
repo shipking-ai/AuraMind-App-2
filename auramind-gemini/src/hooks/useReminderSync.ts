@@ -10,7 +10,7 @@ import {
   type ScheduledReminder,
   type SpokenReminderMode,
 } from '../lib/reminderSchedule';
-import { AuraSpeech, hasNativeSpeech } from '../lib/auraSpeech';
+import { BonaSpeech, hasNativeSpeech } from '../lib/bonaSpeech';
 import { VOICE_AUTO, VOICE_PREF_KEY } from '../services/voice/speechOutput';
 import { useLocalNotifications } from './useNative';
 
@@ -27,10 +27,10 @@ async function syncSpokenReminder(
   if (!hasNativeSpeech()) return;
   const time = spokenReminderTime(notifications);
   if (mode === 'off' || !time) {
-    await AuraSpeech.setSpokenReminder({ enabled: false });
+    await BonaSpeech.setSpokenReminder({ enabled: false });
     return;
   }
-  await AuraSpeech.setSpokenReminder({
+  await BonaSpeech.setSpokenReminder({
     enabled: true,
     ...time,
     mode,

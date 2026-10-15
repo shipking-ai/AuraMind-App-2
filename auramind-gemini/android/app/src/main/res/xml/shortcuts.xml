@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Launcher long-press shortcuts. Each fires a VIEW intent on the auramind://
+  Launcher long-press shortcuts. Each fires a VIEW intent on the bonamind://
   scheme, which the JS layer turns into router navigation (see NativeRuntime).
   Paths mirror the Android bottom-nav destinations in AndroidBottomNav.tsx.
 -->
@@ -15,7 +15,7 @@
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.auramind.app"
             android:targetClass="com.auramind.app.MainActivity"
-            android:data="auramind://app/dashboard/study" />
+            android:data="bonamind://app/dashboard/study" />
     </shortcut>
 
     <shortcut
@@ -28,7 +28,7 @@
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.auramind.app"
             android:targetClass="com.auramind.app.MainActivity"
-            android:data="auramind://app/dashboard/generator" />
+            android:data="bonamind://app/dashboard/generator" />
     </shortcut>
 
     <shortcut
@@ -41,6 +41,6 @@
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.auramind.app"
             android:targetClass="com.auramind.app.MainActivity"
-            android:data="auramind://app/dashboard/chat" />
+            android:data="bonamind://app/dashboard/chat" />
     </shortcut>
 </shortcuts>

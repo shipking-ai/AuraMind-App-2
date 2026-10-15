@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auraAiClient } from '../../services/api/auraAiService';
+import { bonaAiClient } from '../../services/api/bonaAiService';
 import { Quiz, FlashcardData } from '../../types';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import { 
@@ -281,7 +281,7 @@ const GeneratorPage: React.FC = () => {
       : `Generate a ${generatorType} on "${sourceLabel}" with ${finalNumItems} ${generatorType === 'quiz' ? 'questions' : 'flashcards'} at ${diffDesc}. ${generatorType === 'quiz' ? 'Include explanations for each question.' : 'Include difficulty levels for each card.'}${languageInstruction}${exampleInstruction}${sourceContext}\n\nRespond with valid JSON only. ${generatorType === 'quiz' ? 'Format: { "questions": [{ "id": "1", "question": "...", "options": ["...", "..."], "correctAnswer": 0, "explanation": "..." }] }' : 'Format: { "cards": [{ "question": "...", "answer": "...", "difficulty": "easy|medium|hard" }] }'}`;
 
     try {
-      const response = await auraAiClient.chatCompletion({
+      const response = await bonaAiClient.chatCompletion({
         messages: [
           { role: 'system', content: 'You are a study content generator. Always respond with valid JSON only, no markdown, no other text.' },
           { role: 'user', content: prompt }

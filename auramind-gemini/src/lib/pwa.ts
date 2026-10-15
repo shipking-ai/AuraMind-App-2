@@ -72,7 +72,7 @@ export const pwaConfig = VitePWA({
         update: 1800,
         screenshots: [
           {
-            src: '/auramind/og-cover.png',
+            src: '/bonamind/og-cover.png',
             sizes: '1200x630',
             label: 'The number of cards due for review',
           },

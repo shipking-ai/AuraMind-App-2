@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
-import { auraAiClient } from '../services/api/auraAiService';
+import { bonaAiClient } from '../services/api/bonaAiService';
 import { buildSystemPrompt, type ChatMode } from '../lib/chat-prompts';
 import type { ConceptWeakness } from '../lib/conceptModel';
-import { getStoredPersonality, type ProfAuraPersonality } from '../lib/profAuraPersonality';
+import { getStoredPersonality, type ProfLinneaPersonality } from '../lib/profLinneaPersonality';
 
 export type { ChatMode };
-export type { ProfAuraPersonality };
+export type { ProfLinneaPersonality };
 
 export interface Message {
   id: string;
@@ -31,7 +31,7 @@ export interface ChatContext {
   weakCards: Array<{ term: string; againCount: number }>;
   currentCard?: { term: string; definition: string };
   /** User-selected personality for tone control. */
-  personality?: ProfAuraPersonality;
+  personality?: ProfLinneaPersonality;
   /** 7-day retention 0..1. */
   retention7d?: number;
   /** Last session accuracy 0..100. */
@@ -132,7 +132,7 @@ export function useAIChat(initialContext: ChatContext) {
     let fullContent = '';
 
     try {
-      const stream = auraAiClient.streamChatCompletion({
+      const stream = bonaAiClient.streamChatCompletion({
         messages: [{ role: 'system', content: systemPrompt }, ...apiMessages],
         temperature: 0.7,
         max_tokens: 2000,

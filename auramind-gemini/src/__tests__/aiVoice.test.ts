@@ -13,9 +13,9 @@ vi.mock('../services/database/supabase', () => ({
 }));
 
 const native = vi.hoisted(() => ({ speak: vi.fn(), stop: vi.fn() }));
-vi.mock('../lib/auraSpeech', () => ({
+vi.mock('../lib/bonaSpeech', () => ({
   hasNativeSpeech: () => true,
-  AuraSpeech: { getVoices: vi.fn(async () => ({ voices: [] })), speak: native.speak, stop: native.stop },
+  BonaSpeech: { getVoices: vi.fn(async () => ({ voices: [] })), speak: native.speak, stop: native.stop },
 }));
 
 import {

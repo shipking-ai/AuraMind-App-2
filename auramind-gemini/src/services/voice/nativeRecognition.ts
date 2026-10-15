@@ -1,6 +1,6 @@
 /**
  * nativeRecognition — a SpeechRecognition look-alike backed by Android's
- * SpeechRecognizer (android/.../AuraListenPlugin.java).
+ * SpeechRecognizer (android/.../BonaListenPlugin.java).
  *
  * Android System WebView has no SpeechRecognition, so voice study could
  * speak questions in the Android app but never hear the answer. Returning an
@@ -21,7 +21,7 @@ interface SessionEvent {
   session: string;
 }
 
-interface AuraListenPlugin {
+interface BonaListenPlugin {
   isAvailable(): Promise<{ available: boolean }>;
   start(options: { session: string; lang: string; interimResults: boolean }): Promise<void>;
   stop(): Promise<void>;
@@ -35,7 +35,7 @@ interface AuraListenPlugin {
   addListener(event: 'error', listener: (e: SessionEvent & { error: string }) => void): Promise<PluginListenerHandle>;
 }
 
-export const AuraListen = registerPlugin<AuraListenPlugin>('AuraListen');
+export const BonaListen = registerPlugin<BonaListenPlugin>('BonaListen');
 
 export interface NativeRecognition extends SpeechRecognitionLike {
   /** Normalised 0..1 input loudness while listening. */
@@ -72,10 +72,10 @@ export function createNativeRecognition(opts: {
       void begin();
     },
     stop: () => {
-      void AuraListen.stop().catch(() => undefined);
+      void BonaListen.stop().catch(() => undefined);
     },
     abort: () => {
-      void AuraListen.abort().catch(() => undefined);
+      void BonaListen.abort().catch(() => undefined);
     },
   };
 
@@ -97,24 +97,24 @@ export function createNativeRecognition(opts: {
 
   async function begin() {
     handles = await Promise.all([
-      AuraListen.addListener('start', (e) => {
+      BonaListen.addListener('start', (e) => {
         if (mine(e)) rec.onstart?.();
       }),
-      AuraListen.addListener('partial', (e) => {
+      BonaListen.addListener('partial', (e) => {
         if (mine(e) && rec.interimResults) rec.onresult?.(resultEvent(e.text, false));
       }),
-      AuraListen.addListener('final', (e) => {
+      BonaListen.addListener('final', (e) => {
         if (mine(e) && e.text) rec.onresult?.(resultEvent(e.text, true));
       }),
-      AuraListen.addListener('level', (e) => {
+      BonaListen.addListener('level', (e) => {
         if (mine(e)) rec.onlevel?.(e.level);
       }),
-      AuraListen.addListener('error', (e) => {
+      BonaListen.addListener('error', (e) => {
         // "aborted" is how a stop/replace is reported; the browser reports
         // the same, and useVoiceStudy treats it as a quiet end.
         if (mine(e)) rec.onerror?.({ error: e.error });
       }),
-      AuraListen.addListener('end', (e) => {
+      BonaListen.addListener('end', (e) => {
         if (e.session === session) finish();
       }),
     ]);
@@ -123,7 +123,7 @@ export function createNativeRecognition(opts: {
       return;
     }
     try {
-      await AuraListen.start({ session, lang: rec.lang, interimResults: rec.interimResults });
+      await BonaListen.start({ session, lang: rec.lang, interimResults: rec.interimResults });
     } catch (err) {
       // Plugin rejections carry the Web Speech error name as their code.
       const code = (err as { code?: string })?.code;
