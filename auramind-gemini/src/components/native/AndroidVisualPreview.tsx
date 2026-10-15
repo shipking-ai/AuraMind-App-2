@@ -66,6 +66,15 @@ const PREVIEW_CARDS: Card[] = [
   },
 ];
 
+/** What the top bar says on each screen in the real app (see AndroidMobileTopBar). */
+const SCREEN_TITLES: Record<string, string> = {
+  home: "Today",
+  library: "Library",
+  study: "Study",
+  generator: "Create",
+  settings: "Settings",
+};
+
 function PreviewScreen({ screen }: { screen: string }) {
   if (screen === "library") return <AndroidLibrary />;
   if (screen === "study") return <AndroidStudy />;
@@ -91,7 +100,7 @@ export default function AndroidVisualPreview() {
     >
       <div className="nova-shell android-mobile-shell" data-testid="android-preview-shell">
         <div className="android-mobile-app-column">
-          <AndroidMobileTopBar user={PREVIEW_USER} />
+          <AndroidMobileTopBar user={PREVIEW_USER} title={SCREEN_TITLES[screen] ?? SCREEN_TITLES.home} />
           <main className="android-mobile-main scrollbar-thin overflow-y-auto">
             <div className="android-mobile-content">
               <PreviewScreen screen={screen} />

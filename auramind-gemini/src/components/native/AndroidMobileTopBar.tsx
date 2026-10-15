@@ -26,7 +26,8 @@ function initials(user: UserProfile | null | undefined): string {
   );
 }
 
-export function AndroidMobileTopBar({ user }: { user: UserProfile | null | undefined }) {
+/** `title` overrides the route-derived page name (the visual harness has no real route). */
+export function AndroidMobileTopBar({ user, title }: { user: UserProfile | null | undefined; title?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [offlineMode] = useAppPreference("bonamind_offlineMode", false);
@@ -45,7 +46,7 @@ export function AndroidMobileTopBar({ user }: { user: UserProfile | null | undef
         </span>
         <span className="min-w-0">
           <span className="android-mobile-brand-name">BonaMind</span>
-          <span className="android-mobile-page-title">{pageTitle(location.pathname)}</span>
+          <span className="android-mobile-page-title">{title ?? pageTitle(location.pathname)}</span>
         </span>
       </div>
       <div className="android-mobile-top-actions">

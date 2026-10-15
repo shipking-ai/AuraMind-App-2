@@ -105,10 +105,9 @@ the traps that cost real time.
     - After **PR2**: paste the new store text into Play Console. That's
       `store/android/listings/en-US/` (`title.txt` is now "BonaMind",
       `full_description.txt`) and `store/android/changelogs/en-US.txt`.
-      Then recapture the Play screenshots with
-      `auramind-gemini/scripts/capture-store-screenshots.mjs` (the current set
-      shows the AuraMind wordmark) and upload them with the feature graphic
-      `store/graphics/android/feature-1024x500.png`.
+      Then upload the new screenshots (`store/graphics/android/screenshots/`,
+      five captured from the real app on the emulator) and the feature graphic
+      `store/graphics/android/feature-1024x500.png`, replacing the old set.
     - After **PR3**: ship Android and Windows builds again.
 
 After the first publish, `status=completed` in the release workflow makes a
@@ -737,9 +736,16 @@ app plus its extension burn two per sideload.
     the Android eyebrows ("CREATE WITH LINNEA") and the Play description
     (its privacy link pointed at the dead `auramind.app`).
   - Art: the Windows installer sidebar (`generate-assets.ps1` →
-    `nsis-sidebar.bmp`) and the Play feature graphic were regenerated. The
-    **Play screenshots** still show AuraMind; they need the running app (see
-    owner step 13).
+    `nsis-sidebar.bmp`) and the Play feature graphic were regenerated.
+  - **Play screenshots** are now real app screens. The old set was web pages
+    and static mockups showing AuraMind.
+    `scripts/capture-android-screenshots.mjs` drives a development debug build
+    on an emulator through Chrome DevTools to each sample-data screen
+    (`/__e2e/android?screen=…`). It captures them at 1080×1920 in demo mode.
+    The harness now passes the real top-bar title (`AndroidMobileTopBar`
+    `title`), which read "BONAMIND" there before. Rebuild with
+    `npm run build:android` afterwards, so a direct Gradle build can't pick up
+    the development bundle.
   - The landing page and share previews say "BonaMind builds your course".
     A first-time visitor hasn't met Prof. Linnea yet.
 - **Avatar files:**
