@@ -345,3 +345,83 @@ html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
 .win-button-danger:hover {
   background: #a82419;
 }
+
+/* ── Study session ─────────────────────────────────────────────────────── */
+
+.win-study {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.win-study-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.win-progress {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--win-surface-hover);
+  overflow: hidden;
+}
+
+.win-progress > i {
+  display: block;
+  height: 100%;
+  background: var(--win-accent);
+  transition: width var(--win-motion) ease;
+}
+
+.win-study-card {
+  flex: 1;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 32px;
+}
+
+.win-study-question {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.win-study-answer {
+  font-size: 18px;
+  color: var(--win-text-muted);
+  animation: win-fade var(--win-motion) ease;
+}
+
+@keyframes win-fade {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+.win-study-grades {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.win-key {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.win-interval {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.win-stat {
+  font-size: 24px;
+  font-weight: 600;
+}

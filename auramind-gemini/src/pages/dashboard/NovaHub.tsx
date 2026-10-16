@@ -93,7 +93,7 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
           <Routes>
             <Route path="/" element={isWindows ? <WindowsToday /> : isIOS ? <IOSToday /> : isMobileApp ? <AndroidOverview /> : <NovaOverview />} />
             <Route path="/decks" element={isWindows ? <WindowsLibrary /> : isIOS ? <IOSLibrary /> : isMobileApp ? <AndroidLibrary /> : <NovaLibrary />} />
-            <Route path="/study" element={isIOS ? <IOSStudy /> : isMobileApp ? <AndroidStudy /> : <NovaStudy />} />
+            <Route path="/study" element={isWindows ? <Navigate to="/dashboard" replace /> : isIOS ? <IOSStudy /> : isMobileApp ? <AndroidStudy /> : <NovaStudy />} />
             <Route path="/study/:deckId" element={<StudyModeRoute />} />
             {/* Memory spark notification deep-link (tap-to-speak + grade). */}
             <Route path="/spark/:cardId" element={<SparkReviewRoute />} />
