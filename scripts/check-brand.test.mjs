@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { scanBrand } from './check-brand.mjs';
 
 // Planted files live in a temp directory, not in the repo, so the repo-wide
@@ -84,11 +86,47 @@ test('passes the widget and tile stand-ins only in their own files and manifests
 test('passes the old scheme only where an app registers it', () => {
   const hits = scan({
     'android/app/src/main/AndroidManifest.xml': '<data android:scheme="auramind" />\n', // legacy-name: ok
-    'ios/App/App/Info.plist': '<string>auramind</string>\n', // legacy-name: ok
+    'ios/App/App/Info.plist': '<key>CFBundleURLSchemes</key>\n<array>\n<string>auramind</string>\n</array>\n', // legacy-name: ok
     'src-tauri/tauri.conf.json': '"schemes": ["bonamind", "auramind"]\n', // legacy-name: ok
     'src/link.ts': "const scheme = 'auramind';\n", // legacy-name: ok
   });
   assert.deepEqual(hits.map((h) => `${h.file}:${h.line}`), ['src/link.ts:1']);
+});
+
+test('still reports old names on stand-in and scheme lines beyond the kept names', () => {
+  const plist = [
+    '<key>CFBundleDisplayName</key>',
+    '<string>auramind</string>', // legacy-name: ok
+    '<key>CFBundleURLSchemes</key>',
+    '<array>',
+    '<string>bonamind</string>',
+    '<string>auramind</string>', // legacy-name: ok
+    '</array>',
+  ].join('\n');
+  const hits = scan({
+    'android/app/src/main/AndroidManifest.xml': '<application android:label="auramind">\n', // legacy-name: ok
+    'android/wear/src/main/AndroidManifest.xml':
+      '<service android:name=".AuraMindTileService" android:label="AuraMind Tile">\n', // legacy-name: ok
+    'android/app/src/main/java/com/x/AuraMindWidgetProvider.java': // legacy-name: ok
+      'public class AuraMindWidgetProvider { String label = "AuraMind"; }\n', // legacy-name: ok
+    'src-tauri/tauri.conf.json': '"productName": "auramind",\n', // legacy-name: ok
+    'ios/App/App/Info.plist': plist,
+  });
+  assert.deepEqual(hits.map((h) => `${h.file}:${h.line}`), [
+    'android/app/src/main/AndroidManifest.xml:1',
+    'android/wear/src/main/AndroidManifest.xml:1',
+    'android/app/src/main/java/com/x/AuraMindWidgetProvider.java:1', // legacy-name: ok
+    'src-tauri/tauri.conf.json:1',
+    'ios/App/App/Info.plist:2',
+  ]);
+});
+
+test('the CLI always reports a result', () => {
+  const out = spawnSync(process.execPath, [fileURLToPath(new URL('./check-brand.mjs', import.meta.url))], {
+    cwd: tmpdir(),
+    encoding: 'utf8',
+  });
+  assert.match(out.stdout + out.stderr, /Brand guard: no old names|line\(s\) still use the old name/);
 });
 
 test('passes CHANGELOG history but not the release that carries the rename', () => {

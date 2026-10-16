@@ -56,7 +56,7 @@
 	     silently does nothing when no handler claims the scheme — the tap looks
 	     like a dead Live Activity rather than a missing configuration.
 	     Must stay in step with android/app/src/main/AndroidManifest.xml, which
-	     declares schemes "bonamind" and "auramind", host "app". -->
+	     declares schemes "bonamind" and "auramind", host "app". (legacy-name: ok) -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

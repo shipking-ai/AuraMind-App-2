@@ -13,7 +13,7 @@
 // Usage: node scripts/check-brand.mjs   (exits 1 and prints file:line: text)
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,10 +34,40 @@ const PERMANENT_TOKENS = [
   { token: 'pathPrefix="/auramind"', reason: 'Wear data-layer path filter' }, // legacy-name: ok
 ];
 
-const isManifest = (file) => basename(file) === 'AndroidManifest.xml';
+const STAND_IN_CLASSES = ['AuraMindWidgetProvider', 'AuraMindTileService']; // legacy-name: ok
 const STAND_IN_FILES = new Set(['AuraMindWidgetProvider.java', 'AuraMindTileService.kt']); // legacy-name: ok
-const SCHEME_FILES = new Set(['AndroidManifest.xml', 'Info.plist', 'tauri.conf.json']);
 const RENAME_DATE = '2026-10-13';
+
+// Names kept only in particular places. Like PERMANENT_TOKENS they are
+// removed from the line and the rest is still searched, so a visible label
+// on the same line is still reported.
+function scopedTokens(file, line, ctx) {
+  const name = basename(file);
+  const tokens = [];
+  if (name === 'AndroidManifest.xml' || STAND_IN_FILES.has(name)) {
+    // Stand-ins keep placed widgets and tiles working.
+    tokens.push(...STAND_IN_CLASSES);
+  }
+  // Apps keep accepting links in the pre-rename scheme: only the scheme
+  // registrations themselves.
+  if (name === 'AndroidManifest.xml') tokens.push('android:scheme="auramind"'); // legacy-name: ok
+  if (name === 'tauri.conf.json' && ctx.lines[line - 1].includes('"schemes"')) tokens.push('"auramind"'); // legacy-name: ok
+  if (name === 'Info.plist' && ctx.urlSchemeLines.has(line)) tokens.push('<string>auramind</string>'); // legacy-name: ok
+  return tokens;
+}
+
+// Line numbers inside the plist's CFBundleURLSchemes array.
+function urlSchemeLines(lines) {
+  const out = new Set();
+  let inside = false;
+  lines.forEach((l, i) => {
+    if (/<key>CFBundleURLSchemes<\/key>/.test(l)) inside = 'key';
+    else if (inside === 'key' && /<array>/.test(l)) inside = 'array';
+    else if (inside === 'array' && /<\/array>/.test(l)) inside = false;
+    else if (inside === 'array') out.add(i + 1);
+  });
+  return out;
+}
 
 // Whole files that may keep an old name.
 const ALLOW_FILES = [
@@ -60,23 +90,10 @@ const ALLOW_FILES = [
     test: (file) => file === 'auramind-gemini/src/lib/legacyNames.ts', // legacy-name: ok
     reason: 'The one web module that names the old values',
   },
-  {
-    test: (file) => STAND_IN_FILES.has(basename(file)),
-    reason: 'Stand-ins keep placed widgets and tiles working',
-  },
 ];
 
 // Single lines that may keep an old name.
 const ALLOW_LINES = [
-  {
-    test: (file, text) => isManifest(file) && /AuraMind(WidgetProvider|TileService)/.test(text), // legacy-name: ok
-    reason: 'Manifests register the stand-ins under their old names',
-  },
-  {
-    test: (file, text) =>
-      SCHEME_FILES.has(basename(file)) && /(scheme="auramind"|>auramind<|"auramind")/.test(text), // legacy-name: ok
-    reason: 'Apps keep accepting links in the pre-rename scheme',
-  },
   {
     test: (file, text, line, ctx) => file === 'CHANGELOG.md' && line > ctx.changelogHistoryStart,
     reason: 'CHANGELOG entries older than the rename are history',
@@ -92,9 +109,9 @@ function changelogHistoryStart(lines) {
   return next === -1 ? Infinity : next + 1;
 }
 
-function stripPermanent(text) {
+function strip(text, tokens) {
   let out = text;
-  for (const { token } of PERMANENT_TOKENS) out = out.split(token).join('');
+  for (const token of tokens) out = out.split(token).join('');
   return out;
 }
 
@@ -115,11 +132,16 @@ export function scanBrand({ root, files }) {
     }
     if (isBinary(buf)) continue;
     const lines = buf.toString('utf8').split(/\r?\n/);
-    const ctx = { changelogHistoryStart: path === 'CHANGELOG.md' ? changelogHistoryStart(lines) : Infinity };
+    const ctx = {
+      lines,
+      changelogHistoryStart: path === 'CHANGELOG.md' ? changelogHistoryStart(lines) : Infinity,
+      urlSchemeLines: basename(path) === 'Info.plist' ? urlSchemeLines(lines) : new Set(),
+    };
     lines.forEach((text, i) => {
       const line = i + 1;
       if (!OLD_NAME.test(text) || text.includes(MARKER)) return;
-      if (!OLD_NAME.test(stripPermanent(text))) return;
+      const kept = [...PERMANENT_TOKENS.map((p) => p.token), ...scopedTokens(path, line, ctx)];
+      if (!OLD_NAME.test(strip(text, kept))) return;
       if (ALLOW_LINES.some((a) => a.test(path, text, line, ctx))) return;
       hits.push({ file: path, line, text: text.trim() });
     });
@@ -127,7 +149,9 @@ export function scanBrand({ root, files }) {
   return hits;
 }
 
-const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+// realpath on both sides: through a symlinked checkout Node resolves the
+// module but not argv[1], and a mismatch here would skip the scan and exit 0.
+const isMain = Boolean(process.argv[1]) && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
 if (isMain) {
   const root = fileURLToPath(new URL('..', import.meta.url));
   const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
