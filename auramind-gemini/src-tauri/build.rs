@@ -15,6 +15,7 @@ fn main() {
                 "get_autostart",
                 "set_autostart",
                 "notifications_enabled",
+                "set_title_bar_theme",
             ])),
     )
     .expect("failed to run tauri-build");

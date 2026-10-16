@@ -21,7 +21,6 @@
         "minWidth": 940,
         "minHeight": 620,
         "center": true,
-        "theme": "Dark",
         "backgroundColor": "#060a16",
         "useHttpsScheme": true,
         "dragDropEnabled": false

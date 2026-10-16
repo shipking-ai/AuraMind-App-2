@@ -6,6 +6,8 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-title",
+    "core:window:allow-set-theme",
+    "core:window:allow-set-background-color",
     {
       "identifier": "opener:allow-open-url",
       "allow": [
@@ -24,6 +26,7 @@
     "allow-schedule-nudges",
     "allow-get-autostart",
     "allow-set-autostart",
-    "allow-notifications-enabled"
+    "allow-notifications-enabled",
+    "allow-set-title-bar-theme"
   ]
 }

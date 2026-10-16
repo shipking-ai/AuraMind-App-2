@@ -10,7 +10,7 @@ import { uploadAvatar, deleteAvatar } from '../../services/user/avatarService';
 import ProfLinneaAvatar from '../../components/bonamind/ProfLinneaAvatar';
 import { DeleteAccountModal } from '../../components/settings/DeleteAccountModal';
 import { Capacitor } from '../../lib/nativeShim';
-import { useAppPreference } from '../../lib/appPreferences';
+import { themeDefaults, useAppPreference } from '../../lib/appPreferences';
 import { analyticsService } from '../../services/analytics/analyticsService';
 import { useReminderSync } from '../../hooks/useReminderSync';
 import { useVoiceOptions } from '../../hooks/useVoiceOptions';
@@ -297,7 +297,7 @@ export default function SettingsPage() {
   const [dueReminder, setDueReminder] = useLocalStorage('bonamind_dueReminder', true);
   const [streakReminder, setStreakReminder] = useLocalStorage('bonamind_streakReminder', true);
   const [weeklySummary, setWeeklySummary] = useLocalStorage('bonamind_weeklySummary', false);
-  const [theme, setTheme] = useLocalStorage('bonamind_theme', 'dark');
+  const [theme, setTheme] = useLocalStorage<string>('bonamind_theme', themeDefaults().theme);
   const [reduceMotion, setReduceMotion] = useLocalStorage('bonamind_reduceMotion', false);
   const [compactMode, setCompactMode] = useLocalStorage('bonamind_compactMode', false);
   const [usageAnalytics, setUsageAnalytics] = useLocalStorage('bonamind_usageAnalytics', true);
@@ -315,7 +315,7 @@ export default function SettingsPage() {
     if (next === VOICE_RANDOM) resetRandomVoice();
     setTtsVoice(next);
   };
-  const [autoNightMode, setAutoNightMode] = useLocalStorage('bonamind_autoNightMode', true);
+  const [autoNightMode, setAutoNightMode] = useLocalStorage('bonamind_autoNightMode', themeDefaults().autoNightMode);
   const [reviewOrder, setReviewOrder] = useLocalStorage('bonamind_reviewOrder', 'FSRS - Optimized');
   const [showHintFirst, setShowHintFirst] = useLocalStorage('bonamind_showHintFirst', false);
   const [autoPlayAudio, setAutoPlayAudio] = useLocalStorage('bonamind_autoPlayAudio', false);

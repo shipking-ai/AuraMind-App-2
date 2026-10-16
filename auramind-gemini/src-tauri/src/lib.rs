@@ -75,6 +75,7 @@ pub fn run() {
             commands::get_autostart,
             commands::set_autostart,
             commands::notifications_enabled,
+            commands::set_title_bar_theme,
         ])
         .setup(|app| {
             let args: Vec<String> = std::env::args().collect();
@@ -130,7 +131,7 @@ pub fn run() {
                     false
                 })
                 .build()?;
-            chrome::brand_title_bar(&window);
+            chrome::brand_title_bar(&window, chrome::initial_dark(&window));
             chrome::show_fallback(app.handle());
             tray::build(app.handle())?;
             nudges::start(app.handle());

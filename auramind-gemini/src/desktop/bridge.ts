@@ -44,6 +44,19 @@ export const desktop = {
   setAutostart: (enabled: boolean) => call<boolean>('set_autostart', { enabled }, false),
   /** null = can't tell (not the Windows app, or no installed shortcut yet). */
   notificationsEnabled: () => call<boolean | null>('notifications_enabled', undefined, null),
+  /** Window frame, background and title bar follow the app's light/dark theme. */
+  async applyTheme(theme: 'light' | 'dark'): Promise<void> {
+    if (!isDesktopApp()) return;
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      const win = getCurrentWindow();
+      await win.setTheme(theme);
+      await win.setBackgroundColor(theme === 'light' ? '#f3f3f6' : '#1c1c22');
+    } catch {
+      /* cosmetic */
+    }
+    await call<void>('set_title_bar_theme', { dark: theme === 'dark' });
+  },
   async setTitle(title: string): Promise<void> {
     if (!isDesktopApp()) return;
     try {
