@@ -22,8 +22,8 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
-    "@vercel/node": "^13.0.1",
+    "@types/node": "^26.6.5",
+    "@vercel/node": "^23.0.1",
     "tsx": "^4.23.13",
     "vitest": "^5.0.1"
   }
