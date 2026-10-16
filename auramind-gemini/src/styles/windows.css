@@ -251,3 +251,97 @@ html.platform-desktop[data-reduce-motion="true"] {
 html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
   animation: none;
 }
+
+/* ── Inputs, menus and dialogs ────────────────────────────────────────── */
+
+.win-input {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--win-border);
+  border-bottom-color: var(--win-text-muted);
+  border-radius: 5px;
+  background: var(--win-surface);
+  color: var(--win-text);
+  font: inherit;
+}
+
+.win-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--win-accent);
+}
+
+.win-menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 160px;
+  padding: 4px;
+  border: 1px solid var(--win-border);
+  border-radius: 8px;
+  background: var(--win-surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.win-menu-item {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--win-text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.win-menu-item:hover,
+.win-menu-item:focus-visible {
+  background: var(--win-surface-hover);
+  outline: none;
+}
+
+.win-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.35);
+}
+
+.win-dialog {
+  width: min(440px, calc(100vw - 48px));
+  padding: 24px;
+  border: 1px solid var(--win-border);
+  border-radius: 8px;
+  background: var(--win-surface);
+  color: var(--win-text);
+  font-family: var(--win-font);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.28);
+}
+
+.win-dialog-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.win-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.win-button-danger {
+  background: #c42b1c;
+  border-color: #c42b1c;
+  color: #fff;
+  font-weight: 600;
+}
+
+.win-button-danger:hover {
+  background: #a82419;
+}

@@ -21,6 +21,7 @@ import { resolveDashboardSurface } from "../../components/native/androidSurface"
 import WearSyncWiring from "../../components/wear/WearSyncWiring";
 import { appPlatform, isDesktopApp } from "../../lib/platform";
 import { WindowsToday } from "../../components/windows/WindowsToday";
+import { WindowsLibrary } from "../../components/windows/WindowsLibrary";
 import { IOSLibrary, IOSStudy, IOSToday } from "../../components/ios/IOSScreens";
 import IOSSettingsScreen from "../../components/ios/IOSSettingsScreen";
 
@@ -91,7 +92,7 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
         <Suspense fallback={<LazyFallback />}>
           <Routes>
             <Route path="/" element={isWindows ? <WindowsToday /> : isIOS ? <IOSToday /> : isMobileApp ? <AndroidOverview /> : <NovaOverview />} />
-            <Route path="/decks" element={isIOS ? <IOSLibrary /> : isMobileApp ? <AndroidLibrary /> : <NovaLibrary />} />
+            <Route path="/decks" element={isWindows ? <WindowsLibrary /> : isIOS ? <IOSLibrary /> : isMobileApp ? <AndroidLibrary /> : <NovaLibrary />} />
             <Route path="/study" element={isIOS ? <IOSStudy /> : isMobileApp ? <AndroidStudy /> : <NovaStudy />} />
             <Route path="/study/:deckId" element={<StudyModeRoute />} />
             {/* Memory spark notification deep-link (tap-to-speak + grade). */}
