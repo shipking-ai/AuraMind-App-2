@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isDesktopApp } from "../../lib/platform";
 
 /** True only for devices with a real pointer — excludes phones and tablets. */
 const FINE_POINTER = "(hover: hover) and (pointer: fine)";
@@ -11,7 +12,8 @@ export function CustomCursor() {
   const [finePointer, setFinePointer] = useState(false);
 
   useEffect(() => {
-    setFinePointer(window.matchMedia(FINE_POINTER).matches);
+    // The Windows app keeps the Windows pointer; the custom cursor is a web flourish.
+    setFinePointer(!isDesktopApp() && window.matchMedia(FINE_POINTER).matches);
   }, []);
 
   useEffect(() => {

@@ -425,3 +425,13 @@ html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
   font-size: 24px;
   font-weight: 600;
 }
+
+/* Links read as links (Windows accent), not as plain text. */
+.win-page a:not(.win-button) {
+  color: var(--win-accent);
+  text-decoration: none;
+}
+
+.win-page a:not(.win-button):hover {
+  text-decoration: underline;
+}

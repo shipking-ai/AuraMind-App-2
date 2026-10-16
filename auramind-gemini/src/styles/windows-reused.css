@@ -1,0 +1,100 @@
+/*
+ * The Windows app reuses the website's Create (GeneratorPage), Prof. Linnea
+ * (AIChatPage) and Classes pages inside its own shell. Those pages hard-code
+ * dark colours, so inside .win-content their surface, text and border
+ * utilities are mapped to the Windows variables (light and dark), and the
+ * decorative glows are hidden. Tailwind 4 puts utilities in a cascade layer,
+ * so these unlayered rules win without extra specificity. Phase 2 replaces
+ * these pages with Windows-native ones and this file goes away.
+ */
+
+/* Page backdrops: the shell already paints the window. */
+html.platform-desktop .win-content :is(.bg-\[\#0A0A0F\], .bg-\[\#0B0B12\], .bg-\[\#08080D\]) {
+  background: transparent;
+}
+
+/* Cards and panels. */
+html.platform-desktop .win-content :is(
+  .bg-\[\#1A1A24\], .bg-\[\#111118\], .bg-\[\#15151D\], .bg-\[\#0E1420\],
+  .bg-white\/\[0\.02\], .bg-white\/\[0\.03\], .bg-white\/\[0\.04\],
+  .bg-white\/\[0\.05\], .bg-white\/\[0\.06\], .bg-black\/25
+) {
+  background-color: var(--win-surface);
+}
+
+html.platform-desktop .win-content :is(.bg-\[\#2A2A3A\], .bg-white\/\[0\.08\]) {
+  background-color: var(--win-surface-hover);
+}
+
+/* Text. */
+html.platform-desktop .win-content :is(
+  .text-white, .text-\[\#F0EFFE\], .text-zinc-300, .text-white\/80, .text-\[\#C4C4D4\]
+) {
+  color: var(--win-text);
+}
+
+html.platform-desktop .win-content :is(
+  .text-\[\#7A7A96\], .text-zinc-400, .text-zinc-500, .text-zinc-600,
+  .text-\[\#8A8AA3\], .text-\[\#A8A8C0\], .text-\[\#9090A8\], .text-\[\#3A3A4F\]
+) {
+  color: var(--win-text-muted);
+}
+
+html.platform-desktop .win-content :is(.placeholder-\[\#7A7A96\], .placeholder-zinc-500)::placeholder {
+  color: var(--win-text-muted);
+}
+
+/* White text on the violet buttons and gradient bubbles stays white. */
+html.platform-desktop .win-content :is(
+  .bg-\[\#7C3AED\], .bg-\[\#6D28D9\], .bg-\[\#8B5CF6\], .bg-gradient-to-br, .bg-gradient-to-r
+):is(.text-white, :has(> .text-white)),
+html.platform-desktop .win-content :is(
+  .bg-\[\#7C3AED\], .bg-\[\#6D28D9\], .bg-\[\#8B5CF6\], .bg-gradient-to-br, .bg-gradient-to-r
+) .text-white {
+  color: #fff;
+}
+
+/* Borders. */
+html.platform-desktop .win-content :is(
+  .border-\[\#2A2A3A\], .border-\[\#3A3A4F\],
+  .border-white\/\[0\.06\], .border-white\/\[0\.08\], .border-white\/\[0\.1\], .border-white\/\[0\.12\],
+  .border-white\/10, .border-white\/15, .border-white\/30
+) {
+  border-color: var(--win-border);
+}
+
+/* Darker one-off panels (the chat tour, menus). */
+html.platform-desktop .win-content :is(
+  .bg-\[\#0D0D14\], .bg-\[\#0E0E14\], .bg-\[\#0E0E15\], .bg-\[\#171322\], .bg-zinc-900
+) {
+  background-color: var(--win-surface);
+}
+
+/*
+ * AIChatPage carries android-chat-* classes, which platform-styles.css
+ * repaints navy with !important (for the Android app). Inside the Windows
+ * shell they follow the Windows colours instead.
+ */
+html.platform-desktop .win-content :is(.android-chat-header, .android-chat-composer) {
+  background: var(--win-bg) !important;
+  border-color: var(--win-border) !important;
+}
+
+html.platform-desktop .win-content :is(.android-chat-messages, .android-chat-composer) :is([class*="bg-[#111118]"], [class*="bg-[#1A1A24]"]),
+html.platform-desktop .win-content .android-chat-composer > div > div > div {
+  background: var(--win-surface) !important;
+  border-color: var(--win-border) !important;
+}
+
+html.platform-desktop .win-content .android-chat-messages [class*="border-[#2A2A3A]"] {
+  border-color: var(--win-border) !important;
+}
+
+html.platform-desktop .win-content .android-chat-composer textarea {
+  color: var(--win-text) !important;
+}
+
+/* Decorative glows behind the chat. */
+html.platform-desktop .win-content :is(.blur-\[120px\], .blur-\[100px\]) {
+  display: none;
+}

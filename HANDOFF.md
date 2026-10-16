@@ -735,6 +735,45 @@ app plus its extension burn two per sideload.
 
 ---
 
+## 2026-10-16 - Windows app: its own simple, Windows 11-style layout
+
+Spec `docs/superpowers/specs/2026-10-16-windows-native-shell-design.md`,
+plan `docs/superpowers/plans/2026-10-16-windows-native-shell.md`. The
+Windows app no longer looks like the website in a window.
+
+- **Where it lives:** `auramind-gemini/src/components/windows/`. Chosen the
+  way the iPhone app is: `NovaDashboardShell` returns `WindowsShell` when
+  `shouldUseWindowsShell(pathname)` (Windows app, not `/admin`), and
+  `NovaHub` picks `WindowsToday` / `WindowsLibrary` / `WindowsSettings`;
+  `StudyModePage` keeps the engine and draws `WindowsStudySession` /
+  `WindowsStudyComplete` / `WindowsStudyEmpty` (`studyDesign()`).
+  `/dashboard/study` redirects to Today on Windows.
+- **Sidebar:** Today, Library, Create, Linnea, Classes (members only,
+  `useClassMembership`), Settings. ☰ / Ctrl+B collapse it
+  (`bonamind_win_sidebar`); under 900px it collapses without saving.
+- **Theme:** on Windows the theme default is `system` and auto night mode is
+  off (`themeDefaults()` in `lib/appPreferences.ts`), so the app follows
+  Windows live. `desktop.applyTheme` sets the window theme and background,
+  and the Rust command `set_title_bar_theme` recolours the title bar
+  (`chrome.rs` `title_bar_colors`; light hands caption and text back to
+  Windows). `tauri.conf.json` no longer forces `"theme": "Dark"`.
+- **Styles:** `src/styles/windows.css` (variables, shell, building blocks)
+  and `src/styles/windows-reused.css`, which re-maps the hard-coded dark
+  colours of the reused Create, Linnea and Classes pages inside the shell.
+  The chat's `android-chat-*` classes get `!important` overrides there
+  because `platform-styles.css` repaints them navy with `!important`.
+- **No custom cursor on Windows:** `CustomCursor` hid the Windows pointer
+  (`cursor: none`); it now stays off in the Windows app.
+- **Seeing it without the app or an account:** the dev-only route
+  `/__e2e/windows?screen=today|library|session|answer|complete|settings|chat|create`
+  renders the screens with sample data; `node scripts/capture-windows-screens.mjs`
+  (in `auramind-gemini/`, with `npm run dev` running) screenshots them in
+  light and dark into `.superpowers/windows-screens/` (git-ignored).
+- **Not done (Phase 2, once there is usage):** Windows-native Create and
+  Prof. Linnea (they are the website pages, restyled), reminders inside the
+  Windows Settings (it links to the full settings page), and the Study Float
+  button (Document PiP needs a real browser window).
+
 ## 2026-10-15 - BonaMind rename, PR4: brand guard and docs (rename done)
 
 - **Rename — done.** With this PR every surface, doc and workflow says
