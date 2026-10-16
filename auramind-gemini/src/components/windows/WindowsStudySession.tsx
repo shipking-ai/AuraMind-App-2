@@ -73,43 +73,48 @@ export function WindowsStudySession({
   }, [confirming, flipped, onFlip, onRate, requestExit]);
 
   return (
-    <div className="win-study">
-      <div className="win-study-top">
-        <span>{deckTitle}</span>
-        <div className="win-progress" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={index}>
-          <i style={{ width: `${total ? (index / total) * 100 : 0}%` }} />
+    <div className="win-page">
+      <div className="win-cmd">
+        <span style={{ fontWeight: 600 }}>{deckTitle}</span>
+        <div className="win-cmd-end">
+          <div className="win-progress" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={index}>
+            <i style={{ width: `${total ? (index / total) * 100 : 0}%` }} />
+          </div>
+          <span className="win-muted">{index + 1} of {total}</span>
+          <button type="button" className="win-button" onClick={requestExit}>End</button>
         </div>
-        <span className="win-muted">{index + 1} / {total}</span>
-        <button type="button" className="win-button" onClick={requestExit}>End</button>
       </div>
 
-      <div className="win-card win-study-card" onClick={() => { if (!flipped) onFlip(); }}>
-        <div className="win-study-question">{question}</div>
-        {flipped && <div className="win-study-answer">{answer}</div>}
-      </div>
+      <div className="win-study">
+        <div className="win-index-card" onClick={() => { if (!flipped) onFlip(); }}>
+          <div className="win-index-meta">{deckTitle} · card {index + 1}</div>
+          <div className="win-index-question">{question}</div>
+          {flipped && <div className="win-index-answer">{answer}</div>}
+        </div>
 
-      {flipped ? (
-        <div className="win-study-grades">
-          {GRADES.map((g) => (
-            <button
-              key={g.key}
-              type="button"
-              className={`win-button${g.rating === Rating.GOOD ? ' win-button-primary' : ''}`}
-              onClick={() => onRate(g.rating)}
-            >
-              <span className="win-key">{g.key}</span>
-              {g.label}
-              {intervals[g.rating] !== undefined && <span className="win-interval">{formatInterval(intervals[g.rating]!)}</span>}
+        <div className="win-grades">
+          {flipped ? (
+            GRADES.map((g) => (
+              <button
+                key={g.key}
+                type="button"
+                className={`win-button${g.rating === Rating.GOOD ? ' win-button-primary' : ''}`}
+                onClick={() => onRate(g.rating)}
+              >
+                <span className="win-key">{g.key}</span>
+                {g.label}
+                {intervals[g.rating] !== undefined && <span className="win-interval">{formatInterval(intervals[g.rating]!)}</span>}
+              </button>
+            ))
+          ) : (
+            <button type="button" className="win-button win-button-primary" onClick={onFlip}>
+              <span className="win-key">Space</span>Show answer
             </button>
-          ))}
+          )}
         </div>
-      ) : (
-        <div className="win-study-grades">
-          <button type="button" className="win-button win-button-primary" onClick={onFlip}>
-            <span className="win-key">Space</span>Show answer
-          </button>
-        </div>
-      )}
+      </div>
+
+      <div className="win-status">Space shows the answer · 1–4 grade · Esc ends</div>
 
       {confirming && (
         <WindowsDialog
@@ -141,16 +146,20 @@ export function WindowsStudyComplete({
   const pct = reviewed > 0 ? Math.round((correct / reviewed) * 100) : 0;
   return (
     <div className="win-page">
-      <h1 className="win-title">Session complete</h1>
-      <p className="win-muted" style={{ margin: 0 }}>{deckTitle}</p>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div className="win-card" style={{ flex: 1 }}><div className="win-stat">{reviewed}</div><div className="win-muted">cards reviewed</div></div>
-        <div className="win-card" style={{ flex: 1 }}><div className="win-stat">{pct}%</div><div className="win-muted">correct</div></div>
-        <div className="win-card" style={{ flex: 1 }}><div className="win-stat">{duration(elapsedMs)}</div><div className="win-muted">time</div></div>
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="win-cmd">
         <button type="button" className="win-button win-button-primary" onClick={onDone} autoFocus>Back to Today</button>
         <button type="button" className="win-button" onClick={onRestart}>Study again</button>
+      </div>
+      <div className="win-body">
+        <h1 className="win-headline">Session complete</h1>
+        <p className="win-muted" style={{ margin: '8px 0 24px' }}>{deckTitle}</p>
+        <table className="win-table" style={{ maxWidth: 420 }}>
+          <tbody>
+            <tr><td className="win-muted">Cards reviewed</td><td className="num win-stat">{reviewed}</td></tr>
+            <tr><td className="win-muted">Correct</td><td className="num win-stat">{pct}%</td></tr>
+            <tr><td className="win-muted">Time</td><td className="num win-stat">{duration(elapsedMs)}</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -159,10 +168,12 @@ export function WindowsStudyComplete({
 export function WindowsStudyEmpty({ onDone }: { onDone: () => void }) {
   return (
     <div className="win-page">
-      <h1 className="win-title">Nothing to study here right now</h1>
-      <p className="win-muted" style={{ margin: 0 }}>Every card in this course is scheduled for later.</p>
-      <div>
+      <div className="win-cmd">
         <button type="button" className="win-button win-button-primary" onClick={onDone} autoFocus>Back to Today</button>
+      </div>
+      <div className="win-body">
+        <h1 className="win-headline">Nothing to study here right now</h1>
+        <p className="win-muted" style={{ margin: '8px 0 0' }}>Every card in this course is scheduled for later.</p>
       </div>
     </div>
   );

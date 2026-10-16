@@ -44,13 +44,10 @@ html.platform-desktop .win-content :is(.placeholder-\[\#7A7A96\], .placeholder-z
   color: var(--win-text-muted);
 }
 
-/* White text on the violet buttons and gradient bubbles stays white. */
-html.platform-desktop .win-content :is(
-  .bg-\[\#7C3AED\], .bg-\[\#6D28D9\], .bg-\[\#8B5CF6\], .bg-gradient-to-br, .bg-gradient-to-r
-):is(.text-white, :has(> .text-white)),
-html.platform-desktop .win-content :is(
-  .bg-\[\#7C3AED\], .bg-\[\#6D28D9\], .bg-\[\#8B5CF6\], .bg-gradient-to-br, .bg-gradient-to-r
-) .text-white {
+/* White text on the gradient bubbles (chat messages, the Linnea mark) stays white.
+   The violet buttons become ink buttons below, with their own text colour. */
+html.platform-desktop .win-content :is(.bg-gradient-to-br, .bg-gradient-to-r):is(.text-white, :has(> .text-white)),
+html.platform-desktop .win-content :is(.bg-gradient-to-br, .bg-gradient-to-r) .text-white {
   color: #fff;
 }
 
@@ -92,6 +89,36 @@ html.platform-desktop .win-content .android-chat-messages [class*="border-[#2A2A
 
 html.platform-desktop .win-content .android-chat-composer textarea {
   color: var(--win-text) !important;
+}
+
+/*
+ * Paper and ink, like the Windows screens: gradient headline text becomes
+ * plain ink, violet glows go, the violet action buttons become ink buttons,
+ * and page headings use the serif.
+ */
+html.platform-desktop .win-content .bg-clip-text.text-transparent {
+  background: none !important;
+  color: var(--win-text) !important;
+  -webkit-text-fill-color: currentColor;
+}
+
+html.platform-desktop .win-content [class*="shadow-violet"],
+html.platform-desktop .win-content [class*="shadow-[0_0"] {
+  box-shadow: none !important;
+}
+
+html.platform-desktop .win-content :is(.bg-\[\#7C3AED\], .bg-\[\#6D28D9\], .bg-\[\#8B5CF6\]) {
+  background-color: var(--win-ink);
+  color: var(--win-on-ink);
+}
+
+html.platform-desktop .win-content :is(.bg-\[\#7C3AED\], .bg-\[\#6D28D9\], .bg-\[\#8B5CF6\]) :is(.text-white, svg) {
+  color: var(--win-on-ink);
+}
+
+html.platform-desktop .win-content :is(h1, h2):not([class*="win-"]) {
+  font-family: var(--win-serif);
+  font-weight: 400;
 }
 
 /* Decorative glows behind the chat. */

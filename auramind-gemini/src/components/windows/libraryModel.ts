@@ -37,3 +37,11 @@ export function libraryRows(decks: Deck[], cards: Card[], now: number, query: st
   if (sort === 'recent') return rows.sort((a, b) => (b.lastStudied ?? -1) - (a.lastStudied ?? -1) || byTitle(a, b));
   return rows.sort((a, b) => b.due - a.due || byTitle(a, b));
 }
+
+/** "Today", "Yesterday" or "N days ago" for a last-studied timestamp. */
+export function studiedLabel(at: number, now: number): string {
+  const days = Math.floor((now - at) / 86_400_000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
+}

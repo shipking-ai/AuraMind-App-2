@@ -19,7 +19,7 @@ pub fn colorref(hex: &str) -> Option<u32> {
 /// title bar; the violet border stays in both.
 pub fn title_bar_colors(dark: bool) -> [Option<&'static str>; 3] {
     if dark {
-        [Some("#0b1022"), Some("#e8e6ff"), Some("#8B5CF6")]
+        [Some("#1f1d1a"), Some("#efe9de"), Some("#8B5CF6")]
     } else {
         [None, None, Some("#8B5CF6")]
     }
@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn title_bar_colors_follow_theme() {
-        assert_eq!(title_bar_colors(true), [Some("#0b1022"), Some("#e8e6ff"), Some("#8B5CF6")]);
+        assert_eq!(title_bar_colors(true), [Some("#1f1d1a"), Some("#efe9de"), Some("#8B5CF6")]);
         // Light: caption and text go back to the Windows default.
         assert_eq!(title_bar_colors(false), [None, None, Some("#8B5CF6")]);
     }
