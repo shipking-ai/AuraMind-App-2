@@ -77,7 +77,7 @@ module.exports = {
           low: "rgba(168, 85, 247, 0.1)",
           glow: "rgba(168, 85, 247, 0.25)",
         },
-        // AuraMind Design System Colors
+        // BonaMind Design System Colors
         surface: '#0d1515',
         'surface-dim': '#0d1515',
         'surface-bright': '#333b3b',

@@ -163,7 +163,7 @@ console.log('');
  * The Open Graph card is the product name on every shared link, and it is
  * generated from an SVG into a committed PNG — the one brand surface with no
  * import path from app-identity.ts, which is exactly why it survived the
- * rename: the SVG said AuraMind and the PNG still rendered it.
+ * rename: the SVG said AuraMind and the PNG still rendered it. // legacy-name: ok
  *
  * This checks the SVG source only. Verifying the rasterised PNG would need
  * sharp in CI, and the SVG is what the PNG is built from (`npm run og:build`),

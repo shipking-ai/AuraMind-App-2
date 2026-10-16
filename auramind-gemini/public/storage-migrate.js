@@ -1,5 +1,5 @@
 /**
- * Moves localStorage keys from their pre-rename names (`auramind` followed by
+ * Moves localStorage keys from their pre-rename names (`auramind` followed by // legacy-name: ok
  * `_`, `-`, `.` or `:`) to the same key under `bonamind`, before any app
  * module runs. It is a classic script in index.html's <head> for that reason:
  * the bundler can hoist shared chunks above the entry's own code, but nothing

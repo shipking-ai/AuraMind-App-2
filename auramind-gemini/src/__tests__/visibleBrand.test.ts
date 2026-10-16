@@ -42,10 +42,10 @@ const ROOTS = [
 
 const SKIP_FILES = new Set(['src/lib/legacyNames.ts']);
 
-const STANDALONE_BRAND = /(?<![A-Za-z0-9_])(AuraMind|AURAMIND)(?![A-Za-z0-9_])/;
+const STANDALONE_BRAND = /(?<![A-Za-z0-9_])(AuraMind|AURAMIND)(?![A-Za-z0-9_])/; // legacy-name: ok
 const OLD_TUTOR = /Prof(?:\. ?| )Aura\b/;
 /** The pre-rename domain no longer serves the site (com.auramind.app is the app ID, not a host). */
-const DEAD_DOMAIN = /(?<![A-Za-z0-9_.])auramind\.app/;
+const DEAD_DOMAIN = /(?<![A-Za-z0-9_.])auramind\.app/; // legacy-name: ok
 const STANDALONE_AURA = /(?<![A-Za-z0-9_\-./])(Aura|AURA)(?![A-Za-z0-9_])/;
 
 /** Standalone "Aura" that is not the tutor or the product, with why. */

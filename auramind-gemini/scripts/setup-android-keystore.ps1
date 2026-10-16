@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Android keystore setup for AuraMind.
+  Android keystore setup for BonaMind.
   - Generates a debug keystore for development builds.
   - Documents the production keystore generation steps.
 
@@ -87,13 +87,13 @@ Write-Host "keystore using keytool (example command below).  Keep this file"
 Write-Host "BACKED UP and SECURE — losing it means you cannot upload updates."
 Write-Host ""
 Write-Host "  keytool -genkey -v -keystore android/keystore/release.keystore ^"
-Write-Host "    -alias auramind-release ^"
+Write-Host "    -alias auramind-upload ^"
 Write-Host "    -keyalg RSA -keysize 2048 -validity 10000"
 Write-Host ""
 Write-Host "Keep these in a password manager (1Password / Bitwarden):"
 Write-Host "  • Keystore file        → android/keystore/release.keystore"
 Write-Host "  • Keystore password    → (strong, unique)"
-Write-Host "  • Key alias            → auramind-release"
+Write-Host "  • Key alias            → auramind-upload"
 Write-Host "  • Key password         → (strong, unique)"
 Write-Host ""
 Write-Host "After generating, update the signing config in:"

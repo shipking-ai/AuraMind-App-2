@@ -1,7 +1,7 @@
 /**
  * Every surface that sends an app link sends bonamind:// — shortcuts, the
  * widget and tile, Live Activity and Siri, push reminders and the Windows
- * OAuth return. auramind:// may appear only where links are still ACCEPTED
+ * OAuth return. auramind:// may appear only where links are still ACCEPTED // legacy-name: ok
  * (installed builds, pinned shortcuts and old notifications send it).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -28,7 +28,7 @@ const ACCEPTS_BOTH = new Set([
   'auramind-gemini/src/services/notifications/pushService.ts', // follows both on a notification tap
 ]);
 /** Single lines that accept the old scheme. */
-const ACCEPT_LINE = /startsWith\('auramind:\/\/'\)/; // POST /api/push/send link check
+const ACCEPT_LINE = /startsWith\('auramind:\/\/'\)/; // POST /api/push/send link check // legacy-name: ok
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -49,7 +49,7 @@ it('sends bonamind:// links from every surface', () => {
     readFileSync(file, 'utf8')
       .split('\n')
       .forEach((line, i) => {
-        if (line.includes('auramind://') && !ACCEPT_LINE.test(line)) hits.push(`${rel}:${i + 1}`);
+        if (line.includes('auramind://') && !ACCEPT_LINE.test(line)) hits.push(`${rel}:${i + 1}`); // legacy-name: ok
       });
   }
   expect(hits).toEqual([]);

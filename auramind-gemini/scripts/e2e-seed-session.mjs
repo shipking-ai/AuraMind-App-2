@@ -161,7 +161,7 @@ async function main() {
   });
   if (linkErr) throw linkErr;
 
-  // The verify URL 302s to the project's configured SITE_URL (auramind.app);
+  // The verify URL 302s to the project's configured SITE_URL;
   // `redirect_to` cannot override it because localhost is not on the
   // project's redirect allowlist, and routing the browser's verify hop hits
   // the same TLS interception as direct navigation. So the verify hop runs

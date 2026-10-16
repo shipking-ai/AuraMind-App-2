@@ -3,26 +3,26 @@ import { parseDeepLink } from '../lib/deepLinks';
 
 describe('parseDeepLink', () => {
   it('routes launcher shortcuts to their destinations', () => {
-    expect(parseDeepLink('auramind://app/dashboard/study')).toBe('/dashboard/study');
-    expect(parseDeepLink('auramind://app/generator')).toBe('/dashboard/generator');
-    expect(parseDeepLink('auramind://app/dashboard/chat')).toBe('/dashboard/chat');
+    expect(parseDeepLink('auramind://app/dashboard/study')).toBe('/dashboard/study'); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/generator')).toBe('/dashboard/generator'); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/dashboard/chat')).toBe('/dashboard/chat'); // legacy-name: ok
   });
 
   it('normalizes bare top-level prefixes that would otherwise 404', () => {
-    expect(parseDeepLink('auramind://app/study')).toBe('/dashboard/study');
-    expect(parseDeepLink('auramind://app/decks')).toBe('/dashboard/decks');
-    expect(parseDeepLink('auramind://app/chat')).toBe('/dashboard/chat');
-    expect(parseDeepLink('auramind://app/settings')).toBe('/dashboard/settings');
-    expect(parseDeepLink('auramind://app/study/some-deck')).toBe('/dashboard/study/some-deck');
+    expect(parseDeepLink('auramind://app/study')).toBe('/dashboard/study'); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/decks')).toBe('/dashboard/decks'); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/chat')).toBe('/dashboard/chat'); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/settings')).toBe('/dashboard/settings'); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/study/some-deck')).toBe('/dashboard/study/some-deck'); // legacy-name: ok
   });
 
   it('preserves query and hash', () => {
-    expect(parseDeepLink('auramind://app/dashboard/study?deck=abc#card-2')).toBe(
+    expect(parseDeepLink('auramind://app/dashboard/study?deck=abc#card-2')).toBe( // legacy-name: ok
       '/dashboard/study?deck=abc#card-2',
     );
   });
 
-  it('accepts bonamind:// exactly like auramind://', () => {
+  it('accepts bonamind:// exactly like auramind://', () => { // legacy-name: ok
     expect(parseDeepLink('bonamind://app/study')).toBe('/dashboard/study');
     expect(parseDeepLink('bonamind://app/dashboard/study?deck=abc#card-2')).toBe('/dashboard/study?deck=abc#card-2');
   });
@@ -35,8 +35,8 @@ describe('parseDeepLink', () => {
 
   it('rejects foreign schemes, unknown paths and the dev harness', () => {
     expect(parseDeepLink('https://bonamind.app/dashboard')).toBeNull();
-    expect(parseDeepLink('auramind://app/__e2e/android')).toBeNull();
-    expect(parseDeepLink('auramind://app/admin/backdoor')).toBeNull();
+    expect(parseDeepLink('auramind://app/__e2e/android')).toBeNull(); // legacy-name: ok
+    expect(parseDeepLink('auramind://app/admin/backdoor')).toBeNull(); // legacy-name: ok
     expect(parseDeepLink('not a url')).toBeNull();
   });
 });

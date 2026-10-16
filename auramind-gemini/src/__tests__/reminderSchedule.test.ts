@@ -106,13 +106,13 @@ describe("spoken reminder message", () => {
   // The chosen line is stored as its text. A line saved before the rename
   // must play, and show as selected, in its current wording.
   it("maps a line saved under the old names to its current wording", () => {
-    expect(currentReminderMessage("Prof. Aura here. Ready for a few cards?")).toBe(
+    expect(currentReminderMessage("Prof. Aura here. Ready for a few cards?")).toBe( // legacy-name: ok
       "Prof. Linnea here. Ready for a few cards?",
     );
-    expect(currentReminderMessage("Time for a quick AuraMind review. Your cards are waiting.")).toBe(
+    expect(currentReminderMessage("Time for a quick AuraMind review. Your cards are waiting.")).toBe( // legacy-name: ok
       SPOKEN_REMINDER_MESSAGES[0],
     );
-    expect(currentReminderMessage("Keep your streak alive. Open AuraMind for a quick session.")).toBe(
+    expect(currentReminderMessage("Keep your streak alive. Open AuraMind for a quick session.")).toBe( // legacy-name: ok
       "Keep your streak alive. Open BonaMind for a quick session.",
     );
   });

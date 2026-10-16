@@ -44,7 +44,7 @@ surfaces, so old material keeps coming back without the user scheduling anything
   notifications today, and vice versa. A card reviewed normally is suppressed
   for 3 h everywhere (same minRereviewGap).
 
-**Log:** `localStorage["auramind:sparkLog"]` — array of
+**Log:** `localStorage["bonamind:sparkLog"]` — array of
 `SparkEvent { cardId, ts, surface: 'popup' | 'notification' | 'interleave' }`,
 trimmed to 7 days. No DB migration; the log is device-local by design.
 
@@ -129,10 +129,10 @@ load-bearing.)
 
 ## Settings (SettingsPage, "Memory sparks" section)
 
-- `auramind_sparksEnabled` (default **true**) — master switch.
-- `auramind_sparksPopup` (default true) / `auramind_sparksNotifications`
+- `bonamind_sparksEnabled` (default **true**) — master switch.
+- `bonamind_sparksPopup` (default true) / `bonamind_sparksNotifications`
   (default true) — per-surface toggles.
-- `auramind_sparksQuietStart` / `auramind_sparksQuietEnd` (default "22:00" /
+- `bonamind_sparksQuietStart` / `bonamind_sparksQuietEnd` (default "22:00" /
   "08:00") — quiet hours.
 - Voice reuses the global TTS voice preference; no separate toggle.
 

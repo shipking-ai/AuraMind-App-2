@@ -2,7 +2,7 @@
  * Deep-link parsing for the installed Android app.
  *
  * Launcher shortcuts fire `bonamind://app/<path>` VIEW intents (older ones
- * `auramind://`); Capacitor's App plugin forwards them to JS as `appUrlOpen`
+ * `auramind://`); Capacitor's App plugin forwards them to JS as `appUrlOpen` // legacy-name: ok
  * events. This module turns
  * the URL into a router path — or null when it must be ignored.
  *
@@ -34,7 +34,7 @@ export function parseDeepLink(url: string): string | null {
     return null;
   }
   // All first-party routes live under /dashboard/*; bare prefixes
-  // (auramind://app/study) are normalized so they resolve instead of 404.
+  // (auramind://app/study) are normalized so they resolve instead of 404. // legacy-name: ok
   const normalized =
     path === "/dashboard" || path.startsWith("/dashboard/") ? path : `/dashboard${path}`;
   return normalized + parsed.search + parsed.hash;

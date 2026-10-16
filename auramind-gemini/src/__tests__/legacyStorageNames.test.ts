@@ -6,8 +6,8 @@
  * the migration moved its data, so this fails CI instead.
  *
  * Exempt everywhere: the app ID `com.auramind.app`, the `auramind-gemini`
- * folder name and `auramind://` links (accepted alongside `bonamind://`).
- * Capitalised "AuraMind" is visible copy and is checked separately.
+ * folder name and `auramind://` links (accepted alongside `bonamind://`). // legacy-name: ok
+ * Capitalised "AuraMind" is visible copy and is checked separately. // legacy-name: ok
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -16,7 +16,7 @@ import { expect, it } from 'vitest';
 const APP_ROOT = resolve(__dirname, '../..');
 const TEXT = /\.(ts|tsx|js|jsx|mjs|cjs|css|html|json|svg|md|txt|webmanifest|xml)$/;
 const EXEMPT_FILES = new Set(['src/lib/legacyNames.ts']);
-const LEGACY = /auramind(?=_|\.|:(?!\/\/)|-)/;
+const LEGACY = /auramind(?=_|\.|:(?!\/\/)|-)/; // legacy-name: ok
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -40,7 +40,7 @@ function legacyHits(): string[] {
       .split('\n')
       .forEach((line, i) => {
         if (line.includes('// legacy-name: ok')) return;
-        const cleaned = line.replace(/com\.auramind\.app/g, '').replace(/auramind-gemini/g, '');
+        const cleaned = line.replace(/com\.auramind\.app/g, '').replace(/auramind-gemini/g, ''); // legacy-name: ok
         if (LEGACY.test(cleaned)) hits.push(`${rel}:${i + 1}`);
       });
   }
@@ -55,7 +55,7 @@ it('deletes the pre-rename widget cache when the service worker activates', () =
   const sw = readFileSync(join(APP_ROOT, 'public/widget-sw.js'), 'utf8');
   expect(sw).toMatch(/addEventListener\('activate'/);
   expect(sw).toContain('caches.delete(');
-  const legacyLines = sw.split('\n').filter((l) => l.includes('auramind-widget-state'));
+  const legacyLines = sw.split('\n').filter((l) => l.includes('auramind-widget-state')); // legacy-name: ok
   expect(legacyLines).toHaveLength(1);
   expect(legacyLines[0]).toContain('// legacy-name: ok');
 });

@@ -25,6 +25,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: auramind-gemini/package-lock.json
 
+      # No dependencies needed: plain Node over `git ls-files`. Runs in the
+      # required job so an old brand name can't merge (see HANDOFF, "The
+      # brand guard").
+      - name: Brand guard
+        run: |
+          node --test scripts/check-brand.test.mjs
+          node scripts/check-brand.mjs
+
       - name: Install dependencies
         run: |
           cd auramind-gemini

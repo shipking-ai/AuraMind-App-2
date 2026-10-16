@@ -53,7 +53,7 @@ public class BonaMindWidgetProvider extends AppWidgetProvider {
             // widget shows its initial layout until the app is opened once.
             AppWidgetManager manager = AppWidgetManager.getInstance(context);
             int[] ids = manager.getAppWidgetIds(
-                    new ComponentName(context, AuraMindWidgetProvider.class));
+                    new ComponentName(context, AuraMindWidgetProvider.class)); // legacy-name: ok
             onUpdate(context, manager, ids);
         }
     }

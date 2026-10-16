@@ -19,30 +19,30 @@ const APP_JAVA = 'app/src/main/java/com/auramind/app';
 const WEAR_KT = 'wear/src/main/java/com/auramind/app/wear';
 
 describe('registered widget and tile names', () => {
-  it('keeps the phone widget registered as .AuraMindWidgetProvider only', () => {
+  it('keeps the phone widget registered as .AuraMindWidgetProvider only', () => { // legacy-name: ok
     const manifest = read('app/src/main/AndroidManifest.xml');
-    expect(manifest).toMatch(/android:name="\.AuraMindWidgetProvider"/);
+    expect(manifest).toMatch(/android:name="\.AuraMindWidgetProvider"/); // legacy-name: ok
     expect(manifest).not.toMatch(/\.BonaMindWidgetProvider/);
     expect(manifest).toMatch(/@xml\/bonamind_widget_info/);
   });
 
-  it('keeps the Wear tile registered as .AuraMindTileService only', () => {
+  it('keeps the Wear tile registered as .AuraMindTileService only', () => { // legacy-name: ok
     const manifest = read('wear/src/main/AndroidManifest.xml');
-    expect(manifest).toMatch(/android:name="\.AuraMindTileService"/);
+    expect(manifest).toMatch(/android:name="\.AuraMindTileService"/); // legacy-name: ok
     expect(manifest).not.toMatch(/\.BonaMindTileService/);
   });
 
   it('makes the old names empty stand-ins for the BonaMind classes', () => {
-    expect(read(`${APP_JAVA}/AuraMindWidgetProvider.java`)).toMatch(
-      /class AuraMindWidgetProvider extends BonaMindWidgetProvider\s*\{\s*\}/,
+    expect(read(`${APP_JAVA}/AuraMindWidgetProvider.java`)).toMatch( // legacy-name: ok
+      /class AuraMindWidgetProvider extends BonaMindWidgetProvider\s*\{\s*\}/, // legacy-name: ok
     );
-    expect(read(`${WEAR_KT}/AuraMindTileService.kt`)).toMatch(/class AuraMindTileService\s*:\s*BonaMindTileService\(\)/);
+    expect(read(`${WEAR_KT}/AuraMindTileService.kt`)).toMatch(/class AuraMindTileService\s*:\s*BonaMindTileService\(\)/); // legacy-name: ok
     expect(read(`${WEAR_KT}/BonaMindTileService.kt`)).toMatch(/open class BonaMindTileService/);
   });
 
   it('looks up placed widgets and the tile by their registered class', () => {
-    expect(read(`${APP_JAVA}/BonaMindWidgetProvider.java`)).toMatch(/new ComponentName\(context, AuraMindWidgetProvider\.class\)/);
-    expect(read(`${WEAR_KT}/BonaMindTileService.kt`)).toMatch(/requestUpdate\(AuraMindTileService::class\.java\)/);
+    expect(read(`${APP_JAVA}/BonaMindWidgetProvider.java`)).toMatch(/new ComponentName\(context, AuraMindWidgetProvider\.class\)/); // legacy-name: ok
+    expect(read(`${WEAR_KT}/BonaMindTileService.kt`)).toMatch(/requestUpdate\(AuraMindTileService::class\.java\)/); // legacy-name: ok
   });
 });
 

@@ -105,7 +105,7 @@ speech is unavailable the client falls back to the device voice.
 - `api/_providers.ts` — provider registry + failover policy
 - `api/_aiHandler.ts` — the proxy: auth, allowlisting, failover, usage logging
 - `groqClient.ts` — client entry point; talks to `/api/ai`, Puter rescue on 429
-- `auraAiService.ts` — multi-provider unified chat
+- `bonaAiService.ts` — multi-provider unified chat
 - `puterProvider.ts` — user-pays Puter fallback (SDK loaded from its CDN)
 - `templateDeckGenerator.ts` — deterministic offline generation
 
@@ -228,21 +228,21 @@ src/
 - **iOS** — Capacitor 8 app at `auramind-gemini/ios/`. The `Mobile iOS`
   workflow builds it unsigned, runs it in a simulator, and checks the Live
   Activity. Both apps share the phone layout; `src/lib/platform.ts` gates the
-  Android-only parts. Listening uses a native `AuraListenPlugin` on both
+  Android-only parts. Listening uses a native `BonaListenPlugin` on both
   platforms, because neither WebView's speech recognition works.
 
 ### Android platform integrations
 
 | Capability | Where |
 |---|---|
-| Launcher shortcuts: 3 static + the 2 most recently studied decks | `res/xml/shortcuts.xml`, `AuraDevicePlugin.setRecentDecks` |
-| Pin a deck to the home screen | `AuraDevicePlugin.pinDeck` (deck action sheet) |
+| Launcher shortcuts: 3 static + the 2 most recently studied decks | `res/xml/shortcuts.xml`, `BonaDevicePlugin.setRecentDecks` |
+| Pin a deck to the home screen | `BonaDevicePlugin.pinDeck` (deck action sheet) |
 | Quick Settings tile with the due count | `QuickReviewTileService.java` |
-| Screen kept on during a study session | `AuraDevicePlugin.setKeepAwake`, driven by `NativeRuntime` |
+| Screen kept on during a study session | `BonaDevicePlugin.setKeepAwake`, driven by `NativeRuntime` |
 | Material You colour, biometric lock, in-app review/updates | `ThemeColorsPlugin`, `BiometricAuthPlugin`, `PlayEngagementPlugin` |
-| Share target, home-screen widget, Wear OS sync | `ShareTargetPlugin`, `AuraMindWidgetProvider`, `WearSync*` |
+| Share target, home-screen widget, Wear OS sync | `ShareTargetPlugin`, `BonaMindWidgetProvider`, `WearSync*` |
 
-All shortcuts, the tile and the widget open `auramind://app/...` VIEW
+All shortcuts, the tile and the widget open `bonamind://app/...` VIEW
 intents, so every entry point goes through one allowlist (`lib/deepLinks.ts`).
 The tile and widget read the same `CapacitorStorage` due count; neither
 reimplements FSRS in Java.
@@ -282,7 +282,7 @@ at 600dp and up.
 
 ### Home-screen widget
 
-A 2×2 `RemoteViews` AppWidget (`AuraMindWidgetProvider.java`) showing cards
+A 2×2 `RemoteViews` AppWidget (`BonaMindWidgetProvider.java`) showing cards
 due. Not Glance: that needs Kotlin and Compose, and this module is plain Java
 with neither.
 

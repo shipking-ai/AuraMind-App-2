@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BonaMind rename
+
+- **AuraMind is now BonaMind, and Prof. Aura is now Prof. Linnea** - on <!-- legacy-name: ok -->
+  every screen, notification, store listing and doc, across the website,
+  Android, Wear OS, iOS and Windows apps
+- **Saved data moves with you** - settings, reminders, XP, streaks,
+  achievements, consent choices, queued offline reviews and placed widgets
+  and watch tiles carry over to the new names on first launch; nothing is
+  deleted
+- **New `bonamind://` links** - every app now sends `bonamind://` links, and
+  older links still open the app
+- **Permanent names stay** - the app ID `com.auramind.app` and a few stored
+  names are kept on purpose so installs, updates and settings survive (see
+  `scripts/check-brand.mjs`)
+- **Brand guard in CI** - `scripts/check-brand.mjs` fails a PR that brings
+  an old name back outside its allow-list
+
 ### Added
 - **Community tab in the Library** - browse decks other learners published
   (search, category, popular/newest) and add one to your library. Adding
@@ -22,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   taskbar badge, study reminders as Windows notifications with Quick
   review / Later, a Quick Review corner window on Ctrl+Alt+Space, drag a
   file onto the window (or right-click it in Explorer) to make a course,
-  `auramind://` links, a navy Windows 11 title bar and no white flash on
+  `bonamind://` links, a navy Windows 11 title bar and no white flash on
   launch
 - **Classroom portal** - teachers create classes, students join with a
   6-character code or deep link, and teachers assign decks and
@@ -44,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   native plugins (the WebView has no Web Speech API), spoken reminders,
   and natural AI voices with the device voice as fallback
 - **iOS app** - Capacitor 8 project built unsigned in CI, with an
-  iOS-native design, Prof. Aura chat (Talk / Notebook / Cards), the study
+  iOS-native design, Prof. Linnea chat (Talk / Notebook / Cards), the study
   session as a Live Activity, and Siri / Shortcuts ("quiz me", "what's
   due"). A public sample-data preview builds with `npm run build:ios-preview`
 - **Android 16 Live Update** for study sessions, plus launcher shortcuts,

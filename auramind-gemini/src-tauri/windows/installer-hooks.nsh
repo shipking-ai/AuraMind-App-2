@@ -8,7 +8,7 @@
 ; update leaves a duplicate item
 ; and an uninstall leaves one pointing at a deleted exe.
 !macro BonaMindVerb EXT
-  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind" ; legacy-name: ok
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind" "" "Make a course with BonaMind"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind" "Icon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" --create "%1"'
@@ -16,7 +16,7 @@
 
 !macro BonaMindUnverb EXT
   DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\BonaMind"
-  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.${EXT}\shell\AuraMind" ; legacy-name: ok
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL

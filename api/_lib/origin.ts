@@ -45,19 +45,19 @@ export const APP_ORIGIN: string = (process.env.APP_ORIGIN || 'https://bonamind.a
 /**
  * The previous domain, kept allowlisted while the migration settles.
  *
- * bonamind.app is now canonical, but links to auramind.app still exist in the
+ * bonamind.app is now canonical, but links to auramind.app still exist in the // legacy-name: ok
  * wild: old Stripe emails, bookmarks, shared links, and the Play tester
  * listing. If those origins stopped being recognised the moment the default
  * changed, a customer following a link from a receipt they kept would get a
  * silent network failure rather than a page.
  *
- * Empty when APP_ORIGIN is already auramind.app, so a deployment that has not
+ * Empty when APP_ORIGIN is already auramind.app, so a deployment that has not // legacy-name: ok
  * migrated does not end up allowlisting its own origin twice. Remove this once
  * the old domain 301s to the new one and receipt emails have aged out.
  */
 export const LEGACY_APP_ORIGIN: string | undefined =
   process.env.LEGACY_APP_ORIGIN ??
-  (APP_ORIGIN === 'https://auramind.app' ? undefined : 'https://auramind.app');
+  (APP_ORIGIN === 'https://auramind.app' ? undefined : 'https://auramind.app'); // legacy-name: ok
 
 /**
  * Transnational email sender. Kept as its own variable because the sender
@@ -77,7 +77,7 @@ export const EMAIL_FROM: string =
  *
  * Accepts a path with or without a leading slash. Going through this rather
  * than string-concatenating `APP_ORIGIN` at each call site is what keeps a
- * double slash (`https://auramind.app//dashboard`) from appearing when one
+ * double slash (`https://auramind.app//dashboard`) from appearing when one // legacy-name: ok
  * call site passes a leading slash and another does not.
  */
 export function appUrl(pathname = ''): string {

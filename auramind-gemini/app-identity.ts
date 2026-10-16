@@ -10,7 +10,7 @@
  *   TypeScript   src/lib/seo.ts, src/lib/pwa.ts, and inline JSX copy
  *   HTML         index.html <title> / meta / og: / twitter:
  *   XML          android/app/src/main/res/values/strings.xml
- *   plist        ios/App/App/Info.plist + ios/App/AuraMindWidgets/Info.plist
+ *   plist        ios/App/App/Info.plist + ios/App/BonaMindWidgets/Info.plist
  *
  * Renaming meant a manual sweep across all of them, and missing one produced
  * a build that still said the old name in production. `src/lib/branding.ts`

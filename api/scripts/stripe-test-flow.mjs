@@ -100,7 +100,7 @@ try {
 
   // --- 3. Checkout ---------------------------------------------------------
   console.log('\n— Checkout —');
-  const email = process.env.STRIPE_TEST_EMAIL || `test+${Date.now()}@auramind.app`;
+  const email = process.env.STRIPE_TEST_EMAIL || `test+${Date.now()}@bonamind.app`;
   const checkoutRes = await fetch(`http://localhost:${PORT}/api/stripe/checkout`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

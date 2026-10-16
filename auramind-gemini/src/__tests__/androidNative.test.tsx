@@ -65,7 +65,7 @@ describe("workspaceRefresh", () => {
 
 describe("deck shortcut deep links", () => {
   it("routes a pinned-deck shortcut to that deck's study session", () => {
-    expect(parseDeepLink("auramind://app/dashboard/study/deck-42")).toBe("/dashboard/study/deck-42");
+    expect(parseDeepLink("auramind://app/dashboard/study/deck-42")).toBe("/dashboard/study/deck-42"); // legacy-name: ok
   });
 });
 

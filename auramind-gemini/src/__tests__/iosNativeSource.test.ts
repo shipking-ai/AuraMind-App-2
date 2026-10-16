@@ -104,11 +104,11 @@ describe('Info.plist registers the deep-link scheme', () => {
     expect(plist).toMatch(/<key>CFBundleURLTypes<\/key>/);
   });
 
-  it('claims the auramind scheme that Android also registers', () => {
+  it('claims the auramind scheme that Android also registers', () => { // legacy-name: ok
     // Must stay in step with android/app/src/main/AndroidManifest.xml, which
-    // declares scheme "auramind" host "app". A one-sided change breaks the
+    // declares scheme "auramind" host "app". A one-sided change breaks the // legacy-name: ok
     // deep link on exactly one platform.
-    expect(plist).toMatch(/<string>auramind<\/string>/);
+    expect(plist).toMatch(/<string>auramind<\/string>/); // legacy-name: ok
   });
 
   it('also claims the bonamind scheme', () => {
@@ -194,14 +194,14 @@ describe('the deep-link scheme agrees with Android', () => {
       path.resolve(__dirname, '../../android/app/src/main/AndroidManifest.xml'),
       'utf8',
     );
-    expect(manifest).toMatch(/android:scheme="auramind"/);
+    expect(manifest).toMatch(/android:scheme="auramind"/); // legacy-name: ok
     expect(manifest).toMatch(/android:scheme="bonamind"/);
     expect(manifest).toMatch(/android:host="app"/);
   });
 
   it('the Windows app registers both schemes', () => {
     const conf = JSON.parse(readFileSync(path.resolve(__dirname, '../../src-tauri/tauri.conf.json'), 'utf8'));
-    expect(conf.plugins['deep-link'].desktop.schemes).toEqual(['bonamind', 'auramind']);
+    expect(conf.plugins['deep-link'].desktop.schemes).toEqual(['bonamind', 'auramind']); // legacy-name: ok
   });
 });
 // The Xcode project file is maintained by hand (no Mac here), so a rename

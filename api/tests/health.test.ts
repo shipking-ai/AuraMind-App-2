@@ -6,7 +6,7 @@ describe('GET /api/health', () => {
     const { status, body } = await call('health', { method: 'GET' });
     expect(status).toBe(200);
     expect(body.status).toBe('ok');
-    expect(body.service).toBe('auramind-api');
+    expect(body.service).toBe('bonamind-api');
     expect(typeof body.timestamp).toBe('number');
   });
 

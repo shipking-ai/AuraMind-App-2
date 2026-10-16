@@ -63,7 +63,7 @@ android {
                 boolean isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
                 if (isReleaseTask) {
                     throw new GradleException(
-                        "[AuraMind] Release build cannot proceed. Required inputs missing:\n" +
+                        "[BonaMind] Release build cannot proceed. Required inputs missing:\n" +
                         "  • keystore: ${keystoreFile.absolutePath} ${keystoreFile.exists() ? '(found)' : '(NOT FOUND)'}\n" +
                         "  • ANDROID_KEYSTORE_PASSWORD env var ${ksStorePassword ? '(set)' : '(NOT SET)'}\n" +
                         "  • ANDROID_KEY_ALIAS env var (defaults to 'auramind-upload' if unset)\n" +

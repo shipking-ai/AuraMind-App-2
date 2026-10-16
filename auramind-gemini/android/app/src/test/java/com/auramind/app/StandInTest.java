@@ -8,6 +8,6 @@ import org.junit.Test;
 public class StandInTest {
     @Test
     public void widgetStandInExtendsTheRealProvider() {
-        assertTrue(BonaMindWidgetProvider.class.isAssignableFrom(AuraMindWidgetProvider.class));
+        assertTrue(BonaMindWidgetProvider.class.isAssignableFrom(AuraMindWidgetProvider.class)); // legacy-name: ok
     }
 }

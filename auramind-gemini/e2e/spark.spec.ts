@@ -67,8 +67,8 @@ test.describe('memory sparks', () => {
   // neither overlay sits above the spark dialog or intercepts a grade click.
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem('auramind_consentChoice', JSON.stringify('declined'));
-      window.localStorage.setItem('auramind:completedTutorials', JSON.stringify(['onboarding']));
+      window.localStorage.setItem('bonamind_consentChoice', JSON.stringify('declined'));
+      window.localStorage.setItem('bonamind:completedTutorials', JSON.stringify(['onboarding']));
     });
   });
 

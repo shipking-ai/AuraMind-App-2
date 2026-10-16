@@ -50,7 +50,7 @@
 
             <!-- Deep links for launcher shortcuts (and anything else that can
                  open a URL): bonamind://app/<path>, and the pre-rename
-                 auramind://app/<path> that older shortcuts, widgets and
+                 auramind://app/<path> that older shortcuts, widgets and (legacy-name: ok)
                  notifications still send. Capacitor's App plugin
                  forwards these to the JS `appUrlOpen` listener, which routes
                  them — see NativeRuntime. -->
@@ -78,7 +78,7 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Receives grade data from the paired Wear OS app (AuraMind watch
+        <!-- Receives grade data from the paired Wear OS app (BonaMind watch
              companion). Runs while the app is in the background. -->
         <service
             android:name=".WearSyncListenerService"

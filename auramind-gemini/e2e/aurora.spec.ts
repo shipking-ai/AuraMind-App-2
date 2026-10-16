@@ -59,8 +59,8 @@ test.describe('aurora motion', () => {
   // preferences), so no overlay sits above the shell when the probe runs.
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem('auramind_consentChoice', JSON.stringify('declined'));
-      window.localStorage.setItem('auramind:completedTutorials', JSON.stringify(['onboarding']));
+      window.localStorage.setItem('bonamind_consentChoice', JSON.stringify('declined'));
+      window.localStorage.setItem('bonamind:completedTutorials', JSON.stringify(['onboarding']));
     });
   });
 

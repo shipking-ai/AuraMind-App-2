@@ -47,13 +47,13 @@ describe('desktop bridge', () => {
     (window as W).__TAURI_INTERNALS__ = {};
     const unlisten = vi.fn();
     listen.mockImplementation(async (_name: string, cb: (e: { payload: unknown }) => void) => {
-      cb({ payload: { url: 'auramind://app/study' } });
+      cb({ payload: { url: 'auramind://app/study' } }); // legacy-name: ok
       return unlisten;
     });
     const handler = vi.fn();
     const off = await desktop.on('deep-link', handler);
     expect(listen).toHaveBeenCalledWith('deep-link', expect.any(Function));
-    expect(handler).toHaveBeenCalledWith({ url: 'auramind://app/study' });
+    expect(handler).toHaveBeenCalledWith({ url: 'auramind://app/study' }); // legacy-name: ok
     off();
     expect(unlisten).toHaveBeenCalled();
   });

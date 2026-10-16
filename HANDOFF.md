@@ -14,7 +14,7 @@ the traps that cost real time.
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
 | Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main` at `8e1eac2d` (2026-10-14, through #170: rename PR2, Prof. Linnea and copy). Open: #171 (real-app Play screenshots and the live listing text), rename PR3 (code names and `bonamind://` senders) on `feat/rename-3-code`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
+| Branch | `main` at `a71d970e` (2026-10-15, through #172: rename PR3, code names and `bonamind://` senders; #171 real-app Play screenshots merged the same day). Open: rename PR4 (brand guard, docs) on `feat/rename-4-guard`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
 | Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
@@ -50,9 +50,9 @@ the traps that cost real time.
    `src/services/voice/aiVoice.ts`.
 7. **Put the iPhone build on a phone.** Everything iOS is CI-verified only.
    Run `mobile-ios.yml` (workflow_dispatch), download
-   `BonaMind-ios-unsigned-ipa`, sign it with Sideloadly and a free Apple ID —
+   `bonamind-ios-unsigned-ipa`, sign it with Sideloadly and a free Apple ID —
    full steps under "Getting the app onto an iPhone from Windows" below. The
-   three things that have never executed on hardware: Siri (`AuraMindIntents`),
+   three things that have never executed on hardware: Siri (`BonaMindIntents`),
    the Live Activity, and native dictation (`SFSpeechRecognizer`).
 8. **Apple Developer Program ($99/yr) is the only way past the 7-day wall.**
    A free Apple ID signature expires weekly, allows 3 sideloaded apps, and
@@ -76,15 +76,20 @@ the traps that cost real time.
       the Capacitor build): upload the existing upload keystore to EAS and
       set `ANDROID_VERSION_CODE` above the last Play build.
     - Trademark search for "Linnea" before any store listing.
-11. **Pick one canonical host: `bonamind.app` or `www.bonamind.app`.** As of
-    2026-10-11 Vercel 308-redirects the apex **to** `www`, the reverse of
-    item 3 above. The code still treats the apex as canonical
-    (`api/_lib/origin.ts` `APP_ORIGIN`, `src/lib/branding.ts`
-    `PRODUCT_SITE_URL`). Either flip Vercel's primary domain back to the apex,
-    or move those constants (and Supabase Site URL / redirect URLs) to `www`.
-    The native app now calls `https://www.bonamind.app` directly; if the apex
-    becomes primary again, change `EXPO_PUBLIC_API_BASE_URL` (in
-    `mobile/.env.local`, `mobile/src/env.ts`, `mobile-builds.yml`) back too.
+11. ~~**Apex redirect broke the apps' API calls.**~~ Fixed 2026-10-15.
+    From 2026-10-11 Vercel 308-redirected `bonamind.app` to `www`; the
+    Android release build and `.env.desktop` call `https://bonamind.app`, and
+    a CORS preflight that gets a redirect fails (see the trap "A redirect on
+    the API host breaks every app"). The redirect was removed (Vercel project
+    `auramind-gemini` → Domains: `bonamind.app` now serves Production
+    directly; `www.bonamind.app` serves too). Verified: preflights from
+    `https://localhost` and `https://tauri.localhost` to both hosts answer
+    204. **Don't re-add an apex↔www redirect** without moving every app's
+    API host first. Both hosts serving means no canonical redirect for SEO;
+    the code treats the apex as canonical (`api/_lib/origin.ts`
+    `APP_ORIGIN`, `src/lib/branding.ts` `PRODUCT_SITE_URL`). The native Expo
+    app calls `https://www.bonamind.app` (`EXPO_PUBLIC_API_BASE_URL`), which
+    also works.
 12. **Course creation on the phone (Part 2) needs the API deployed.** The app
     calls the new `/api/extract/document` and `/api/extract/image` endpoints on
     `www.bonamind.app`, so they work only after the Part 2 PR is merged and
@@ -95,20 +100,25 @@ the traps that cost real time.
     Then make one course from each source in Expo Go and check it appears on
     bonamind.app.
 13. **BonaMind rename, owner steps** (spec
-    `docs/superpowers/specs/2026-10-13-bonamind-rename-design.md`, four PRs):
-    - After **PR1** (storage migration) merges: ship new **Android** and
-      **Windows** builds. They carry the native half of the migration and
-      register `bonamind://`.
-    - Before **PR3** merges: add `bonamind://auth/callback` to Supabase →
-      Authentication → URL Configuration → Redirect URLs. Keep the
-      `auramind://auth/callback` entry, because older Windows installs still send it.
-    - After **PR2**: paste the new store text into Play Console. That's
-      `store/android/listings/en-US/` (`title.txt` is now "BonaMind",
-      `full_description.txt`) and `store/android/changelogs/en-US.txt`.
-      Then upload the new screenshots (`store/graphics/android/screenshots/`,
-      five captured from the real app on the emulator) and the feature graphic
-      `store/graphics/android/feature-1024x500.png`, replacing the old set.
-    - After **PR3**: ship Android and Windows builds again.
+    `docs/superpowers/specs/2026-10-13-bonamind-rename-design.md`; PR1–PR3
+    merged, PR4 open):
+    - ~~Supabase redirect URL `bonamind://auth/callback`~~ — added. Keep the
+      `auramind://auth/callback` entry: older Windows installs still send it. <!-- legacy-name: ok -->
+    - **Play listing:** paste `store/android/listings/en-US/` (`title.txt`
+      "BonaMind", `full_description.txt`) and
+      `store/android/changelogs/en-US.txt`; replace the screenshots with
+      `store/graphics/android/screenshots/` (five, from the real app) and the
+      feature graphic with `store/graphics/android/feature-1024x500.png`.
+      Send for review together with the release below.
+    - **Android:** the post-PR3 build goes to Alpha as a draft (2026-10-15;
+      the first two attempts ran out of Gradle heap, see the trap "Signing
+      the release bundle needs a 4 GB heap"). Roll it out from Play Console
+      → Closed testing → Manage track. Item 11 is fixed, so its API calls
+      work.
+    - **Windows:** there has never been a BonaMind Windows release (the only
+      one is the retired June AuraMind build). Add the repo secret <!-- legacy-name: ok -->
+      `TAURI_SIGNING_PRIVATE_KEY` (DEPLOYMENT.md → Windows app), bump the
+      version above 2.0.0 and push a `desktop-v*` tag.
 
 After the first publish, `status=completed` in the release workflow makes a
 dispatch go live without a console visit.
@@ -342,7 +352,7 @@ size in a normal page; the window itself needs a real Chrome or Edge.
 There is no Mac here, so `ios/App/App.xcodeproj/project.pbxproj` is edited as
 text. Every object needs a **globally unique 24-hex ID** — copying a nearby
 block and keeping its IDs produces a project that still parses and then builds
-the wrong file (this happened once with `AuraMindIntents.swift` inheriting
+the wrong file (this happened once with `AuraMindIntents.swift` inheriting <!-- legacy-name: ok -->
 `MainViewController.swift`'s IDs). After any pbxproj edit, check: unique keys,
 no reference to an undefined ID, balanced braces. CI is a slow way to find out.
 
@@ -491,7 +501,7 @@ the type-check, tests and build.
 
 Once the PR1 web deploy has run on a browser, that browser's settings,
 saved chats and local XP live under `bonamind…` keys only. A Vercel instant
-rollback to an older build would read the old `auramind…` keys, find nothing,
+rollback to an older build would read the old `auramind…` keys, find nothing, <!-- legacy-name: ok -->
 and show every returning user default settings: theme, consent banner, an
 empty chat history. Rolling forward again doesn't recover what they changed
 in between, because the migration's run-once marker is already set.
@@ -503,35 +513,61 @@ misbehaves, ship a fix forward.
 ### The widget and Wear tile keep their pre-rename class names
 
 Android finds a placed home-screen widget, and Wear OS an added tile, by the
-class name registered in the manifest. `AuraMindWidgetProvider` and
-`AuraMindTileService` are now empty subclasses of the `BonaMind*` classes.
+class name registered in the manifest. `AuraMindWidgetProvider` and <!-- legacy-name: ok -->
+`AuraMindTileService` are now empty subclasses of the `BonaMind*` classes. <!-- legacy-name: ok -->
 **Never rename or delete them, and never register the BonaMind classes
 instead.** That silently removes the widget or tile from every user's screen.
 Code that asks Android about placed widgets or tiles must name the registered
-class (`new ComponentName(context, AuraMindWidgetProvider.class)`,
-`requestUpdate(AuraMindTileService::class.java)`).
+class (`new ComponentName(context, AuraMindWidgetProvider.class)`, <!-- legacy-name: ok -->
+`requestUpdate(AuraMindTileService::class.java)`). <!-- legacy-name: ok -->
 
 ### The old repo URL must never be reused
 
-Installed Windows apps check `shipking-ai/AuraMind-App-2` for updates until
+Installed Windows apps check `shipking-ai/AuraMind-App-2` for updates until <!-- legacy-name: ok -->
 they update once. GitHub redirects that URL to `shipking-ai/BonaMind` only
 while no repo of the old name exists. **Don't create a repo called
-`AuraMind-App-2`.**
+`AuraMind-App-2`.** <!-- legacy-name: ok -->
 
 ### Pre-rename names live in one web file
 
-The rename to BonaMind moved every stored key from `auramind…` to
+The rename to BonaMind moved every stored key from `auramind…` to <!-- legacy-name: ok -->
 `bonamind…`. `auramind-gemini/src/lib/legacyNames.ts` is the **only** web
 source file allowed to spell a pre-rename name, and
 `src/__tests__/legacyStorageNames.test.ts` fails CI on any other. It holds the
 migration's old prefix and the old link scheme. It also holds names that can
-never change: `urn:auramind:classroom:*` (raised by an applied migration), the
-Windows widget tag `auramind-due` (the widget board finds pinned widgets by
+never change: `urn:auramind:classroom:*` (raised by an applied migration), the <!-- legacy-name: ok -->
+Windows widget tag `auramind-due` (the widget board finds pinned widgets by <!-- legacy-name: ok -->
 tag), and the owner's Google Group address. Don't "finish the rename" on
 those. Other permanent names are listed in the spec's "What never changes"
 table: `com.auramind.app`, the signing-key alias `auramind-upload`, the Wear
 paths `/auramind/sync` and `/auramind/grade`, the notification channel
 `auramind_study_session` and `auramind_biometric_creds`.
+
+### A redirect on the API host breaks every app
+
+The Android, iOS and Windows apps run the site from their own origin
+(`https://localhost`, `capacitor://localhost`, `https://tauri.localhost`) and
+call the API on another host. Every signed-in call carries an
+`Authorization` header, so the web view first sends a CORS preflight
+(`OPTIONS`), and **a preflight that gets any redirect fails** — the app
+launches and looks fine, but AI, chat, Stripe and account calls all error.
+So the host in `VITE_API_BASE_URL` (the Android release workflow,
+`.env.desktop`) must answer directly. Check it with
+`curl -X OPTIONS -H "Origin: https://localhost" -H "Access-Control-Request-Method: POST" -I https://<host>/api/ai/chat`:
+204 is right, 30x is this trap. `desktopIdentity.test.ts` keeps the Windows
+and Android hosts identical; the domain setting itself lives in Vercel.
+
+### The brand guard (`scripts/check-brand.mjs`)
+
+CI fails any line in a tracked file that says `AuraMind`, `auramind`, <!-- legacy-name: ok -->
+`Prof. Aura` or `ProfAura` outside the allow-list (run it locally with <!-- legacy-name: ok -->
+`node scripts/check-brand.mjs`). Permanent names (`com.auramind.app`, the <!-- legacy-name: ok -->
+folder name, the signing alias, the Wear paths, applied migrations, …) are
+allow-listed in the script, each with its reason. Code that exists to read
+or accept an old name carries the marker `legacy-name: ok` in a comment on
+the same line. Adding an allow-list entry is the owner's decision, never a
+way to turn CI green; it needs a one-line reason and a test case in
+`scripts/check-brand.test.mjs`.
 
 ### Full website suite timeouts on this PC
 
@@ -647,7 +683,7 @@ types line up and nothing else.
 ### Getting the app onto an iPhone from Windows
 
 1. Run `mobile-ios.yml` (Actions → Run workflow), then
-   `gh run download <id> -n BonaMind-ios-unsigned-ipa -D <dir>`. `gh` unzips
+   `gh run download <id> -n bonamind-ios-unsigned-ipa -D <dir>`. `gh` unzips
    the artifact, so what lands is the real `.ipa`, ~70 MB.
 2. Install **Sideloadly**. It needs Apple's own iTunes *and* iCloud from
    apple.com — the Microsoft Store versions don't expose the device.
@@ -685,26 +721,54 @@ app plus its extension burn two per sideload.
   and role and entitlement are read from `app_metadata` only
 - **Identity** — the product is BonaMind now (#139, #143–#145, merged
   2026-10-04): the app name and the domain moved to bonamind.app through
-  single-source-of-truth constants. `auramind` survives only where Play
+  single-source-of-truth constants. `auramind` survives only where Play <!-- legacy-name: ok -->
   already keyed it — the Android package (`com.auramind.app`) and the CI
-  artifact names (`auramind-ios-unsigned-ipa`). The Windows/`AuraMind-windows`
+  artifact names (`auramind-ios-unsigned-ipa`). The Windows/`AuraMind-windows` <!-- legacy-name: ok -->
   checkouts predate this and still carry the old names.
 - **Community tab** (#137) — browse and fork published decks, migration
   `20260930_marketplace_fork_and_listing.sql`.
 
 ---
 
+## 2026-10-15 - BonaMind rename, PR4: brand guard and docs (rename done)
+
+- **Rename — done.** With this PR every surface, doc and workflow says
+  BonaMind and Prof. Linnea; the old names survive only on the guard's
+  allow-list or on lines marked `legacy-name: ok`.
+- **Guard:** `scripts/check-brand.mjs` (+ `node:test` cases in
+  `scripts/check-brand.test.mjs`), run in both required `build-and-test` CI jobs. See the trap
+  "The brand guard".
+- **Docs and URLs:** README, CLAUDE.md, ARCHITECTURE, CONTRIBUTING (clone
+  `shipking-ai/BonaMind`), DEPLOYMENT, the issue-template links, root
+  `package.json` repository/bugs, the iOS artifact names
+  (`bonamind-ios-unsigned-ipa`, `bonamind-ios-live-reload-ipa`), the API's
+  service name (`bonamind-api`) and export filename, and a CHANGELOG
+  `### BonaMind rename` entry.
+- **Fixed on the way:** `.env.desktop` called the retired domain, which now <!-- legacy-name: ok -->
+  301s, so a Windows build made from it would have failed every signed-in
+  API call (preflight + redirect; see the trap). It now uses the Android
+  build's host. DEPLOYMENT.md named the updater key file wrongly.
+- **README banner:** `docs/assets/banner.png` still showed the old wordmark
+  (binary files are outside the guard's scan). It is now rendered from
+  `banner.svg` by `auramind-gemini/scripts/render-banner.mjs` (Playwright,
+  run on Windows for Segoe UI); edit the SVG, then re-run the script. The
+  platform line now reads WEB · ANDROID · iOS · WINDOWS.
+- **Owner decisions (2026-10-15):** `LICENSE` now names BonaMind as the
+  product and mark (CogniVect and the terms unchanged), and `src/lib/seo.ts`
+  no longer sets `twitter:site`/`twitter:creator` — there is no BonaMind
+  account, and the old handle would point link previews at the old brand.
+
 ## 2026-10-14 - BonaMind rename, PR3: code names and bonamind:// links
 
 - **Web.** The code names change, and `src/__tests__/codeNames.test.ts` enforces it:
-  - `ProfAura*` → `ProfLinnea*`, `AuraChatMode` → `LinneaChatMode`;
+  - `ProfAura*` → `ProfLinnea*`, `AuraChatMode` → `LinneaChatMode`; <!-- legacy-name: ok -->
   - the Capacitor plugins `AuraSpeech`/`AuraListen`/`AuraLiveActivity`/`AuraLiveUpdate`/`AuraDevice` → `Bona*`;
-  - `auraAiService` → `bonaAiService`, `useAuraMind` → `useBonaMind`;
-  - `components/auramind/` and `lib/auramind/` → `bonamind/`, and `public/auramind/` assets → `public/bonamind/`.
+  - `auraAiService` → `bonaAiService`, `useAuraMind` → `useBonaMind`; <!-- legacy-name: ok -->
+  - `components/auramind/` and `lib/auramind/` → `bonamind/`, and `public/auramind/` assets → `public/bonamind/`. <!-- legacy-name: ok -->
 - **Android.** The plugin classes are now `Bona*`, and the widget resources are
   `bonamind_widget_info` and `widget_bonamind`. The widget's code moved to
   `BonaMindWidgetProvider` and the watch tile's to `BonaMindTileService`. The
-  manifests still register **`.AuraMindWidgetProvider` and `.AuraMindTileService`**:
+  manifests still register **`.AuraMindWidgetProvider` and `.AuraMindTileService`**: <!-- legacy-name: ok -->
   empty stand-in subclasses that keep placed widgets and added tiles alive.
   `src/__tests__/androidIdentity.test.ts` pins this.
 - **iOS.** The types, files, the widget extension folder and the target are all
@@ -719,7 +783,7 @@ app plus its extension burn two per sideload.
 - **Links.** Every surface now sends `bonamind://`: shortcuts, widget, tile,
   Live Update, Live Activity, Siri, push reminders and the Windows OAuth return.
   `src/__tests__/linkSenders.test.ts` enforces it. Everything still
-  **accepts** `auramind://`.
+  **accepts** `auramind://`. <!-- legacy-name: ok -->
 - **Kept on purpose:**
   - the aura glow-effect names (`auraDepth`, `AndroidAura`, `VoiceAura`) and the "Aura Sans"/"Aura Script" typefaces;
   - the Wear data-layer paths, now `WEAR_SYNC_PATH`/`WEAR_GRADE_PATH` in `legacyNames.ts`. The sweep had renamed them, which would have broken phone↔watch sync.
@@ -731,13 +795,13 @@ app plus its extension burn two per sideload.
   the iPhone and Android screens, the generator, settings, the legal pages, the
   AI system prompts, Android strings and shortcuts, and the store text. Where
   the old copy said plain "Aura", it now says "Linnea". The in-app copy uses no
-  pronoun for her. The Play listing already said "she" for Prof. Aura, and that
+  pronoun for her. The Play listing already said "she" for Prof. Aura, and that <!-- legacy-name: ok -->
   wording is kept.
 - **Saved reminder lines map forward.** The spoken-reminder line a user picks
   is stored as its text. `currentReminderMessage` (`src/lib/reminderSchedule.ts`)
-  shows and speaks a line saved as "Prof. Aura here…" (or with "AuraMind") in
+  shows and speaks a line saved as "Prof. Aura here…" (or with "AuraMind") in <!-- legacy-name: ok -->
   its current wording.
-- **Every remaining "AuraMind" is now BonaMind:**
+- **Every remaining "AuraMind" is now BonaMind:** <!-- legacy-name: ok -->
   - the HTML shell, the iOS permission strings and the Windows app description;
   - the payment emails (`api/stripe-webhook.ts`), the reminder push title, the
     `User-Agent` and the server logs.
@@ -745,11 +809,11 @@ app plus its extension burn two per sideload.
     spans (`Aura<span>Mind</span>`), so a plain text search never found them.
   - The watch app name, its complication and sync text, the Siri description,
     the Android eyebrows ("CREATE WITH LINNEA") and the Play description
-    (its privacy link pointed at the dead `auramind.app`).
+    (its privacy link pointed at the dead `auramind.app`). <!-- legacy-name: ok -->
   - Art: the Windows installer sidebar (`generate-assets.ps1` →
     `nsis-sidebar.bmp`) and the Play feature graphic were regenerated.
   - **Play screenshots** are now real app screens. The old set was web pages
-    and static mockups showing AuraMind.
+    and static mockups showing AuraMind. <!-- legacy-name: ok -->
     `scripts/capture-android-screenshots.mjs` drives a development debug build
     on an emulator through Chrome DevTools to each sample-data screen
     (`/__e2e/android?screen=…`). It captures them at 1080×1920 in demo mode.
@@ -764,17 +828,17 @@ app plus its extension burn two per sideload.
     `scripts/generate-android-assets.mjs` reads the new names;
   - `store/graphics/prof-aura-variant-*` is now `prof-linnea-variant-*`.
 - **Guards:**
-  - `src/__tests__/visibleBrand.test.ts` fails on standalone "AuraMind",
-    "Prof. Aura" or a standalone "Aura". Uses that never meant the tutor are
+  - `src/__tests__/visibleBrand.test.ts` fails on standalone "AuraMind", <!-- legacy-name: ok -->
+    "Prof. Aura" or a standalone "Aura". Uses that never meant the tutor are <!-- legacy-name: ok -->
     kept on a short list, each with a reason: the font names, two music tracks,
     the focus-aura glow and the top league tier.
   - The web guard also scans the native code (Java, Kotlin, Swift, Rust), the
     watch app, the Windows asset script and the Play listing text. It catches
-    all-caps forms and the dead `auramind.app` domain.
+    all-caps forms and the dead `auramind.app` domain. <!-- legacy-name: ok -->
   - `api/tests/brandCopy.test.ts` does the same for the API.
 - **Windows auto-update** now points at `shipking-ai/BonaMind` releases.
-- **Unchanged:** stored chat history still says "Prof. Aura" where it was
-  written that way. Code names (`ProfAura*`, `Aura*` plugins) change in PR3.
+- **Unchanged:** stored chat history still says "Prof. Aura" where it was <!-- legacy-name: ok -->
+  written that way. Code names (`ProfAura*`, `Aura*` plugins) change in PR3. <!-- legacy-name: ok -->
 
 ## 2026-10-13 - BonaMind rename, PR1: stored data moves to new names
 
@@ -785,7 +849,7 @@ GitHub repo is now `shipking-ai/BonaMind`; the old URL redirects.
 - **Web storage.** `public/storage-migrate.js` is a classic script, loaded
   first in `index.html`, so it runs before every module. A first import in
   `index.tsx` would not, because the bundler runs shared chunks ahead of the
-  entry. It moves every localStorage key that starts with `auramind` +
+  entry. It moves every localStorage key that starts with `auramind` + <!-- legacy-name: ok -->
   `_ - . :` to `bonamind` + the same rest.
   - A key that already exists under the new name wins.
   - If a write fails, the old value goes back under its old name.
@@ -793,20 +857,20 @@ GitHub repo is now `shipking-ai/BonaMind`; the old URL redirects.
   - Capacitor Preferences gets the async twin (`migrateLegacyKeysAsync`) from
     `NativeRuntime`. The code itself reads and writes only the new names.
 - **Offline reviews.** `src/services/offline/offlineDb.ts` merges
-  `auramind-offline` into `bonamind-offline`, by key and only where the key is
+  `auramind-offline` into `bonamind-offline`, by key and only where the key is <!-- legacy-name: ok -->
   missing, under a Web Lock. It then removes the copied records from the old
   database. It **never deletes a database**: a delete blocked by another tab
   stays queued, wipes the database when that tab closes and hangs every open
   behind it. That is how the first design lost every queued review.
-- **Push taps.** `pushTapTarget` follows `bonamind://` and `auramind://` links
+- **Push taps.** `pushTapTarget` follows `bonamind://` and `auramind://` links <!-- legacy-name: ok -->
   through the deep-link allowlist.
-- **Android.** `LegacyPrefs` moves `auramind_spoken_reminder` and the Wear
-  `auramind_wear_grade_queue` on first read. `WidgetPrefs.read` lets the widget
+- **Android.** `LegacyPrefs` moves `auramind_spoken_reminder` and the Wear <!-- legacy-name: ok -->
+  `auramind_wear_grade_queue` on first read. `WidgetPrefs.read` lets the widget <!-- legacy-name: ok -->
   and Quick Settings tile fall back to the old key until the app has run once.
   CI now runs the phone app's JVM tests (`:app:testDebugUnitTest`).
 - **Links.** Android, iOS, Windows, the web router and `POST /api/push/send`
-  accept both `bonamind://` and `auramind://`. Everything still **sends**
-  `auramind://` until PR3.
+  accept both `bonamind://` and `auramind://`. Everything still **sends** <!-- legacy-name: ok -->
+  `auramind://` until PR3. <!-- legacy-name: ok -->
 - **Also renamed.** The iOS Siri keys (`bonamind_widget_due`/`_deck`/
   `_pending_route`) and the `bonamind_ci_*` keys `mobile-ios.yml` reads. The
   `robots.txt` sitemap now points at `https://www.bonamind.app`.
@@ -1120,7 +1184,7 @@ Service, server push sparks) is explicitly out of scope.
   gently.
 - **Surface 3: interleaved sessions** — `services/memory/sessionComposer.ts`
   (pure) mixes ≤20% near-due cards from OTHER decks into the study queue at
-  expanding gaps; wired into `StudyModePage` behind `auramind_sparksEnabled`.
+  expanding gaps; wired into `StudyModePage` behind `bonamind_sparksEnabled`.
   Gap base scales with queue size so the ratio is actually reachable; the
   last insertion only happens while a full gap can still be honored (no
   tail-bunching).
@@ -1168,7 +1232,7 @@ the moment credentials arrive. Nothing else in the code changes when they do.
   fill with corpses that slow every future send. Fails closed:
   unconfigured → `configured: false` report, zero network calls.
 - **`POST /api/push/send`** — admin-only (same `app_metadata` role gate as
-  every privileged route), zod-validated (`auramind://` links only, caps on  
+  every privileged route), zod-validated (`auramind://` links only, caps on <!-- legacy-name: ok -->
   title/body/userIds). Used for admin-triggered sends and manual testing.
 - **Daily due-card reminders** — cron job 4 on the existing
   `/api/cron/dunning` run (14:00 UTC in vercel.json): users with cards due in
@@ -1369,11 +1433,11 @@ design language and the capabilities only iOS has.
 - **Study, two ways** — the card can be a *deck* (swipe to grade) or a
   *notebook* page, chosen by the learner rather than by us.
 - **Chat that isn't a message list.** Three modes: Talk, Notebook and Cards.
-- **Siri** — `ios/App/App/AuraMindIntents.swift` exposes "Quiz me" and "Cards
+- **Siri** — `ios/App/App/BonaMindIntents.swift` exposes "Quiz me" and "Cards
   due" through `AppShortcutsProvider`. The spoken due count comes from what the
   app last published, so it's stale until the app has been opened once.
-- **Live Activity + Dynamic Island** — `AuraLiveActivityPlugin.swift` and the
-  `AuraMindWidgets` extension (`StudySessionAttributes`,
+- **Live Activity + Dynamic Island** — `BonaLiveActivityPlugin.swift` and the
+  `BonaMindWidgets` extension (`StudySessionAttributes`,
   `StudySessionLiveActivity`). Requested with `pushType: nil`; see the trap.
 - **Native dictation** — `SFSpeechRecognizer` behind the same Web Speech shape
   the Android plugin uses, so `useVoiceStudy` is untouched on both.
@@ -1412,7 +1476,7 @@ them is additive — absent the API, the app is exactly what it was.
   streak from the app, deduped, and `WindowsWidgetSync` mounts it next to
   `MemorySpark`. The manifest `widgets` member and `workbox.importScripts` are
   wired in `lib/pwa.ts`.
-- **Android 16 Live Updates (#91).** `AuraLiveUpdatePlugin.java` posts the
+- **Android 16 Live Updates (#91).** `BonaLiveUpdatePlugin.java` posts the
   session as a promoted ongoing notification: `Notification.ProgressStyle` with
   a segment per card, points for the ones still to come back, and
   `setShortCriticalText` for the count. Verified on a real Android 17 emulator
@@ -1439,7 +1503,7 @@ changes (no Mac)" above. The `server_url` input turns it into a live-reload
 shell that loads the web app from a URL, which makes iteration a refresh
 instead of a 15-minute round trip.
 
-Run 35805655820 on `main`: both jobs green, `BonaMind-ios-unsigned-ipa`, 70 MB.
+Run 35805655820 on `main`: both jobs green, `bonamind-ios-unsigned-ipa`, 70 MB.
 
 ---
 
@@ -1529,7 +1593,7 @@ Full suite 553 green at the time.
   and lock-screen layout, and push-driven updates. There is no `simctl` API to
   enable Live Activities on a simulator, so CI cannot close this. Tracked with
   the TestFlight work.
-- **Trap for the next person:** `auramind_ci_live_session` is **not** a
+- **Trap for the next person:** `bonamind_ci_live_session` is **not** a
   boolean — `LiveActivityDriver` writes `session-mounted:<path>`. Comparing it
   to `true` fails every run. The other five keys are `"true"`/`"false"`.
 
@@ -1600,8 +1664,8 @@ swipe to reveal" (`e2e/core-loop.yaml` taps that text).
 
 ### Next
 
-Rename pass (AuraMind → BonaMind and Prof. Aura → Prof. Linnea in the existing
-code, `auramind_*` storage keys), then part 3 (billing, notifications), part 4
+Rename pass (AuraMind → BonaMind and Prof. Aura → Prof. Linnea in the existing <!-- legacy-name: ok -->
+code, `auramind_*` storage keys), then part 3 (billing, notifications), part 4 <!-- legacy-name: ok -->
 (iOS-only features), part 5 (stores). Part 2 is below.
 
 ---

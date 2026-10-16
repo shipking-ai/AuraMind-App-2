@@ -51,7 +51,7 @@ describe('CORS in production', () => {
     'https://www.bonamind.app',
     // The pre-migration domain, allowlisted while links to it are still in
     // circulation (see LEGACY_APP_ORIGIN).
-    'https://auramind.app',
+    'https://auramind.app', // legacy-name: ok
   ])(
     'allows %s',
     async (origin) => {

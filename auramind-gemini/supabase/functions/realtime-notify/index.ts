@@ -1,5 +1,5 @@
 /**
- * AuraMind Realtime Notify — Supabase Edge Function (Deno)
+ * BonaMind Realtime Notify — Supabase Edge Function (Deno)
  *
  * Broadcasts events to Realtime channels using the service role.
  * Triggered by database triggers via net.http_post() (pg_net).

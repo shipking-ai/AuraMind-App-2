@@ -9,7 +9,7 @@ public class WidgetPrefsTest {
     @Test
     public void newKeyWins() {
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putString("bonamind_widget_due", "4").putString("auramind_widget_due", "9").commit();
+        prefs.edit().putString("bonamind_widget_due", "4").putString("auramind_widget_due", "9").commit(); // legacy-name: ok
 
         assertEquals("4", WidgetPrefs.read(prefs, "widget_due", "0"));
     }
@@ -19,7 +19,7 @@ public class WidgetPrefsTest {
         // After an update the widget can refresh before the app has opened
         // and moved its keys; it must still show the real count.
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putString("auramind_widget_due", "7").commit();
+        prefs.edit().putString("auramind_widget_due", "7").commit(); // legacy-name: ok
 
         assertEquals("7", WidgetPrefs.read(prefs, "widget_due", "0"));
     }

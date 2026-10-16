@@ -88,23 +88,23 @@ describe('CORS allowlist follows APP_ORIGIN', () => {
     expect(CORS_ORIGINS.has('https://newname.app')).toBe(true);
     expect(CORS_ORIGINS.has('https://www.newname.app')).toBe(true);
     // Legacy explicitly disabled above, so it must not appear.
-    expect(CORS_ORIGINS.has('https://auramind.app')).toBe(false);
+    expect(CORS_ORIGINS.has('https://auramind.app')).toBe(false); // legacy-name: ok
   });
 
   it('keeps the previous domain allowlisted during a migration', async () => {
-    // Old receipts, bookmarks and shared links still point at auramind.app.
+    // Old receipts, bookmarks and shared links still point at auramind.app. // legacy-name: ok
     // Dropping it the moment the default changed would turn a customer
     // following a link from a saved email into a silent network failure.
     vi.stubEnv('APP_ORIGIN', 'https://bonamind.app');
     vi.resetModules();
     const { CORS_ORIGINS } = await import('../_middleware.js');
-    expect(CORS_ORIGINS.has('https://auramind.app')).toBe(true);
+    expect(CORS_ORIGINS.has('https://auramind.app')).toBe(true); // legacy-name: ok
   });
 
   it('does not allowlist the legacy domain twice once APP_ORIGIN is itself legacy', async () => {
     // Otherwise a deployment that has not migrated ends up listing its own
     // origin as its own predecessor.
-    vi.stubEnv('APP_ORIGIN', 'https://auramind.app');
+    vi.stubEnv('APP_ORIGIN', 'https://auramind.app'); // legacy-name: ok
     vi.resetModules();
     const { APP_ORIGIN, LEGACY_APP_ORIGIN } = await import('../_lib/origin.js');
     const { CORS_ORIGINS } = await import('../_middleware.js');

@@ -150,7 +150,7 @@ async function upsertToken(userId: string, token: string): Promise<void> {
 /**
  * The link a tapped notification should open, or null. Either scheme, but
  * only destinations the deep-link allowlist accepts (same rule as launcher
- * shortcuts): `bonamind://` from the rename on, `auramind://` from before it.
+ * shortcuts): `bonamind://` from the rename on, `auramind://` from before it. // legacy-name: ok
  */
 export function pushTapTarget(data: { link?: unknown } | undefined): string | null {
   const link = data?.link;

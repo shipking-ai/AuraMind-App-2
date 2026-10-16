@@ -26,7 +26,7 @@ open class BonaMindTileService : TileService() {
         /** Nudge the tile to re-render now (call after a payload arrives). */
         fun requestUpdate(context: Context) {
             try {
-                TileService.getUpdater(context).requestUpdate(AuraMindTileService::class.java)
+                TileService.getUpdater(context).requestUpdate(AuraMindTileService::class.java) // legacy-name: ok
             } catch (t: Throwable) {
                 // Best effort: a missed glance refresh is never worth a crash.
             }

@@ -19,7 +19,7 @@
 
 </div>
 
-An **adaptive AI learning system** — turn anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course of cards, lessons, and quizzes. FSRS spaced repetition (the official `ts-fsrs`, FSRS-6) schedules your reviews; Prof. Aura, the AI tutor, remembers what you actually struggle with — weak cards, concepts, retention, and past conversations — and teaches to those gaps. Freemium via Stripe, all in one repo.
+An **adaptive AI learning system** — turn anything you're studying (a PDF, a video, a lecture, a topic) into a personalized course of cards, lessons, and quizzes. FSRS spaced repetition (the official `ts-fsrs`, FSRS-6) schedules your reviews; Prof. Linnea, the AI tutor, remembers what you actually struggle with — weak cards, concepts, retention, and past conversations — and teaches to those gaps. Freemium via Stripe, all in one repo.
 
 > **Status:** v2.0.0 · web deployed via Vercel · Android in Google Play
 > closed testing · iOS builds (unsigned) in CI · Windows app (Tauri 2) built
@@ -367,7 +367,7 @@ ORDER  BY applied_at DESC;
 
 ## 🎨 Features
 
-- **AI tutor (Prof. Aura)** — a conversational coach that remembers your weak cards, concepts, retention, and past conversations, then teaches to the gaps.
+- **AI tutor (Prof. Linnea)** — a conversational coach that remembers your weak cards, concepts, retention, and past conversations, then teaches to the gaps.
 - **AI generation** — turn a topic, PDF, video, URL, or voice memo into flashcards, quizzes, and narrated slides.
 - **FSRS spaced repetition** — reviews scheduled by the official `ts-fsrs` (FSRS-6), not a fixed interval.
 - **Classroom portal** — teachers create classes, students join with a 6-character code, and teachers assign decks and graded quizzes and track per-student progress.
