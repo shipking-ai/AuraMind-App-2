@@ -41,6 +41,6 @@
     "url": "https://github.com/shipking-ai/BonaMind/issues"
   },
   "devDependencies": {
-    "concurrently": "^10.0.0"
+    "concurrently": "^10.0.6"
   }
 }
