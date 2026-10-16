@@ -4,8 +4,11 @@ import {
   applyPreferenceToDocument,
   applyStoredPreferences,
   normalizeTheme,
+  themeDefaults,
   useAppPreference,
 } from "../lib/appPreferences";
+import { isDesktopApp } from "../lib/platform";
+import { desktop } from "../desktop/bridge";
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -23,8 +26,9 @@ interface ThemeProviderProps {
 
 // Theme preference is persisted centrally so every route sees the same mode.
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [storedTheme, setStoredTheme] = useAppPreference<string>("bonamind_theme", "dark");
-  const [autoNightMode] = useAppPreference<boolean>("bonamind_autoNightMode", true);
+  const defaults = themeDefaults();
+  const [storedTheme, setStoredTheme] = useAppPreference<string>("bonamind_theme", defaults.theme);
+  const [autoNightMode] = useAppPreference<boolean>("bonamind_autoNightMode", defaults.autoNightMode);
   const theme = normalizeTheme(storedTheme);
   const [systemDark, setSystemDark] = useState(() =>
     typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -55,11 +59,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const systemResolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
   const isNight = currentHour >= 20 || currentHour < 7;
-  const resolvedTheme = autoNightMode && isNight ? "dark" : systemResolvedTheme;
+  const nightForced = autoNightMode && isNight;
+  const resolvedTheme = nightForced ? "dark" : systemResolvedTheme;
+  // "System" with nothing forcing dark: the Windows app leaves its window
+  // following Windows rather than pinning the current colour.
+  const followsSystem = theme === "system" && !nightForced;
 
   useEffect(() => {
     applyPreferenceToDocument("bonamind_theme", resolvedTheme);
-  }, [resolvedTheme]);
+    // The Windows app's frame, title bar and window background follow too.
+    if (isDesktopApp()) {
+      void desktop.applyTheme(resolvedTheme === "light" ? "light" : "dark", followsSystem);
+    }
+  }, [resolvedTheme, followsSystem]);
 
   const value = useMemo<ThemeContextType>(
     () => ({

@@ -126,6 +126,7 @@ const BonaLandingPage = React.lazy(() => import("./components/landing/ModernLand
 const AndroidWelcomeScreen = React.lazy(() => import("./components/native/AndroidWelcomeScreen"));
 const IOSWelcomeScreen = React.lazy(() => import("./components/ios/IOSWelcomeScreen"));
 const AndroidVisualPreview = React.lazy(() => import("./components/native/AndroidVisualPreview"));
+const WindowsVisualPreview = React.lazy(() => import("./components/windows/WindowsVisualPreview"));
 const IOSVisualPreview = React.lazy(() => import("./components/ios/IOSVisualPreview"));
 // Sample-data iPhone screens for CI screenshots; never set in a release build.
 // "live" is the same tour but booting straight into a driven Live Activity
@@ -915,6 +916,12 @@ const AppContent = ({ onUserRoleChange }: { onUserRoleChange: (role: UserRole) =
                 path="/__e2e/android"
                 element={
                   import.meta.env.DEV ? <AndroidVisualPreview /> : <Navigate to="/" replace />
+                }
+              />
+              <Route
+                path="/__e2e/windows"
+                element={
+                  import.meta.env.DEV ? <WindowsVisualPreview /> : <Navigate to="/" replace />
                 }
               />
               <Route

@@ -45,6 +45,13 @@ import { VoiceStudyControls } from '../../components/study/VoiceStudyControls';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
 import { StudyPreviewContext } from './studyPreview';
 import { IOSStudyComplete, IOSStudySession } from '../../components/ios/IOSStudySession';
+import {
+  WindowsStudyComplete,
+  WindowsStudyEmpty,
+  WindowsStudySession,
+  studyDesign,
+} from '../../components/windows/WindowsStudySession';
+import type { AppPlatform } from '../../lib/platform';
 import { speak as speakAloud, stopSpeaking } from '../../services/voice/speechOutput';
 
 // The interval under each button is computed per card (previewIntervals).
@@ -124,6 +131,12 @@ export default function StudyModePage() {
   const userId = useCurrentUserId();
   const workspace = useDashboardWorkspace();
   const preview = useContext(StudyPreviewContext);
+  // iPhone gets its own session screen (components/ios/IOSStudySession), and
+  // so does the Windows app (components/windows/WindowsStudySession); the
+  // grading, scheduling and saving below are shared with every platform.
+  const design = studyDesign({ platform: Capacitor.getPlatform() as AppPlatform, preview: preview !== null });
+  const iosDesign = design === 'ios';
+  const windowsDesign = design === 'windows';
   const [dailyGoal] = useAppPreference('bonamind_dailyGoal', '20');
   const [newCards] = useAppPreference('bonamind_newCards', '10');
   const [maxReviews] = useAppPreference('bonamind_maxReviews', '100');
@@ -567,7 +580,9 @@ export default function StudyModePage() {
   };
 
   useEffect(() => {
-    if (!keyboardShortcuts) return;
+    // The Windows session screen handles its own keys (Space reveals, 1–4
+    // grade, Esc ends); running this one too flipped twice and graded twice.
+    if (!keyboardShortcuts || windowsDesign) return;
     const onKey = (e: KeyboardEvent) => {
       if (completed) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -586,7 +601,7 @@ export default function StudyModePage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flipped, currentCard, handleRate, completed, keyboardShortcuts, toggleFlip]);
+  }, [flipped, currentCard, handleRate, completed, keyboardShortcuts, toggleFlip, windowsDesign]);
 
   // Replay modal opens from the Session-Complete screen so the user can immediately
   // scrub through what they just studied. We instantiate it here so the modal
@@ -619,9 +634,7 @@ export default function StudyModePage() {
     typeof window !== 'undefined' ? localStorage.getItem('bonamind_user_xp') ?? 0 : 0,
   );
 
-  // iPhone gets its own session screen (components/ios/IOSStudySession);
-  // the grading, scheduling and saving above are shared with every platform.
-  const iosDesign = Capacitor.getPlatform() === 'ios' || preview !== null;
+  if (loading && windowsDesign) return <div className="win-page" aria-busy="true"><div className="win-placeholder" style={{ height: 320 }} /></div>;
 
   if (loading) return <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center"><div className="text-[#7A7A96] text-sm">Loading...</div></div>;
 
@@ -630,6 +643,19 @@ export default function StudyModePage() {
       <IOSStudyComplete
         deckTitle={deck?.title || ''}
         deckId={deck?.id || ''}
+        reviewed={sessionStats.total}
+        correct={sessionStats.correct}
+        elapsedMs={elapsedMs}
+        onRestart={handleRestart}
+        onDone={() => navigate('/dashboard')}
+      />
+    );
+  }
+
+  if (completed && windowsDesign) {
+    return (
+      <WindowsStudyComplete
+        deckTitle={deck?.title || ''}
         reviewed={sessionStats.total}
         correct={sessionStats.correct}
         elapsedMs={elapsedMs}
@@ -669,11 +695,31 @@ export default function StudyModePage() {
     );
   }
 
+  if (studyCards.length === 0 && windowsDesign) {
+    return <WindowsStudyEmpty onDone={() => navigate('/dashboard')} />;
+  }
+
   if (studyCards.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0A0A0F]">
         <div className="text-[#7A7A96] text-sm">No cards to study</div>
       </div>
+    );
+  }
+
+  if (windowsDesign && currentCard) {
+    return (
+      <WindowsStudySession
+        deckTitle={deck?.title || 'Study'}
+        card={currentCard}
+        index={index}
+        total={studyCards.length}
+        flipped={flipped}
+        onFlip={toggleFlip}
+        onRate={(r) => void handleRate(r)}
+        onExit={() => navigate('/dashboard')}
+        intervals={gradeIntervals ?? {}}
+      />
     );
   }
 

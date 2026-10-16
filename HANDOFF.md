@@ -12,7 +12,7 @@ the traps that cost real time.
 
 | | |
 |---|---|
-| Version | 2.1.0 (root, app, Android and Wear agree; Windows reads it from `auramind-gemini/package.json`). Cut 2026-10-16 for the first BonaMind Windows release, tag `desktop-v2.1.0`; Play's versionCode 14 still says 2.0.0, the next Android build says 2.1.0 |
+| Version | 2.2.0 (root, app, Android and Wear agree; Windows reads it from `auramind-gemini/package.json`). 2.2.0 carries the rename and the Windows layout; it is the first BonaMind Windows release (tag `desktop-v2.2.0` once #180 merges). The `desktop-v2.1.0` draft (old layout) was never published and can be deleted. Play's versionCode 14 still says 2.0.0 |
 | Play | versionCode 14 (the BonaMind rename, built after #172 and #176), closed testing (Alpha), **rolled out and sent for review 2026-10-16** together with the BonaMind listing |
 | Branch | `main` at `707f6fc7` (2026-10-16, through #177: rename PR4, brand guard and docs — the BonaMind rename is done; #176 the Gradle heap fix). Repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
@@ -118,9 +118,9 @@ the traps that cost real time.
       crashes inside those libraries. `ndk { debugSymbolLevel 'SYMBOL_TABLE' }`
       in the release build type would clear it on the next build.
     - **Windows:** ~~add `TAURI_SIGNING_PRIVATE_KEY`~~ (added 2026-10-16)
-      and ~~bump the version~~ (2.1.0). Next: once the bump is on `main`,
-      push the tag `desktop-v2.1.0`; `Desktop Windows` builds, signs and
-      drafts the release. Review the draft, run
+      and ~~bump the version~~ (2.2.0, with the Windows layout). Next: once
+      #180 is on `main`, push the tag `desktop-v2.2.0`; `Desktop Windows`
+      builds, signs and drafts the release. Review the draft, run
       `docs/windows-app-checklist.md` on a real PC, then publish. It is the
       first BonaMind Windows release (the only earlier one is the retired
       June AuraMind build). <!-- legacy-name: ok -->
@@ -734,6 +734,55 @@ app plus its extension burn two per sideload.
   `20260930_marketplace_fork_and_listing.sql`.
 
 ---
+
+## 2026-10-16 - Windows app: its own simple, Windows 11-style layout
+
+Spec `docs/superpowers/specs/2026-10-16-windows-native-shell-design.md`,
+plan `docs/superpowers/plans/2026-10-16-windows-native-shell.md`. The
+Windows app no longer looks like the website in a window.
+
+- **Where it lives:** `auramind-gemini/src/components/windows/`. Chosen the
+  way the iPhone app is: `NovaDashboardShell` returns `WindowsShell` when
+  `shouldUseWindowsShell(pathname)` (Windows app, not `/admin`), and
+  `NovaHub` picks `WindowsToday` / `WindowsLibrary` / `WindowsSettings`;
+  `StudyModePage` keeps the engine and draws `WindowsStudySession` /
+  `WindowsStudyComplete` / `WindowsStudyEmpty` (`studyDesign()`).
+  `/dashboard/study` redirects to Today on Windows.
+- **Sidebar:** Today, Library, Create, Linnea, Classes (members only,
+  `useClassMembership`), Settings. ☰ / Ctrl+B collapse it
+  (`bonamind_win_sidebar`); under 900px it collapses without saving.
+- **Theme:** on Windows the theme default is `system` and auto night mode is
+  off (`themeDefaults()` in `lib/appPreferences.ts`), so the app follows
+  Windows live. `desktop.applyTheme` sets the window theme and background,
+  and the Rust command `set_title_bar_theme` recolours the title bar
+  (`chrome.rs` `title_bar_colors`; light hands caption and text back to
+  Windows). `tauri.conf.json` no longer forces `"theme": "Dark"`.
+- **Styles:** `src/styles/windows.css` (variables, shell, building blocks)
+  and `src/styles/windows-reused.css`, which re-maps the hard-coded dark
+  colours of the reused Create, Linnea and Classes pages inside the shell.
+  The chat's `android-chat-*` classes get `!important` overrides there
+  because `platform-styles.css` repaints them navy with `!important`.
+- **No custom cursor on Windows:** `CustomCursor` hid the Windows pointer
+  (`cursor: none`); it now stays off in the Windows app.
+- **Seeing it without the app or an account:** the dev-only route
+  `/__e2e/windows?screen=today|library|session|answer|complete|settings|chat|create`
+  renders the screens with sample data; `node scripts/capture-windows-screens.mjs`
+  (in `auramind-gemini/`, with `npm run dev` running) screenshots them in
+  light and dark into `.superpowers/windows-screens/` (git-ignored).
+- **Trap — two key handlers:** `StudyModePage` has its own window keydown
+  handler (Space flips, 1–4 rate). Any platform session screen that handles
+  keys itself must switch it off, or Space flips twice (the answer never
+  shows) and every grade is saved twice. It stands down when `windowsDesign`
+  is true; `windowsStudyKeys.test.tsx` renders the real page to pin it.
+- **Trap — don't pin the window theme for "System":** `getCurrentWindow().setTheme('dark')`
+  makes Tauri set WebView2's `PreferredColorScheme`, after which
+  `prefers-color-scheme` stops following Windows (the app followed only the
+  first switch). `desktop.applyTheme(theme, followSystem)` passes `null`
+  for System; only an explicit Light/Dark (or auto night mode) pins it.
+- **Not done (Phase 2, once there is usage):** Windows-native Create and
+  Prof. Linnea (they are the website pages, restyled), reminders inside the
+  Windows Settings (it links to the full settings page), and the Study Float
+  button (Document PiP needs a real browser window).
 
 ## 2026-10-15 - BonaMind rename, PR4: brand guard and docs (rename done)
 

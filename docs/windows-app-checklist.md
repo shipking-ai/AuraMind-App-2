@@ -12,12 +12,24 @@ Build: ____________  Date: ____________  Tester: ____________
 
 ## Window
 - [ ] Launch: no white flash; the window appears once the app has drawn.
-- [ ] Title bar is navy with light text and a violet border (Windows 11).
+- [ ] In Windows dark mode the title bar is navy with light text and a violet border; in light mode it's Windows' own light title bar (violet border kept).
+- [ ] Switch Windows between light and dark (Settings → Personalization → Colors) with the app open: the app, its window and title bar follow without a restart.
 - [ ] Hovering maximize shows Snap Layouts.
 - [ ] Signed in, it opens to the dashboard; signed out, to sign-in (never the marketing page).
 - [ ] The title follows the page ("Library · BonaMind").
 - [ ] Right-click on empty space shows no browser menu; in a text field it does.
 - [ ] Ctrl+N opens the generator; Ctrl+, opens Settings.
+
+## Layout (Windows 11 style)
+- [ ] The sidebar shows Today, Library, Create, Linnea and Settings (Classes too, only for an account in a class); the current place has a violet bar.
+- [ ] ☰ and Ctrl+B collapse the sidebar to icons and back; the choice survives a restart; Ctrl+B does nothing while typing.
+- [ ] Narrowing the window below ~900px collapses the sidebar; widening restores your choice.
+- [ ] Today: the due count, "about N min", Start review, streak, "remembered this week" (after 10 reviews this week) and up to 5 courses with cards due; "You're all caught up" when nothing is due.
+- [ ] Library: search, the Sort menu, click to study, right-click → Study / Open / Delete (Delete asks first).
+- [ ] A session opens inside the window with the sidebar unchanged: Space shows the answer, 1–4 grade (each shows its next interval), Esc ends (asks once a card is graded); the summary offers Back to Today and Study again.
+- [ ] Create and Linnea are readable in both light and dark (no dark panels in light mode, no glows).
+- [ ] Settings: Light / Dark / System, the Windows section, daily goal, Reminders and More settings links, Admin only for admins, Sign out.
+- [ ] The normal Windows mouse pointer is used (no custom dot-and-ring cursor).
 
 ## Tray, badge, notifications
 - [ ] The tray icon shows "BonaMind · N cards due"; the menu matches the design.

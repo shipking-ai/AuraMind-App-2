@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-16
+
+### Added
+- **Windows app: its own simple layout** - a Windows 11-style sidebar
+  (Today, Library, Create, Prof. Linnea, Settings) that collapses with ☰ or
+  Ctrl+B; a Today screen with what's due and one Start review button; a
+  searchable Library with a right-click menu; study sessions inside the
+  window driven by the keyboard (Space, 1–4, Esc); and the app, window and
+  title bar following Windows light or dark mode
+
+### Changed
+- **Windows app** uses the normal Windows mouse pointer instead of the
+  website's custom cursor
+
 ## [2.1.0] - 2026-10-16
 
 ### BonaMind rename

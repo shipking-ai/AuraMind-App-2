@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
+import { isDesktopApp } from "./platform";
 
 export type PreferenceValue = string | number | boolean | null;
+
+/**
+ * Theme defaults before the user picks one. The Windows app follows the
+ * Windows light/dark setting, so it starts on "system" with auto night mode
+ * off (that mode forces dark 20:00–07:00 whatever Windows says).
+ */
+export function themeDefaults(): { theme: "system" | "dark"; autoNightMode: boolean } {
+  return isDesktopApp()
+    ? { theme: "system", autoNightMode: false }
+    : { theme: "dark", autoNightMode: true };
+}
 export type PreferenceSetter<T> = T | ((previous: T) => T);
 
 const CHANGE_EVENT = "bonamind:preferences-changed";

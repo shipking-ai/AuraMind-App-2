@@ -14,23 +14,37 @@ pub fn colorref(hex: &str) -> Option<u32> {
     Some((b << 16) | (g << 8) | r)
 }
 
-/// Caption, title text and border colours. Windows 10 doesn't support these
-/// attributes and returns an error, which is ignored: it keeps the dark
-/// title bar from `theme: "Dark"`.
+/// Caption, title-text and border colours for the theme. `None` resets that
+/// attribute to the Windows default, so a light app gets Windows' own light
+/// title bar; the violet border stays in both.
+pub fn title_bar_colors(dark: bool) -> [Option<&'static str>; 3] {
+    if dark {
+        [Some("#0b1022"), Some("#e8e6ff"), Some("#8B5CF6")]
+    } else {
+        [None, None, Some("#8B5CF6")]
+    }
+}
+
+/// Applies `title_bar_colors`. Windows 10 doesn't support these attributes
+/// and returns an error, which is ignored: the frame then just follows the
+/// system theme.
 #[cfg(windows)]
-pub fn brand_title_bar(window: &WebviewWindow) {
+pub fn brand_title_bar(window: &WebviewWindow, dark: bool) {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::Graphics::Dwm::{
         DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_CAPTION_COLOR, DWMWA_TEXT_COLOR,
     };
+    // DWMWA_COLOR_DEFAULT: hand the attribute back to Windows.
+    const DEFAULT: u32 = 0xFFFF_FFFF;
     let Ok(raw) = window.hwnd() else { return };
     let hwnd = HWND(raw.0 as _);
+    let [caption, text, border] = title_bar_colors(dark);
     for (attr, hex) in [
-        (DWMWA_CAPTION_COLOR, "#0b1022"),
-        (DWMWA_TEXT_COLOR, "#e8e6ff"),
-        (DWMWA_BORDER_COLOR, "#8B5CF6"),
+        (DWMWA_CAPTION_COLOR, caption),
+        (DWMWA_TEXT_COLOR, text),
+        (DWMWA_BORDER_COLOR, border),
     ] {
-        if let Some(color) = colorref(hex) {
+        if let Some(color) = hex.map_or(Some(DEFAULT), colorref) {
             unsafe {
                 let _ = DwmSetWindowAttribute(
                     hwnd,
@@ -44,7 +58,12 @@ pub fn brand_title_bar(window: &WebviewWindow) {
 }
 
 #[cfg(not(windows))]
-pub fn brand_title_bar(_window: &WebviewWindow) {}
+pub fn brand_title_bar(_window: &WebviewWindow, _dark: bool) {}
+
+/// Startup: match the system theme until React reports the app's own.
+pub fn initial_dark(window: &WebviewWindow) -> bool {
+    window.theme().map_or(true, |t| t == tauri::Theme::Dark)
+}
 
 pub fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -81,6 +100,13 @@ mod tests {
         assert_eq!(colorref("#0b1022"), Some(0x0022_100b));
         assert_eq!(colorref("#8B5CF6"), Some(0x00f6_5c8b));
         assert_eq!(colorref("#e8e6ff"), Some(0x00ff_e6e8));
+    }
+
+    #[test]
+    fn title_bar_colors_follow_theme() {
+        assert_eq!(title_bar_colors(true), [Some("#0b1022"), Some("#e8e6ff"), Some("#8B5CF6")]);
+        // Light: caption and text go back to the Windows default.
+        assert_eq!(title_bar_colors(false), [None, None, Some("#8B5CF6")]);
     }
 
     #[test]

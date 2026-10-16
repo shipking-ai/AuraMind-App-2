@@ -1,7 +1,7 @@
 //! Commands the web layer may call. Each is also listed in build.rs so it
 //! gets its own permission, granted per window in capabilities/*.json.
 
-use crate::chrome::show_main_window;
+use crate::chrome::{brand_title_bar, show_main_window};
 use crate::nudges::Nudge;
 use crate::quick_review;
 use crate::state::{emit_to_main, AppState, DueState};
@@ -9,7 +9,7 @@ use crate::tray;
 use tauri_plugin_autostart::ManagerExt;
 use serde::Serialize;
 use std::sync::atomic::Ordering;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 /// React has painted: show the window (unless started hidden) and deliver
@@ -111,5 +111,14 @@ pub fn set_shortcut(app: AppHandle, accelerator: String) -> ShortcutResult {
             let reason = if err.to_string().to_lowercase().contains("already") { "taken" } else { "invalid" };
             ShortcutResult { ok: false, reason: Some(reason) }
         }
+    }
+}
+
+/// The app's light/dark theme changed (or was first resolved): recolour the
+/// main window's title bar to match.
+#[tauri::command]
+pub fn set_title_bar_theme(app: AppHandle, dark: bool) {
+    if let Some(window) = app.get_webview_window("main") {
+        brand_title_bar(&window, dark);
     }
 }
