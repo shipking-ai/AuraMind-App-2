@@ -268,6 +268,17 @@ directly. There is a regression test asserting the forged value is ignored.
 `versionCode` comes from `github.run_number`, which is monotonic. Don't
 hardcode it, and don't "reset" it.
 
+### Signing the release bundle needs a 4 GB heap
+
+On 2026-10-15 the release build failed twice at `:app:signReleaseBundle`
+with only "A failure occurred while executing
+FinalizeBundleTask$BundleToolRunnable". `--stacktrace` (now always on in
+`mobile-android.yml`) showed `java.lang.OutOfMemoryError: Java heap space`:
+signing reads the whole bundle, which carries ~77 MB of web assets (about
+50 MB of it the landing page's videos), and the 1.5 GB Gradle heap was no
+longer enough. `gradle.properties` now sets `-Xmx4g`. The same build passes
+locally, so a CI-only signing failure is this, not the keystore.
+
 ### A draft app only accepts draft releases
 
 Until one release is published by hand, Play rejects any other status:
