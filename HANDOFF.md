@@ -737,6 +737,11 @@ app plus its extension burn two per sideload.
   301s, so a Windows build made from it would have failed every signed-in
   API call (preflight + redirect; see the trap). It now uses the Android
   build's host. DEPLOYMENT.md named the updater key file wrongly.
+- **README banner:** `docs/assets/banner.png` still showed the old wordmark
+  (binary files are outside the guard's scan). It is now rendered from
+  `banner.svg` by `auramind-gemini/scripts/render-banner.mjs` (Playwright,
+  run on Windows for Segoe UI); edit the SVG, then re-run the script. The
+  platform line now reads WEB · ANDROID · iOS · WINDOWS.
 - **Owner decisions (2026-10-15):** `LICENSE` now names BonaMind as the
   product and mark (CogniVect and the terms unchanged), and `src/lib/seo.ts`
   no longer sets `twitter:site`/`twitter:creator` — there is no BonaMind
