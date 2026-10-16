@@ -19,7 +19,8 @@ import AndroidGeneratorScreen from "../../components/native/AndroidGeneratorScre
 import AndroidSettingsScreen from "../../components/native/AndroidSettingsScreen";
 import { resolveDashboardSurface } from "../../components/native/androidSurface";
 import WearSyncWiring from "../../components/wear/WearSyncWiring";
-import { appPlatform } from "../../lib/platform";
+import { appPlatform, isDesktopApp } from "../../lib/platform";
+import { WindowsToday } from "../../components/windows/WindowsToday";
 import { IOSLibrary, IOSStudy, IOSToday } from "../../components/ios/IOSScreens";
 import IOSSettingsScreen from "../../components/ios/IOSSettingsScreen";
 
@@ -71,6 +72,8 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
   const platform = appPlatform();
   const isMobileApp = platform === 'android';
   const isIOS = platform === 'ios';
+  // The Windows app (Tauri) has its own screens; appPlatform() says "web" there.
+  const isWindows = isDesktopApp();
 
   return (
     <DashboardWorkspaceProvider
@@ -87,7 +90,7 @@ const NovaHub: React.FC<NovaHubProps> = (props) => {
       <NovaDashboardShell>
         <Suspense fallback={<LazyFallback />}>
           <Routes>
-            <Route path="/" element={isIOS ? <IOSToday /> : isMobileApp ? <AndroidOverview /> : <NovaOverview />} />
+            <Route path="/" element={isWindows ? <WindowsToday /> : isIOS ? <IOSToday /> : isMobileApp ? <AndroidOverview /> : <NovaOverview />} />
             <Route path="/decks" element={isIOS ? <IOSLibrary /> : isMobileApp ? <AndroidLibrary /> : <NovaLibrary />} />
             <Route path="/study" element={isIOS ? <IOSStudy /> : isMobileApp ? <AndroidStudy /> : <NovaStudy />} />
             <Route path="/study/:deckId" element={<StudyModeRoute />} />
