@@ -769,6 +769,16 @@ Windows app no longer looks like the website in a window.
   renders the screens with sample data; `node scripts/capture-windows-screens.mjs`
   (in `auramind-gemini/`, with `npm run dev` running) screenshots them in
   light and dark into `.superpowers/windows-screens/` (git-ignored).
+- **Trap — two key handlers:** `StudyModePage` has its own window keydown
+  handler (Space flips, 1–4 rate). Any platform session screen that handles
+  keys itself must switch it off, or Space flips twice (the answer never
+  shows) and every grade is saved twice. It stands down when `windowsDesign`
+  is true; `windowsStudyKeys.test.tsx` renders the real page to pin it.
+- **Trap — don't pin the window theme for "System":** `getCurrentWindow().setTheme('dark')`
+  makes Tauri set WebView2's `PreferredColorScheme`, after which
+  `prefers-color-scheme` stops following Windows (the app followed only the
+  first switch). `desktop.applyTheme(theme, followSystem)` passes `null`
+  for System; only an explicit Light/Dark (or auto night mode) pins it.
 - **Not done (Phase 2, once there is usage):** Windows-native Create and
   Prof. Linnea (they are the website pages, restyled), reminders inside the
   Windows Settings (it links to the full settings page), and the Study Float
