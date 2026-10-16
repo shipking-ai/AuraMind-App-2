@@ -164,8 +164,10 @@ export default function StudyModePage() {
   // The open session, on whatever surface the platform gives it: Android's
   // status-bar chip, the iPhone Lock Screen and Dynamic Island. Leaving the
   // app to look something up shouldn't lose the thread. Inert on the web.
+  // Not in the iOS preview: there the CI driver owns the one Live Activity,
+  // and a second start from here would replace the activity it drives.
   useEffect(() => {
-    if (!deck || studyCards.length === 0 || completed) return;
+    if (preview || !deck || studyCards.length === 0 || completed) return;
     const session = {
       deckTitle: deck.title,
       total: studyCards.length,
@@ -175,13 +177,14 @@ export default function StudyModePage() {
     };
     if (sessionStats.total === 0) void startSessionLiveUpdate(session);
     else void updateSessionLiveUpdate(session);
-  }, [deck, studyCards.length, sessionStats.total, againAt, completed]);
+  }, [preview, deck, studyCards.length, sessionStats.total, againAt, completed]);
 
-  // It must never outlive the session it mirrors.
+  // It must never outlive the session it mirrors — and in the preview, where
+  // it mirrors nothing, ending would tear down the driver's activity.
   useEffect(() => {
-    if (completed) void endSessionLiveUpdate();
-  }, [completed]);
-  useEffect(() => () => { void endSessionLiveUpdate(); }, []);
+    if (completed && !preview) void endSessionLiveUpdate();
+  }, [completed, preview]);
+  useEffect(() => () => { if (!preview) void endSessionLiveUpdate(); }, [preview]);
 
   const [elapsedMs, setElapsedMs] = useState(0);
   const _studyTimer = useTimer({ duration: Infinity, autoplay: true });

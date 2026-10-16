@@ -122,6 +122,11 @@ public class BonaLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         guard #available(iOS 16.1, *),
               let activity = current as? Activity<StudySessionAttributes> else {
             call.resolve(["updated": false])
+            // This branch used to be silent, so an update that arrived before
+            // any start left no trace in the log, only updated:false in prefs.
+            #if DEBUG
+            Self.ciLog.notice("LIVE_ACTIVITY_UPDATED:false (no current activity)")
+            #endif
             return
         }
         let next = state(from: call)

@@ -4,14 +4,15 @@ name: Mobile iOS
 # an iPhone simulator, and uploads the screenshots plus the app's log.
 #
 # On the Live Activity: the driver really does run here (probe -> start ->
-# update, never ended), but a freshly created simulator reports
-# areActivitiesEnabled == false, so ActivityKit refuses and the plugin
-# correctly declines. CI therefore verifies the *refusal contract* - the driver
-# ran, detected the refusal, and did not claim a session it never had - and
-# explicitly does NOT verify the Dynamic Island or lock-screen layout. There is
-# no simctl API to enable Live Activities, so no simulator run can. Only
-# available=true + started=true + updated=true proves the integration, and
-# that path has never been taken in CI. See the live-boot step for the gate.
+# update, never ended). Older simulator images reported
+# areActivitiesEnabled == false, so ActivityKit refused and CI could only
+# verify the *refusal contract* - the driver ran, detected the refusal, and did
+# not claim a session it never had. The iOS 26.4.1 image (seen since at least
+# 2026-10-09) reports Live Activities enabled, so every run now takes the
+# available=true path and must show started=true + updated=true. That proves
+# the ActivityKit start/update integration, but not the Dynamic Island or
+# lock-screen layout, which only a real device shows. See the live-boot step
+# for the gate.
 #
 # No Apple Developer account or signing is needed for this job. Device/TestFlight
 # builds are the separate, manually dispatched `ios-device-ipa` job below.
@@ -193,13 +194,14 @@ jobs:
       # The tour's last step holds a live study session and asks the plugin to
       # start a real ActivityKit session (start + update, never ended).
       #
-      # This step does NOT verify the Live Activity. A freshly created simulator
-      # has Live Activities switched off, ActivityKit reports
-      # areActivitiesEnabled == false, and the plugin correctly refuses - so the
-      # screenshots here are the app's own study screen, not the Dynamic Island.
-      # The artifacts are named "attempt" so nobody later mistakes them for
-      # proof. The contract assertions live in the live-boot step below, which
-      # is the one that gates.
+      # This step does NOT gate. Older simulator images had Live Activities
+      # switched off (areActivitiesEnabled == false) and the plugin correctly
+      # refused, so the screenshots were the app's own study screen; the iOS
+      # 26.4.1 image allows them, so the tour usually starts and updates one
+      # now. Either way its timing rides on the tour, and the artifacts are
+      # named "attempt" so nobody mistakes them for proof. The contract
+      # assertions live in the live-boot step below, which is the one that
+      # gates.
       - name: Attempt a Live Activity during the tour (simulator normally refuses)
         run: |
           set -euo pipefail
@@ -240,9 +242,9 @@ jobs:
               ;;
           esac
           if [ "$started" = true ] && [ "$updated" = true ]; then
-            echo "Live Activity started and updated during the tour. This should not happen on a stock simulator - confirm the screenshots are actually the Dynamic Island."
+            echo "Live Activity started and updated during the tour. The live-boot step asserts the contract."
           else
-            echo "::warning::Tour-timed Live Activity attempt did not start (started=$started updated=$updated). Expected: simulators refuse ActivityKit. The live-boot step asserts the contract."
+            echo "::warning::Tour-timed Live Activity attempt did not start and update (started=$started updated=$updated). Expected only where the simulator refuses ActivityKit. The live-boot step asserts the contract."
           fi
 
       # Deterministic attempt without any tour timing: rebuild the web bundle
@@ -267,6 +269,12 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build > build/xcodebuild-liveboot.log
           xcrun simctl terminate "$DEVICE" com.auramind.app || true
+          # Uninstall first: installing over the tour build keeps its data
+          # container, so every driver key below would start out holding the
+          # tour's value. A live-boot driver that stalled before writing
+          # `updated` then read as the tour's `true`. A clean container means a
+          # key this process never wrote reads MISSING and fails the gate.
+          xcrun simctl uninstall "$DEVICE" com.auramind.app || true
           xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/App.app
           xcrun simctl launch "$DEVICE" com.auramind.app
           sleep 25
