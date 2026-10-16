@@ -13,8 +13,8 @@ the traps that cost real time.
 | | |
 |---|---|
 | Version | 2.0.0 (root, app and Android now agree) |
-| Play | versionCode 7, closed testing (Alpha), **submitted for review 2026-09-16** |
-| Branch | `main` at `a71d970e` (2026-10-15, through #172: rename PR3, code names and `bonamind://` senders; #171 real-app Play screenshots merged the same day). Open: rename PR4 (brand guard, docs) on `feat/rename-4-guard`; repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
+| Play | versionCode 14 (the BonaMind rename, built after #172 and #176), closed testing (Alpha), **rolled out and sent for review 2026-10-16** together with the BonaMind listing |
+| Branch | `main` at `707f6fc7` (2026-10-16, through #177: rename PR4, brand guard and docs — the BonaMind rename is done; #176 the Gradle heap fix). Repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
 | Migrations | all applied through `20260925_close_admin_oracle.sql` (verified live 2026-09-28); merged since: `20260929_cards_rls_owner_and_deck.sql` (#116) and `20260930_marketplace_fork_and_listing.sql` (#137) — **live application of those two not re-verified** |
 | iOS | builds and screenshots in CI (`mobile-ios.yml`); unsigned device IPA on demand; **never run on a real phone yet** |
@@ -100,8 +100,8 @@ the traps that cost real time.
     Then make one course from each source in Expo Go and check it appears on
     bonamind.app.
 13. **BonaMind rename, owner steps** (spec
-    `docs/superpowers/specs/2026-10-13-bonamind-rename-design.md`; PR1–PR3
-    merged, PR4 open):
+    `docs/superpowers/specs/2026-10-13-bonamind-rename-design.md`; all four
+    PRs merged — #168, #170, #172, #177):
     - ~~Supabase redirect URL `bonamind://auth/callback`~~ — added. Keep the
       `auramind://auth/callback` entry: older Windows installs still send it. <!-- legacy-name: ok -->
     - **Play listing:** paste `store/android/listings/en-US/` (`title.txt`
@@ -109,12 +109,14 @@ the traps that cost real time.
       `store/android/changelogs/en-US.txt`; replace the screenshots with
       `store/graphics/android/screenshots/` (five, from the real app) and the
       feature graphic with `store/graphics/android/feature-1024x500.png`.
-      Send for review together with the release below.
-    - **Android:** the post-PR3 build goes to Alpha as a draft (2026-10-15;
-      the first two attempts ran out of Gradle heap, see the trap "Signing
-      the release bundle needs a 4 GB heap"). Roll it out from Play Console
-      → Closed testing → Manage track. Item 11 is fixed, so its API calls
-      work.
+    - ~~**Android:** ship the post-PR3 build~~ — versionCode 14 rolled out on
+      Alpha and sent for review 2026-10-16 (the first two attempts ran out of
+      Gradle heap, see the trap "Signing the release bundle needs a 4 GB
+      heap"). Play warns that the bundle has native code without debug
+      symbols: the native code is AndroidX's (`libdatastore_shared_counter.so`,
+      `libandroidx.graphics.path.so`), not ours, so it only affects reading
+      crashes inside those libraries. `ndk { debugSymbolLevel 'SYMBOL_TABLE' }`
+      in the release build type would clear it on the next build.
     - **Windows:** there has never been a BonaMind Windows release (the only
       one is the retired June AuraMind build). Add the repo secret <!-- legacy-name: ok -->
       `TAURI_SIGNING_PRIVATE_KEY` (DEPLOYMENT.md → Windows app), bump the
