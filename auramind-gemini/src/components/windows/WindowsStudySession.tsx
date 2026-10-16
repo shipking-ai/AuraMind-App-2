@@ -9,11 +9,15 @@ import { Rating, type Card } from '../../types';
 import { formatInterval } from '../../services/study/srs';
 import { isDesktopApp, type AppPlatform } from '../../lib/platform';
 import { isTextTarget } from '../../desktop/DesktopChrome';
+import { WindowsDialog } from './WindowsDialog';
 
-/** Which session screens StudyModePage draws. Previews keep the iOS design. */
+/**
+ * Which session screens StudyModePage draws. The Windows app always gets its
+ * own; previews (the iOS sample-data harness) otherwise keep the iOS design.
+ */
 export function studyDesign({ platform, preview }: { platform: AppPlatform; preview: boolean }): 'windows' | 'ios' | 'web' {
-  if (platform === 'ios' || preview) return 'ios';
   if (isDesktopApp()) return 'windows';
+  if (platform === 'ios' || preview) return 'ios';
   return 'web';
 }
 
@@ -108,16 +112,18 @@ export function WindowsStudySession({
       )}
 
       {confirming && (
-        <div className="win-scrim">
-          <div role="dialog" aria-modal="true" aria-labelledby="win-end-title" className="win-dialog">
-            <h2 id="win-end-title" className="win-dialog-title">End this session?</h2>
-            <p className="win-muted">The cards you've graded are saved.</p>
-            <div className="win-dialog-actions">
-              <button type="button" className="win-button" onClick={() => setConfirming(false)} autoFocus>Keep studying</button>
+        <WindowsDialog
+          title="End this session?"
+          onClose={() => setConfirming(false)}
+          actions={
+            <>
+              <button type="button" className="win-button" data-autofocus onClick={() => setConfirming(false)}>Keep studying</button>
               <button type="button" className="win-button win-button-primary" onClick={onExit}>End session</button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="win-muted">The cards you've graded are saved.</p>
+        </WindowsDialog>
       )}
     </div>
   );

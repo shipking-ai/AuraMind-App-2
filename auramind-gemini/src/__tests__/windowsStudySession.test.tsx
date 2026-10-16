@@ -5,7 +5,7 @@
  * back. StudyModePage keeps the engine; studyDesign() picks the screens.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { Rating, type Card } from '../types';
 import {
   WindowsStudyComplete,
@@ -44,8 +44,12 @@ describe('studyDesign', () => {
   });
   it('keeps iPhone and preview sessions on the iOS screens', () => {
     expect(studyDesign({ platform: 'ios', preview: false })).toBe('ios');
-    (window as W).__TAURI_INTERNALS__ = {};
     expect(studyDesign({ platform: 'web', preview: true })).toBe('ios');
+  });
+
+  it('uses the Windows screens for a preview inside the Windows app', () => {
+    (window as W).__TAURI_INTERNALS__ = {};
+    expect(studyDesign({ platform: 'web', preview: true })).toBe('windows');
   });
   it('leaves the website and Android alone', () => {
     expect(studyDesign({ platform: 'web', preview: false })).toBe('web');
@@ -112,6 +116,18 @@ describe('WindowsStudySession', () => {
     key('Escape');
     fireEvent.click(screen.getByRole('button', { name: 'End session' }));
     expect(s.onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps Tab inside the end-session dialog so a card can not be graded behind it', () => {
+    session({ index: 4, flipped: true });
+    key('Escape');
+    const dialog = screen.getByRole('dialog');
+    const [keep, end] = within(dialog).getAllByRole('button');
+    end.focus();
+    fireEvent.keyDown(end, { key: 'Tab' });
+    expect(document.activeElement).toBe(keep);
+    fireEvent.keyDown(keep, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(end);
   });
 
   it('ignores keys while typing', () => {

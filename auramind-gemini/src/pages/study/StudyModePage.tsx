@@ -131,6 +131,12 @@ export default function StudyModePage() {
   const userId = useCurrentUserId();
   const workspace = useDashboardWorkspace();
   const preview = useContext(StudyPreviewContext);
+  // iPhone gets its own session screen (components/ios/IOSStudySession), and
+  // so does the Windows app (components/windows/WindowsStudySession); the
+  // grading, scheduling and saving below are shared with every platform.
+  const design = studyDesign({ platform: Capacitor.getPlatform() as AppPlatform, preview: preview !== null });
+  const iosDesign = design === 'ios';
+  const windowsDesign = design === 'windows';
   const [dailyGoal] = useAppPreference('bonamind_dailyGoal', '20');
   const [newCards] = useAppPreference('bonamind_newCards', '10');
   const [maxReviews] = useAppPreference('bonamind_maxReviews', '100');
@@ -574,7 +580,9 @@ export default function StudyModePage() {
   };
 
   useEffect(() => {
-    if (!keyboardShortcuts) return;
+    // The Windows session screen handles its own keys (Space reveals, 1–4
+    // grade, Esc ends); running this one too flipped twice and graded twice.
+    if (!keyboardShortcuts || windowsDesign) return;
     const onKey = (e: KeyboardEvent) => {
       if (completed) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -593,7 +601,7 @@ export default function StudyModePage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flipped, currentCard, handleRate, completed, keyboardShortcuts, toggleFlip]);
+  }, [flipped, currentCard, handleRate, completed, keyboardShortcuts, toggleFlip, windowsDesign]);
 
   // Replay modal opens from the Session-Complete screen so the user can immediately
   // scrub through what they just studied. We instantiate it here so the modal
@@ -625,13 +633,6 @@ export default function StudyModePage() {
   const lifetimeXp = Number(
     typeof window !== 'undefined' ? localStorage.getItem('bonamind_user_xp') ?? 0 : 0,
   );
-
-  // iPhone gets its own session screen (components/ios/IOSStudySession), and
-  // so does the Windows app (components/windows/WindowsStudySession); the
-  // grading, scheduling and saving above are shared with every platform.
-  const design = studyDesign({ platform: Capacitor.getPlatform() as AppPlatform, preview: preview !== null });
-  const iosDesign = design === 'ios';
-  const windowsDesign = design === 'windows';
 
   if (loading && windowsDesign) return <div className="win-page" aria-busy="true"><div className="win-placeholder" style={{ height: 320 }} /></div>;
 

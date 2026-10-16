@@ -59,13 +59,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const systemResolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
   const isNight = currentHour >= 20 || currentHour < 7;
-  const resolvedTheme = autoNightMode && isNight ? "dark" : systemResolvedTheme;
+  const nightForced = autoNightMode && isNight;
+  const resolvedTheme = nightForced ? "dark" : systemResolvedTheme;
+  // "System" with nothing forcing dark: the Windows app leaves its window
+  // following Windows rather than pinning the current colour.
+  const followsSystem = theme === "system" && !nightForced;
 
   useEffect(() => {
     applyPreferenceToDocument("bonamind_theme", resolvedTheme);
     // The Windows app's frame, title bar and window background follow too.
-    if (isDesktopApp()) void desktop.applyTheme(resolvedTheme === "light" ? "light" : "dark");
-  }, [resolvedTheme]);
+    if (isDesktopApp()) {
+      void desktop.applyTheme(resolvedTheme === "light" ? "light" : "dark", followsSystem);
+    }
+  }, [resolvedTheme, followsSystem]);
 
   const value = useMemo<ThemeContextType>(
     () => ({

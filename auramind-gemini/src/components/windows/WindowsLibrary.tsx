@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import type { Deck } from '../../types';
 import { libraryRows, type LibrarySort } from './libraryModel';
+import { WindowsDialog } from './WindowsDialog';
 
 function relativeDay(at: number, now: number): string {
   const days = Math.floor((now - at) / 86_400_000);
@@ -15,7 +16,8 @@ function relativeDay(at: number, now: number): string {
   return `${days} days ago`;
 }
 
-interface MenuState { deck: Deck; x: number; y: number }
+interface MenuState { deck: Deck; x: number; y: number; trigger: HTMLElement }
+interface ConfirmState { deck: Deck; trigger: HTMLElement }
 
 export function WindowsLibrary() {
   const navigate = useNavigate();
@@ -23,7 +25,9 @@ export function WindowsLibrary() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<LibrarySort>('due');
   const [menu, setMenu] = useState<MenuState | null>(null);
-  const [confirm, setConfirm] = useState<Deck | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const now = Date.now();
   const rows = libraryRows(ws.decks, ws.cards, now, query, sort);
@@ -79,7 +83,7 @@ export function WindowsLibrary() {
               type="button"
               className="win-row"
               onClick={() => ws.startStudyForDeck(r.deck.id)}
-              onContextMenu={(e) => { e.preventDefault(); setMenu({ deck: r.deck, x: e.clientX, y: e.clientY }); }}
+              onContextMenu={(e) => { e.preventDefault(); setMenu({ deck: r.deck, x: e.clientX, y: e.clientY, trigger: e.currentTarget }); }}
             >
               <span>{r.deck.title}</span>
               <span className="win-row-end">
@@ -101,27 +105,46 @@ export function WindowsLibrary() {
         >
           <button type="button" role="menuitem" className="win-menu-item" onClick={() => pick(() => ws.startStudyForDeck(menu.deck.id))}>Study</button>
           <button type="button" role="menuitem" className="win-menu-item" onClick={() => pick(() => navigate(`/deck/${menu.deck.id}`))}>Open</button>
-          <button type="button" role="menuitem" className="win-menu-item" onClick={() => pick(() => setConfirm(menu.deck))}>Delete</button>
+          <button type="button" role="menuitem" className="win-menu-item" onClick={() => pick(() => { setDeleteError(false); setConfirm({ deck: menu.deck, trigger: menu.trigger }); })}>Delete</button>
         </div>
       )}
 
       {confirm && (
-        <div className="win-scrim">
-          <div role="dialog" aria-modal="true" aria-labelledby="win-delete-title" className="win-dialog">
-            <h2 id="win-delete-title" className="win-dialog-title">Delete "{confirm.title}"?</h2>
-            <p className="win-muted">Its cards are deleted too. This can't be undone.</p>
-            <div className="win-dialog-actions">
-              <button type="button" className="win-button" onClick={() => setConfirm(null)} autoFocus>Cancel</button>
+        <WindowsDialog
+          title={`Delete "${confirm.deck.title}"?`}
+          onClose={() => { if (!deleting) setConfirm(null); }}
+          closeOnBackdrop
+          returnFocusTo={confirm.trigger}
+          actions={
+            <>
+              <button type="button" className="win-button" data-autofocus disabled={deleting} onClick={() => setConfirm(null)}>Cancel</button>
               <button
                 type="button"
                 className="win-button win-button-danger"
-                onClick={() => { const id = confirm.id; setConfirm(null); void ws.deleteDeck(id); }}
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  setDeleteError(false);
+                  try {
+                    await ws.deleteDeck(confirm.deck.id);
+                    setConfirm(null);
+                  } catch {
+                    setDeleteError(true);
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
               >
                 Delete course
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="win-muted">Its cards are deleted too. This can't be undone.</p>
+          {deleteError && (
+            <p role="alert" style={{ color: '#c42b1c' }}>Couldn't delete this course. Check your connection and try again.</p>
+          )}
+        </WindowsDialog>
       )}
     </div>
   );

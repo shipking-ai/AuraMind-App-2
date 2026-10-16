@@ -71,12 +71,19 @@ describe('Windows theme', () => {
     expect(getByTestId('resolved').textContent).toBe('dark');
   });
 
-  it('tells the window when the resolved theme changes', () => {
+  it('tells the window when the resolved theme changes, still following Windows', () => {
     (window as W).__TAURI_INTERNALS__ = {};
     render(<ThemeProvider><Probe /></ThemeProvider>);
-    expect(bridge.applyTheme).toHaveBeenLastCalledWith('dark');
+    expect(bridge.applyTheme).toHaveBeenLastCalledWith('dark', true);
     act(() => { systemDark = false; listeners.forEach((l) => l({ matches: false })); });
-    expect(bridge.applyTheme).toHaveBeenLastCalledWith('light');
+    expect(bridge.applyTheme).toHaveBeenLastCalledWith('light', true);
+  });
+
+  it('pins the window only for an explicit Light or Dark choice', () => {
+    (window as W).__TAURI_INTERNALS__ = {};
+    localStorage.setItem('bonamind_theme', JSON.stringify('light'));
+    render(<ThemeProvider><Probe /></ThemeProvider>);
+    expect(bridge.applyTheme).toHaveBeenLastCalledWith('light', false);
   });
 
   it('does not touch the window on the website', () => {

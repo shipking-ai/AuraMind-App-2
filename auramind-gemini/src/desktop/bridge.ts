@@ -44,13 +44,18 @@ export const desktop = {
   setAutostart: (enabled: boolean) => call<boolean>('set_autostart', { enabled }, false),
   /** null = can't tell (not the Windows app, or no installed shortcut yet). */
   notificationsEnabled: () => call<boolean | null>('notifications_enabled', undefined, null),
-  /** Window frame, background and title bar follow the app's light/dark theme. */
-  async applyTheme(theme: 'light' | 'dark'): Promise<void> {
+  /**
+   * Window frame, background and title bar follow the app's light/dark theme.
+   * `followSystem` (the "System" setting) leaves the window theme unset so it
+   * keeps following Windows: forcing one makes WebView2 report it as the
+   * system colour scheme, and the app would stop noticing later switches.
+   */
+  async applyTheme(theme: 'light' | 'dark', followSystem = false): Promise<void> {
     if (!isDesktopApp()) return;
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       const win = getCurrentWindow();
-      await win.setTheme(theme);
+      await win.setTheme(followSystem ? null : theme);
       await win.setBackgroundColor(theme === 'light' ? '#f3f3f6' : '#1c1c22');
     } catch {
       /* cosmetic */

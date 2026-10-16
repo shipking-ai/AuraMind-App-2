@@ -114,6 +114,43 @@ describe('WindowsLibrary', () => {
     expect(deleteDeck).toHaveBeenCalledWith('d-bio');
   });
 
+  it('keeps the dialog open and says so when a delete fails', async () => {
+    mount(vi.fn(async () => { throw new Error('offline'); }));
+    fireEvent.contextMenu(row(/Biology 101/));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete course' }));
+    expect(await within(screen.getByRole('dialog')).findByRole('alert')).toHaveTextContent("Couldn't delete");
+  });
+
+  it('closes the delete dialog with Esc and on the backdrop, and puts focus back on the course', () => {
+    mount();
+    const bio = row(/Biology 101/);
+    bio.focus();
+    fireEvent.contextMenu(bio);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(bio);
+
+    fireEvent.contextMenu(bio);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    fireEvent.mouseDown(document.querySelector('.win-scrim')!);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('keeps Tab inside the delete dialog', () => {
+    mount();
+    fireEvent.contextMenu(row(/Biology 101/));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    const [cancel, del] = within(dialog).getAllByRole('button');
+    del.focus();
+    fireEvent.keyDown(del, { key: 'Tab' });
+    expect(document.activeElement).toBe(cancel);
+    fireEvent.keyDown(cancel, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(del);
+  });
+
   it('goes to Create from New course', () => {
     mount();
     fireEvent.click(screen.getByRole('button', { name: 'New course' }));
