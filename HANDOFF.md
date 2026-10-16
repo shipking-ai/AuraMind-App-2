@@ -12,7 +12,7 @@ the traps that cost real time.
 
 | | |
 |---|---|
-| Version | 2.1.0 (root, app, Android and Wear agree; Windows reads it from `auramind-gemini/package.json`). Cut 2026-10-16 for the first BonaMind Windows release, tag `desktop-v2.1.0`; Play's versionCode 14 still says 2.0.0, the next Android build says 2.1.0 |
+| Version | 2.2.0 (root, app, Android and Wear agree; Windows reads it from `auramind-gemini/package.json`). 2.2.0 carries the rename and the Windows layout; it is the first BonaMind Windows release (tag `desktop-v2.2.0` once #180 merges). The `desktop-v2.1.0` draft (old layout) was never published and can be deleted. Play's versionCode 14 still says 2.0.0 |
 | Play | versionCode 14 (the BonaMind rename, built after #172 and #176), closed testing (Alpha), **rolled out and sent for review 2026-10-16** together with the BonaMind listing |
 | Branch | `main` at `707f6fc7` (2026-10-16, through #177: rename PR4, brand guard and docs — the BonaMind rename is done; #176 the Gradle heap fix). Repo renamed to `shipking-ai/BonaMind` 2026-10-13 |
 | CI | Node **22 + 24** (20 dropped, EOL); required checks are `build-and-test (22.x)` and `(24.x)` |
@@ -118,9 +118,9 @@ the traps that cost real time.
       crashes inside those libraries. `ndk { debugSymbolLevel 'SYMBOL_TABLE' }`
       in the release build type would clear it on the next build.
     - **Windows:** ~~add `TAURI_SIGNING_PRIVATE_KEY`~~ (added 2026-10-16)
-      and ~~bump the version~~ (2.1.0). Next: once the bump is on `main`,
-      push the tag `desktop-v2.1.0`; `Desktop Windows` builds, signs and
-      drafts the release. Review the draft, run
+      and ~~bump the version~~ (2.2.0, with the Windows layout). Next: once
+      #180 is on `main`, push the tag `desktop-v2.2.0`; `Desktop Windows`
+      builds, signs and drafts the release. Review the draft, run
       `docs/windows-app-checklist.md` on a real PC, then publish. It is the
       first BonaMind Windows release (the only earlier one is the retired
       June AuraMind build). <!-- legacy-name: ok -->

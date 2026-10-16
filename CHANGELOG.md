@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-16
+
 ### Added
 - **Windows app: its own simple layout** - a Windows 11-style sidebar
   (Today, Library, Create, Prof. Linnea, Settings) that collapses with ☰ or
