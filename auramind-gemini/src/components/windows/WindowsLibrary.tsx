@@ -6,15 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardWorkspace } from '../../contexts/DashboardWorkspaceContext';
 import type { Deck } from '../../types';
-import { libraryRows, type LibrarySort } from './libraryModel';
+import { libraryRows, studiedLabel, type LibrarySort } from './libraryModel';
 import { WindowsDialog } from './WindowsDialog';
-
-function relativeDay(at: number, now: number): string {
-  const days = Math.floor((now - at) / 86_400_000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  return `${days} days ago`;
-}
 
 interface MenuState { deck: Deck; x: number; y: number; trigger: HTMLElement }
 interface ConfirmState { deck: Deck; trigger: HTMLElement }
@@ -46,53 +39,68 @@ export function WindowsLibrary() {
 
   return (
     <div className="win-page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <h1 className="win-title" style={{ marginRight: 'auto' }}>Library</h1>
+      <div className="win-cmd">
         <button type="button" className="win-button win-button-primary" onClick={() => navigate('/dashboard/generator')}>
           New course
         </button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 12 }}>
-        <input
-          type="search"
-          aria-label="Search courses"
-          placeholder="Search courses"
-          className="win-input"
-          style={{ flex: 1 }}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <label className="win-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          Sort
-          <select aria-label="Sort" className="win-input" value={sort} onChange={(e) => setSort(e.target.value as LibrarySort)}>
-            <option value="due">Due first</option>
-            <option value="recent">Recently studied</option>
-            <option value="az">A–Z</option>
-          </select>
-        </label>
-      </div>
-
-      {rows.length === 0 ? (
-        <p className="win-muted">{query ? 'No courses match your search.' : 'No courses yet.'}</p>
-      ) : (
-        <div className="win-card win-list">
-          {rows.map((r) => (
-            <button
-              key={r.deck.id}
-              type="button"
-              className="win-row"
-              onClick={() => ws.startStudyForDeck(r.deck.id)}
-              onContextMenu={(e) => { e.preventDefault(); setMenu({ deck: r.deck, x: e.clientX, y: e.clientY, trigger: e.currentTarget }); }}
-            >
-              <span>{r.deck.title}</span>
-              <span className="win-row-end">
-                {r.cards} cards · {r.due} due{r.lastStudied ? ` · studied ${relativeDay(r.lastStudied, now)}` : ''}
-              </span>
-            </button>
-          ))}
+        <div className="win-cmd-end">
+          <input
+            type="search"
+            aria-label="Search courses"
+            placeholder="Search courses"
+            className="win-input"
+            style={{ width: 220 }}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <label className="win-muted" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            Sort
+            <select aria-label="Sort" className="win-input" value={sort} onChange={(e) => setSort(e.target.value as LibrarySort)}>
+              <option value="due">Due first</option>
+              <option value="recent">Recently studied</option>
+              <option value="az">A–Z</option>
+            </select>
+          </label>
         </div>
-      )}
+      </div>
+
+      <div className="win-body">
+        <h1 className="win-title">Library</h1>
+        {rows.length === 0 ? (
+          <p className="win-muted" style={{ marginTop: 16 }}>{query ? 'No courses match your search.' : 'No courses yet.'}</p>
+        ) : (
+          <table className="win-table" style={{ marginTop: 16 }}>
+            <thead>
+              <tr><th>Course</th><th className="num">Due</th><th className="num">Cards</th><th>Last studied</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr
+                  key={r.deck.id}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    const trigger = (e.target as HTMLElement).closest('tr')?.querySelector('button') ?? (e.currentTarget as HTMLElement);
+                    setMenu({ deck: r.deck, x: e.clientX, y: e.clientY, trigger });
+                  }}
+                >
+                  <td>
+                    <button type="button" className="win-cell-button" onClick={() => ws.startStudyForDeck(r.deck.id)}>
+                      {r.deck.title}
+                    </button>
+                  </td>
+                  <td className="num">{r.due}</td>
+                  <td className="num">{r.cards}</td>
+                  <td className="win-muted">{r.lastStudied ? studiedLabel(r.lastStudied, now) : 'Never'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="win-status">
+        {ws.decks.length} {ws.decks.length === 1 ? 'course' : 'courses'} · {rows.reduce((n, r) => n + r.due, 0)} cards due
+      </div>
 
       {menu && (
         <div
@@ -142,7 +150,7 @@ export function WindowsLibrary() {
         >
           <p className="win-muted">Its cards are deleted too. This can't be undone.</p>
           {deleteError && (
-            <p role="alert" style={{ color: '#c42b1c' }}>Couldn't delete this course. Check your connection and try again.</p>
+            <p role="alert" className="win-alert">Couldn't delete this course. Check your connection and try again.</p>
           )}
         </WindowsDialog>
       )}

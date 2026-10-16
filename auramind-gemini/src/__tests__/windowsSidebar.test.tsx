@@ -47,14 +47,14 @@ describe('WindowsSidebar', () => {
   it('lists the places in order', async () => {
     renderWithWorkspace(<WindowsSidebar />);
     await waitFor(() => expect(fetchMyClassrooms).toHaveBeenCalledWith('u-1'));
-    expect(navLabels()).toEqual(['Today', 'Library', 'Create', 'Linnea', 'Settings']);
+    expect(navLabels()).toEqual(['Today', 'Library', 'New course', 'Linnea', 'Settings']);
   });
 
   it('shows Classes only for class members', async () => {
     fetchMyClassrooms.mockResolvedValue([{ role: 'student', classroom: { id: 'k1' } }]);
     renderWithWorkspace(<WindowsSidebar />);
     await waitFor(() =>
-      expect(navLabels()).toEqual(['Today', 'Library', 'Create', 'Linnea', 'Classes', 'Settings']),
+      expect(navLabels()).toEqual(['Today', 'Library', 'New course', 'Linnea', 'Classes', 'Settings']),
     );
   });
 

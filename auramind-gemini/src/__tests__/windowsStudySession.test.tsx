@@ -61,7 +61,8 @@ describe('WindowsStudySession', () => {
   it('shows the course, progress and question', () => {
     session();
     expect(screen.getByText('Biology 101')).toBeVisible();
-    expect(screen.getByText('9 / 24')).toBeVisible();
+    expect(screen.getByText('9 of 24')).toBeVisible();
+    expect(screen.getByText('What does the mitochondria produce?').closest('.win-index-card')).not.toBeNull();
     expect(screen.getByText('What does the mitochondria produce?')).toBeVisible();
     expect(screen.queryByText('ATP')).toBeNull();
   });

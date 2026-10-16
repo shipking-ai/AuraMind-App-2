@@ -47,8 +47,8 @@ try {
       }
       if (size.name === 'wide') {
         await page.goto(`${base}/__e2e/windows?screen=library`, { waitUntil: 'load' });
-        await page.waitForSelector('.win-row');
-        await page.locator('.win-row').first().click({ button: 'right' });
+        await page.waitForSelector('.win-table tbody tr');
+        await page.locator('.win-table tbody tr').first().click({ button: 'right' });
         await page.waitForTimeout(300);
         await page.screenshot({ path: resolve(out, `library-menu-${scheme}-wide.png`) });
       }

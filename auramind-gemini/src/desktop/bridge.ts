@@ -56,7 +56,7 @@ export const desktop = {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       const win = getCurrentWindow();
       await win.setTheme(followSystem ? null : theme);
-      await win.setBackgroundColor(theme === 'light' ? '#f3f3f6' : '#1c1c22');
+      await win.setBackgroundColor(theme === 'light' ? '#f6f3ec' : '#262420');
     } catch {
       /* cosmetic */
     }

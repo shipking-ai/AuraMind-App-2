@@ -735,6 +735,34 @@ app plus its extension burn two per sideload.
 
 ---
 
+## 2026-10-16 - Windows app: the look (paper, ink, index card)
+
+The first Windows layout read as generic ("AI slop": rounded cards, violet
+buttons everywhere). It now has a point of view, combining three directions
+the owner picked from:
+
+- **Structure from Windows itself:** a command bar on top (the page's main
+  actions), details lists with columns (Course / Due / Cards / Last
+  studied), a status bar at the bottom (streak, weekly recall, key hints).
+- **Feel from paper and ink:** light mode is warm paper (`#f6f3ec`), dark
+  mode a warm desk (`#262420`), not navy. Headlines and numbers use a serif
+  (`--win-serif`, Georgia); rules instead of boxes; primary buttons are ink.
+  Violet appears only as the marker on the current sidebar place and as
+  link underlines.
+- **The index card only where you study:** the session shows a ruled index
+  card (red top line, blue rules); the question in the serif, the answer in
+  a handwriting face (`Ink Free`, built into Windows). Text sits on the
+  rules: they fall at 29px + 30n under a 44px header band, so the question
+  starts 15px below it and every line is 30px.
+- **Window frame:** the dark title bar is the desk colour (`#1f1d1a`) and
+  the window background matches the theme (`#f6f3ec` / `#262420`, also the
+  launch colour in `tauri.conf.json`).
+- **Reused pages (Create, Linnea):** `windows-reused.css` turns gradient
+  headline text into ink, removes violet glows, makes the violet action
+  buttons ink, sets their headings in the serif, and pads them. Their
+  violet selection tints remain until Phase 2 rebuilds them.
+- The sidebar's "Create" is now **New course**; Today has no greeting.
+
 ## 2026-10-16 - Windows app: its own simple, Windows 11-style layout
 
 Spec `docs/superpowers/specs/2026-10-16-windows-native-shell-design.md`,

@@ -67,9 +67,9 @@ describe('todayModel', () => {
 describe('WindowsToday', () => {
   it('shows the due count and starts a review', () => {
     renderWithWorkspace(<WindowsToday />, { fixture: { decks, cards } });
-    expect(screen.getByText('Good evening, Matt')).toBeVisible();
+    expect(screen.queryByText(/Good (morning|afternoon|evening)/)).toBeNull();
     expect(screen.getByTestId('due-count')).toHaveTextContent('24');
-    expect(screen.getByText('about 8 min')).toBeVisible();
+    expect(screen.getByText('About 8 minutes')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Start review' }));
     expect(where()).toMatch(/^\/dashboard\/study\//);
   });
@@ -93,31 +93,30 @@ describe('WindowsToday', () => {
     const first = renderWithWorkspace(<WindowsToday />, { fixture: { decks, cards } });
     await waitFor(() => expect(fetchStudySessions).toHaveBeenCalled());
     await waitFor(() => expect(screen.queryByTestId('stats-loading')).toBeNull());
-    expect(screen.queryByText('remembered this week')).toBeNull();
+    expect(screen.queryByText(/remembered this week/)).toBeNull();
     first.unmount();
 
     fetchStudySessions.mockResolvedValue([session(10, 9)]);
     renderWithWorkspace(<WindowsToday />, { fixture: { decks, cards } });
-    expect(await screen.findByText('90%')).toBeVisible();
-    expect(screen.getByText('remembered this week')).toBeVisible();
+    expect(await screen.findByText(/90% remembered this week/)).toBeVisible();
   });
 
   it('shows the streak worked out from real study days', async () => {
     fetchStudySessions.mockResolvedValue([session(3, 3, 0), session(3, 3, 1)]);
     renderWithWorkspace(<WindowsToday />, { fixture: { decks, cards } });
-    expect(await screen.findByText('2 days')).toBeVisible();
+    expect(await screen.findByText(/2-day streak/)).toBeVisible();
   });
 
-  it('says "1 day" for a one-day streak', async () => {
+  it('says "1-day streak" for a one-day streak', async () => {
     fetchStudySessions.mockResolvedValue([session(3, 3, 0)]);
     renderWithWorkspace(<WindowsToday />, { fixture: { decks, cards } });
-    expect(await screen.findByText('1 day')).toBeVisible();
+    expect(await screen.findByText(/1-day streak/)).toBeVisible();
   });
 
   it('says you are caught up when nothing is due', () => {
     renderWithWorkspace(<WindowsToday />, { fixture: { decks: [his], cards: cardsFor('d-his', 0, 2) } });
-    expect(screen.getByText("You're all caught up")).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Create a course' }));
+    expect(screen.getByText('All caught up')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'New course' }));
     expect(where()).toBe('/dashboard/generator');
   });
 
@@ -125,6 +124,14 @@ describe('WindowsToday', () => {
     renderWithWorkspace(<WindowsToday />);
     fireEvent.click(screen.getByRole('button', { name: 'Create your first course' }));
     expect(where()).toBe('/dashboard/generator');
+  });
+
+  it('lists the due courses with their card counts and when they were last studied', () => {
+    renderWithWorkspace(<WindowsToday />, { fixture: { decks, cards } });
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Course', 'Due', 'Cards', 'Last studied']);
+    const hist = screen.getByRole('button', { name: /World History/ }).closest('tr')!;
+    expect(hist).toHaveTextContent('4');
+    expect(hist).toHaveTextContent('6');
   });
 
   it('offers Try again when the stats fail to load', async () => {

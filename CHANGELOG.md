@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Windows app look** - paper and ink instead of generic cards: a command
+  bar, plain lists with columns and a status bar; warm paper (light) and a
+  warm desk (dark); serif headlines; study sessions on a ruled index card
+  with the answer in handwriting. The title bar matches
+
 ## [2.2.0] - 2026-10-16
 
 ### Added

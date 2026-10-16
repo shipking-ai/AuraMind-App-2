@@ -1,35 +1,53 @@
 /*
- * The Windows app's look (Windows 11 style). Everything here is scoped to
- * html.platform-desktop, which DesktopChrome sets only inside the Tauri app,
- * so the website and phone apps are untouched.
- * Spec: docs/superpowers/specs/2026-10-16-windows-native-shell-design.md
+ * The Windows app's look. Everything here is scoped to html.platform-desktop
+ * (set only inside the Tauri app), so the website and phone apps are
+ * untouched.
+ *
+ * Structure from Windows itself (sidebar, command bar, details list, status
+ * bar); feel from paper and ink (warm neutrals, a serif for headlines and
+ * numbers, rules instead of boxes); the index card only where you study.
+ * Light = paper, dark = a warm desk. Violet only marks the current place.
  */
 
-html.platform-desktop.dark {
-  --win-bg: #1c1c22;
-  --win-sidebar: #202028;
-  --win-surface: #26262f;
-  --win-surface-hover: #2d2d38;
-  --win-border: #30303a;
-  --win-text: #e8e8ee;
-  --win-text-muted: #9a9aab;
+html.platform-desktop.light {
+  --win-bg: #f6f3ec;
+  --win-sidebar: #efebe2;
+  --win-surface: #fbf9f4;
+  --win-surface-hover: #ece7dc;
+  --win-border: #e4dfd3;
+  --win-rule: #ece8de;
+  --win-text: #1d1b17;
+  --win-text-muted: #8a8478;
+  --win-ink: #1d1b17;
+  --win-on-ink: #f6f3ec;
+  --win-accent: #5b3fd9;
 }
 
-html.platform-desktop.light {
-  --win-bg: #f3f3f6;
-  --win-sidebar: #ebebf0;
-  --win-surface: #ffffff;
-  --win-surface-hover: #dddde6;
-  --win-border: #e1e1e8;
-  --win-text: #1b1b22;
-  --win-text-muted: #6b6b7a;
+html.platform-desktop.dark {
+  --win-bg: #262420;
+  --win-sidebar: #1f1d1a;
+  --win-surface: #2e2b26;
+  --win-surface-hover: #35322c;
+  --win-border: #3a362f;
+  --win-rule: #2f2c27;
+  --win-text: #efe9de;
+  --win-text-muted: #9c968a;
+  --win-ink: #efe9de;
+  --win-on-ink: #1f1d1a;
+  --win-accent: #a58bff;
 }
 
 html.platform-desktop {
-  --win-accent: #8b5cf6;
-  --win-accent-hover: #7c4dea;
   --win-font: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  --win-motion: 180ms;
+  --win-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --win-hand: "Ink Free", "Segoe Print", cursive;
+  --win-card-paper: #fbf8f0;
+  --win-card-ink: #22201b;
+  --win-card-rule: #c9d7ec;
+  --win-card-margin: #d9534f;
+  --win-card-answer: #2b4da0;
+  --win-danger: #c42b1c;
+  --win-motion: 160ms;
 }
 
 html.platform-desktop[data-reduce-motion="true"] {
@@ -45,14 +63,14 @@ html.platform-desktop[data-reduce-motion="true"] {
   background: var(--win-bg);
   color: var(--win-text);
   font-family: var(--win-font);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .win-content {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  padding: 24px 32px;
+  border-left: 1px solid var(--win-border);
 }
 
 /* ── Sidebar ───────────────────────────────────────────────────────────── */
@@ -60,8 +78,8 @@ html.platform-desktop[data-reduce-motion="true"] {
 .win-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  width: 240px;
+  gap: 1px;
+  width: 200px;
   flex-shrink: 0;
   padding: 8px 6px;
   background: var(--win-sidebar);
@@ -77,11 +95,11 @@ html.platform-desktop[data-reduce-motion="true"] {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 36px;
-  padding: 0 11px;
+  gap: 10px;
+  height: 32px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 4px;
   background: transparent;
   color: var(--win-text);
   font: inherit;
@@ -99,35 +117,30 @@ html.platform-desktop[data-reduce-motion="true"] {
   color: var(--win-text-muted);
 }
 
+.win-nav-icon {
+  flex-shrink: 0;
+  color: var(--win-text-muted);
+}
+
 .win-nav-toggle:hover,
 .win-nav-item:hover {
   background: var(--win-surface-hover);
 }
 
 .win-nav-item.is-active {
-  background: var(--win-surface-hover);
+  background: var(--win-bg);
   font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--win-accent);
 }
 
-.win-nav-item.is-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 9px;
-  bottom: 9px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--win-accent);
-}
-
-.win-nav-icon {
-  flex-shrink: 0;
+.win-nav-item.is-active .win-nav-icon {
+  color: var(--win-text);
 }
 
 .win-nav-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .win-nav-spacer {
@@ -137,53 +150,107 @@ html.platform-desktop[data-reduce-motion="true"] {
 .win-nav-toggle:focus-visible,
 .win-nav-item:focus-visible,
 .win-button:focus-visible,
-.win-row:focus-visible {
+.win-row:focus-visible,
+.win-cell-button:focus-visible,
+.win-link-button:focus-visible {
   outline: 2px solid var(--win-text);
   outline-offset: -2px;
 }
 
-/* ── Building blocks for the Windows screens ──────────────────────────── */
+/* ── Page: command bar, body, status bar ──────────────────────────────── */
 
 .win-page {
-  max-width: 880px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  min-height: 100%;
+}
+
+.win-cmd {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 20px;
+  background: var(--win-bg);
+  border-bottom: 1px solid var(--win-border);
+}
+
+.win-cmd-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.win-body {
+  flex: 1;
+  padding: 20px 20px 24px;
+  max-width: 960px;
+}
+
+.win-status {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+  padding: 0 20px;
+  background: var(--win-bg);
+  border-top: 1px solid var(--win-border);
+  color: var(--win-text-muted);
+  font-size: 12px;
+}
+
+/* Headlines and numbers are set like a notebook, not a dashboard. */
+.win-headline {
+  margin: 0;
+  font-family: var(--win-serif);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+}
+
+.win-headline em {
+  font-size: 18px;
+  font-style: italic;
+  letter-spacing: 0;
+  color: var(--win-text-muted);
 }
 
 .win-title {
-  font-size: 28px;
-  font-weight: 600;
   margin: 0;
+  font-family: var(--win-serif);
+  font-size: 28px;
+  font-weight: 400;
 }
 
 .win-section-label {
+  margin: 24px 0 6px;
   font-size: 12px;
   font-weight: 600;
   color: var(--win-text-muted);
-  margin: 8px 0 -8px;
-}
-
-.win-card {
-  background: var(--win-surface);
-  border: 1px solid var(--win-border);
-  border-radius: 8px;
-  padding: 16px;
 }
 
 .win-muted {
   color: var(--win-text-muted);
 }
 
+/* ── Controls ──────────────────────────────────────────────────────────── */
+
 .win-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 0 16px;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
   border: 1px solid var(--win-border);
-  border-radius: 5px;
+  border-radius: 4px;
   background: var(--win-surface);
   color: var(--win-text);
   font: inherit;
@@ -194,72 +261,52 @@ html.platform-desktop[data-reduce-motion="true"] {
   background: var(--win-surface-hover);
 }
 
+.win-button:disabled {
+  opacity: 0.55;
+}
+
 .win-button-primary {
-  background: var(--win-accent);
-  border-color: var(--win-accent);
-  color: #fff;
+  background: var(--win-ink);
+  border-color: var(--win-ink);
+  color: var(--win-on-ink);
   font-weight: 600;
 }
 
 .win-button-primary:hover {
-  background: var(--win-accent-hover);
+  background: var(--win-ink);
+  opacity: 0.88;
 }
 
-.win-list {
+.win-button-danger {
+  background: var(--win-danger);
+  border-color: var(--win-danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+.win-button-danger:hover {
+  background: var(--win-danger);
+  opacity: 0.88;
+}
+
+.win-link-button {
   padding: 0;
-  overflow: hidden;
-}
-
-.win-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 16px;
   border: 0;
-  background: transparent;
+  background: none;
   color: var(--win-text);
   font: inherit;
-  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--win-accent);
+  text-underline-offset: 3px;
   cursor: default;
 }
 
-.win-row + .win-row {
-  border-top: 1px solid var(--win-border);
-}
-
-.win-row:hover {
-  background: var(--win-surface-hover);
-}
-
-.win-row-end {
-  margin-left: auto;
-  color: var(--win-text-muted);
-}
-
-.win-placeholder {
-  background: var(--win-surface-hover);
-  border-radius: 8px;
-  animation: win-pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes win-pulse {
-  50% { opacity: 0.55; }
-}
-
-html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
-  animation: none;
-}
-
-/* ── Inputs, menus and dialogs ────────────────────────────────────────── */
-
 .win-input {
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 10px;
   border: 1px solid var(--win-border);
   border-bottom-color: var(--win-text-muted);
-  border-radius: 5px;
+  border-radius: 4px;
   background: var(--win-surface);
   color: var(--win-text);
   font: inherit;
@@ -270,13 +317,77 @@ html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
   border-bottom: 2px solid var(--win-accent);
 }
 
+/* ── Details list ──────────────────────────────────────────────────────── */
+
+.win-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.win-table th {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--win-border);
+  color: var(--win-text-muted);
+  font-weight: 400;
+  text-align: left;
+}
+
+.win-table td {
+  padding: 0 12px;
+  height: 34px;
+  border-bottom: 1px solid var(--win-rule);
+}
+
+.win-table .num {
+  text-align: right;
+}
+
+.win-table tbody tr:hover td {
+  background: var(--win-surface-hover);
+}
+
+.win-cell-button {
+  width: 100%;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+/* Settings-style groups: a label column and rules, no boxes. */
+.win-group {
+  border-top: 1px solid var(--win-border);
+}
+
+.win-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 44px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--win-rule);
+}
+
+.win-field-label {
+  width: 180px;
+  flex-shrink: 0;
+  color: var(--win-text-muted);
+}
+
+/* ── Menus and dialogs ─────────────────────────────────────────────────── */
+
 .win-menu {
   position: fixed;
   z-index: 50;
   min-width: 160px;
   padding: 4px;
   border: 1px solid var(--win-border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--win-surface);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
 }
@@ -284,7 +395,7 @@ html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
 .win-menu-item {
   display: block;
   width: 100%;
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 12px;
   border: 0;
   border-radius: 4px;
@@ -308,130 +419,177 @@ html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(0 0 0 / 0.35);
+  background: rgb(0 0 0 / 0.3);
 }
 
 .win-dialog {
-  width: min(440px, calc(100vw - 48px));
-  padding: 24px;
+  width: min(420px, calc(100vw - 48px));
+  padding: 22px 24px 18px;
   border: 1px solid var(--win-border);
-  border-radius: 8px;
-  background: var(--win-surface);
+  border-radius: 6px;
+  background: var(--win-bg);
   color: var(--win-text);
   font-family: var(--win-font);
+  font-size: 13px;
   box-shadow: 0 16px 48px rgb(0 0 0 / 0.28);
 }
 
 .win-dialog-title {
   margin: 0 0 8px;
-  font-size: 20px;
-  font-weight: 600;
+  font-family: var(--win-serif);
+  font-size: 22px;
+  font-weight: 400;
 }
 
 .win-dialog-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
-.win-button-danger {
-  background: #c42b1c;
-  border-color: #c42b1c;
-  color: #fff;
-  font-weight: 600;
+.win-alert {
+  color: var(--win-danger);
 }
 
-.win-button-danger:hover {
-  background: #a82419;
+.win-placeholder {
+  background: var(--win-surface-hover);
+  border-radius: 4px;
+  animation: win-pulse 1.4s ease-in-out infinite;
 }
 
-/* ── Study session ─────────────────────────────────────────────────────── */
+@keyframes win-pulse {
+  50% { opacity: 0.55; }
+}
+
+html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
+  animation: none;
+}
+
+/* ── Study: the index card ─────────────────────────────────────────────── */
 
 .win-study {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  height: 100%;
-  max-width: 880px;
-  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
 }
 
-.win-study-top {
+.win-index-card {
+  position: relative;
+  width: min(560px, 100%);
+  min-height: 300px;
+  padding: 0 28px 30px;
+  border-radius: 2px;
+  border-top: 4px solid var(--win-card-margin);
+  background-color: var(--win-card-paper);
+  background-image:
+    linear-gradient(var(--win-card-paper) 44px, transparent 44px),
+    repeating-linear-gradient(var(--win-card-paper) 0 29px, var(--win-card-rule) 29px 30px);
+  color: var(--win-card-ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), 0 8px 24px rgb(0 0 0 / 0.16);
+  cursor: default;
+}
+
+html.platform-desktop.dark .win-index-card {
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.5);
+}
+
+.win-index-meta {
+  /* Fills the unruled header band (44px) so the text below sits on the rules. */
+  line-height: 44px;
+  font-size: 11px;
+  color: #8a8478;
+}
+
+.win-index-question {
+  /* Rules fall at 29px + 30n; the header band covers the first. 44 + 15 = 59,
+     so each 30px line of text ends on a rule. */
+  margin-top: 15px;
+  font-family: var(--win-serif);
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.win-index-answer {
+  margin-top: 30px;
+  font-family: var(--win-hand);
+  font-size: 24px;
+  line-height: 30px;
+  color: var(--win-card-answer);
+  animation: win-write var(--win-motion) ease;
+}
+
+@keyframes win-write {
+  from { opacity: 0; }
+}
+
+.win-grades {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  gap: 6px;
+}
+
+.win-grades .win-button {
+  min-width: 82px;
+}
+
+.win-key {
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.win-interval {
+  font-size: 11px;
+  opacity: 0.65;
 }
 
 .win-progress {
-  flex: 1;
-  height: 4px;
+  width: 160px;
+  height: 3px;
   border-radius: 2px;
-  background: var(--win-surface-hover);
+  background: var(--win-border);
   overflow: hidden;
 }
 
 .win-progress > i {
   display: block;
   height: 100%;
-  background: var(--win-accent);
+  background: var(--win-text-muted);
   transition: width var(--win-motion) ease;
 }
 
-.win-study-card {
-  flex: 1;
-  min-height: 240px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  text-align: center;
-  padding: 32px;
-}
-
-.win-study-question {
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.win-study-answer {
-  font-size: 18px;
-  color: var(--win-text-muted);
-  animation: win-fade var(--win-motion) ease;
-}
-
-@keyframes win-fade {
-  from { opacity: 0; transform: translateY(4px); }
-}
-
-.win-study-grades {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.win-key {
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-.win-interval {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
 .win-stat {
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--win-serif);
+  font-size: 34px;
+  line-height: 1.1;
 }
 
-/* Links read as links (Windows accent), not as plain text. */
+/* Links read as links. */
 .win-page a:not(.win-button) {
-  color: var(--win-accent);
-  text-decoration: none;
+  color: var(--win-text);
+  text-decoration: underline;
+  text-decoration-color: var(--win-accent);
+  text-underline-offset: 3px;
 }
 
-.win-page a:not(.win-button):hover {
-  text-decoration: underline;
+/* Reused website pages (Create, Linnea, Classes) bring no page padding of
+   their own; the Windows screens are .win-page and manage theirs. */
+html.platform-desktop .win-content > :not(.win-page) {
+  padding: 20px 24px;
+}
+
+/* The Windows section in Settings is the website's boxed component: here it
+   sits on the page's rules like the other groups, under its own label. */
+html.platform-desktop .win-content .win-group > .rounded-xl {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html.platform-desktop .win-content .win-group > .rounded-xl > .mb-2:first-child {
+  display: none;
 }

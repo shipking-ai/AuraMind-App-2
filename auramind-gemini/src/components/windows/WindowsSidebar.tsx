@@ -19,7 +19,7 @@ interface Place {
 const TOP: Place[] = [
   { label: 'Today', to: '/dashboard', icon: Home, end: true },
   { label: 'Library', to: '/dashboard/decks', icon: BookOpen },
-  { label: 'Create', to: '/dashboard/generator', icon: Plus },
+  { label: 'New course', to: '/dashboard/generator', icon: Plus },
   { label: 'Linnea', to: '/dashboard/chat', icon: Sparkles },
 ];
 const CLASSES: Place = { label: 'Classes', to: '/dashboard/classes', icon: Users };

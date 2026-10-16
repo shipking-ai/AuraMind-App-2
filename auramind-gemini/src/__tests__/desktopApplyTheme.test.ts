@@ -21,14 +21,14 @@ describe('desktop.applyTheme', () => {
   it('leaves the window following Windows for "System"', async () => {
     await desktop.applyTheme('light', true);
     expect(win.setTheme).toHaveBeenCalledWith(null);
-    expect(win.setBackgroundColor).toHaveBeenCalledWith('#f3f3f6');
+    expect(win.setBackgroundColor).toHaveBeenCalledWith('#f6f3ec');
     expect(invoke).toHaveBeenCalledWith('set_title_bar_theme', { dark: false });
   });
 
   it('pins the window for an explicit choice', async () => {
     await desktop.applyTheme('dark', false);
     expect(win.setTheme).toHaveBeenCalledWith('dark');
-    expect(win.setBackgroundColor).toHaveBeenCalledWith('#1c1c22');
+    expect(win.setBackgroundColor).toHaveBeenCalledWith('#262420');
     expect(invoke).toHaveBeenCalledWith('set_title_bar_theme', { dark: true });
   });
 });
