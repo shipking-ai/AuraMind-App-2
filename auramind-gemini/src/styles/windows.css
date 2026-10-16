@@ -1,0 +1,253 @@
+/*
+ * The Windows app's look (Windows 11 style). Everything here is scoped to
+ * html.platform-desktop, which DesktopChrome sets only inside the Tauri app,
+ * so the website and phone apps are untouched.
+ * Spec: docs/superpowers/specs/2026-10-16-windows-native-shell-design.md
+ */
+
+html.platform-desktop.dark {
+  --win-bg: #1c1c22;
+  --win-sidebar: #202028;
+  --win-surface: #26262f;
+  --win-surface-hover: #2d2d38;
+  --win-border: #30303a;
+  --win-text: #e8e8ee;
+  --win-text-muted: #9a9aab;
+}
+
+html.platform-desktop.light {
+  --win-bg: #f3f3f6;
+  --win-sidebar: #ebebf0;
+  --win-surface: #ffffff;
+  --win-surface-hover: #dddde6;
+  --win-border: #e1e1e8;
+  --win-text: #1b1b22;
+  --win-text-muted: #6b6b7a;
+}
+
+html.platform-desktop {
+  --win-accent: #8b5cf6;
+  --win-accent-hover: #7c4dea;
+  --win-font: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --win-motion: 180ms;
+}
+
+html.platform-desktop[data-reduce-motion="true"] {
+  --win-motion: 0ms;
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+.win-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--win-bg);
+  color: var(--win-text);
+  font-family: var(--win-font);
+  font-size: 14px;
+}
+
+.win-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+
+.win-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 240px;
+  flex-shrink: 0;
+  padding: 8px 6px;
+  background: var(--win-sidebar);
+  transition: width var(--win-motion) ease;
+}
+
+.win-sidebar.is-collapsed {
+  width: 48px;
+}
+
+.win-nav-toggle,
+.win-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--win-text);
+  font: inherit;
+  text-decoration: none;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.win-nav-toggle {
+  width: 36px;
+  padding: 0;
+  justify-content: center;
+  margin-bottom: 6px;
+  color: var(--win-text-muted);
+}
+
+.win-nav-toggle:hover,
+.win-nav-item:hover {
+  background: var(--win-surface-hover);
+}
+
+.win-nav-item.is-active {
+  background: var(--win-surface-hover);
+  font-weight: 600;
+}
+
+.win-nav-item.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--win-accent);
+}
+
+.win-nav-icon {
+  flex-shrink: 0;
+}
+
+.win-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.win-nav-spacer {
+  flex: 1;
+}
+
+.win-nav-toggle:focus-visible,
+.win-nav-item:focus-visible,
+.win-button:focus-visible,
+.win-row:focus-visible {
+  outline: 2px solid var(--win-text);
+  outline-offset: -2px;
+}
+
+/* ── Building blocks for the Windows screens ──────────────────────────── */
+
+.win-page {
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.win-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.win-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--win-text-muted);
+  margin: 8px 0 -8px;
+}
+
+.win-card {
+  background: var(--win-surface);
+  border: 1px solid var(--win-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.win-muted {
+  color: var(--win-text-muted);
+}
+
+.win-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 16px;
+  border: 1px solid var(--win-border);
+  border-radius: 5px;
+  background: var(--win-surface);
+  color: var(--win-text);
+  font: inherit;
+  cursor: default;
+}
+
+.win-button:hover {
+  background: var(--win-surface-hover);
+}
+
+.win-button-primary {
+  background: var(--win-accent);
+  border-color: var(--win-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.win-button-primary:hover {
+  background: var(--win-accent-hover);
+}
+
+.win-list {
+  padding: 0;
+  overflow: hidden;
+}
+
+.win-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--win-text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.win-row + .win-row {
+  border-top: 1px solid var(--win-border);
+}
+
+.win-row:hover {
+  background: var(--win-surface-hover);
+}
+
+.win-row-end {
+  margin-left: auto;
+  color: var(--win-text-muted);
+}
+
+.win-placeholder {
+  background: var(--win-surface-hover);
+  border-radius: 8px;
+  animation: win-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes win-pulse {
+  50% { opacity: 0.55; }
+}
+
+html.platform-desktop[data-reduce-motion="true"] .win-placeholder {
+  animation: none;
+}

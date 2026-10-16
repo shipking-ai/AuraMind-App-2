@@ -27,6 +27,8 @@ const ANDROID_REFRESHABLE_PATHS = new Set(['/dashboard', '/dashboard/decks', '/d
 import { MobileWebBottomNav } from './MobileWebBottomNav';
 import { appPlatform } from '../../../lib/platform';
 import { IOSShell } from '../../ios/IOSShell';
+import { WindowsShell } from '../../windows/WindowsShell';
+import { shouldUseWindowsShell } from '../../windows/windowsShellRoute';
 
 // ─── Navigation config ──────────────────────────────────────────────────────
 
@@ -738,6 +740,23 @@ export function NovaDashboardShell({ children }: NovaDashboardShellProps) {
       </div>
     </>
   );
+
+  // The Windows app: its own sidebar layout, study sessions included.
+  if (shouldUseWindowsShell(location.pathname)) {
+    return (
+      <WindowsShell
+        overlays={
+          <>
+            <MemorySpark />
+            <WindowsWidgetSync />
+            <FirstRunGate />
+          </>
+        }
+      >
+        {children}
+      </WindowsShell>
+    );
+  }
 
   if (isIOSMobile) {
     return (

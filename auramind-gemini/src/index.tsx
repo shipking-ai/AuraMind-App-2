@@ -10,6 +10,7 @@ import { installDesktopLinkHandling } from './lib/desktopLinks';
 // values by cascade order rather than !important.
 import './styles/editorial.css';
 import './styles/android-native.css';
+import './styles/windows.css';
 import './styles/ios-native.css';
 import './styles/desktop.css';
 
